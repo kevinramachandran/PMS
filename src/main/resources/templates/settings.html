@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Carlsberg Brewery PMS</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .upload-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+            border: 2px solid var(--primary-green);
+        }
+
+        .upload-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .upload-header h2 {
+            color: var(--primary-green);
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .upload-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--primary-green);
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            background: var(--accent-green);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+
+        .upload-area:hover {
+            background: var(--bg-color);
+            border-color: var(--primary-green-light);
+        }
+
+        .upload-area.dragover {
+            background: var(--primary-green);
+            border-color: var(--primary-green-light);
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            color: var(--primary-green);
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .selected-file {
+            display: none;
+            background: var(--bg-color);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .selected-file.show {
+            display: flex;
+        }
+
+        .file-icon {
+            font-size: 32px;
+            color: var(--primary-green);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .remove-file {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .remove-file:hover {
+            background: #dc2626;
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-green-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-bg);
+            border-color: var(--primary-green);
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+        }
+
+        .alert-message {
+            flex: 1;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-green);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-section {
+            background: var(--accent-green);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 32px;
+        }
+
+        .info-section h3 {
+            color: var(--primary-green);
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .info-section ul {
+            margin-left: 20px;
+            color: var(--text-secondary);
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img th:src="@{/images/carlsberg-logo.png}" alt="Carlsberg Logo">
+                </div>
+                <div class="sidebar-title">Brewery PMS</div>
+            </div>
+            <nav class="sidebar-nav">
+                <a th:href="@{/}" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a th:href="@{/home}" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a th:href="@{/kpi-dashboard}" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>KPI Dashboard</span>
+                </a>
+                <a th:href="@{/add-metrics}" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add Metrics</span>
+                </a>
+                <a th:href="@{/settings}" class="nav-item active">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="hamburger" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <h1>Settings</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="upload-container">
+                    <div class="upload-card">
+                        <div class="upload-header">
+                            <h2>Upload PMS Data</h2>
+                            <p>Import production metrics data from CSV file</p>
+                        </div>
+
+                        <!-- Alert Messages -->
+                        <div class="alert alert-success" id="successAlert">
+                            <i class="fas fa-check-circle alert-icon"></i>
+                            <div class="alert-message">
+                                <strong>Success!</strong> CSV file imported successfully.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-error" id="errorAlert">
+                            <i class="fas fa-exclamation-circle alert-icon"></i>
+                            <div class="alert-message" id="errorMessage">
+                                <strong>Error!</strong> Failed to import CSV file.
+                            </div>
+                        </div>
+
+                        <!-- Upload Area -->
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <div class="upload-text">Click to browse or drag and drop</div>
+                            <div class="upload-hint">CSV files only (Max 10MB)</div>
+                        </div>
+
+                        <input type="file" id="fileInput" class="file-input" accept=".csv">
+
+                        <!-- Selected File Display -->
+                        <div class="selected-file" id="selectedFile">
+                            <i class="fas fa-file-csv file-icon"></i>
+                            <div class="file-info">
+                                <div class="file-name" id="fileName"></div>
+                                <div class="file-size" id="fileSize"></div>
+                            </div>
+                            <button class="remove-file" id="removeFile">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </div>
+
+                        <!-- Upload Actions -->
+                        <div class="upload-actions">
+                            <button class="btn btn-primary" id="uploadBtn" disabled>
+                                <i class="fas fa-upload"></i> Upload File
+                            </button>
+                            <button class="btn btn-secondary" id="resetBtn">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                            <a href="/api/production-metrics/export/csv" class="btn btn-secondary" download style="text-decoration: none;">
+                                <i class="fas fa-download"></i> Download Template
+                            </a>
+                        </div>
+
+                        <!-- Loading Spinner -->
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                            <p>Uploading file...</p>
+                        </div>
+
+                        <!-- Information Section -->
+                        <div class="info-section">
+                            <h3><i class="fas fa-info-circle"></i> CSV Format Requirements</h3>
+                            <ul>
+                                <li>File must be in CSV format (.csv extension)</li>
+                                <li>Maximum file size: 10MB</li>
+                                <li>Date format: yyyy-MM-dd HH:mm:ss (e.g., 2026-03-02 00:00:00)</li>
+                                <li>Use the "Download Template" button to get the correct CSV format with all required columns</li>
+                                <li>Numeric values should be numbers only (no special characters except decimal points)</li>
+                                <li>Empty values are allowed for optional fields</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script th:src="@{/js/dashboard.js}"></script>
+    <script>
+        $(document).ready(function() {
+            const uploadArea = $('#uploadArea');
+            const fileInput = $('#fileInput');
+            const selectedFile = $('#selectedFile');
+            const uploadBtn = $('#uploadBtn');
+            const removeFileBtn = $('#removeFile');
+            const resetBtn = $('#resetBtn');
+            const successAlert = $('#successAlert');
+            const errorAlert = $('#errorAlert');
+            const loading = $('#loading');
+            let selectedFileObj = null;
+
+            // Click to browse
+            uploadArea.on('click', function() {
+                fileInput.click();
+            });
+
+            // File selection
+            fileInput.on('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFileSelect(file);
+                }
+            });
+
+            // Drag and drop
+            uploadArea.on('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('dragover');
+            });
+
+            uploadArea.on('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('dragover');
+            });
+
+            uploadArea.on('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('dragover');
+
+                const file = e.originalEvent.dataTransfer.files[0];
+                if (file && file.name.endsWith('.csv')) {
+                    handleFileSelect(file);
+                } else {
+                    showError('Please select a valid CSV file');
+                }
+            });
+
+            // Handle file selection
+            function handleFileSelect(file) {
+                if (!file.name.endsWith('.csv')) {
+                    showError('Please select a CSV file');
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    showError('File size exceeds 10MB limit');
+                    return;
+                }
+
+                selectedFileObj = file;
+                $('#fileName').text(file.name);
+                $('#fileSize').text(formatFileSize(file.size));
+                selectedFile.addClass('show');
+                uploadBtn.prop('disabled', false);
+                hideAlerts();
+            }
+
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            // Remove file
+            removeFileBtn.on('click', function() {
+                resetForm();
+            });
+
+            // Reset button
+            resetBtn.on('click', function() {
+                resetForm();
+            });
+
+            // Upload button
+            uploadBtn.on('click', function() {
+                if (!selectedFileObj) {
+                    showError('Please select a file first');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', selectedFileObj);
+
+                uploadBtn.prop('disabled', true);
+                loading.addClass('show');
+                hideAlerts();
+
+                $.ajax({
+                    url: '/api/production-metrics/import/csv',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        loading.removeClass('show');
+                        showSuccess();
+                        setTimeout(function() {
+                            resetForm();
+                        }, 3000);
+                    },
+                    error: function(xhr) {
+                        loading.removeClass('show');
+                        uploadBtn.prop('disabled', false);
+                        const errorMsg = xhr.responseText || 'Failed to upload file';
+                        showError(errorMsg);
+                    }
+                });
+            });
+
+            // Show success alert
+            function showSuccess() {
+                successAlert.addClass('show');
+            }
+
+            // Show error alert
+            function showError(message) {
+                $('#errorMessage').html('<strong>Error!</strong> ' + message);
+                errorAlert.addClass('show');
+            }
+
+            // Hide alerts
+            function hideAlerts() {
+                successAlert.removeClass('show');
+                errorAlert.removeClass('show');
+            }
+
+            // Reset form
+            function resetForm() {
+                fileInput.val('');
+                selectedFileObj = null;
+                selectedFile.removeClass('show');
+                uploadBtn.prop('disabled', true);
+                hideAlerts();
+                uploadArea.removeClass('dragover');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brewery Production Management System</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="/images/carlsberg-logo.svg" alt="Carlsberg Logo" class="header-logo">
+            <h1>Brewery Production Management System</h1>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a th:href="@{/}">Home</a></li>
+                <li><a th:href="@{/metrics}">Production Metrics</a></li>
+                <li><a th:href="@{/export}">File Exports</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <div class="welcome-section">
+                <h2>Welcome to the Brewery PMS</h2>
+                <p>Manage your brewery's production metrics and export data efficiently.</p>
+
+                <div class="card-grid">
+                    <div class="card">
+                        <h3>Production Metrics</h3>
+                        <p>Track and manage daily production metrics including batch numbers, quantities, and quality scores.</p>
+                        <a th:href="@{/metrics}" class="btn">View Metrics</a>
+                    </div>
+
+                    <div class="card">
+                        <h3>File Exports</h3>
+                        <p>Export production data in various formats for reporting and analysis.</p>
+                        <a th:href="@{/export}" class="btn">Manage Exports</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Brewery Production Management System</p>
+        </footer>
+    </div>
+</body>
+</html>

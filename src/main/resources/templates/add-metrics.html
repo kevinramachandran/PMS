@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Production Metrics - Carlsberg Brewery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-green: #16a34a;
+            --primary-green-light: #22c55e;
+            --accent-green: #dcfce7;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #1f2933;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --sidebar-width: 260px;
+            --header-height: 70px;
+        }
+
+        body {
+            font-family: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+            color: white;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .sidebar-header {
+            padding: 16px 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-logo {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 10px;
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+            padding-left: 28px;
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-left-color: white;
+            font-weight: 600;
+        }
+
+        .nav-item i {
+            width: 24px;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header */
+        .top-header {
+            position: sticky;
+            top: 0;
+            height: var(--header-height);
+            background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            z-index: 100;
+            border-radius: 0 0 16px 16px;
+            color: white;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .hamburger span {
+            width: 24px;
+            height: 3px;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 2px solid var(--primary-green);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-avatar:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 32px;
+        }
+
+        /* Form Container */
+        .form-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title i {
+            color: var(--primary-green);
+        }
+
+        .form-section {
+            background: var(--card-bg);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-section h3 {
+            color: var(--primary-green);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-green);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+        }
+
+        .metric-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-reset {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .alert {
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 10px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid var(--primary-green);
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+
+        .alert i {
+            font-size: 24px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-green);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .required {
+            color: #ef4444;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--card-bg);
+            padding: 24px 32px;
+            text-align: center;
+            color: var(--text-secondary);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            margin-top: auto;
+            font-size: 14px;
+        }
+
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .top-header {
+                padding: 0 16px;
+                border-radius: 0;
+            }
+
+            .header-left h1 {
+                font-size: 18px;
+            }
+
+            .content-area {
+                padding: 16px;
+            }
+
+            .form-section {
+                padding: 16px;
+            }
+
+            .metric-pair {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-section {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                </div>
+                <div class="sidebar-title">Carlsberg PMS</div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/home" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/kpi-dashboard" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>KPI Dashboard</span>
+                </a>
+                <a href="/add-metrics" class="nav-item active">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add Metrics</span>
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="hamburger" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <h1>Add Production Metrics</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </div>
+                    <div class="header-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="form-container">
+                    <div class="page-title">
+                        <i class="fas fa-edit"></i>
+                        Add Production Metrics Data
+                    </div>
+
+                    <div id="alert" class="alert"></div>
+                    <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Saving metrics...</p>
+                    </div>
+
+                    <form id="metricsForm">
+                        <!-- Date Section -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-calendar-alt"></i> Date & Time <span class="required">*</span></h3>
+                            <div class="form-group">
+                                <label for="date">Date & Time <span class="required">*</span></label>
+                                <input type="datetime-local" id="date" name="date" required>
+                            </div>
+                        </div>
+
+                        <!-- Production Productivity -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-industry"></i> Production Productivity</h3>
+                            <div class="metric-pair">
+                                <div class="form-group">
+                                    <label for="productionProductivityFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="productionProductivityFtdActual" name="productionProductivityFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="productionProductivityFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="productionProductivityFtdTarget" name="productionProductivityFtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Logistics Productivity -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-truck"></i> Logistics Productivity</h3>
+                            <div class="metric-pair">
+                                <div class="form-group">
+                                    <label for="logisticsProductivityFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="logisticsProductivityFtdActual" name="logisticsProductivityFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="logisticsProductivityFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="logisticsProductivityFtdTarget" name="logisticsProductivityFtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Sensory Score -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-vial"></i> KPI - Sensory Score</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiSensoryScoreFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiSensoryScoreFtdActual" name="kpiSensoryScoreFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiSensoryScoreFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiSensoryScoreFtdTarget" name="kpiSensoryScoreFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiSensoryScoreMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiSensoryScoreMtdActual" name="kpiSensoryScoreMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiSensoryScoreMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiSensoryScoreMtdTarget" name="kpiSensoryScoreMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Consumer Complaint -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-comment-dots"></i> KPI - Consumer Complaint (Units / mHL)</h3>
+                            <div class="metric-pair">
+                                <div class="form-group">
+                                    <label for="kpiConsumerComplaintUnitsMhlFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiConsumerComplaintUnitsMhlFtdActual" name="kpiConsumerComplaintUnitsMhlFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiConsumerComplaintUnitsMhlFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiConsumerComplaintUnitsMhlFtdTarget" name="kpiConsumerComplaintUnitsMhlFtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Customer Complaint -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-comments"></i> KPI - Customer Complaint (Units / mHL)</h3>
+                            <div class="metric-pair">
+                                <div class="form-group">
+                                    <label for="kpiCustomerComplaintUnitsMhlFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiCustomerComplaintUnitsMhlFtdActual" name="kpiCustomerComplaintUnitsMhlFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiCustomerComplaintUnitsMhlFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiCustomerComplaintUnitsMhlFtdTarget" name="kpiCustomerComplaintUnitsMhlFtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Process Confirmation B&P -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-check-circle"></i> Process Confirmation B&P</h3>
+                            <div class="metric-pair">
+                                <div class="form-group">
+                                    <label for="processConfirmationBpFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="processConfirmationBpFtdActual" name="processConfirmationBpFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="processConfirmationBpFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="processConfirmationBpFtdTarget" name="processConfirmationBpFtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Process Confirmation Pack -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-box"></i> Process Confirmation Pack</h3>
+                            <div class="metric-pair">
+                                <div class="form-group">
+                                    <label for="processConfirmationPackMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="processConfirmationPackMtdActual" name="processConfirmationPackMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="processConfirmationPackMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="processConfirmationPackMtdTarget" name="processConfirmationPackMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI OEE -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-gauge-high"></i> KPI - OEE (%)</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiOeeFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiOeeFtdActual" name="kpiOeeFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiOeeFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiOeeFtdTarget" name="kpiOeeFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiOeeMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiOeeMtdActual" name="kpiOeeMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiOeeMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiOeeMtdTarget" name="kpiOeeMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Beer Loss -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-beer"></i> KPI - Beer Loss (%)</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiBeerLossFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiBeerLossFtdActual" name="kpiBeerLossFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiBeerLossFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiBeerLossFtdTarget" name="kpiBeerLossFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiBeerLossMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiBeerLossMtdActual" name="kpiBeerLossMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiBeerLossMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiBeerLossMtdTarget" name="kpiBeerLossMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI WUR -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-tint"></i> KPI - WUR (hl/hl)</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiWurHlHlFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiWurHlHlFtdActual" name="kpiWurHlHlFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiWurHlHlFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiWurHlHlFtdTarget" name="kpiWurHlHlFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiWurHlHlMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiWurHlHlMtdActual" name="kpiWurHlHlMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiWurHlHlMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiWurHlHlMtdTarget" name="kpiWurHlHlMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Electricity -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-bolt"></i> KPI - Electricity (kwh/hl)</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiElectricityKwhHlFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiElectricityKwhHlFtdActual" name="kpiElectricityKwhHlFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiElectricityKwhHlFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiElectricityKwhHlFtdTarget" name="kpiElectricityKwhHlFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiElectricityKwhHlMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiElectricityKwhHlMtdActual" name="kpiElectricityKwhHlMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiElectricityKwhHlMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiElectricityKwhHlMtdTarget" name="kpiElectricityKwhHlMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI Energy -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-fire"></i> KPI - Energy (kwh/hl)</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiEnergyKwhHlFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiEnergyKwhHlFtdActual" name="kpiEnergyKwhHlFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiEnergyKwhHlFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiEnergyKwhHlFtdTarget" name="kpiEnergyKwhHlFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiEnergyKwhHlMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiEnergyKwhHlMtdActual" name="kpiEnergyKwhHlMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiEnergyKwhHlMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiEnergyKwhHlMtdTarget" name="kpiEnergyKwhHlMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI RGB Ratio -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-recycle"></i> KPI - RGB Ratio (%)</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="kpiRgbRatioFtdActual">FTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiRgbRatioFtdActual" name="kpiRgbRatioFtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiRgbRatioFtdTarget">FTD Target</label>
+                                    <input type="number" step="0.01" id="kpiRgbRatioFtdTarget" name="kpiRgbRatioFtdTarget">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiRgbRatioMtdActual">MTD Actual</label>
+                                    <input type="number" step="0.01" id="kpiRgbRatioMtdActual" name="kpiRgbRatioMtdActual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="kpiRgbRatioMtdTarget">MTD Target</label>
+                                    <input type="number" step="0.01" id="kpiRgbRatioMtdTarget" name="kpiRgbRatioMtdTarget">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-submit">
+                                <i class="fas fa-save"></i> Save Metrics
+                            </button>
+                            <button type="reset" class="btn btn-reset">
+                                <i class="fas fa-redo"></i> Reset Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2026 Carlsberg Production Management System | All Rights Reserved</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Sidebar Toggle
+        const hamburger = document.getElementById('hamburger');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        hamburger.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Form submission
+        document.getElementById('metricsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const alert = document.getElementById('alert');
+            const loading = document.getElementById('loading');
+            const form = e.target;
+
+            // Hide any previous alerts
+            alert.classList.remove('show');
+            alert.className = 'alert';
+
+            // Show loading
+            loading.classList.add('show');
+
+            // Get form data
+            const formData = new FormData(form);
+
+            // Convert datetime-local to the format expected by the API (ISO-8601 format)
+            const dateInput = formData.get('date');
+            const dateObj = new Date(dateInput);
+            const formattedDate = dateObj.getFullYear() + '-' +
+                                 String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+                                 String(dateObj.getDate()).padStart(2, '0') + 'T' +
+                                 String(dateObj.getHours()).padStart(2, '0') + ':' +
+                                 String(dateObj.getMinutes()).padStart(2, '0') + ':' +
+                                 String(dateObj.getSeconds()).padStart(2, '0');
+
+            // Build JSON object
+            const jsonData = {
+                date: formattedDate
+            };
+
+            // Add all numeric fields
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'date' && value !== '') {
+                    jsonData[key] = parseFloat(value);
+                }
+            }
+
+            try {
+                const response = await fetch('/api/production-metrics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+
+                loading.classList.remove('show');
+
+                if (response.ok) {
+                    alert.className = 'alert alert-success show';
+                    alert.innerHTML = '<i class="fas fa-check-circle"></i><div><strong>Success!</strong> Production metrics saved successfully!</div>';
+                    form.reset();
+                    // Reset date to current
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    document.getElementById('date').value = now.toISOString().slice(0, 16);
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (response.status === 409) {
+                    alert.className = 'alert alert-error show';
+                    alert.innerHTML = '<i class="fas fa-exclamation-circle"></i><div><strong>Error!</strong> A record already exists for this date. Please use a different date or update the existing record.</div>';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    throw new Error('Failed to save metrics');
+                }
+            } catch (error) {
+                loading.classList.remove('show');
+                alert.className = 'alert alert-error show';
+                alert.innerHTML = '<i class="fas fa-exclamation-circle"></i><div><strong>Error!</strong> Failed to save production metrics. Please try again.</div>';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                console.error('Error:', error);
+            }
+        });
+
+        // Set default date to current date and time
+        window.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('date').value = now.toISOString().slice(0, 16);
+        });
+    </script>
+</body>
+</html>

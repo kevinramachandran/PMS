@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPI Dashboard - Carlsberg Brewery</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                </div>
+                <div class="sidebar-title">Carlsberg PMS</div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/home" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/people-kpi" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>People & KPI</span>
+                </a>
+                <a href="/kpi-dashboard" class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>KPI Dashboard</span>
+                </a>
+                <a href="/metrics" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>KPI Metrics</span>
+                </a>
+                <a href="/export" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="hamburger" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <h1>KPI Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div class="header-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge"></span>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Daily Status Section -->
+                <div class="daily-status-grid">
+                    <!-- People Daily -->
+                    <div class="status-card">
+                        <div class="status-header people-header">
+                            <h3>People - Daily</h3>
+                        </div>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>TO DO</th>
+                                    <th>FPR</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>FAC Investigation</td>
+                                    <td>Mohan / Suresh</td>
+                                    <td><span class="badge badge-open">Open</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Safety Gemba walk submission</td>
+                                    <td>HOD's</td>
+                                    <td><span class="badge badge-open">Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Quality Daily -->
+                    <div class="status-card">
+                        <div class="status-header quality-header">
+                            <h3>Quality - Daily</h3>
+                        </div>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>TO DO</th>
+                                    <th>FPR</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Take gmba in B&P Spent grain issue and yeast drain</td>
+                                    <td>Mantesh/ Rajesh/ Prashanth</td>
+                                    <td><span class="badge badge-open">Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Service Daily -->
+                    <div class="status-card">
+                        <div class="status-header service-header">
+                            <h3>Service - Daily</h3>
+                        </div>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>TO DO</th>
+                                    <th>FPR</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>WWRP Product transfer pump</td>
+                                    <td>Rajesh</td>
+                                    <td><span class="badge badge-open">Open</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Area clerance at bottle yard for canline</td>
+                                    <td>Raghavendra</td>
+                                    <td><span class="badge badge-open">Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Cost Daily -->
+                    <div class="status-card">
+                        <div class="status-header cost-header">
+                            <h3>Cost - Daily</h3>
+                        </div>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>TO DO</th>
+                                    <th>FPR</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>R&M cost breakup to Finance</td>
+                                    <td>Rajesh</td>
+                                    <td><span class="badge badge-open">Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Charts Grid Section -->
+                <div class="charts-section">
+                    <!-- Row 1 -->
+                    <div class="chart-card">
+                        <div class="chart-header">Productivity - Production & Logistics</div>
+                        <canvas id="productivityChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">KPI - Sensory</div>
+                        <canvas id="sensoryChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">Complaint - Customer & Consumer</div>
+                        <canvas id="complaintChart"></canvas>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="chart-card">
+                        <div class="chart-header">Process confirmation- B&P and Pack</div>
+                        <canvas id="processChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">KPI - OEE</div>
+                        <canvas id="oeeChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">KPI - Beer loss</div>
+                        <canvas id="beerLossChart"></canvas>
+                    </div>
+
+                    <!-- Row 3 -->
+                    <div class="chart-card">
+                        <div class="chart-header">KPI - WUR (HI/HI)</div>
+                        <canvas id="wurChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">KPI - Electricity and energy</div>
+                        <canvas id="energyChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">KPI_RGB Loss</div>
+                        <canvas id="rgbLossChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="bottom-section">
+                    <!-- H&S Section -->
+                    <div class="hs-section">
+                        <div class="section-header">H&S</div>
+                        <div class="hs-grid">
+                            <div class="hs-item">
+                                <div class="hs-label">Near Miss</div>
+                                <div class="hs-indicator green"></div>
+                            </div>
+                            <div class="hs-item">
+                                <div class="hs-label">First Aid</div>
+                                <div class="hs-indicator green"></div>
+                            </div>
+                            <div class="hs-item">
+                                <div class="hs-label">LTI</div>
+                                <div class="hs-indicator green"></div>
+                            </div>
+                            <div class="hs-item">
+                                <div class="hs-label">MTI</div>
+                                <div class="hs-indicator green"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LSR Section -->
+                    <div class="lsr-section">
+                        <div class="section-header">LSR</div>
+                        <div class="lsr-grid">
+                            <div class="lsr-day">
+                                <div class="day-label">Mon</div>
+                                <div class="lsr-status red"></div>
+                                <div class="lsr-status green"></div>
+                            </div>
+                            <div class="lsr-day">
+                                <div class="day-label">Tue</div>
+                                <div class="lsr-status green"></div>
+                                <div class="lsr-status green"></div>
+                            </div>
+                            <div class="lsr-day">
+                                <div class="day-label">Wed</div>
+                                <div class="lsr-status green"></div>
+                                <div class="lsr-status red"></div>
+                            </div>
+                            <div class="lsr-day">
+                                <div class="day-label">Thu</div>
+                                <div class="lsr-status green"></div>
+                                <div class="lsr-status green"></div>
+                            </div>
+                            <div class="lsr-day">
+                                <div class="day-label">Fri</div>
+                                <div class="lsr-status green"></div>
+                                <div class="lsr-status green"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>&copy; 2026 Carlsberg Production Management System | All Rights Reserved</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
