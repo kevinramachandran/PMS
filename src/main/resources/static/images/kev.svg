@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 300" role="img" aria-labelledby="title desc">
+  <title id="title">Solvex Engineering Solutions</title>
+  <desc id="desc">Solvex Engineering Solution logo with puzzle accent.</desc>
+  <rect width="920" height="300" fill="transparent"/>
+
+  <g fill="#355EA8" font-family="Segoe UI, Arial, sans-serif" font-weight="700">
+    <text x="24" y="176" font-size="140" letter-spacing="0.5">Solve</text>
+    <text x="520" y="180" font-size="185" letter-spacing="0">X</text>
+  </g>
+
+  <g fill="#56585C" font-family="Segoe UI, Arial, sans-serif" font-weight="400">
+    <text x="30" y="255" font-size="72" letter-spacing="4">Engineering Solutions</text>
+  </g>
+
+  <g transform="translate(726,52)">
+    <g transform="rotate(-45 64 40)">
+      <rect x="8" y="8" width="44" height="44" rx="6" fill="#E2466B"/>
+      <circle cx="30" cy="4" r="7" fill="#E2466B"/>
+      <circle cx="56" cy="30" r="7" fill="#E2466B"/>
+      <circle cx="30" cy="56" r="7" fill="#f2f3f5"/>
+      <circle cx="4" cy="30" r="7" fill="#f2f3f5"/>
+
+      <rect x="52" y="8" width="44" height="44" rx="6" fill="#2F8EC3"/>
+      <circle cx="74" cy="4" r="7" fill="#2F8EC3"/>
+      <circle cx="100" cy="30" r="7" fill="#2F8EC3"/>
+      <circle cx="74" cy="56" r="7" fill="#f2f3f5"/>
+      <circle cx="48" cy="30" r="7" fill="#f2f3f5"/>
+
+      <rect x="30" y="52" width="44" height="44" rx="6" fill="#F2C94C"/>
+      <circle cx="52" cy="48" r="7" fill="#f2f3f5"/>
+      <circle cx="78" cy="74" r="7" fill="#F2C94C"/>
+      <circle cx="52" cy="100" r="7" fill="#F2C94C"/>
+      <circle cx="26" cy="74" r="7" fill="#f2f3f5"/>
+    </g>
+  </g>
+</svg>

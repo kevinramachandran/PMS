@@ -1,7 +1,7 @@
 package org.example.service;
 
-import org.example.entity.DailyData;
-import org.example.repository.DailyDataRepository;
+import org.example.entity.Priorities;
+import org.example.repository.PrioritiesRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,26 +9,26 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-public class DailyDataService {
+public class PrioritiesService {
 
-    private final DailyDataRepository repo;
+    private final PrioritiesRepository repo;
 
-    public DailyDataService(DailyDataRepository repo) {
+    public PrioritiesService(PrioritiesRepository repo) {
         this.repo = repo;
     }
 
     // Save
-    public DailyData save(DailyData data) {
+    public Priorities save(Priorities data) {
         return repo.save(data);
     }
 
     // Get All
-    public List<DailyData> getAll() {
+    public List<Priorities> getAll() {
         return repo.findAll();
     }
 
     // Get by ID
-    public DailyData getById(Long id) {
+    public Priorities getById(Long id) {
         return repo.findById(id).orElseThrow(() -> new RuntimeException("Not Found"));
     }
 
@@ -38,35 +38,31 @@ public class DailyDataService {
     }
 
     // Get Today
-    public List<DailyData> getToday() {
+    public List<Priorities> getToday() {
         return repo.findByDate(LocalDate.now());
     }
 
     // Get by Date
-    public List<DailyData> getByDate(LocalDate date) {
+    public List<Priorities> getByDate(LocalDate date) {
         return repo.findByDate(date);
     }
 
     // Get by Type and Date
-    public List<DailyData> getByTypeAndDate(String type, LocalDate date) {
+    public List<Priorities> getByTypeAndDate(String type, LocalDate date) {
         return repo.findByTypeAndDate(type, date);
     }
 
     // Get by Type
-    public List<DailyData> getByType(String type) {
+    public List<Priorities> getByType(String type) {
         return repo.findByType(type);
     }
 
     @Transactional
-    public List<DailyData> replaceByTypeAndDate(String type, LocalDate date, List<DailyData> dataList) {
+    public Priorities replaceByTypeAndDate(String type, LocalDate date, Priorities data) {
         repo.deleteByTypeAndDate(type, date);
-
-        for (DailyData data : dataList) {
-            data.setId(null);
-            data.setType(type);
-            data.setDate(date);
-        }
-
-        return repo.saveAll(dataList);
+        data.setId(null);
+        data.setType(type);
+        data.setDate(date);
+        return repo.save(data);
     }
 }

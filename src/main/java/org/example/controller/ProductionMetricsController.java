@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.entity.ProductionMetrics;
 import org.example.service.ProductionMetricsService;
 import org.springframework.core.io.InputStreamResource;
@@ -15,19 +16,32 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/production-metrics")
-@RequiredArgsConstructor
 public class ProductionMetricsController {
 
     private final ProductionMetricsService service;
+    private final ObjectMapper objectMapper;
 
     @GetMapping
     public ResponseEntity<List<ProductionMetrics>> getAllRecords() {
         return ResponseEntity.ok(service.getAllRecords());
+    }
+
+    @GetMapping(params = "date")
+    public ResponseEntity<?> getRecordByDateQuery(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        return service.getRecordByDate(date)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.ok(Collections.emptyMap()));
     }
 
     @GetMapping("/{id}")
@@ -52,10 +66,35 @@ public class ProductionMetricsController {
         return ResponseEntity.ok(service.getRecordsByDateRange(startDate, endDate));
     }
 
+    @GetMapping("/current-month")
+    public ResponseEntity<List<ProductionMetrics>> getCurrentMonthData() {
+        return ResponseEntity.ok(service.getCurrentMonthData());
+    }
+
+    @GetMapping("/by-day/{date}")
+    public ResponseEntity<ProductionMetrics> getRecordByDay(
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
+        return service.getRecordByDay(date)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/month")
+    public ResponseEntity<List<ProductionMetrics>> getRecordsByMonth(
+            @RequestParam int month,
+            @RequestParam int year) {
+        if (month < 1 || month > 12) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(service.getRecordsByMonth(month, year));
+    }
+
     @PostMapping
     public ResponseEntity<ProductionMetrics> createRecord(@RequestBody ProductionMetrics metrics) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED).body(service.createRecord(metrics));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
@@ -67,6 +106,8 @@ public class ProductionMetricsController {
             @RequestBody ProductionMetrics metrics) {
         try {
             return ResponseEntity.ok(service.updateRecord(id, metrics));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -74,7 +115,76 @@ public class ProductionMetricsController {
 
     @PutMapping("/upsert")
     public ResponseEntity<ProductionMetrics> upsertByDate(@RequestBody ProductionMetrics metrics) {
-        return ResponseEntity.ok(service.upsertByDate(metrics));
+        try {
+            return ResponseEntity.ok(service.upsertByDate(metrics));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{date}")
+    public ResponseEntity<ProductionMetrics> patchByDate(
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+            @RequestBody Map<String, Object> patchPayload) {
+        try {
+            Map<String, Object> normalized = normalizePatchPayload(patchPayload);
+            ProductionMetrics patch = objectMapper.convertValue(normalized, ProductionMetrics.class);
+            return ResponseEntity.ok(service.patchRecordByDate(date, patch));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    private Map<String, Object> normalizePatchPayload(Map<String, Object> source) {
+        Map<String, Object> normalized = new HashMap<>();
+        if (source == null) {
+            return normalized;
+        }
+
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isBlank()) {
+                continue;
+            }
+            normalized.put(toCamelCase(key), entry.getValue());
+        }
+
+        return normalized;
+    }
+
+    private String toCamelCase(String key) {
+        if (!key.contains("_")) {
+            return key;
+        }
+
+        StringBuilder out = new StringBuilder();
+        boolean upperNext = false;
+        for (int i = 0; i < key.length(); i++) {
+            char ch = key.charAt(i);
+            if (ch == '_') {
+                upperNext = true;
+                continue;
+            }
+
+            if (upperNext) {
+                out.append(Character.toUpperCase(ch));
+                upperNext = false;
+            } else {
+                out.append(ch);
+            }
+        }
+        return out.toString();
+    }
+
+    @PutMapping("/bulk-update")
+    public ResponseEntity<List<ProductionMetrics>> bulkUpdate(@RequestBody List<ProductionMetrics> updates) {
+        try {
+            return ResponseEntity.ok(service.bulkUpdateRecords(updates));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     @DeleteMapping("/{id}")

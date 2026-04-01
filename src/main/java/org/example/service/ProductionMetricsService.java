@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -37,11 +39,39 @@ public class ProductionMetricsService {
         return repository.findByDate(date);
     }
 
+    public Optional<ProductionMetrics> getRecordByDate(LocalDate date) {
+        return repository.findByDate(date);
+    }
+
+    public Optional<ProductionMetrics> getRecordByDay(LocalDate date) {
+        return repository.findByDate(date);
+    }
+
     public List<ProductionMetrics> getRecordsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         return repository.findByDateBetween(startDate, endDate);
     }
 
+    public List<ProductionMetrics> getCurrentMonthData() {
+        LocalDate today = LocalDate.now();
+        LocalDate firstDay = today.withDayOfMonth(1);
+        LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
+
+        LocalDateTime startDate = firstDay.atStartOfDay();
+        LocalDateTime endDate = lastDay.atTime(23, 59, 59);
+
+        return repository.findByDateBetweenOrderByDateAsc(startDate, endDate);
+    }
+
+    public List<ProductionMetrics> getRecordsByMonth(int month, int year) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDateTime startDate = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+        return repository.findByDateBetweenOrderByDateAsc(startDate, endDate);
+    }
+
     public ProductionMetrics createRecord(ProductionMetrics metrics) {
+        metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
+        validateMetricsDateNotInFuture(metrics);
         if (repository.existsByDate(metrics.getDate())) {
             throw new RuntimeException("Record already exists for date: " + metrics.getDate());
         }
@@ -55,14 +85,106 @@ public class ProductionMetricsService {
     }
 
     public ProductionMetrics upsertByDate(ProductionMetrics metrics) {
-        Optional<ProductionMetrics> existing = repository.findByDate(metrics.getDate());
+        metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
+        validateMetricsDateNotInFuture(metrics);
+        Optional<ProductionMetrics> existing = repository.findByDate(metrics.getDate().toLocalDate());
         if (existing.isPresent()) {
             return updateFields(existing.get(), metrics);
         }
         return repository.save(metrics);
     }
 
+    @Transactional
+    public ProductionMetrics patchRecordByDate(LocalDate date, ProductionMetrics patch) {
+        LocalDateTime normalizedDate = date.atStartOfDay();
+        validateDateNotInFuture(normalizedDate);
+
+        List<ProductionMetrics> dayRecords = repository.findByDateBetweenOrderByDateAsc(
+                normalizedDate,
+                date.atTime(23, 59, 59)
+        );
+
+        ProductionMetrics target;
+        if (dayRecords.isEmpty()) {
+            target = new ProductionMetrics();
+            target.setDate(normalizedDate);
+        } else {
+            target = dayRecords.get(0);
+            target.setDate(normalizedDate);
+            if (dayRecords.size() > 1) {
+                repository.deleteAll(dayRecords.subList(1, dayRecords.size()));
+            }
+        }
+
+        applyPartialUpdate(target, patch);
+        return repository.save(target);
+    }
+
+    @Transactional
+    public List<ProductionMetrics> bulkUpdateRecords(List<ProductionMetrics> updates) {
+        if (updates == null || updates.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProductionMetrics> persisted = new java.util.ArrayList<>();
+
+        for (ProductionMetrics update : updates) {
+            if (update.getId() == null) {
+                throw new IllegalArgumentException("Record id is required for bulk update");
+            }
+
+            ProductionMetrics existing = repository.findById(update.getId())
+                    .orElseThrow(() -> new RuntimeException("Record not found with id: " + update.getId()));
+
+            applyPartialUpdate(existing, update);
+            persisted.add(repository.save(existing));
+        }
+
+        return persisted;
+    }
+
+    private void applyPartialUpdate(ProductionMetrics existing, ProductionMetrics update) {
+        setIfPresent(existing::setProductionProductivityFtdActual, update.getProductionProductivityFtdActual(), "productionProductivityFtdActual");
+        setIfPresent(existing::setProductionProductivityFtdTarget, update.getProductionProductivityFtdTarget(), "productionProductivityFtdTarget");
+        setIfPresent(existing::setLogisticsProductivityFtdActual, update.getLogisticsProductivityFtdActual(), "logisticsProductivityFtdActual");
+        setIfPresent(existing::setLogisticsProductivityFtdTarget, update.getLogisticsProductivityFtdTarget(), "logisticsProductivityFtdTarget");
+        setIfPresent(existing::setProcessConfirmationBpFtdActual, update.getProcessConfirmationBpFtdActual(), "processConfirmationBpFtdActual");
+        setIfPresent(existing::setProcessConfirmationBpFtdTarget, update.getProcessConfirmationBpFtdTarget(), "processConfirmationBpFtdTarget");
+        setIfPresent(existing::setProcessConfirmationPackMtdActual, update.getProcessConfirmationPackMtdActual(), "processConfirmationPackMtdActual");
+        setIfPresent(existing::setProcessConfirmationPackMtdTarget, update.getProcessConfirmationPackMtdTarget(), "processConfirmationPackMtdTarget");
+        setIfPresent(existing::setKpiOeeFtdActual, update.getKpiOeeFtdActual(), "kpiOeeFtdActual");
+        setIfPresent(existing::setKpiOeeFtdTarget, update.getKpiOeeFtdTarget(), "kpiOeeFtdTarget");
+        setIfPresent(existing::setKpiSensoryScoreFtdActual, update.getKpiSensoryScoreFtdActual(), "kpiSensoryScoreFtdActual");
+        setIfPresent(existing::setKpiSensoryScoreFtdTarget, update.getKpiSensoryScoreFtdTarget(), "kpiSensoryScoreFtdTarget");
+        setIfPresent(existing::setKpiWurHlHlFtdActual, update.getKpiWurHlHlFtdActual(), "kpiWurHlHlFtdActual");
+        setIfPresent(existing::setKpiWurHlHlFtdTarget, update.getKpiWurHlHlFtdTarget(), "kpiWurHlHlFtdTarget");
+        setIfPresent(existing::setKpiElectricityKwhHlFtdActual, update.getKpiElectricityKwhHlFtdActual(), "kpiElectricityKwhHlFtdActual");
+        setIfPresent(existing::setKpiElectricityKwhHlFtdTarget, update.getKpiElectricityKwhHlFtdTarget(), "kpiElectricityKwhHlFtdTarget");
+        setIfPresent(existing::setKpiEnergyKwhHlFtdActual, update.getKpiEnergyKwhHlFtdActual(), "kpiEnergyKwhHlFtdActual");
+        setIfPresent(existing::setKpiEnergyKwhHlFtdTarget, update.getKpiEnergyKwhHlFtdTarget(), "kpiEnergyKwhHlFtdTarget");
+        setIfPresent(existing::setKpiRgbRatioFtdActual, update.getKpiRgbRatioFtdActual(), "kpiRgbRatioFtdActual");
+        setIfPresent(existing::setKpiRgbRatioFtdTarget, update.getKpiRgbRatioFtdTarget(), "kpiRgbRatioFtdTarget");
+        setIfPresent(existing::setKpiBeerLossFtdActual, update.getKpiBeerLossFtdActual(), "kpiBeerLossFtdActual");
+        setIfPresent(existing::setKpiBeerLossFtdTarget, update.getKpiBeerLossFtdTarget(), "kpiBeerLossFtdTarget");
+        setIfPresent(existing::setKpiConsumerComplaintUnitsMhlFtdActual, update.getKpiConsumerComplaintUnitsMhlFtdActual(), "kpiConsumerComplaintUnitsMhlFtdActual");
+        setIfPresent(existing::setKpiConsumerComplaintUnitsMhlFtdTarget, update.getKpiConsumerComplaintUnitsMhlFtdTarget(), "kpiConsumerComplaintUnitsMhlFtdTarget");
+        setIfPresent(existing::setKpiCustomerComplaintUnitsMhlFtdActual, update.getKpiCustomerComplaintUnitsMhlFtdActual(), "kpiCustomerComplaintUnitsMhlFtdActual");
+        setIfPresent(existing::setKpiCustomerComplaintUnitsMhlFtdTarget, update.getKpiCustomerComplaintUnitsMhlFtdTarget(), "kpiCustomerComplaintUnitsMhlFtdTarget");
+    }
+
+    private void setIfPresent(java.util.function.Consumer<Double> setter, Double value, String fieldName) {
+        if (value == null) {
+            return;
+        }
+        if (value < 0) {
+            throw new IllegalArgumentException(fieldName + " cannot be negative");
+        }
+        setter.accept(value);
+    }
+
     private ProductionMetrics updateFields(ProductionMetrics existing, ProductionMetrics metrics) {
+        metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
+        validateMetricsDateNotInFuture(metrics);
         existing.setDate(metrics.getDate());
         existing.setProductionProductivityFtdActual(metrics.getProductionProductivityFtdActual());
         existing.setProductionProductivityFtdTarget(metrics.getProductionProductivityFtdTarget());
@@ -105,6 +227,30 @@ public class ProductionMetricsService {
         existing.setKpiRgbRatioMtdActual(metrics.getKpiRgbRatioMtdActual());
         existing.setKpiRgbRatioMtdTarget(metrics.getKpiRgbRatioMtdTarget());
         return repository.save(existing);
+    }
+
+    private LocalDateTime normalizeToStartOfDay(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        return dateTime.toLocalDate().atStartOfDay();
+    }
+
+    private void validateDateNotInFuture(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            throw new IllegalArgumentException("Metrics date is required");
+        }
+
+        if (dateTime.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Future dates are not allowed for production metrics");
+        }
+    }
+
+    private void validateMetricsDateNotInFuture(ProductionMetrics metrics) {
+        if (metrics == null) {
+            throw new IllegalArgumentException("Metrics payload is required");
+        }
+        validateDateNotInFuture(metrics.getDate());
     }
 
     public void deleteRecord(Long id) {

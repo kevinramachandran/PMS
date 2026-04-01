@@ -30,4 +30,9 @@ public class WebController {
     public String addMetrics() {
         return "add-metrics";
     }
+
+    @GetMapping("/add-daily-data")
+    public String addDailyData() {
+        return "add-daily-data";
+    }
 }

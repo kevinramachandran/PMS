@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" width="420" height="110" role="img" aria-label="Carlsberg">
+  <defs>
+    <style>
+      .mark { fill: #ffffff; }
+      .text { fill: #ffffff; font-family: Georgia, 'Times New Roman', serif; font-weight: 700; }
+    </style>
+  </defs>
+
+  <!-- Crown -->
+  <g class="mark" transform="translate(289, 18)">
+    <circle cx="16" cy="8" r="7" />
+    <circle cx="7" cy="2" r="6" />
+    <circle cx="26" cy="2" r="6" />
+    <circle cx="22" cy="16" r="6" />
+    <circle cx="10" cy="16" r="6" />
+    <path d="M9 20h14v5H9z" />
+  </g>
+
+  <!-- Wordmark -->
+  <text x="20" y="70" font-size="92" class="text">Carlsberg</text>
+
+  <!-- Signature underline -->
+  <path class="mark" d="M105 86 C155 44, 248 100, 323 88 C349 84, 365 73, 376 57 C378 69, 373 90, 349 99 C307 114, 223 95, 165 95 C144 95, 126 101, 109 111 L79 94 C85 89, 95 86, 105 86 Z"/>
+</svg>

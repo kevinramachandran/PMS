@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Production Metrics - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/add-metrics-bulk.css">
     <style>
         * {
             margin: 0;
@@ -13,18 +14,26 @@
         }
 
         :root {
-            --primary-green: #16a34a;
-            --primary-green-light: #22c55e;
-            --accent-green: #dcfce7;
-            --bg-color: #f5f7fa;
+            --primary-green: #0b6b2e;
+            --dark-green: #064e1f;
+            --accent-green: #16a34a;
+            --light-green: #22c55e;
+            --background: #f5f7fa;
+            --text-dark: #111827;
+            --border: #e5e7eb;
+            --deep-green: var(--dark-green);
+            --primary-green-light: var(--accent-green);
+            --accent-color: var(--light-green);
+            --bg-color: var(--background);
             --card-bg: #ffffff;
-            --text-primary: #1f2933;
+            --text-primary: var(--text-dark);
             --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
+            --border-color: var(--border);
             --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
             --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.05);
             --shadow-lg: 0 4px 15px rgba(0, 0, 0, 0.08);
             --sidebar-width: 260px;
+            --sidebar-collapsed-width: 80px;
             --header-height: 70px;
         }
 
@@ -47,39 +56,37 @@
             top: 0;
             width: var(--sidebar-width);
             height: 100vh;
-            background: linear-gradient(180deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+            background: linear-gradient(180deg, var(--primary-green) 0%, var(--deep-green) 100%);
             color: white;
             overflow-y: auto;
-            transition: transform 0.3s ease;
+            transition: width 0.3s ease, transform 0.3s ease;
             z-index: 1000;
             box-shadow: var(--shadow-lg);
         }
 
         .sidebar-header {
-            padding: 16px 12px;
+            padding: 18px 16px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .sidebar-logo {
-            width: 140px;
-            height: 140px;
             margin: 0 auto 10px;
-            background: white;
-            border-radius: 16px;
-            padding: 12px;
-            box-shadow: var(--shadow-md);
+            padding: 0;
         }
 
-        .sidebar-logo img {
-            width: 100%;
-            height: 100%;
+        .logo {
+            width: 140px;
+            max-width: 100%;
+            height: auto;
             object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.2));
         }
 
         .sidebar-title {
-            font-size: 20px;
-            font-weight: 700;
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
             margin-top: 6px;
         }
 
@@ -93,19 +100,20 @@
             align-items: center;
             color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             border-left: 3px solid transparent;
         }
 
         .nav-item:hover {
             background-color: rgba(255, 255, 255, 0.1);
-            border-left-color: white;
+            filter: brightness(1.08);
+            border-left-color: rgba(255,255,255,0.6);
             padding-left: 28px;
         }
 
         .nav-item.active {
-            background-color: rgba(255, 255, 255, 0.15);
-            border-left-color: white;
+            background: linear-gradient(90deg, rgba(22,163,74,0.78) 0%, rgba(22,163,74,0.48) 100%);
+            border-left-color: #16a34a;
             font-weight: 600;
         }
 
@@ -114,6 +122,16 @@
             margin-right: 12px;
             font-size: 18px;
         }
+
+        .nav-parent { position: relative; }
+        .nav-parent-toggle { width: 100%; }
+        .nav-chevron { margin-left: auto; transition: transform 0.3s ease; }
+        .nav-parent-toggle.expanded .nav-chevron { transform: rotate(180deg); }
+        .nav-children { display: none; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
+        .nav-children.show { display: block; }
+        .nav-child { padding: 12px 24px 12px 48px; font-size: 14px; }
+        .nav-child:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .nav-child.active { background-color: rgba(255, 255, 255, 0.15); font-weight: 600; }
 
         /* Main Content Area */
         .main-content {
@@ -130,7 +148,7 @@
             top: 0;
             height: var(--header-height);
             background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -147,12 +165,16 @@
         }
 
         .hamburger {
-            display: none;
+            display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
             cursor: pointer;
             padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
         }
+
+        .hamburger:hover { background-color: rgba(255,255,255,0.15); }
 
         .hamburger span {
             width: 24px;
@@ -249,9 +271,27 @@
             padding: 25px;
             margin-bottom: 25px;
             border-radius: 12px;
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 2px 16px rgba(11, 107, 46, 0.25);
             transition: all 0.3s ease;
+            transition: margin-left 0.3s ease, width 0.3s ease;
         }
+
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); overflow: visible; }
+        .sidebar.collapsed .sidebar-header { padding: 12px 8px; }
+        .sidebar.collapsed .sidebar-logo { margin-bottom: 2px; }
+        .sidebar.collapsed .logo { width: 38px; }
+        .sidebar.collapsed .sidebar-title { display: none; }
+        .sidebar.collapsed .nav-item { padding: 14px; justify-content: center; position: relative; }
+        .sidebar.collapsed .nav-item span { display: none; }
+        .sidebar.collapsed .nav-item i { margin-right: 0; width: auto; font-size: 20px; }
+        .sidebar.collapsed .nav-item:hover::after {
+            content: attr(data-tooltip);
+            position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+            background: #1f2937; color: white; padding: 6px 12px; border-radius: 6px;
+            white-space: nowrap; font-size: 13px; font-weight: 500; z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25); pointer-events: none;
+        }
+        .main-content.expanded { margin-left: var(--sidebar-collapsed-width); width: calc(100% - var(--sidebar-collapsed-width)); }
 
         .form-section:hover {
             box-shadow: var(--shadow-lg);
@@ -417,6 +457,18 @@
             font-size: 14px;
         }
 
+        .footer-brand {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .footer-brand-logo {
+            width: min(320px, 78vw);
+            height: auto;
+            object-fit: contain;
+        }
+
         /* Overlay for mobile sidebar */
         .sidebar-overlay {
             display: none;
@@ -437,6 +489,7 @@
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
+                width: var(--sidebar-width) !important;
             }
 
             .sidebar.active {
@@ -444,12 +497,10 @@
             }
 
             .main-content {
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .hamburger {
-                display: flex;
+            .main-content,
+            .main-content.expanded {
+                margin-left: 0 !important;
+                width: 100% !important;
             }
 
             .top-header {
@@ -508,31 +559,21 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                    <img class="logo" src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
                 </div>
                 <div class="sidebar-title">Carlsberg PMS</div>
             </div>
             <nav class="sidebar-nav">
-                <a href="/" class="nav-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/home" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="/kpi-dashboard" class="nav-item">
+                <a href="/kpi-dashboard" class="nav-item" data-tooltip="KPI Dashboard">
                     <i class="fas fa-chart-line"></i>
                     <span>KPI Dashboard</span>
                 </a>
-                <a href="/add-metrics" class="nav-item active">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Add Metrics</span>
-                </a>
-                <a href="/settings" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
+                <div class="nav-parent">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/settings" class="nav-item nav-child" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
+                    </div>
+                </div>
             </nav>
         </aside>
 
@@ -549,6 +590,10 @@
                     <h1>Add Production Metrics</h1>
                 </div>
                 <div class="header-right">
+                    <button type="button" class="header-bulk-btn" id="toggleBulkEditBtn" title="Bulk Edit">
+                        <i class="fas fa-table"></i>
+                        <span>Bulk Edit</span>
+                    </button>
                     <div class="header-icon">
                         <i class="fas fa-bell"></i>
                         <span class="notification-badge"></span>
@@ -570,6 +615,7 @@
                         Add Production Metrics Data
                     </div>
 
+                    <div id="singleEntryView">
                     <div id="alert" class="alert"></div>
                     <div id="loading" class="loading">
                         <div class="spinner"></div>
@@ -846,12 +892,72 @@
                             </button>
                         </div>
                     </form>
+                    </div>
+
+                    <div id="bulkEditView" class="bulk-view" style="display: none;">
+                        <div class="bulk-toolbar form-section">
+                            <div class="bulk-toolbar-left">
+                                <h3><i class="fas fa-table"></i> Bulk Edit - Production Metrics</h3>
+                            </div>
+                            <div class="bulk-toolbar-controls">
+                                <label for="bulkMonth">Month</label>
+                                <select id="bulkMonth"></select>
+                                <label for="bulkYear">Year</label>
+                                <select id="bulkYear"></select>
+                                <button type="button" id="bulkLoadBtn" class="btn btn-submit"><i class="fas fa-filter"></i> Load</button>
+                            </div>
+                        </div>
+
+                        <div id="bulkAlert" class="alert"></div>
+
+                        <div class="form-section">
+                            <div class="bulk-table-container">
+                                <table id="bulkEditTable" class="bulk-edit-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Prod FTD Actual</th>
+                                            <th>Prod FTD Target</th>
+                                            <th>Log FTD Actual</th>
+                                            <th>Log FTD Target</th>
+                                            <th>OEE Actual</th>
+                                            <th>OEE Target</th>
+                                            <th>Sensory Actual</th>
+                                            <th>Sensory Target</th>
+                                            <th>WUR Actual</th>
+                                            <th>WUR Target</th>
+                                            <th>Electricity Actual</th>
+                                            <th>Electricity Target</th>
+                                            <th>Energy Actual</th>
+                                            <th>Energy Target</th>
+                                            <th>RGB Actual</th>
+                                            <th>RGB Target</th>
+                                            <th>Beer Loss Actual</th>
+                                            <th>Beer Loss Target</th>
+                                            <th>Consumer Complaint Actual</th>
+                                            <th>Consumer Complaint Target</th>
+                                            <th>Customer Complaint Actual</th>
+                                            <th>Customer Complaint Target</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bulkEditTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" id="bulkSaveBtn" class="btn btn-submit"><i class="fas fa-save"></i> Save All</button>
+                                <button type="button" id="bulkCancelBtn" class="btn btn-reset"><i class="fas fa-undo"></i> Cancel</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Footer -->
             <footer class="footer">
-                <p>&copy; 2026 Carlsberg Production Management System | All Rights Reserved</p>
+                <div class="footer-brand">
+                    <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
+                </div>
+                <p>&copy; 2026 Carlsberg Production Management System | Powered by Solvex Engineering Solution</p>
             </footer>
         </main>
     </div>
@@ -862,16 +968,45 @@
         const hamburger = document.getElementById('hamburger');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const mainContent = document.querySelector('.main-content');
+
+        if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 768) {
+            sidebar.classList.add('collapsed');
+            mainContent.classList.add('expanded');
+        }
 
         hamburger.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            sidebarOverlay.classList.toggle('active');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+            } else {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            }
         });
 
         sidebarOverlay.addEventListener('click', () => {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
         });
+
+        const navParentToggle = document.querySelector('.nav-parent-toggle');
+        const navChildren = document.querySelector('.nav-children');
+        const activeChild = document.querySelector('.nav-child.active');
+
+        if (activeChild && navParentToggle && navChildren) {
+            navParentToggle.classList.add('expanded');
+            navChildren.classList.add('show');
+        }
+
+        if (navParentToggle && navChildren) {
+            navParentToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                navParentToggle.classList.toggle('expanded');
+                navChildren.classList.toggle('show');
+            });
+        }
 
         // Form submission
         document.getElementById('metricsForm').addEventListener('submit', async function(e) {
@@ -894,6 +1029,21 @@
             // Convert datetime-local to the format expected by the API (ISO-8601 format)
             const dateInput = formData.get('date');
             const dateObj = new Date(dateInput);
+
+            if (Number.isNaN(dateObj.getTime())) {
+                loading.classList.remove('show');
+                alert.className = 'alert alert-error show';
+                alert.innerHTML = '<i class="fas fa-exclamation-circle"></i><div><strong>Error!</strong> Please select a valid date.</div>';
+                return;
+            }
+
+            if (dateObj.getTime() > Date.now()) {
+                loading.classList.remove('show');
+                alert.className = 'alert alert-error show';
+                alert.innerHTML = '<i class="fas fa-exclamation-circle"></i><div><strong>Error!</strong> Future dates are not allowed for production metrics.</div>';
+                return;
+            }
+
             const formattedDate = dateObj.getFullYear() + '-' +
                                  String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
                                  String(dateObj.getDate()).padStart(2, '0') + 'T' +
@@ -952,10 +1102,17 @@
 
         // Set default date to current date and time
         window.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('date');
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('date').value = now.toISOString().slice(0, 16);
+
+            const maxDateTime = new Date();
+            maxDateTime.setMinutes(maxDateTime.getMinutes() - maxDateTime.getTimezoneOffset());
+            dateInput.max = maxDateTime.toISOString().slice(0, 16);
+
+            dateInput.value = now.toISOString().slice(0, 16);
         });
     </script>
+    <script src="/js/add-metrics-bulk.js"></script>
 </body>
 </html>

@@ -1,560 +1,414 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Carlsberg Brewery PMS</title>
-    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <title>PMS Data - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/settings.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .upload-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .upload-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
-            padding: 32px;
-            border: 2px solid var(--primary-green);
-        }
-
-        .upload-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .upload-header h2 {
-            color: var(--primary-green);
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .upload-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .upload-area {
-            border: 3px dashed var(--primary-green);
-            border-radius: 12px;
-            padding: 48px 24px;
-            text-align: center;
-            background: var(--accent-green);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-bottom: 24px;
-        }
-
-        .upload-area:hover {
-            background: var(--bg-color);
-            border-color: var(--primary-green-light);
-        }
-
-        .upload-area.dragover {
-            background: var(--primary-green);
-            border-color: var(--primary-green-light);
-        }
-
-        .upload-icon {
-            font-size: 64px;
-            color: var(--primary-green);
-            margin-bottom: 16px;
-        }
-
-        .upload-text {
-            font-size: 18px;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .upload-hint {
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .selected-file {
-            display: none;
-            background: var(--bg-color);
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .selected-file.show {
-            display: flex;
-        }
-
-        .file-icon {
-            font-size: 32px;
-            color: var(--primary-green);
-        }
-
-        .file-info {
-            flex: 1;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .remove-file {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .remove-file:hover {
-            background: #dc2626;
-        }
-
-        .upload-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 14px 32px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: var(--primary-green);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-green-light);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-primary:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: var(--bg-color);
-            color: var(--text-primary);
-            border: 2px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--card-bg);
-            border-color: var(--primary-green);
-        }
-
-        .alert {
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            display: none;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .alert.show {
-            display: flex;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 2px solid #10b981;
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 2px solid #ef4444;
-        }
-
-        .alert-icon {
-            font-size: 24px;
-        }
-
-        .alert-message {
-            flex: 1;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 24px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--primary-green);
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .info-section {
-            background: var(--accent-green);
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 32px;
-        }
-
-        .info-section h3 {
-            color: var(--primary-green);
-            margin-bottom: 12px;
-            font-size: 18px;
-        }
-
-        .info-section ul {
-            margin-left: 20px;
-            color: var(--text-secondary);
-        }
-
-        .info-section li {
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-    </style>
 </head>
 <body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="app-container">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img th:src="@{/images/carlsberg-logo.png}" alt="Carlsberg Logo">
+                    <img class="logo" src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
                 </div>
-                <div class="sidebar-title">Brewery PMS</div>
             </div>
             <nav class="sidebar-nav">
-                <a th:href="@{/}" class="nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a th:href="@{/home}" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a th:href="@{/kpi-dashboard}" class="nav-item">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>KPI Dashboard</span>
-                </a>
-                <a th:href="@{/add-metrics}" class="nav-item">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Add Metrics</span>
-                </a>
-                <a th:href="@{/settings}" class="nav-item active">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
+                <a href="/kpi-dashboard" class="nav-item" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+                <div class="nav-parent">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/settings" class="nav-item nav-child active" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
+                    </div>
+                </div>
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Top Header -->
             <header class="top-header">
                 <div class="header-left">
-                    <div class="hamburger" id="hamburger">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                    <h1>Settings</h1>
+                    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+                    <h1>PMS Data</h1>
                 </div>
                 <div class="header-right">
-                    <div class="header-icon">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge"></span>
-                    </div>
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
+                    <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
+                    <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
+                    <div class="user-avatar"><i class="fas fa-user"></i></div>
                 </div>
             </header>
 
-            <!-- Content Area -->
             <div class="content-area">
-                <div class="upload-container">
-                    <div class="upload-card">
-                        <div class="upload-header">
-                            <h2>Upload PMS Data</h2>
-                            <p>Import production metrics data from CSV file</p>
-                        </div>
-
-                        <!-- Alert Messages -->
-                        <div class="alert alert-success" id="successAlert">
-                            <i class="fas fa-check-circle alert-icon"></i>
-                            <div class="alert-message">
-                                <strong>Success!</strong> CSV file imported successfully.
+                <div class="settings-container">
+                    <!-- Left Panel: Config List -->
+                    <aside class="settings-sidebar">
+                        <div class="config-list">
+                            <div class="config-group">
+                                <div class="config-group-title">PMS Data</div>
+                                <div class="config-item active" data-config="priorities" data-type="">
+                                    <i class="fas fa-star"></i>
+                                    <span>TOP 3 Priorities (CBN-3YP)</span>
+                                </div>
+                                <div class="config-item" data-config="weekly-priorities" data-type="">
+                                    <i class="fas fa-list"></i>
+                                    <span>Top 3 Weekly Priorities</span>
+                                </div>
+                                <div class="config-item" data-config="daily-performance" data-type="">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Daily Performance</span>
+                                </div>
+                                <div class="config-item" data-config="daily-section" data-type="PEOPLE">
+                                    <i class="fas fa-users"></i>
+                                    <span>People - Daily</span>
+                                </div>
+                                <div class="config-item" data-config="daily-section" data-type="QUALITY">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Quality - Daily</span>
+                                </div>
+                                <div class="config-item" data-config="daily-section" data-type="SERVICE">
+                                    <i class="fas fa-wrench"></i>
+                                    <span>Service - Daily</span>
+                                </div>
+                                <div class="config-item" data-config="daily-section" data-type="COST">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>Cost - Daily</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="metrics-data" data-type="">
+                                    <i class="fas fa-chart-area"></i>
+                                    <span>Production Metrics Data</span>
+                                </div>
                             </div>
                         </div>
+                    </aside>
 
-                        <div class="alert alert-error" id="errorAlert">
-                            <i class="fas fa-exclamation-circle alert-icon"></i>
-                            <div class="alert-message" id="errorMessage">
-                                <strong>Error!</strong> Failed to import CSV file.
+                    <!-- Right Panel: Dynamic Form -->
+                    <main class="settings-main">
+                        <div class="form-card">
+                            <!-- TOP 3 Priorities Form -->
+                            <div id="form-priorities" class="form-section active">
+                                <h2>TOP 3 Priorities (CBN-3YP)</h2>
+                                <p class="form-subtitle">Update the top 3 priorities reviewed every Monday</p>
+                                <form id="prioritiesForm" class="dynamic-form">
+                                    <div class="form-group">
+                                        <label for="priority1">Top 1 Priority</label>
+                                        <textarea id="priority1" name="priority1" placeholder="Enter top 1 priority..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="priority2">Top 2 Priority</label>
+                                        <textarea id="priority2" name="priority2" placeholder="Enter top 2 priority..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="priority3">Top 3 Priority</label>
+                                        <textarea id="priority3" name="priority3" placeholder="Enter top 3 priority..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                        <button type="reset" class="btn btn-secondary">
+                                            <i class="fas fa-redo"></i> Reset
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="prioritiesMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- Top 3 Weekly Priorities Form -->
+                            <div id="form-weekly-priorities" class="form-section">
+                                <h2>Top 3 Weekly Priorities</h2>
+                                <p class="form-subtitle">Update the top 3 priorities reviewed every Monday</p>
+                                <form id="weeklyPrioritiesForm" class="dynamic-form">
+                                    <div class="form-group">
+                                        <label for="weekly1">Priority 1</label>
+                                        <textarea id="weekly1" name="weekly1" placeholder="Enter weekly priority 1..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="weekly2">Priority 2</label>
+                                        <textarea id="weekly2" name="weekly2" placeholder="Enter weekly priority 2..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="weekly3">Priority 3</label>
+                                        <textarea id="weekly3" name="weekly3" placeholder="Enter weekly priority 3..." rows="3"></textarea>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                        <button type="reset" class="btn btn-secondary">
+                                            <i class="fas fa-redo"></i> Reset
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="weeklyPrioritiesMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-daily-performance" class="form-section">
+                                <h2>Daily Performance</h2>
+                                <p class="form-subtitle">Update daily performance values shown in KPI Dashboard</p>
+                                <form id="dailyPerformanceForm" class="dynamic-form">
+                                    <div class="form-group">
+                                        <label for="monthTargetInput">Month Target (HL)</label>
+                                        <input type="number" id="monthTargetInput" name="monthTarget" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="actualMtdInput">Actual MTD (HL)</label>
+                                        <input type="number" id="actualMtdInput" name="actualMtd" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dailyTargetInput">Daily Target (HL)</label>
+                                        <input type="number" id="dailyTargetInput" name="dailyTarget" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="yesterdayInput">Yesterday's (HL)</label>
+                                        <input type="number" id="yesterdayInput" name="yesterday" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="dailyPerformanceMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- Daily Section Form (People, Quality, Service, Cost) -->
+                            <div id="form-daily-section" class="form-section">
+                                <h2 id="dailySectionTitle">People - Daily</h2>
+                                <p class="form-subtitle">Manage daily tasks and status tracking</p>
+                                <div class="daily-data-table">
+                                    <table id="dailyDataTable">
+                                        <thead>
+                                            <tr>
+                                                <th>TO DO</th>
+                                                <th>FPR</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dailyDataTableBody">
+                                        </tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-secondary" id="addRowBtn">
+                                        <i class="fas fa-plus"></i> Add New Row
+                                    </button>
+                                </div>
+                                <div class="form-actions">
+                                    <button id="saveDailyBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save All Changes
+                                    </button>
+                                </div>
+                                <div id="dailySectionMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-metrics-data" class="form-section">
+                                <h2>Production Metrics Data</h2>
+                                <p class="form-subtitle">Configure grouped production metrics by People, Quality, Service, and Cost.</p>
+                                <form id="metricsDataForm" class="dynamic-form">
+                                    <div class="metrics-date-row">
+                                        <div class="form-group metrics-date-group">
+                                            <label for="metricsDateInput">Metrics Date</label>
+                                            <input type="date" id="metricsDateInput" name="metricsDate" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="metrics-tabs" role="tablist" aria-label="Production Metrics Sections">
+                                        <button type="button" class="metrics-tab active" data-tab="people">People</button>
+                                        <button type="button" class="metrics-tab" data-tab="quality">Quality</button>
+                                        <button type="button" class="metrics-tab" data-tab="service">Service</button>
+                                        <button type="button" class="metrics-tab" data-tab="cost">Cost</button>
+                                    </div>
+
+                                    <div class="metrics-tab-panel active" id="metrics-panel-people" data-panel="people">
+                                        <div class="metrics-type-group">
+                                            <h3>People</h3>
+                                            <div class="metrics-grid">
+                                                <div class="form-group">
+                                                    <label for="productionProductivityFtdActual">Production Productivity - FTD Actual</label>
+                                                    <input type="number" id="productionProductivityFtdActual" name="productionProductivityFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="productionProductivityFtdTarget">Production Productivity - FTD Target</label>
+                                                    <input type="number" id="productionProductivityFtdTarget" name="productionProductivityFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="logisticsProductivityFtdActual">Logistics Productivity - FTD Actual</label>
+                                                    <input type="number" id="logisticsProductivityFtdActual" name="logisticsProductivityFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="logisticsProductivityFtdTarget">Logistics Productivity - FTD Target</label>
+                                                    <input type="number" id="logisticsProductivityFtdTarget" name="logisticsProductivityFtdTarget" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions metrics-tab-actions">
+                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="people">
+                                                <i class="fas fa-save"></i> Save
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="metrics-tab-panel" id="metrics-panel-quality" data-panel="quality">
+                                        <div class="metrics-type-group">
+                                            <h3>Quality</h3>
+                                            <div class="metrics-grid">
+                                                <div class="form-group">
+                                                    <label for="kpiSensoryScoreFtdActual">Sensory Score - FTD Actual</label>
+                                                    <input type="number" id="kpiSensoryScoreFtdActual" name="kpiSensoryScoreFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiSensoryScoreFtdTarget">Sensory Score - FTD Target</label>
+                                                    <input type="number" id="kpiSensoryScoreFtdTarget" name="kpiSensoryScoreFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiConsumerComplaintUnitsMhlFtdActual">Consumer Complaint - FTD Actual</label>
+                                                    <input type="number" id="kpiConsumerComplaintUnitsMhlFtdActual" name="kpiConsumerComplaintUnitsMhlFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiConsumerComplaintUnitsMhlFtdTarget">Consumer Complaint - FTD Target</label>
+                                                    <input type="number" id="kpiConsumerComplaintUnitsMhlFtdTarget" name="kpiConsumerComplaintUnitsMhlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiCustomerComplaintUnitsMhlFtdActual">Customer Complaint - FTD Actual</label>
+                                                    <input type="number" id="kpiCustomerComplaintUnitsMhlFtdActual" name="kpiCustomerComplaintUnitsMhlFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiCustomerComplaintUnitsMhlFtdTarget">Customer Complaint - FTD Target</label>
+                                                    <input type="number" id="kpiCustomerComplaintUnitsMhlFtdTarget" name="kpiCustomerComplaintUnitsMhlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions metrics-tab-actions">
+                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="quality">
+                                                <i class="fas fa-save"></i> Save
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="metrics-tab-panel" id="metrics-panel-service" data-panel="service">
+                                        <div class="metrics-type-group">
+                                            <h3>Service</h3>
+                                            <div class="metrics-grid">
+                                                <div class="form-group">
+                                                    <label for="processConfirmationBpFtdActual">Process Confirmation B&P - FTD Actual</label>
+                                                    <input type="number" id="processConfirmationBpFtdActual" name="processConfirmationBpFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationBpFtdTarget">Process Confirmation B&P - FTD Target</label>
+                                                    <input type="number" id="processConfirmationBpFtdTarget" name="processConfirmationBpFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationPackMtdActual">Process Confirmation Pack - MTD Actual</label>
+                                                    <input type="number" id="processConfirmationPackMtdActual" name="processConfirmationPackMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationPackMtdTarget">Process Confirmation Pack - MTD Target</label>
+                                                    <input type="number" id="processConfirmationPackMtdTarget" name="processConfirmationPackMtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiOeeFtdActual">OEE - FTD Actual</label>
+                                                    <input type="number" id="kpiOeeFtdActual" name="kpiOeeFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiOeeFtdTarget">OEE - FTD Target</label>
+                                                    <input type="number" id="kpiOeeFtdTarget" name="kpiOeeFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiBeerLossFtdActual">Beer Loss - FTD Actual</label>
+                                                    <input type="number" id="kpiBeerLossFtdActual" name="kpiBeerLossFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiBeerLossFtdTarget">Beer Loss - FTD Target</label>
+                                                    <input type="number" id="kpiBeerLossFtdTarget" name="kpiBeerLossFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiWurHlHlFtdActual">WUR - FTD Actual</label>
+                                                    <input type="number" id="kpiWurHlHlFtdActual" name="kpiWurHlHlFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiWurHlHlFtdTarget">WUR - FTD Target</label>
+                                                    <input type="number" id="kpiWurHlHlFtdTarget" name="kpiWurHlHlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions metrics-tab-actions">
+                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="service">
+                                                <i class="fas fa-save"></i> Save
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="metrics-tab-panel" id="metrics-panel-cost" data-panel="cost">
+                                        <div class="metrics-type-group">
+                                            <h3>Cost</h3>
+                                            <div class="metrics-grid">
+                                                <div class="form-group">
+                                                    <label for="kpiElectricityKwhHlFtdActual">Electricity - FTD Actual</label>
+                                                    <input type="number" id="kpiElectricityKwhHlFtdActual" name="kpiElectricityKwhHlFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiElectricityKwhHlFtdTarget">Electricity - FTD Target</label>
+                                                    <input type="number" id="kpiElectricityKwhHlFtdTarget" name="kpiElectricityKwhHlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiEnergyKwhHlFtdActual">Energy - FTD Actual</label>
+                                                    <input type="number" id="kpiEnergyKwhHlFtdActual" name="kpiEnergyKwhHlFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiEnergyKwhHlFtdTarget">Energy - FTD Target</label>
+                                                    <input type="number" id="kpiEnergyKwhHlFtdTarget" name="kpiEnergyKwhHlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiRgbRatioFtdActual">RGB Ratio - FTD Actual</label>
+                                                    <input type="number" id="kpiRgbRatioFtdActual" name="kpiRgbRatioFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiRgbRatioFtdTarget">RGB Ratio - FTD Target</label>
+                                                    <input type="number" id="kpiRgbRatioFtdTarget" name="kpiRgbRatioFtdTarget" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions metrics-tab-actions">
+                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="cost">
+                                                <i class="fas fa-save"></i> Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div id="metricsDataMessage" class="form-message"></div>
+                                <div id="metricsToast" class="metrics-toast" aria-live="polite"></div>
                             </div>
                         </div>
-
-                        <!-- Upload Area -->
-                        <div class="upload-area" id="uploadArea">
-                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                            <div class="upload-text">Click to browse or drag and drop</div>
-                            <div class="upload-hint">CSV files only (Max 10MB)</div>
-                        </div>
-
-                        <input type="file" id="fileInput" class="file-input" accept=".csv">
-
-                        <!-- Selected File Display -->
-                        <div class="selected-file" id="selectedFile">
-                            <i class="fas fa-file-csv file-icon"></i>
-                            <div class="file-info">
-                                <div class="file-name" id="fileName"></div>
-                                <div class="file-size" id="fileSize"></div>
-                            </div>
-                            <button class="remove-file" id="removeFile">
-                                <i class="fas fa-times"></i> Remove
-                            </button>
-                        </div>
-
-                        <!-- Upload Actions -->
-                        <div class="upload-actions">
-                            <button class="btn btn-primary" id="uploadBtn" disabled>
-                                <i class="fas fa-upload"></i> Upload File
-                            </button>
-                            <button class="btn btn-secondary" id="resetBtn">
-                                <i class="fas fa-redo"></i> Reset
-                            </button>
-                            <a href="/api/production-metrics/export/csv" class="btn btn-secondary" download style="text-decoration: none;">
-                                <i class="fas fa-download"></i> Download Template
-                            </a>
-                        </div>
-
-                        <!-- Loading Spinner -->
-                        <div class="loading" id="loading">
-                            <div class="spinner"></div>
-                            <p>Uploading file...</p>
-                        </div>
-
-                        <!-- Information Section -->
-                        <div class="info-section">
-                            <h3><i class="fas fa-info-circle"></i> CSV Format Requirements</h3>
-                            <ul>
-                                <li>File must be in CSV format (.csv extension)</li>
-                                <li>Maximum file size: 10MB</li>
-                                <li>Date format: yyyy-MM-dd HH:mm:ss (e.g., 2026-03-02 00:00:00)</li>
-                                <li>Use the "Download Template" button to get the correct CSV format with all required columns</li>
-                                <li>Numeric values should be numbers only (no special characters except decimal points)</li>
-                                <li>Empty values are allowed for optional fields</li>
-                            </ul>
-                        </div>
-                    </div>
+                    </main>
                 </div>
             </div>
+
+            <footer class="footer">
+                <div class="footer-brand">
+                    <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
+                </div>
+                <p>&copy; 2026 Carlsberg Production Management System | Powered by Solvex Engineering Solution</p>
+            </footer>
         </main>
     </div>
 
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <script th:src="@{/js/dashboard.js}"></script>
     <script>
-        $(document).ready(function() {
-            const uploadArea = $('#uploadArea');
-            const fileInput = $('#fileInput');
-            const selectedFile = $('#selectedFile');
-            const uploadBtn = $('#uploadBtn');
-            const removeFileBtn = $('#removeFile');
-            const resetBtn = $('#resetBtn');
-            const successAlert = $('#successAlert');
-            const errorAlert = $('#errorAlert');
-            const loading = $('#loading');
-            let selectedFileObj = null;
+        (function () {
+            const dateElement = document.getElementById("pmsDeckDate");
+            if (!dateElement) return;
 
-            // Click to browse
-            uploadArea.on('click', function() {
-                fileInput.click();
-            });
-
-            // File selection
-            fileInput.on('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    handleFileSelect(file);
-                }
-            });
-
-            // Drag and drop
-            uploadArea.on('dragover', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $(this).addClass('dragover');
-            });
-
-            uploadArea.on('dragleave', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $(this).removeClass('dragover');
-            });
-
-            uploadArea.on('drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $(this).removeClass('dragover');
-
-                const file = e.originalEvent.dataTransfer.files[0];
-                if (file && file.name.endsWith('.csv')) {
-                    handleFileSelect(file);
-                } else {
-                    showError('Please select a valid CSV file');
-                }
-            });
-
-            // Handle file selection
-            function handleFileSelect(file) {
-                if (!file.name.endsWith('.csv')) {
-                    showError('Please select a CSV file');
-                    return;
-                }
-
-                if (file.size > 10 * 1024 * 1024) {
-                    showError('File size exceeds 10MB limit');
-                    return;
-                }
-
-                selectedFileObj = file;
-                $('#fileName').text(file.name);
-                $('#fileSize').text(formatFileSize(file.size));
-                selectedFile.addClass('show');
-                uploadBtn.prop('disabled', false);
-                hideAlerts();
-            }
-
-            // Format file size
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-            }
-
-            // Remove file
-            removeFileBtn.on('click', function() {
-                resetForm();
-            });
-
-            // Reset button
-            resetBtn.on('click', function() {
-                resetForm();
-            });
-
-            // Upload button
-            uploadBtn.on('click', function() {
-                if (!selectedFileObj) {
-                    showError('Please select a file first');
-                    return;
-                }
-
-                const formData = new FormData();
-                formData.append('file', selectedFileObj);
-
-                uploadBtn.prop('disabled', true);
-                loading.addClass('show');
-                hideAlerts();
-
-                $.ajax({
-                    url: '/api/production-metrics/import/csv',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        loading.removeClass('show');
-                        showSuccess();
-                        setTimeout(function() {
-                            resetForm();
-                        }, 3000);
-                    },
-                    error: function(xhr) {
-                        loading.removeClass('show');
-                        uploadBtn.prop('disabled', false);
-                        const errorMsg = xhr.responseText || 'Failed to upload file';
-                        showError(errorMsg);
-                    }
-                });
-            });
-
-            // Show success alert
-            function showSuccess() {
-                successAlert.addClass('show');
-            }
-
-            // Show error alert
-            function showError(message) {
-                $('#errorMessage').html('<strong>Error!</strong> ' + message);
-                errorAlert.addClass('show');
-            }
-
-            // Hide alerts
-            function hideAlerts() {
-                successAlert.removeClass('show');
-                errorAlert.removeClass('show');
-            }
-
-            // Reset form
-            function resetForm() {
-                fileInput.val('');
-                selectedFileObj = null;
-                selectedFile.removeClass('show');
-                uploadBtn.prop('disabled', true);
-                hideAlerts();
-                uploadArea.removeClass('dragover');
-            }
-        });
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, "0");
+            const month = String(today.getMonth() + 1).padStart(2, "0");
+            const year = today.getFullYear();
+            dateElement.textContent = `${day}-${month}-${year}`;
+        })();
     </script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/settings.js"></script>
 </body>
 </html>
