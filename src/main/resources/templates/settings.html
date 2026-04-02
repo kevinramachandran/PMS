@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMS Data - Carlsberg Brewery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/settings.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body>
+<body class="modern-shell">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -21,10 +24,24 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="/kpi-dashboard" class="nav-item" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+                <a href="/issue-board" class="nav-item" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
+                <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+                <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-route"></i><span>Safety Gemba - Tracker</span></a>
+                <a href="/training-schedule" class="nav-item" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
+                <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
+                <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
+                <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
                 <div class="nav-parent">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
-                        <a href="/settings" class="nav-item nav-child active" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
+                        <a href="/settings" class="nav-item nav-child active" data-nav="pms-data" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
+                        <a href="/settings?config=issue-board" class="nav-item nav-child" data-nav="issue-board-config" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
+                        <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-nav="gemba-schedule-config" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
+                        <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-nav="leadership-gemba-tracker-config" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
+                        <a href="/settings?config=training-schedule" class="nav-item nav-child" data-nav="training-schedule-config" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
+                        <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-nav="meeting-agenda-config" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
+                        <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-nav="process-confirmation-config" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
+                        <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-nav="abnormality-tracker-config" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
                     </div>
                 </div>
             </nav>
@@ -81,6 +98,37 @@
                                 <div class="config-item config-sub-child" data-config="metrics-data" data-type="">
                                     <i class="fas fa-chart-area"></i>
                                     <span>Production Metrics Data</span>
+                                </div>
+                            </div>
+                            <div class="config-group">
+                                <div class="config-group-title">PMS 4 Deck V0</div>
+                                <div class="config-item config-sub-child" data-config="issue-board" data-type="">
+                                    <i class="fas fa-table-list"></i>
+                                    <span>Issue Board Configuration</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="gemba-schedule" data-type="">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <span>Gemba Walk Configuration</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="leadership-gemba-tracker" data-type="">
+                                    <i class="fas fa-route"></i>
+                                    <span>Safety Gemba - Tracker Config</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="training-schedule" data-type="">
+                                    <i class="fas fa-calendar-days"></i>
+                                    <span>Training Schedule Config</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="meeting-agenda" data-type="">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <span>PMS Agenda Config</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="process-confirmation" data-type="">
+                                    <i class="fas fa-list-check"></i>
+                                    <span>PMS Process Confirmation Config</span>
+                                </div>
+                                <div class="config-item config-sub-child" data-config="abnormality-tracker" data-type="">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    <span>Abnormality Tracker Config</span>
                                 </div>
                             </div>
                         </div>
@@ -382,6 +430,547 @@
                                 <div id="metricsDataMessage" class="form-message"></div>
                                 <div id="metricsToast" class="metrics-toast" aria-live="polite"></div>
                             </div>
+
+                            <div id="form-issue-board" class="form-section">
+                                <h2>Issue Board Configuration</h2>
+                                <p class="form-subtitle">Configure issue board rows for the Issue Board dashboard.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="issueBoardConfigDate">Configuration Date</label>
+                                        <input type="date" id="issueBoardConfigDate" name="issueBoardConfigDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="issueBoardLastReviewDate">Last review date</label>
+                                        <input type="date" id="issueBoardLastReviewDate" name="issueBoardLastReviewDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="issueBoardNextReviewDate">Next review date</label>
+                                        <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate">
+                                    </div>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap">
+                                    <table id="issueBoardConfigTable">
+                                        <thead>
+                                        <tr>
+                                            <th>Problem</th>
+                                            <th>Name</th>
+                                            <th>Date</th>
+                                            <th>Root Cause</th>
+                                            <th>Actions</th>
+                                            <th>Resp.</th>
+                                            <th>Target date</th>
+                                            <th>Due days</th>
+                                            <th>Status</th>
+                                            <th>Remarks</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="issueBoardConfigTableBody"></tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-secondary" id="addIssueBoardRowBtn">
+                                        <i class="fas fa-plus"></i> Add New Row
+                                    </button>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveIssueBoardBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Issue Board
+                                    </button>
+                                </div>
+                                <div id="issueBoardMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-gemba-schedule" class="form-section">                                <h2>Gemba Walk Configuration</h2>
+                                <p class="form-subtitle">Configure Leadership Safety Gemba Walk schedule for the dashboard.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="gembaScheduleDate">Configuration Date</label>
+                                        <input type="date" id="gembaScheduleDate" name="gembaScheduleDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="gembaMonthLabelInput">Scheduled Month (Auto from Date)</label>
+                                        <input type="text" id="gembaMonthLabelInput" name="gembaMonthLabelInput" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap">
+                                    <table id="gembaConfigTable">
+                                        <thead>
+                                        <tr>
+                                            <th>Function Type</th>
+                                            <th>Associate Name</th>
+                                            <th>Week #1</th>
+                                            <th>Week #2</th>
+                                            <th>Week #3</th>
+                                            <th>Week #4</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="gembaConfigTableBody"></tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-secondary" id="addGembaRowBtn">
+                                        <i class="fas fa-plus"></i> Add New Row
+                                    </button>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveGembaScheduleBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Gemba Schedule
+                                    </button>
+                                </div>
+                                <div id="gembaScheduleMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-leadership-gemba-tracker" class="form-section">
+                                <h2>Leadership Gemba Tracker Configuration</h2>
+                                <p class="form-subtitle">Configure Leadership Gemba Walk tracker rows for dashboard view.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="lgtConfigDate">Configuration Date</label>
+                                        <input type="date" id="lgtConfigDate" name="lgtConfigDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lgtPeriodLabelInput">Period Label (Auto from Date)</label>
+                                        <input type="text" id="lgtPeriodLabelInput" name="lgtPeriodLabelInput" readonly placeholder="e.g. Dec'24">
+                                    </div>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap">
+                                    <table id="leadershipGembaConfigTable">
+                                        <thead>
+                                        <tr>
+                                            <th>Name of Manager</th>
+                                            <th>Department</th>
+                                            <th>Area of Coverage</th>
+                                            <th>Target YTD</th>
+                                            <th>Target MTD</th>
+                                            <th>W1 Target</th>
+                                            <th>W1 Actual</th>
+                                            <th>W2 Target</th>
+                                            <th>W2 Actual</th>
+                                            <th>W3 Target</th>
+                                            <th>W3 Actual</th>
+                                            <th>W4 Target</th>
+                                            <th>W4 Actual</th>
+                                            <th>Compliance %</th>
+                                            <th>W1</th>
+                                            <th>W2</th>
+                                            <th>W3</th>
+                                            <th>W4</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="lgtConfigTableBody"></tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-secondary" id="addLgtRowBtn">
+                                        <i class="fas fa-plus"></i> Add New Row
+                                    </button>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveLgtConfigBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Leadership Gemba Tracker
+                                    </button>
+                                </div>
+                                <div id="lgtConfigMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-training-schedule" class="form-section">
+                                <h2>Training Schedule Configuration</h2>
+                                <p class="form-subtitle">Configure monthly training schedule rows for dashboard view.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="trainingConfigDate">Configuration Date</label>
+                                        <input type="date" id="trainingConfigDate" name="trainingConfigDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="trainingPeriodLabelInput">Period Label (Auto from Date)</label>
+                                        <input type="text" id="trainingPeriodLabelInput" name="trainingPeriodLabelInput" readonly placeholder="e.g. Dec'24">
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="trainingKpiTitle">KPI Title</label>
+                                        <input type="text" id="trainingKpiTitle" placeholder="Training Compliance" value="Training Compliance">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="trainingTargetPercent">Target %</label>
+                                        <input type="number" id="trainingTargetPercent" min="0" max="100" step="1" value="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="trainingResponsible">Responsible</label>
+                                        <input type="text" id="trainingResponsible" placeholder="HR Mgr." value="HR Mgr.">
+                                    </div>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap">
+                                    <table id="trainingScheduleConfigTable">
+                                        <thead>
+                                        <tr>
+                                            <th>Name of Training</th>
+                                            <th>Target Audience</th>
+                                            <th>Trainer</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Duration (Hours)</th>
+                                            <th>Venue</th>
+                                            <th>FPR</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="trainingScheduleConfigTableBody"></tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-secondary" id="addTrainingScheduleRowBtn">
+                                        <i class="fas fa-plus"></i> Add New Row
+                                    </button>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveTrainingScheduleBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Training Schedule
+                                    </button>
+                                </div>
+                                <div id="trainingScheduleMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-meeting-agenda" class="form-section">
+                                <h2>PMS Agenda Configuration</h2>
+                                <p class="form-subtitle">Configure PMS Agenda board content by month.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="meetingAgendaConfigDate">Configuration Date</label>
+                                        <input type="date" id="meetingAgendaConfigDate" name="meetingAgendaConfigDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="meetingAgendaPeriodLabelInput">Period Label (Auto from Date)</label>
+                                        <input type="text" id="meetingAgendaPeriodLabelInput" name="meetingAgendaPeriodLabelInput" readonly placeholder="e.g. Apr'26">
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="maHeaderTitle">Header Title</label>
+                                        <input type="text" id="maHeaderTitle" placeholder="Brewery PMS Meeting Agenda (PMS level 4)">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maFrequency">Frequency</label>
+                                        <input type="text" id="maFrequency" placeholder="Daily">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maMeetingTime">Time</label>
+                                        <input type="text" id="maMeetingTime" placeholder="Mon-Fri 10:00 AM">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maMeetingPlace">Place</label>
+                                        <input type="text" id="maMeetingPlace" placeholder="PMS Room / Line Area">
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="maPurposeDaily">Purpose Daily</label>
+                                        <textarea id="maPurposeDaily" rows="3" placeholder="Daily purpose"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maPurposeWeekly">Purpose Weekly</label>
+                                        <textarea id="maPurposeWeekly" rows="3" placeholder="Weekly purpose"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="maParticipants">Participants (one per line)</label>
+                                        <textarea id="maParticipants" rows="5" placeholder="Ops Manager&#10;Packaging Leader"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maRolesResponsibilities">Roles & Responsibilities (one per line)</label>
+                                        <textarea id="maRolesResponsibilities" rows="5" placeholder="Chairperson - Run agenda&#10;Scribe - Capture actions"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="maInputsDaily">Inputs Daily (one per line)</label>
+                                        <textarea id="maInputsDaily" rows="5" placeholder="Safety observations&#10;Yesterday KPI result&#10;Open actions due today"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maInputsFriday">Inputs Every Friday (one per line)</label>
+                                        <textarea id="maInputsFriday" rows="5" placeholder="Weekly KPI trend&#10;Escalation summary"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="maOutputsDaily">Outputs Daily (one per line)</label>
+                                        <textarea id="maOutputsDaily" rows="5" placeholder="Updated action tracker&#10;Escalations with owner and due date"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="maOutputsFriday">Outputs Every Friday (one per line)</label>
+                                        <textarea id="maOutputsFriday" rows="5" placeholder="Weekly summary&#10;Improvement priorities"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="maGroundRules">Ground Rules (one per line)</label>
+                                    <textarea id="maGroundRules" rows="5" placeholder="Start and end on time&#10;Use facts not assumptions&#10;One owner per action"></textarea>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap">
+                                    <table>
+                                        <thead>
+                                        <tr>
+                                            <th>Agenda Item</th>
+                                            <th>Points (one per line)</th>
+                                            <th>Time</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><input type="text" id="maAgenda1Title" placeholder="1. Safety"></td>
+                                            <td><textarea id="maAgenda1Points" rows="3"></textarea></td>
+                                            <td><input type="text" id="maAgenda1Time" placeholder="3 min"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="maAgenda2Title" placeholder="2. Quality"></td>
+                                            <td><textarea id="maAgenda2Points" rows="3"></textarea></td>
+                                            <td><input type="text" id="maAgenda2Time" placeholder="5 min"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="maAgenda3Title" placeholder="3. Service"></td>
+                                            <td><textarea id="maAgenda3Points" rows="3"></textarea></td>
+                                            <td><input type="text" id="maAgenda3Time" placeholder="5 min"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="maAgenda4Title" placeholder="4. Cost"></td>
+                                            <td><textarea id="maAgenda4Points" rows="3"></textarea></td>
+                                            <td><input type="text" id="maAgenda4Time" placeholder="5 min"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="maAgenda5Title" placeholder="5. Actions & Escalations"></td>
+                                            <td><textarea id="maAgenda5Points" rows="3"></textarea></td>
+                                            <td><input type="text" id="maAgenda5Time" placeholder="2 min"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveMeetingAgendaBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save PMS Agenda
+                                    </button>
+                                </div>
+                                <div id="meetingAgendaMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-process-confirmation" class="form-section">
+                                <h2>PMS Process Confirmation Configuration</h2>
+                                <p class="form-subtitle">Configure monthly process confirmation board for dashboard view.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="pcConfigDate">Configuration Date</label>
+                                        <input type="date" id="pcConfigDate" name="pcConfigDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pcPeriodLabelInput">Period Label (Auto from Date)</label>
+                                        <input type="text" id="pcPeriodLabelInput" name="pcPeriodLabelInput" readonly placeholder="e.g. Apr'26">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pcMonthLabel">Month Label</label>
+                                        <input type="text" id="pcMonthLabel" placeholder="e.g. Dec'24">
+                                    </div>
+                                </div>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="pcKpiTitle">KPI Title</label>
+                                        <input type="text" id="pcKpiTitle" placeholder="Meeting Process Confirmation">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pcTargetLabel">Target</label>
+                                        <input type="text" id="pcTargetLabel" placeholder="> 80%">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="pcResponsible">Responsible</label>
+                                        <input type="text" id="pcResponsible" placeholder="CarlEx Mgr.">
+                                    </div>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap pc-config-card">
+                                    <table class="pc-score-input-table">
+                                        <thead>
+                                        <tr>
+                                            <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th>
+                                            <th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th><th>YTD</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><input type="number" id="pcJanScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcFebScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcMarScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcAprScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcMayScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcJunScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcJulScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcAugScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcSepScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcOctScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcNovScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcDecScore" min="0" max="100" step="1"></td>
+                                            <td><input type="number" id="pcYtdScore" min="0" max="100" step="1"></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap pc-config-card">
+                                    <table class="pc-status-editor-table">
+                                        <thead>
+                                        <tr>
+                                            <th>Question</th>
+                                            <th>Daily Status Colors (Day 1 to Day 31)</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion1" placeholder="Question 1"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ1Statuses"></div>
+                                                <textarea id="pcQ1Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion2" placeholder="Question 2"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ2Statuses"></div>
+                                                <textarea id="pcQ2Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion3" placeholder="Question 3"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ3Statuses"></div>
+                                                <textarea id="pcQ3Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion4" placeholder="Question 4"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ4Statuses"></div>
+                                                <textarea id="pcQ4Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion5" placeholder="Question 5"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ5Statuses"></div>
+                                                <textarea id="pcQ5Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion6" placeholder="Question 6"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ6Statuses"></div>
+                                                <textarea id="pcQ6Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion7" placeholder="Question 7"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ7Statuses"></div>
+                                                <textarea id="pcQ7Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion8" placeholder="Question 8"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ8Statuses"></div>
+                                                <textarea id="pcQ8Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion9" placeholder="Question 9"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ9Statuses"></div>
+                                                <textarea id="pcQ9Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><input type="text" id="pcQuestion10" placeholder="Question 10"></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcQ10Statuses"></div>
+                                                <textarea id="pcQ10Statuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Total Score &gt; 80%</strong></td>
+                                            <td>
+                                                <div class="pc-status-grid" data-target="pcTotalStatuses"></div>
+                                                <textarea id="pcTotalStatuses" class="pc-hidden-status"></textarea>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveProcessConfirmationBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save PMS Process Confirmation
+                                    </button>
+                                </div>
+                                <div id="processConfirmationMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- Abnormality Tracker Config Form -->
+                            <div id="form-abnormality-tracker" class="form-section">
+                                <h2>Abnormality Tracker Configuration</h2>
+                                <p class="form-subtitle">Configure abnormality tag counts and closure rates by department for the dashboard charts.</p>
+
+                                <div class="issue-board-meta-grid">
+                                    <div class="form-group">
+                                        <label for="atConfigDate">Configuration Date</label>
+                                        <input type="date" id="atConfigDate" name="atConfigDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="atPeriodLabelInput">Period Label (Auto from Date)</label>
+                                        <input type="text" id="atPeriodLabelInput" name="atPeriodLabelInput" readonly placeholder="e.g. Apr'2026">
+                                    </div>
+                                </div>
+
+                                <div class="daily-data-table issue-config-table-wrap">
+                                    <table id="abnormalityConfigTable">
+                                        <thead>
+                                        <tr>
+                                            <th>Department</th>
+                                            <th>Yellow Tags</th>
+                                            <th>Red Tags</th>
+                                            <th>Closure %</th>
+                                            <th>Action</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="atConfigTableBody"></tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-secondary" id="addAtRowBtn">
+                                        <i class="fas fa-plus"></i> Add Row
+                                    </button>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="saveAtConfigBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Abnormality Data
+                                    </button>
+                                </div>
+                                <div id="atConfigMessage" class="form-message"></div>
+                            </div>
                         </div>
                     </main>
                 </div>
@@ -391,7 +980,7 @@
                 <div class="footer-brand">
                     <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
                 </div>
-                <p>&copy; 2026 Carlsberg Production Management System | Powered by Solvex Engineering Solution</p>
+                <p>&copy; 2026 Carlsberg Production Management System | Powered by SolveX Engineering Solutions</p>
             </footer>
         </main>
     </div>

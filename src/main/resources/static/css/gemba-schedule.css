@@ -1,0 +1,153 @@
+.gemba-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.gemba-filter-row {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.gemba-filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 230px;
+}
+
+.gemba-filter-item label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #111827;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.gemba-filter-item select {
+    border: 1px solid #9ca3af;
+    background: #ffffff;
+    color: #111827;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.gemba-title-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #ffffff;
+    color: #1f2937;
+    padding: 14px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.gemba-logo {
+    width: 54px;
+    height: auto;
+}
+
+.gemba-title-row h2 {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.gemba-right-badge {
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.gemba-table-wrap {
+    overflow: auto;
+}
+
+.gemba-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1080px;
+}
+
+.gemba-table thead th {
+    background: #f9fafb;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    padding: 8px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.gemba-table tbody td {
+    border: 1px solid #e5e7eb;
+    padding: 10px 8px;
+    font-size: 15px;
+    text-align: center;
+    background: #ffffff;
+}
+
+.gemba-table tbody td:first-child {
+    text-align: left;
+    width: 220px;
+    font-weight: 600;
+}
+
+.gemba-row-section td {
+    background: #737373 !important;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.gemba-row-green td:first-child {
+    background: #8bc34a !important;
+    color: #111827;
+}
+
+.gemba-row-blue td:first-child {
+    background: #9db0cf !important;
+    color: #111827;
+}
+
+.gemba-row-gray td:first-child {
+    background: #d1d5db !important;
+    color: #111827;
+}
+
+.gemba-empty {
+    text-align: center !important;
+    color: #6b7280;
+    padding: 18px;
+}
+
+@media (max-width: 768px) {
+    .gemba-filter-row {
+        flex-direction: column;
+    }
+
+    .gemba-title-row h2 {
+        font-size: 16px;
+        text-align: left;
+    }
+
+    .gemba-logo {
+        width: 40px;
+    }
+
+    .gemba-right-badge {
+        display: none;
+    }
+}

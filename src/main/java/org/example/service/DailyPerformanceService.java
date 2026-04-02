@@ -42,4 +42,11 @@ public class DailyPerformanceService {
         LocalDate end = currentMonth.atEndOfMonth();
         return repository.findTopByDateBetweenOrderByDateDesc(start, end);
     }
+
+    public Optional<DailyPerformance> getLatestByMonth(int month, int year) {
+        YearMonth selectedMonth = YearMonth.of(year, month);
+        LocalDate start = selectedMonth.atDay(1);
+        LocalDate end = selectedMonth.atEndOfMonth();
+        return repository.findTopByDateBetweenOrderByDateDesc(start, end);
+    }
 }

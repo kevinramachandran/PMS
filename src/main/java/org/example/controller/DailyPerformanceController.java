@@ -40,4 +40,17 @@ public class DailyPerformanceController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
+
+    @GetMapping("/month")
+    public ResponseEntity<DailyPerformance> getMonthLatest(
+            @RequestParam int month,
+            @RequestParam int year) {
+        if (month < 1 || month > 12) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return service.getLatestByMonth(month, year)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
 }

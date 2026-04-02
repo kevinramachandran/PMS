@@ -1,0 +1,131 @@
+.ts-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+    overflow: hidden;
+}
+
+.ts-meta-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 10px;
+    padding: 12px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-meta-card {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 10px 12px;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.ts-title-row {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 700;
+    color: #1f2937;
+    padding: 14px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ts-table-wrap {
+    overflow: auto;
+}
+
+.ts-table {
+    width: 100%;
+    min-width: 1500px;
+    border-collapse: collapse;
+}
+
+.ts-table thead th {
+    background: #f9fafb;
+    color: #374151;
+    padding: 10px 8px;
+    border: 1px solid #d1d5db;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.ts-table tbody td {
+    border: 1px solid #d1d5db;
+    padding: 10px 8px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    text-align: center;
+}
+
+.ts-table tbody td:nth-child(2),
+.ts-table tbody td:nth-child(3),
+.ts-table tbody td:nth-child(4),
+.ts-table tbody td:nth-child(8),
+.ts-table tbody td:nth-child(9) {
+    text-align: left;
+}
+
+.ts-table tbody tr:nth-child(even) td {
+    background: #f9fafb;
+}
+
+.ts-status-good {
+    color: #166534;
+    font-weight: 700;
+}
+
+.ts-status-bad {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.ts-status-cell {
+    text-align: center;
+}
+
+.ts-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
+}
+
+.ts-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.ts-status-good .ts-status-dot {
+    background: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.18);
+}
+
+.ts-status-bad .ts-status-dot {
+    background: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18);
+}
+
+.ts-empty {
+    text-align: center;
+    color: #6b7280;
+    padding: 18px;
+}
+
+@media (max-width: 900px) {
+    .ts-meta-row {
+        grid-template-columns: 1fr;
+    }
+
+    .ts-title-row {
+        font-size: 22px;
+    }
+}

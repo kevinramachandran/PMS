@@ -1,0 +1,108 @@
+name: Build Spring Boot Jar
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the generated JAR to the configured Linux host
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Build executable jar
+        run: ./gradlew clean build --no-daemon
+
+      - name: Upload bootJar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: brewery-pms-jar
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+  deploy:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: brewery-pms-jar
+          path: artifact
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add target host to known_hosts
+        run: ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Create runtime environment file
+        run: |
+          cat <<EOF > brewery-pms.env
+          SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
+          SERVER_PORT=${{ secrets.SERVER_PORT }}
+          APP_TIMEZONE=${{ secrets.APP_TIMEZONE }}
+          DB_URL=${{ secrets.DB_URL }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          LOG_LEVEL_ROOT=${{ secrets.LOG_LEVEL_ROOT }}
+          LOG_LEVEL_WEB=${{ secrets.LOG_LEVEL_WEB }}
+          LOG_FILE=${{ secrets.LOG_FILE }}
+          EOF
+
+      - name: Copy application files to server
+        run: |
+          JAR_FILE=$(find artifact -name '*.jar' | head -n 1)
+          scp "$JAR_FILE" "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/app.jar"
+          scp brewery-pms.env "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/brewery-pms.env"
+          scp deployment/systemd/brewery-pms.service "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/brewery-pms.service"
+
+      - name: Install and restart service
+        run: |
+          ssh "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" '
+            getent group brewery >/dev/null || sudo groupadd --system brewery &&
+            id -u brewery >/dev/null 2>&1 || sudo useradd --system --gid brewery --home-dir "${{ secrets.DEPLOY_PATH }}" --shell /usr/sbin/nologin brewery &&
+            sudo mkdir -p "${{ secrets.DEPLOY_PATH }}" /etc/brewery-pms &&
+            sudo mv /tmp/app.jar "${{ secrets.DEPLOY_PATH }}/app.jar" &&
+            sudo mv /tmp/brewery-pms.env /etc/brewery-pms/brewery-pms.env &&
+            sudo mv /tmp/brewery-pms.service /etc/systemd/system/brewery-pms.service &&
+            sudo chown -R brewery:brewery "${{ secrets.DEPLOY_PATH }}" &&
+            sudo chown root:root /etc/systemd/system/brewery-pms.service &&
+            sudo chmod 644 /etc/systemd/system/brewery-pms.service &&
+            sudo chmod 640 /etc/brewery-pms/brewery-pms.env &&
+            sudo systemctl daemon-reload &&
+            sudo systemctl enable brewery-pms &&
+            sudo systemctl restart brewery-pms
+          '

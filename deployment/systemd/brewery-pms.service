@@ -1,0 +1,20 @@
+[Unit]
+Description=Brewery PMS Spring Boot Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=brewery
+Group=brewery
+WorkingDirectory=/opt/brewery-pms
+EnvironmentFile=/etc/brewery-pms/brewery-pms.env
+ExecStart=/usr/bin/java -jar /opt/brewery-pms/app.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

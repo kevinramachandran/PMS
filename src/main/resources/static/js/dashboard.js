@@ -46,8 +46,10 @@ $(document).ready(function() {
         }
     });
 
-    loadProductionCharts();
-    setInterval(loadProductionCharts, 300000);
+    initializeKpiMonthFilter();
+    setInterval(function() {
+        loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+    }, 300000);
 });
 
 const chartThemes = {
@@ -92,6 +94,9 @@ const chartThemes = {
 };
 
 const chartInstances = {};
+
+let selectedKpiMonth = new Date().getMonth() + 1;
+let selectedKpiYear = new Date().getFullYear();
 
 const kpiTableConfig = [
     {
@@ -168,12 +173,16 @@ const kpiTableConfig = [
     }
 ];
 
-function loadProductionCharts() {
+function loadProductionCharts(month, year) {
+    const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
+    const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
+
     updateSyncStatus('Syncing...');
-    loadDailyPerformanceSummary();
+    loadDailyPerformanceSummary(safeMonth, safeYear);
+    updateKpiDeckMonthLabel(safeMonth, safeYear);
 
     $.ajax({
-        url: '/api/production-metrics/current-month',
+        url: '/api/production-metrics/month?month=' + safeMonth + '&year=' + safeYear,
         type: 'GET',
         success: function(metrics) {
             const safeMetrics = Array.isArray(metrics) ? metrics : [];
@@ -195,6 +204,65 @@ function formatTime(date) {
         String(date.getMinutes()).padStart(2, '0'),
         String(date.getSeconds()).padStart(2, '0')
     ].join(':');
+}
+
+function initializeKpiMonthFilter() {
+    const $filter = $('#kpiMonthFilter');
+    if (!$filter.length) {
+        loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+        return;
+    }
+
+    const options = buildKpiMonthOptions(18);
+    $filter.empty();
+    options.forEach(function(item) {
+        $filter.append('<option value="' + item.value + '">' + item.label + '</option>');
+    });
+
+    const currentValue = selectedKpiYear + '-' + String(selectedKpiMonth).padStart(2, '0');
+    $filter.val(currentValue);
+
+    $filter.on('change', function() {
+        const parts = ($(this).val() || '').split('-');
+        if (parts.length !== 2) {
+            return;
+        }
+
+        selectedKpiYear = Number(parts[0]);
+        selectedKpiMonth = Number(parts[1]);
+        loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+    });
+
+    loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+}
+
+function buildKpiMonthOptions(monthCount) {
+    const options = [];
+    const now = new Date();
+
+    for (let i = 0; i < monthCount; i++) {
+        const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = dt.getFullYear();
+        const month = dt.getMonth() + 1;
+        const value = year + '-' + String(month).padStart(2, '0');
+        const label = dt.toLocaleString('en-GB', { month: 'short', year: 'numeric' });
+        options.push({ value: value, label: label });
+    }
+
+    return options;
+}
+
+function updateKpiDeckMonthLabel(month, year) {
+    const dateElement = document.getElementById('pmsDeckDate');
+    if (!dateElement) return;
+
+    const dt = new Date(year, month - 1, 1);
+    if (Number.isNaN(dt.getTime())) {
+        dateElement.textContent = '-';
+        return;
+    }
+
+    dateElement.textContent = dt.toLocaleString('en-GB', { month: 'short', year: 'numeric' });
 }
 
 function updateSyncStatus(text) {
@@ -460,9 +528,12 @@ function renderDailyPerformanceTable(metrics) {
     tbody.innerHTML = rows.join('');
 }
 
-function loadDailyPerformanceSummary() {
+function loadDailyPerformanceSummary(month, year) {
+    const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
+    const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
+
     $.ajax({
-        url: '/api/daily-performance/today',
+        url: '/api/daily-performance/month?month=' + safeMonth + '&year=' + safeYear,
         type: 'GET',
         success: function(data) {
             renderDailyPerformanceSummary(data || null);

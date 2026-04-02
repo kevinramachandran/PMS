@@ -1,0 +1,144 @@
+.agenda-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+    overflow: hidden;
+}
+
+.agenda-header-banner {
+    background: linear-gradient(180deg, #111827, #000000);
+    color: #f3f4f6;
+    text-align: center;
+    font-size: 34px;
+    font-weight: 700;
+    padding: 18px 12px;
+}
+
+.agenda-grid-top {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 8px;
+    padding: 10px;
+}
+
+.agenda-grid-mid {
+    padding: 0 10px 10px;
+}
+
+.agenda-grid-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 10px 10px;
+}
+
+.agenda-left-stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.agenda-left-stack .agenda-box:last-child {
+    grid-column: 1 / span 2;
+}
+
+.agenda-box {
+    border: 1px solid #d1d5db;
+    background: #eef2f6;
+}
+
+.agenda-box h3 {
+    margin: 0;
+    background: #024f2d;
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 700;
+    padding: 8px 10px;
+}
+
+.agenda-kv {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px;
+    padding: 6px 10px;
+    border-top: 1px solid #d1d5db;
+    font-size: 24px;
+}
+
+.agenda-box ul {
+    margin: 0;
+    padding: 8px 20px 10px 30px;
+    font-size: 24px;
+}
+
+.agenda-box li {
+    margin-bottom: 5px;
+}
+
+.agenda-subtitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    padding: 8px 10px 0;
+}
+
+.agenda-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.agenda-table thead th {
+    background: #024f2d;
+    color: #ffffff;
+    font-size: 30px;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+}
+
+.agenda-table tbody td {
+    border: 1px solid #d1d5db;
+    padding: 8px 10px;
+    background: #e5e7eb;
+    font-size: 24px;
+    vertical-align: top;
+}
+
+.ag-row-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.ag-row-points {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.ag-row-time {
+    font-weight: 700;
+    text-align: center;
+}
+
+@media (max-width: 1200px) {
+    .agenda-grid-top,
+    .agenda-grid-main,
+    .agenda-left-stack {
+        grid-template-columns: 1fr;
+    }
+
+    .agenda-header-banner {
+        font-size: 22px;
+    }
+
+    .agenda-box h3,
+    .agenda-table thead th {
+        font-size: 20px;
+    }
+
+    .agenda-box ul,
+    .agenda-kv,
+    .agenda-subtitle,
+    .agenda-table tbody td {
+        font-size: 15px;
+    }
+}

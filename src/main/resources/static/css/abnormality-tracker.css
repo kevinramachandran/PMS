@@ -1,0 +1,499 @@
+/* Abnormality Tracker dashboard redesign: dark sidebar, light content, modern card hierarchy */
+
+:root {
+    --at-sidebar-bg: #111827;
+    --at-sidebar-hover: #1f2937;
+    --at-primary: #16a34a;
+    --at-primary-soft: #22c55e;
+    --at-page-bg: #f9fafb;
+    --at-card-bg: #ffffff;
+    --at-text: #1f2937;
+    --at-muted: #6b7280;
+    --at-border: #e5e7eb;
+    --at-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+}
+
+.at-dashboard {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background: var(--at-page-bg);
+    color: var(--at-text);
+}
+
+.at-dashboard .app-container {
+    background: var(--at-page-bg);
+}
+
+/* Sidebar */
+.at-dashboard .sidebar {
+    background: var(--at-sidebar-bg);
+    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.28);
+    transition: width 0.28s ease, transform 0.28s ease;
+}
+
+.at-dashboard .sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 14px;
+}
+
+.at-dashboard .logo {
+    width: 124px;
+    filter: none;
+}
+
+.at-dashboard .sidebar-nav {
+    padding: 16px 0;
+}
+
+.at-dashboard .nav-item {
+    border-left: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.88);
+    padding: 12px 20px;
+    margin: 3px 10px;
+    border-radius: 10px;
+    transition: all 0.25s ease;
+}
+
+.at-dashboard .nav-item i {
+    width: 20px;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.at-dashboard .nav-item:hover {
+    background: var(--at-sidebar-hover);
+    color: #ffffff;
+    border-left-color: var(--at-primary-soft);
+    padding-left: 20px;
+}
+
+.at-dashboard .nav-item.active {
+    background: rgba(34, 197, 94, 0.18);
+    border-left-color: var(--at-primary-soft);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.at-dashboard .nav-child {
+    padding-left: 36px;
+    font-size: 13px;
+}
+
+.at-dashboard .nav-child.active {
+    background: rgba(34, 197, 94, 0.12);
+}
+
+/* Collapsed state */
+.at-dashboard .sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.at-dashboard .sidebar.collapsed .logo {
+    width: 36px;
+}
+
+.at-dashboard .sidebar.collapsed .nav-item {
+    margin: 4px 8px;
+    padding: 12px;
+    justify-content: center;
+}
+
+.at-dashboard .sidebar.collapsed .nav-item span,
+.at-dashboard .sidebar.collapsed .nav-item .nav-chevron {
+    display: none;
+}
+
+.at-dashboard .sidebar.collapsed .nav-item i {
+    margin-right: 0;
+    width: auto;
+}
+
+.at-dashboard .sidebar.collapsed .nav-children {
+    display: none !important;
+}
+
+/* Header */
+.at-dashboard .top-header {
+    background: #ffffff;
+    border-radius: 0;
+    color: var(--at-text);
+    border-bottom: 1px solid #edf0f3;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    padding: 0 20px;
+    height: 72px;
+    gap: 12px;
+}
+
+.at-dashboard .header-left h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--at-text);
+    letter-spacing: 0.01em;
+}
+
+.at-dashboard .header-center {
+    margin-left: auto;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.at-dashboard .header-filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--at-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.at-dashboard .header-filter-select {
+    min-width: 150px;
+    height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--at-text);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0 12px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.at-dashboard .header-filter-select:focus {
+    border-color: var(--at-primary);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.at-dashboard .sidebar-toggle-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.22s ease;
+}
+
+.at-dashboard .sidebar-toggle-btn:hover {
+    border-color: #9ca3af;
+    background: #f9fafb;
+    color: #111827;
+}
+
+.at-dashboard .header-right {
+    gap: 10px;
+}
+
+.at-dashboard .sync-status {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.at-dashboard .header-icon,
+.at-dashboard .user-avatar {
+    width: 36px;
+    height: 36px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+/* Content area and cards */
+.at-dashboard .content-area {
+    background: var(--at-page-bg);
+    padding: 20px;
+}
+
+.at-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.at-chart-card,
+.at-table-card {
+    background: var(--at-card-bg);
+    border-radius: 12px;
+    box-shadow: var(--at-shadow);
+    border: 1px solid var(--at-border);
+}
+
+.at-chart-card {
+    padding: 16px 18px 14px;
+}
+
+.at-chart-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--at-text);
+    margin: 0 0 12px 0;
+}
+
+.at-chart-title::before {
+    content: "\f201";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 13px;
+    color: var(--at-primary);
+}
+
+.at-chart-wrap {
+    position: relative;
+    height: 295px;
+}
+
+.at-chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.at-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.at-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.at-legend-line-seg {
+    display: inline-block;
+    width: 24px;
+    height: 3px;
+    border-radius: 3px;
+}
+
+.at-table-card {
+    overflow: hidden;
+}
+
+.at-table-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--at-text);
+    margin: 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--at-border);
+    background: #ffffff;
+    text-transform: none;
+    letter-spacing: 0.01em;
+}
+
+.at-table-title::before {
+    content: "\f0ce";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 13px;
+    color: var(--at-primary);
+}
+
+.at-table-wrap {
+    overflow-x: auto;
+}
+
+/* Keep table structure unchanged, style only */
+.at-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+
+.at-summary-table thead tr {
+    background: #f9fafb;
+}
+
+.at-summary-table th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.at-summary-table td {
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #111827;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.at-summary-table tbody tr:hover {
+    background: #f8fdf9;
+}
+
+.at-summary-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.at-status-green {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.at-status-red {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.at-empty {
+    text-align: center;
+    padding: 30px;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+/* Footer */
+.at-dashboard .footer {
+    background: transparent;
+    border-top: 0;
+    padding: 16px 12px 22px;
+}
+
+.at-dashboard .footer p {
+    color: #9ca3af;
+    text-align: center;
+    font-size: 12px;
+}
+
+.at-dashboard .footer-brand {
+    display: none;
+}
+
+/* Keep config table styles that are used inside settings page */
+#abnormalityConfigTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+#abnormalityConfigTable thead tr {
+    background: linear-gradient(135deg, #044e20 0%, #076830 100%);
+}
+
+#abnormalityConfigTable th {
+    padding: 11px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid #056025;
+    white-space: nowrap;
+}
+
+#abnormalityConfigTable td {
+    padding: 8px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+#abnormalityConfigTable td input,
+#abnormalityConfigTable td select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+#abnormalityConfigTable .btn-delete {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    border-radius: 5px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#abnormalityConfigTable .btn-delete:hover {
+    background: #fecaca;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .at-dashboard .top-header {
+        padding: 0 14px;
+        height: auto;
+        min-height: 72px;
+        flex-wrap: wrap;
+        align-items: center;
+        row-gap: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .at-dashboard .header-center {
+        order: 3;
+        width: 100%;
+        margin: 0;
+        justify-content: flex-start;
+    }
+
+    .at-dashboard .header-filter-select {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .at-charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .at-dashboard .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .at-dashboard .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .at-dashboard .main-content,
+    .at-dashboard .main-content.expanded {
+        margin-left: 0;
+        width: 100%;
+    }
+}

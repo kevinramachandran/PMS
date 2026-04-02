@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: brewery-pms-be:latest
+    container_name: brewery-pms-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: 8080
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      DB_URL: ${DB_URL:-jdbc:mysql://mysql:3306/brewery_pms}
+      DB_USERNAME: ${DB_USERNAME:-brewery_user}
+      DB_PASSWORD: ${DB_PASSWORD:-replace-me}
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
+      LOG_LEVEL_WEB: ${LOG_LEVEL_WEB:-INFO}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    volumes:
+      - app-logs:/app/logs
+
+  mysql:
+    image: mysql:8.4
+    container_name: brewery-pms-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-brewery_pms}
+      MYSQL_USER: ${DB_USERNAME:-brewery_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-replace-me}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-change-me}
+      TZ: ${APP_TIMEZONE:-UTC}
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root-change-me}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  app-logs:
+  mysql-data:

@@ -21,6 +21,41 @@ public class WebController {
         return "kpi-dashboard";
     }
 
+    @GetMapping("/issue-board")
+    public String issueBoard() {
+        return "issue-board";
+    }
+
+    @GetMapping("/gemba-schedule")
+    public String gembaSchedule() {
+        return "gemba-schedule";
+    }
+
+    @GetMapping("/leadership-gemba-tracker")
+    public String leadershipGembaTracker() {
+        return "leadership-gemba-tracker";
+    }
+
+    @GetMapping("/training-schedule")
+    public String trainingSchedule() {
+        return "training-schedule";
+    }
+
+    @GetMapping("/meeting-agenda")
+    public String meetingAgenda() {
+        return "meeting-agenda";
+    }
+
+    @GetMapping("/process-confirmation")
+    public String processConfirmation() {
+        return "process-confirmation";
+    }
+
+    @GetMapping("/abnormality-tracker")
+    public String abnormalityTracker() {
+        return "abnormality-tracker";
+    }
+
     @GetMapping("/settings")
     public String settings() {
         return "settings";

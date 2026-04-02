@@ -1,0 +1,164 @@
+.pc-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+    padding: 12px;
+}
+
+.pc-meta-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.pc-meta-card {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #f3f4f6;
+    padding: 10px 12px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.pc-score-wrap {
+    overflow-x: auto;
+    margin-bottom: 10px;
+}
+
+.pc-score-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 840px;
+}
+
+.pc-score-table th,
+.pc-score-table td {
+    border: 1px solid #d1d5db;
+    text-align: center;
+    padding: 6px;
+    font-weight: 700;
+}
+
+.pc-score-table th {
+    background: #111827;
+    color: #f9fafb;
+    font-size: 13px;
+}
+
+.pc-score-table td {
+    background: #f8fafc;
+    font-size: 14px;
+}
+
+.pc-table-wrap {
+    overflow-x: auto;
+}
+
+.pc-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1340px;
+}
+
+.pc-table th,
+.pc-table td {
+    border: 1px solid #d1d5db;
+    text-align: center;
+    padding: 4px;
+}
+
+.pc-table thead th {
+    background: #e5e7eb;
+    color: #111827;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.pc-question-col {
+    width: 480px;
+}
+
+.pc-question {
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    background: #f9fafb;
+    padding: 8px 10px;
+}
+
+.pc-day-col {
+    width: 24px;
+}
+
+.pc-status {
+    display: inline-block;
+    width: 14px;
+    height: 20px;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.pc-status.good {
+    background: #10b981;
+}
+
+.pc-status.bad {
+    background: #ef4444;
+}
+
+.pc-status.na {
+    background: #e5e7eb;
+}
+
+.pc-total-row td {
+    background: #f3f4f6;
+}
+
+.pc-legend {
+    margin-top: 10px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pc-dot {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    border-radius: 2px;
+    margin-right: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.pc-dot.good {
+    background: #10b981;
+}
+
+.pc-dot.bad {
+    background: #ef4444;
+}
+
+.pc-dot.na {
+    background: #e5e7eb;
+}
+
+@media (max-width: 1200px) {
+    .pc-meta-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .pc-meta-card {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pc-meta-row {
+        grid-template-columns: 1fr;
+    }
+}
