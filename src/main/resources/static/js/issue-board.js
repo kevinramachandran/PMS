@@ -6,9 +6,23 @@ $(document).ready(function() {
 
     $('.nav-parent-toggle').on('click', function(e) {
         e.preventDefault();
-        $(this).toggleClass('expanded');
-        $(this).next('.nav-children').slideToggle(200).toggleClass('show');
+        $(this).addClass('expanded');
+        $(this).next('.nav-children').addClass('show').show();
     });
+
+    $('.nav-parent-toggle').addClass('expanded');
+    $('.nav-children').addClass('show').show();
+
+    const currentPath = window.location.pathname;
+    const currentUrl = currentPath + window.location.search;
+    const $matchedChild = $('.nav-child').filter(function() {
+        const href = $(this).attr('href');
+        return href && (href === currentUrl || href === currentPath);
+    }).first();
+    if ($matchedChild.length) {
+        $('.nav-child').removeClass('active');
+        $matchedChild.addClass('active');
+    }
 
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
@@ -62,15 +76,47 @@ $(document).ready(function() {
         return div.innerHTML;
     }
 
-    function statusClass(status) {
-        const normalized = (status || '').toLowerCase();
+    function clampPercent(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) {
+            return 0;
+        }
+        return Math.min(100, Math.max(0, Math.round(parsed)));
+    }
+
+    function statusToPercent(status) {
+        if (status === null || status === undefined || status === '') {
+            return 0;
+        }
+
+        const normalized = String(status).trim().toLowerCase();
+        if (normalized.endsWith('%')) {
+            return clampPercent(normalized.replace('%', ''));
+        }
+
         if (normalized === 'done' || normalized === 'closed') {
-            return 'status-done';
+            return 100;
         }
-        if (normalized === 'in-progress') {
-            return 'status-progress';
+
+        if (normalized === 'in-progress' || normalized === 'in progress') {
+            return 50;
         }
-        return 'status-open';
+
+        if (normalized === 'open') {
+            return 0;
+        }
+
+        return clampPercent(normalized);
+    }
+
+    function renderStatusCircle(status) {
+        const progress = statusToPercent(status);
+        return '' +
+            '<div class="status-cell">' +
+            '<div class="progress-circle" data-value="' + progress + '" style="--progress: ' + progress + ';" title="Status: ' + progress + '%">' +
+            '<span class="progress-circle-label">' + progress + '%</span>' +
+            '</div>' +
+            '</div>';
     }
 
     function dueClass(dueDays) {
@@ -134,7 +180,7 @@ $(document).ready(function() {
                 '<td>' + safeText(row.responsible) + '</td>' +
                 '<td>' + safeText(formatDisplayDate(row.targetDate)) + '</td>' +
                 '<td class="' + dueClass(dueDays) + '">' + safeText(dueDays) + '</td>' +
-                '<td><span class="status-pill ' + statusClass(row.status) + '">' + safeText(row.status || 'Open') + '</span></td>' +
+                '<td>' + renderStatusCircle(row.status) + '</td>' +
                 '<td>' + safeText(row.remarks) + '</td>' +
                 '</tr>';
             tbody.append(tr);

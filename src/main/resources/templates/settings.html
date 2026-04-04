@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMS Data - Carlsberg Brewery</title>
+    <title>PMS 4 Deck V0 Configuration - Carlsberg Brewery</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,15 +11,16 @@
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/settings.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
-<body class="modern-shell">
+<body class="modern-shell dashboard-bg">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img class="logo" src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                    <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -31,17 +32,18 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <div class="nav-parent">
-                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                <div class="nav-parent" th:if="${session.role == 'ADMIN'}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
-                        <a href="/settings" class="nav-item nav-child active" data-nav="pms-data" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
-                        <a href="/settings?config=issue-board" class="nav-item nav-child" data-nav="issue-board-config" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
-                        <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-nav="gemba-schedule-config" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
-                        <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-nav="leadership-gemba-tracker-config" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
-                        <a href="/settings?config=training-schedule" class="nav-item nav-child" data-nav="training-schedule-config" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
-                        <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-nav="meeting-agenda-config" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
-                        <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-nav="process-confirmation-config" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
-                        <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-nav="abnormality-tracker-config" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+<a href="/settings?config=issue-board" class="nav-item nav-child" data-nav="issue-board-config" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
+                                <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-nav="gemba-schedule-config" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
+                                <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-nav="leadership-gemba-tracker-config" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
+                                <a href="/settings?config=training-schedule" class="nav-item nav-child" data-nav="training-schedule-config" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
+                                <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-nav="meeting-agenda-config" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
+                                <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-nav="process-confirmation-config" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
+                                <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-nav="abnormality-tracker-config" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+                                <a href="/settings?config=hs-cross" class="nav-item nav-child" data-nav="hs-cross-config" data-tooltip="H&amp;S Cross Daily Config"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily Config</span></a>
+                                <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-nav="lsr-tracking-config" data-tooltip="LSR Tracking Config"><i class="fas fa-life-ring"></i><span>LSR Tracking Config</span></a>
                     </div>
                 </div>
             </nav>
@@ -51,12 +53,25 @@
             <header class="top-header">
                 <div class="header-left">
                     <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                    <h1>PMS Data</h1>
+                    <h1>PMS 4 Deck V0 Configuration</h1>
                 </div>
                 <div class="header-right">
                     <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
                     <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
-                    <div class="user-avatar"><i class="fas fa-user"></i></div>
+                    <div class="user-info-header">
+                        <i class="fa-solid profile-role-icon" th:classappend="${session.role == 'ADMIN'} ? ' fa-user-shield' : ' fa-user'"></i>
+                        <div class="profile-meta">
+                            <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
+                            <div class="profile-subline">
+                                <span class="header-role-badge" th:text="${session.role}">ROLE</span>
+                                <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/logout" class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
                 </div>
             </header>
 
@@ -66,17 +81,17 @@
                     <aside class="settings-sidebar">
                         <div class="config-list">
                             <div class="config-group">
-                                <div class="config-group-title">PMS Data</div>
+                                <div class="config-group-title">PMS 4 Deck V0 Configuration</div>
                                 <div class="config-item active" data-config="priorities" data-type="">
                                     <i class="fas fa-star"></i>
-                                    <span>TOP 3 Priorities (CBN-3YP)</span>
+                                    <span>Top 3 Priorities</span>
                                 </div>
                                 <div class="config-item" data-config="weekly-priorities" data-type="">
-                                    <i class="fas fa-list"></i>
+                                    <i class="fas fa-calendar-week"></i>
                                     <span>Top 3 Weekly Priorities</span>
                                 </div>
                                 <div class="config-item" data-config="daily-performance" data-type="">
-                                    <i class="fas fa-chart-bar"></i>
+                                    <i class="fas fa-chart-line"></i>
                                     <span>Daily Performance</span>
                                 </div>
                                 <div class="config-item" data-config="daily-section" data-type="PEOPLE">
@@ -432,91 +447,154 @@
                             </div>
 
                             <div id="form-issue-board" class="form-section">
-                                <h2>Issue Board Configuration</h2>
-                                <p class="form-subtitle">Configure issue board rows for the Issue Board dashboard.</p>
+                                <h2>Edit Issue</h2>
 
-                                <div class="issue-board-meta-grid">
-                                    <div class="form-group">
-                                        <label for="issueBoardConfigDate">Configuration Date</label>
-                                        <input type="date" id="issueBoardConfigDate" name="issueBoardConfigDate">
+                                <input type="hidden" id="issueBoardConfigDate" name="issueBoardConfigDate">
+
+                                <div class="config-form-section">
+                                    <div class="section-subtitle">Form Section</div>
+                                    <div class="issue-board-meta-grid form-grid">
+                                        <div class="form-group">
+                                            <label for="issueBoardLastReviewDate">Last review date</label>
+                                            <input type="date" id="issueBoardLastReviewDate" name="issueBoardLastReviewDate">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="issueBoardNextReviewDate">Next review date</label>
+                                            <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="issueBoardLastReviewDate">Last review date</label>
-                                        <input type="date" id="issueBoardLastReviewDate" name="issueBoardLastReviewDate">
+
+                                    <div class="form-grid" id="issueRowFormGrid">
+                                        <div class="form-group"><label for="ibFormProblem">Problem</label><input type="text" id="ibFormProblem"></div>
+                                        <div class="form-group"><label for="ibFormOwner">Name</label><input type="text" id="ibFormOwner"></div>
+                                        <div class="form-group"><label for="ibFormIssueDate">Date</label><input type="date" id="ibFormIssueDate"></div>
+                                        <div class="form-group"><label for="ibFormRootCause">Root Cause</label><input type="text" id="ibFormRootCause"></div>
+                                        <div class="form-group"><label for="ibFormActions">Actions</label><input type="text" id="ibFormActions"></div>
+                                        <div class="form-group"><label for="ibFormResponsible">Resp.</label><input type="text" id="ibFormResponsible"></div>
+                                        <div class="form-group"><label for="ibFormTargetDate">Target date</label><input type="date" id="ibFormTargetDate"></div>
+                                        <div class="form-group"><label for="ibFormStatus">Status</label>
+                                            <select id="ibFormStatus">
+                                                <option value="0%">0%</option>
+                                                <option value="25%">25%</option>
+                                                <option value="50%">50%</option>
+                                                <option value="75%">75%</option>
+                                                <option value="100%">100%</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group"><label for="ibFormCompletedDate">Completed date</label><input type="date" id="ibFormCompletedDate"></div>
+                                        <div class="form-group"><label for="ibFormRemarks">Remarks</label><input type="text" id="ibFormRemarks"></div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="issueBoardNextReviewDate">Next review date</label>
-                                        <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate">
+
+                                    <div class="form-actions compact-actions">
+                                        <button type="button" class="btn btn-secondary" id="addIssueBoardRowBtn">
+                                            <i class="fas fa-plus"></i> Add Row
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="daily-data-table issue-config-table-wrap">
-                                    <table id="issueBoardConfigTable">
-                                        <thead>
-                                        <tr>
-                                            <th>Problem</th>
-                                            <th>Name</th>
-                                            <th>Date</th>
-                                            <th>Root Cause</th>
-                                            <th>Actions</th>
-                                            <th>Resp.</th>
-                                            <th>Target date</th>
-                                            <th>Due days</th>
-                                            <th>Status</th>
-                                            <th>Remarks</th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="issueBoardConfigTableBody"></tbody>
-                                    </table>
-                                    <button type="button" class="btn btn-secondary" id="addIssueBoardRowBtn">
-                                        <i class="fas fa-plus"></i> Add New Row
+                                <div class="config-table-section">
+                                    <div class="section-subtitle">Table Section</div>
+                                    <div class="daily-data-table issue-config-table-wrap">
+                                        <table id="issueBoardConfigTable">
+                                            <thead>
+                                            <tr>
+                                                <th>Problem</th>
+                                                <th>Name</th>
+                                                <th>Date</th>
+                                                <th>Root Cause</th>
+                                                <th>Actions</th>
+                                                <th>Resp.</th>
+                                                <th>Target date</th>
+                                                <th>Due days</th>
+                                                <th>Status</th>
+                                                <th>Completed date</th>
+                                                <th>Remarks</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="issueBoardConfigTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions sticky-save-bar">
+                                    <button id="cancelIssueBoardBtn" type="button" class="btn btn-secondary">
+                                        <i class="fas fa-ban"></i> Cancel
                                     </button>
-                                </div>
-
-                                <div class="form-actions">
                                     <button id="saveIssueBoardBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Issue Board
                                     </button>
                                 </div>
                                 <div id="issueBoardMessage" class="form-message"></div>
+                                <div id="issueBoardPopup" class="issue-popup" aria-live="polite"></div>
                             </div>
 
                             <div id="form-gemba-schedule" class="form-section">                                <h2>Gemba Walk Configuration</h2>
                                 <p class="form-subtitle">Configure Leadership Safety Gemba Walk schedule for the dashboard.</p>
 
-                                <div class="issue-board-meta-grid">
-                                    <div class="form-group">
-                                        <label for="gembaScheduleDate">Configuration Date</label>
-                                        <input type="date" id="gembaScheduleDate" name="gembaScheduleDate">
+                                <div class="config-form-section">
+                                    <div class="section-subtitle">Form Section</div>
+                                    <div class="issue-board-meta-grid form-grid">
+                                        <div class="form-group">
+                                            <label for="gembaScheduleDate">Configuration Date</label>
+                                            <input type="date" id="gembaScheduleDate" name="gembaScheduleDate">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="gembaMonthLabelInput">Scheduled Month (Auto from Date)</label>
+                                            <input type="text" id="gembaMonthLabelInput" name="gembaMonthLabelInput" readonly>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="gembaMonthLabelInput">Scheduled Month (Auto from Date)</label>
-                                        <input type="text" id="gembaMonthLabelInput" name="gembaMonthLabelInput" readonly>
+
+                                    <div class="form-grid" id="gembaRowFormGrid">
+                                        <div class="form-group">
+                                            <label for="gsFormFunctionType">Function Type</label>
+                                            <select id="gsFormFunctionType">
+                                                <option value="Packaging">Packaging</option>
+                                                <option value="Quality">Quality</option>
+                                                <option value="HR &amp; Admin">HR &amp; Admin</option>
+                                                <option value="Utility &amp; Maintenance">Utility &amp; Maintenance</option>
+                                                <option value="Customer Supply">Customer Supply</option>
+                                                <option value="B&amp;P">B&amp;P</option>
+                                                <option value="Finance">Finance</option>
+                                                <option value="Health &amp; Safety">Health &amp; Safety</option>
+                                                <option value="Carlsberg Excellence">Carlsberg Excellence</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group"><label for="gsFormAssociateName">Associate Name</label><input type="text" id="gsFormAssociateName"></div>
+                                        <div class="form-group"><label for="gsFormWeek1">Week #1</label><input type="text" id="gsFormWeek1"></div>
+                                        <div class="form-group"><label for="gsFormWeek2">Week #2</label><input type="text" id="gsFormWeek2"></div>
+                                        <div class="form-group"><label for="gsFormWeek3">Week #3</label><input type="text" id="gsFormWeek3"></div>
+                                        <div class="form-group"><label for="gsFormWeek4">Week #4</label><input type="text" id="gsFormWeek4"></div>
+                                    </div>
+
+                                    <div class="form-actions compact-actions">
+                                        <button type="button" class="btn btn-secondary" id="addGembaRowBtn">
+                                            <i class="fas fa-plus"></i> Add Row
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="daily-data-table issue-config-table-wrap">
-                                    <table id="gembaConfigTable">
-                                        <thead>
-                                        <tr>
-                                            <th>Function Type</th>
-                                            <th>Associate Name</th>
-                                            <th>Week #1</th>
-                                            <th>Week #2</th>
-                                            <th>Week #3</th>
-                                            <th>Week #4</th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="gembaConfigTableBody"></tbody>
-                                    </table>
-                                    <button type="button" class="btn btn-secondary" id="addGembaRowBtn">
-                                        <i class="fas fa-plus"></i> Add New Row
-                                    </button>
+                                <div class="config-table-section">
+                                    <div class="section-subtitle">Table Section</div>
+                                    <div class="daily-data-table issue-config-table-wrap">
+                                        <table id="gembaConfigTable">
+                                            <thead>
+                                            <tr>
+                                                <th>Function Type</th>
+                                                <th>Associate Name</th>
+                                                <th>Week #1</th>
+                                                <th>Week #2</th>
+                                                <th>Week #3</th>
+                                                <th>Week #4</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="gembaConfigTableBody"></tbody>
+                                        </table>
+                                    </div>
                                 </div>
 
-                                <div class="form-actions">
+                                <div class="form-actions sticky-save-bar">
                                     <button id="saveGembaScheduleBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Gemba Schedule
                                     </button>
@@ -971,6 +1049,122 @@
                                 </div>
                                 <div id="atConfigMessage" class="form-message"></div>
                             </div>
+
+                            <!-- H&S Cross Daily Config Form -->
+                            <div id="form-hs-cross" class="form-section">
+                                <div class="hs-cross-config-shell container">
+                                    <div class="hs-cross-header-card">
+                                        <div>
+                                            <h2>H&amp;S Cross Daily Configuration</h2>
+                                            <p class="form-subtitle">Configure daily Accidents, Near Miss and Safety Concern status. Data auto-loads on page open and filter change.</p>
+                                        </div>
+                                        <div class="hs-config-controls">
+                                            <div class="form-group" style="margin-bottom:0;">
+                                                <label for="hsCrossYearSel">Year</label>
+                                                <select id="hsCrossYearSel" class="form-select"></select>
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0;">
+                                                <label for="hsCrossMonthSel">Month</label>
+                                                <select id="hsCrossMonthSel" class="form-select">
+                                                    <option value="1">January</option>
+                                                    <option value="2">February</option>
+                                                    <option value="3">March</option>
+                                                    <option value="4">April</option>
+                                                    <option value="5">May</option>
+                                                    <option value="6">June</option>
+                                                    <option value="7">July</option>
+                                                    <option value="8">August</option>
+                                                    <option value="9">September</option>
+                                                    <option value="10">October</option>
+                                                    <option value="11">November</option>
+                                                    <option value="12">December</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="daily-data-table issue-config-table-wrap hs-cross-table-wrap">
+                                        <table id="hsCrossConfigTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Day</th>
+                                                    <th>Accidents</th>
+                                                    <th>Near Miss</th>
+                                                    <th>Safety Concern</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="hsCrossTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="button" id="saveHsCrossBtn" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                    </div>
+                                    <div id="hsCrossMessage" class="form-message"></div>
+                                </div>
+                            </div>
+
+                            <div id="form-lsr-tracking" class="form-section">
+                                <div class="lsr-config-shell container">
+                                    <div class="lsr-header-card">
+                                        <div>
+                                            <h2>LSR (Life Saving Rules) Tracking Configuration</h2>
+                                            <p class="form-subtitle">Configure daily Life Saving Rules compliance status. Use inline dropdown to edit.</p>
+                                        </div>
+                                        <div class="lsr-config-controls">
+                                            <div class="form-group" style="margin-bottom:0;">
+                                                <label for="lsrYearSel">Year</label>
+                                                <select id="lsrYearSel" class="form-select"></select>
+                                            </div>
+                                            <div class="form-group" style="margin-bottom:0;">
+                                                <label for="lsrMonthSel">Month</label>
+                                                <select id="lsrMonthSel" class="form-select">
+                                                    <option value="1">January</option>
+                                                    <option value="2">February</option>
+                                                    <option value="3">March</option>
+                                                    <option value="4">April</option>
+                                                    <option value="5">May</option>
+                                                    <option value="6">June</option>
+                                                    <option value="7">July</option>
+                                                    <option value="8">August</option>
+                                                    <option value="9">September</option>
+                                                    <option value="10">October</option>
+                                                    <option value="11">November</option>
+                                                    <option value="12">December</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="daily-data-table issue-config-table-wrap lsr-table-wrap">
+                                        <table id="lsrConfigTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Day</th>
+                                                    <th>LSR 1: Traffic Rules</th>
+                                                    <th>LSR 2&amp;3: LOTO/Safeguard</th>
+                                                    <th>LSR 4: Working at Height</th>
+                                                    <th>LSR 5: Confined Space</th>
+                                                    <th>Contractor Mgmt</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lsrTableBody">
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="button" id="saveLsrBtn" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                    </div>
+                                    <div id="lsrMessage" class="form-message"></div>
+                                </div>
+                            </div>
+
                         </div>
                     </main>
                 </div>
@@ -999,5 +1193,11 @@
     </script>
     <script src="/js/dashboard.js"></script>
     <script src="/js/settings.js"></script>
+    <script src="/js/hs-cross-config.js"></script>
+    <script src="/js/lsr-tracking-config.js"></script>
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
 </body>
 </html>
+
+

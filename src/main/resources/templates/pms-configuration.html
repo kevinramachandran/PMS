@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMS Configuration � Carlsberg Brewery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/settings.css">
+    <link rel="stylesheet" href="/css/ui-shell.css">
+</head>
+<body class="modern-shell dashboard-bg">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/kpi-dashboard" class="nav-item" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+                <a href="/issue-board" class="nav-item" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
+                <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+                <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-route"></i><span>Safety Gemba - Tracker</span></a>
+                <a href="/training-schedule" class="nav-item" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
+                <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
+                <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
+                <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
+                <div class="nav-parent" th:if="${session.role == 'ADMIN'}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
+                        <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
+                        <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
+                        <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
+                        <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
+                        <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
+                        <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+                        <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily Config"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily Config</span></a>
+                        <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking Config"><i class="fas fa-life-ring"></i><span>LSR Tracking Config</span></a>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+                    <h1>PMS Configuration</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
+                    <div class="user-info-header">
+                        <i class="fa-solid profile-role-icon" th:classappend="${session.role == 'ADMIN'} ? ' fa-user-shield' : ' fa-user'"></i>
+                        <div class="profile-meta">
+                            <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
+                            <div class="profile-subline">
+                                <span class="header-role-badge" th:text="${session.role}">ROLE</span>
+                                <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/logout" class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="pms-config-page">
+
+                    <!-- System Users Table -->
+                    <div class="pms-config-card">
+                        <div class="pms-config-card-header">
+                            <h2><i class="fas fa-users"></i> System Users</h2>
+                            <p>Manage database users only. Internal system accounts are hidden.</p>
+                        </div>
+                        <div class="pms-config-card-body">
+                            <table class="pms-users-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center;color:#64748b;padding:14px;">Loading users...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div id="usersTableMessage" class="form-message" style="margin-top:12px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Add User Form (UI preview) -->
+                    <div class="pms-config-card">
+                        <div class="pms-config-card-header">
+                            <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+                        </div>
+                        <div class="pms-config-card-body">
+                            <form class="pms-add-user-form" id="addUserForm" onsubmit="return false;">
+                                <div class="pms-form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Username</label>
+                                        <input type="text" id="newUsername" class="form-select" placeholder="Enter username">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" id="newEmail" class="form-select" placeholder="Enter email">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Password</label>
+                                        <input type="password" id="newPassword" class="form-select" placeholder="Enter password">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Role</label>
+                                        <select id="newRole" class="form-select">
+                                            <option value="USER">USER</option>
+                                            <option value="ADMIN">ADMIN</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-actions" style="margin-top:16px;">
+                                    <button type="button" class="btn btn-primary" id="addUserBtn">
+                                        <i class="fas fa-plus"></i> Add User
+                                    </button>
+                                </div>
+                                <div id="addUserMessage" class="form-message" style="margin-top:12px;"></div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="pms-modal-backdrop" id="editUserModal" style="display:none;">
+        <div class="pms-modal-card">
+            <div class="pms-modal-header">
+                <h3><i class="fas fa-user-edit"></i> Edit User</h3>
+                <button type="button" class="pms-modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <div class="pms-modal-body">
+                <form id="editUserForm" onsubmit="return false;">
+                    <input type="hidden" id="editUserId">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="editEmail" class="form-select" placeholder="Enter email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role</label>
+                        <select id="editRole" class="form-select">
+                            <option value="USER">USER</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password (optional)</label>
+                        <input type="password" id="editPassword" class="form-select" placeholder="Leave blank to keep existing password">
+                    </div>
+                    <div class="form-actions" style="margin-top:14px;">
+                        <button type="button" class="btn btn-primary" id="saveEditBtn">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">
+                            Cancel
+                        </button>
+                    </div>
+                    <div id="editUserMessage" class="form-message" style="margin-top:10px;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/pms-configuration.js"></script>
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
+</body>
+</html>
+
+

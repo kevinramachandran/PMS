@@ -1,0 +1,143 @@
+/* ===== Login Page Styles ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.58)), url('/images/carlsbergLoginBackground.png') no-repeat center center;
+    background-size: cover;
+    font-family: 'Segoe UI', sans-serif;
+    position: relative;
+}
+
+.header-logo {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+}
+
+.solvex-watermark {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.12;
+    width: 120px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.login-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 44px 40px 36px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.login-logo img {
+    height: 52px;
+    object-fit: contain;
+}
+
+.login-title {
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.login-subtitle {
+    text-align: center;
+    font-size: 0.84rem;
+    color: #6b7280;
+    margin-bottom: 28px;
+}
+
+.login-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.login-error.show {
+    display: flex;
+}
+
+.login-field {
+    margin-bottom: 18px;
+}
+
+.login-field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.login-field input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    color: #111827;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #f9fafb;
+}
+
+.login-field input:focus {
+    border-color: #00863d;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 134, 61, 0.12);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background: #00863d;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 6px;
+    letter-spacing: 0.01em;
+}
+
+.login-btn:hover:not(:disabled) {
+    background: #006d31;
+    transform: translateY(-1px);
+}
+
+.login-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.login-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}

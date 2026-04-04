@@ -194,6 +194,12 @@
     margin-bottom: 14px;
 }
 
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 10px;
+}
+
 .issue-config-table-wrap {
     overflow-x: auto;
 }
@@ -300,7 +306,7 @@
 
 #issueBoardConfigTable {
     width: 100%;
-    min-width: 1300px;
+    min-width: 1420px;
     border-collapse: collapse;
 }
 
@@ -317,12 +323,13 @@
 }
 
 #issueBoardConfigTable tbody td {
-    padding: 8px;
+    padding: 6px;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
 }
 
 #issueBoardConfigTable tbody tr:hover {
-    background: var(--accent-green);
+    background: #f5f5f5;
 }
 
 #issueBoardConfigTable input[type="text"],
@@ -330,11 +337,47 @@
 #issueBoardConfigTable input[type="number"],
 #issueBoardConfigTable select {
     width: 100%;
-    min-width: 120px;
-    padding: 8px;
+    min-width: 110px;
+    padding: 6px 8px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
+    font-size: 12px;
+}
+
+#issueBoardConfigTable .ib-due-days {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+}
+
+#issueBoardConfigTable .ib-completed-date.required {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+.issue-popup {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    min-width: 260px;
+    max-width: 440px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.92);
+    color: #ffffff;
     font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.26);
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 2500;
+}
+
+.issue-popup.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 #gembaConfigTable {
@@ -523,6 +566,8 @@
 
 .form-group textarea,
 .form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
 .form-group input[type="date"],
 .form-group input[type="number"],
 .form-group select {
@@ -538,6 +583,8 @@
 
 .form-group textarea:focus,
 .form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"]:focus,
 .form-group input[type="date"]:focus,
 .form-group input[type="number"]:focus,
 .form-group select:focus {
@@ -684,6 +731,18 @@
     border-left: 4px solid #ef4444;
 }
 
+.form-message.warning {
+    background: #fef3c7;
+    color: #92400e;
+    border-left: 4px solid #f59e0b;
+}
+
+.form-message.info {
+    background: #dbeafe;
+    color: #1e40af;
+    border-left: 4px solid #3b82f6;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -726,6 +785,10 @@
     }
 
     .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid {
         grid-template-columns: 1fr;
     }
 
@@ -816,4 +879,386 @@
 .nav-child.active {
     background-color: rgba(255, 255, 255, 0.15) !important;
     font-weight: 600 !important;
+}
+
+/* H&S Cross Daily Configuration - compact modern UX */
+.hs-cross-config-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.hs-cross-header-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+#form-hs-cross .form-subtitle {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.hs-config-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin: 0;
+}
+
+.hs-cross-table-wrap {
+    padding: 0;
+    max-height: 520px;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#hsCrossConfigTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#hsCrossConfigTable thead th {
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 2;
+    border-bottom: 2px solid #d1d5db;
+    padding: 6px;
+    font-size: 13px;
+}
+
+#hsCrossConfigTable tbody td {
+    padding: 6px;
+    font-size: 13px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+#hsCrossConfigTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#hsCrossConfigTable tbody tr:hover {
+    background: #eefbf2;
+}
+
+.hs-day-cell {
+    text-align: center;
+    font-weight: 700;
+    width: 64px;
+}
+
+.hs-inline-select {
+    width: 100%;
+    min-width: 160px;
+    height: 34px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hs-inline-select.hs-status-notset {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.hs-inline-select.hs-status-safe {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.hs-inline-select.hs-status-issue {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.hs-loading-cell {
+    text-align: center;
+    color: #475569;
+    font-weight: 600;
+    padding: 14px 6px !important;
+}
+
+/* ================================================
+   LSR Tracking Config Styles
+   ================================================ */
+
+.lsr-config-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 8px;
+}
+
+.lsr-header-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+}
+
+.lsr-header-card h2 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+}
+
+.lsr-header-card .form-subtitle {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+.lsr-config-controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.lsr-table-wrap {
+    max-height: 520px;
+    overflow: auto;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 14px;
+}
+
+#lsrConfigTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f1f5f9;
+    padding: 8px 6px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+#lsrConfigTable tbody tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+#lsrConfigTable tbody tr:hover {
+    background-color: #f0f4ff;
+}
+
+#lsrConfigTable td {
+    padding: 5px 6px;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.lsr-day-cell {
+    font-weight: 600;
+    text-align: center;
+    width: 36px;
+    color: #374151;
+}
+
+.lsr-inline-select {
+    width: 100%;
+    min-width: 90px;
+    height: 34px;
+    padding: 3px 6px;
+    font-size: 12px;
+    border-radius: 5px;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.lsr-inline-select.lsr-status-notset {
+    background: #f3f4f6;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.lsr-inline-select.lsr-status-safe {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.lsr-inline-select.lsr-status-unsafe {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.lsr-loading-cell {
+    text-align: center;
+    color: #475569;
+    font-weight: 600;
+    padding: 14px 6px !important;
+}
+
+/* PMS configuration standardization overrides */
+.settings-main,
+.form-card,
+.form-section {
+    overflow-x: hidden;
+}
+
+.form-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.config-form-section,
+.config-table-section {
+    border: 1px solid #dbe5df;
+    border-radius: 10px;
+    background: #f8fbf9;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.section-subtitle {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1f2937;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+.form-grid,
+.issue-board-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 12px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+table input,
+table select,
+.btn {
+    height: 34px;
+    font-size: 12px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea,
+table input,
+table select {
+    padding: 4px 8px;
+}
+
+.compact-actions {
+    margin-top: 10px;
+}
+
+.sticky-save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    background: rgba(248, 251, 249, 0.98);
+    border: 1px solid #dbe5df;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+.daily-data-table,
+.issue-config-table-wrap,
+.hs-cross-table-wrap,
+.lsr-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.daily-data-table table,
+.issue-config-table-wrap table,
+.hs-cross-table-wrap table,
+.lsr-table-wrap table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.daily-data-table th,
+.daily-data-table td,
+.issue-config-table-wrap th,
+.issue-config-table-wrap td,
+.hs-cross-table-wrap th,
+.hs-cross-table-wrap td,
+.lsr-table-wrap th,
+.lsr-table-wrap td {
+    text-align: center;
+    padding: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+}
+
+#issueBoardConfigTable,
+#gembaConfigTable,
+#leadershipGembaConfigTable,
+#trainingScheduleConfigTable {
+    min-width: 0;
+}
+
+.btn {
+    border-radius: 6px;
+}
+
+.btn-primary,
+.primary-btn {
+    background: #1f7a3f;
+    color: #ffffff;
+}
+
+.btn-secondary,
+.btn-delete {
+    height: 34px;
+}
+
+.issue-edit,
+.gemba-edit {
+    min-width: 64px;
+    padding: 0 10px;
+}
+
+.issue-delete,
+.gemba-delete {
+    min-width: 70px;
+}
+
+@media (max-width: 1024px) {
+    .form-grid,
+    .issue-board-meta-grid {
+        grid-template-columns: 1fr;
+    }
 }

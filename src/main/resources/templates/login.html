@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login â€“ Carlsberg PMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/ui-shell.css">
+</head>
+<body class="login-page">
+
+    <div class="login-card">
+
+        <div class="login-logo">
+            <img class="header-logo" src="/images/carlsbergWhiteLogo.png"
+                 alt="Carlsberg Logo"
+                 onerror="this.style.display='none'">
+        </div>
+
+        <h1 class="login-title">Production Management System</h1>
+        <p class="login-subtitle">Sign in to continue</p>
+
+        <div class="login-error" id="loginError">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="loginErrorMsg">Invalid credentials</span>
+        </div>
+
+        <div class="login-field">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username"
+                   required autocomplete="username">
+        </div>
+
+        <div class="login-field">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password"
+                   required autocomplete="current-password">
+        </div>
+
+        <button class="login-btn" id="loginBtn" type="button">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+
+    </div>
+
+    <script>
+        (function () {
+            const usernameEl = document.getElementById('username');
+            const passwordEl = document.getElementById('password');
+            const loginBtn   = document.getElementById('loginBtn');
+            const errorBox   = document.getElementById('loginError');
+            const errorMsg   = document.getElementById('loginErrorMsg');
+
+            function showError(msg) {
+                errorMsg.textContent = msg;
+                errorBox.classList.add('show');
+            }
+
+            function hideError() {
+                errorBox.classList.remove('show');
+            }
+
+            function doLogin() {
+                const username = usernameEl.value.trim();
+                const password = passwordEl.value;
+
+                if (!username || !password) {
+                    showError('Please enter both username and password.');
+                    return;
+                }
+
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in\u2026';
+                hideError();
+
+                fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, password: password })
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.status === 'success') {
+                        window.location.href = '/kpi-dashboard';
+                    } else {
+                        showError(data.message || 'Invalid credentials');
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                    }
+                })
+                .catch(function () {
+                    showError('Server error. Please try again.');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                });
+            }
+
+            loginBtn.addEventListener('click', doLogin);
+
+            [usernameEl, passwordEl].forEach(function (el) {
+                el.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') doLogin();
+                });
+            });
+        })();
+    </script>
+
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
+</body>
+</html>
+
+
+

@@ -71,9 +71,23 @@ $(function () {
     $('.nav-parent-toggle').on('click', function (e) {
         e.preventDefault();
         const $parent = $(this).closest('.nav-parent');
-        $(this).toggleClass('expanded');
-        $parent.find('.nav-children').toggleClass('show').slideToggle(200);
+        $(this).addClass('expanded');
+        $parent.find('.nav-children').addClass('show').show();
     });
+
+    $('.nav-parent-toggle').addClass('expanded');
+    $('.nav-children').addClass('show').show();
+
+    const currentPath = window.location.pathname;
+    const currentUrl = currentPath + window.location.search;
+    const $matchedChild = $('.nav-child').filter(function() {
+        const href = $(this).attr('href');
+        return href && (href === currentUrl || href === currentPath);
+    }).first();
+    if ($matchedChild.length) {
+        $('.nav-child').removeClass('active');
+        $matchedChild.addClass('active');
+    }
 
     // -------------------------------------------------------
     // Load period filter then render charts

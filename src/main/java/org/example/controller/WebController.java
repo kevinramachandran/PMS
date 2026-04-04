@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
@@ -58,7 +59,92 @@ public class WebController {
 
     @GetMapping("/settings")
     public String settings() {
-        return "settings";
+        return "redirect:/pms/top-priorities";
+    }
+
+    @GetMapping("/pms/top-priorities")
+    public String topPriorities(Model model) {
+        return settingsView(model, "priorities", "", "Top 3 Priorities");
+    }
+
+    @GetMapping("/pms/weekly-priorities")
+    public String weeklyPriorities(Model model) {
+        return settingsView(model, "weekly-priorities", "", "Top 3 Weekly Priorities");
+    }
+
+    @GetMapping("/pms/daily-performance")
+    public String dailyPerformance(Model model) {
+        return settingsView(model, "daily-performance", "", "Daily Performance");
+    }
+
+    @GetMapping("/pms/people-daily")
+    public String peopleDaily(Model model) {
+        return settingsView(model, "daily-section", "PEOPLE", "People - Daily");
+    }
+
+    @GetMapping("/pms/quality-daily")
+    public String qualityDaily(Model model) {
+        return settingsView(model, "daily-section", "QUALITY", "Quality - Daily");
+    }
+
+    @GetMapping("/pms/service-daily")
+    public String serviceDaily(Model model) {
+        return settingsView(model, "daily-section", "SERVICE", "Service - Daily");
+    }
+
+    @GetMapping("/pms/cost-daily")
+    public String costDaily(Model model) {
+        return settingsView(model, "daily-section", "COST", "Cost - Daily");
+    }
+
+    @GetMapping("/pms/production-metrics")
+    public String productionMetrics(Model model) {
+        return settingsView(model, "metrics-data", "", "Production Metrics Data");
+    }
+
+    @GetMapping("/config/issue-board")
+    public String issueBoardConfig(Model model) {
+        return settingsView(model, "issue-board", "", "Issue Board Configuration");
+    }
+
+    @GetMapping("/config/gemba-walk")
+    public String gembaWalkPage(Model model) {
+        return settingsView(model, "gemba-schedule", "", "Gemba Walk Configuration");
+    }
+
+    @GetMapping("/config/safety-gemba")
+    public String safetyGembaConfig(Model model) {
+        return settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba Tracker Config");
+    }
+
+    @GetMapping("/config/training")
+    public String trainingConfig(Model model) {
+        return settingsView(model, "training-schedule", "", "Training Schedule Config");
+    }
+
+    @GetMapping("/config/pms-agenda")
+    public String pmsAgendaConfig(Model model) {
+        return settingsView(model, "meeting-agenda", "", "PMS Agenda Config");
+    }
+
+    @GetMapping("/config/process-confirmation")
+    public String processConfirmationConfig(Model model) {
+        return settingsView(model, "process-confirmation", "", "PMS Process Confirmation Config");
+    }
+
+    @GetMapping("/config/abnormality")
+    public String abnormalityConfig(Model model) {
+        return settingsView(model, "abnormality-tracker", "", "Abnormality Tracker Config");
+    }
+
+    @GetMapping("/config/hs-daily")
+    public String hsDailyConfig(Model model) {
+        return settingsView(model, "hs-cross", "", "H&S Cross Daily Config");
+    }
+
+    @GetMapping("/config/lsr")
+    public String lsrConfig(Model model) {
+        return settingsView(model, "lsr-tracking", "", "LSR Tracking Config");
     }
 
     @GetMapping("/add-metrics")
@@ -69,5 +155,17 @@ public class WebController {
     @GetMapping("/add-daily-data")
     public String addDailyData() {
         return "add-daily-data";
+    }
+
+    @GetMapping("/pms-configuration")
+    public String pmsConfiguration() {
+        return "pms-configuration";
+    }
+
+    private String settingsView(Model model, String activePage, String activeType, String activeTitle) {
+        model.addAttribute("activePage", activePage);
+        model.addAttribute("activeType", activeType);
+        model.addAttribute("activeTitle", activeTitle);
+        return "settings";
     }
 }

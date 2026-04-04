@@ -1,0 +1,171 @@
+package org.example.service;
+
+import org.example.entity.AppUser;
+import org.example.model.UserInfo;
+import org.example.repository.AppUserRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+
+@Service
+public class AuthService {
+
+    private static final PasswordEncoder STATIC_ENCODER = new BCryptPasswordEncoder();
+
+    private static final List<UserInfo> STATIC_SYSTEM_USERS = List.of(
+        new UserInfo("siva", "system.admin.a@internal.local", STATIC_ENCODER.encode("Password@123"), "ADMIN"),
+        new UserInfo("kevin", "system.admin.b@internal.local", STATIC_ENCODER.encode("Password@123"), "ADMIN")
+    );
+
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    public Optional<UserInfo> authenticate(String username, String password) {
+        if (username == null || password == null) return Optional.empty();
+
+        String normalizedUsername = username.trim();
+
+        Optional<UserInfo> staticUser = STATIC_SYSTEM_USERS.stream()
+                .filter(u -> u.getUsername().equalsIgnoreCase(normalizedUsername))
+                .findFirst();
+        if (staticUser.isPresent()) {
+            return staticUser.filter(u -> passwordEncoder.matches(password, u.getPassword()));
+        }
+
+        return appUserRepository.findByUsernameIgnoreCase(username.trim())
+            .filter(u -> matchesAndMigrateIfLegacy(u, password))
+                .map(this::toUserInfo);
+    }
+
+    public List<UserInfo> getAllUsers() {
+        List<UserInfo> users = new ArrayList<>(STATIC_SYSTEM_USERS);
+        appUserRepository.findAll().stream()
+                .filter(u -> !isReservedUsername(u.getUsername()))
+                .map(this::toUserInfo)
+                .forEach(users::add);
+        return users;
+    }
+
+    public synchronized Optional<String> addUser(String username, String email, String password, String role) {
+        if (username == null || username.trim().isEmpty()) return Optional.of("Username is required");
+        if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
+        if (password == null || password.trim().isEmpty()) return Optional.of("Password is required");
+        if (role == null || (!"ADMIN".equals(role) && !"USER".equals(role))) return Optional.of("Role must be ADMIN or USER");
+
+        String normalizedUsername = username.trim();
+        String normalizedEmail = email.trim();
+        String normalizedRole = role.trim().toUpperCase();
+
+        if (isReservedUsername(normalizedUsername)) {
+            return Optional.of("Username is reserved for system admin");
+        }
+
+        if (appUserRepository.existsByUsernameIgnoreCase(normalizedUsername)) {
+            return Optional.of("Username already exists");
+        }
+        if (appUserRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            return Optional.of("Email already exists");
+        }
+
+        AppUser user = new AppUser();
+        user.setUsername(normalizedUsername);
+        user.setEmail(normalizedEmail);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(normalizedRole);
+        appUserRepository.save(user);
+        return Optional.empty();
+    }
+
+    public List<AppUser> getManageableUsers() {
+        return appUserRepository.findAll().stream()
+                .filter(u -> !isReservedUsername(u.getUsername()))
+                .toList();
+    }
+
+    public synchronized Optional<String> updateUser(Long id, String email, String password, String role) {
+        if (id == null) return Optional.of("User id is required");
+        if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
+        if (role == null || (!"ADMIN".equals(role) && !"USER".equals(role))) return Optional.of("Role must be ADMIN or USER");
+
+        Optional<AppUser> maybeUser = appUserRepository.findById(id);
+        if (maybeUser.isEmpty()) return Optional.of("User not found");
+
+        AppUser user = maybeUser.get();
+        if (isReservedUsername(user.getUsername())) {
+            return Optional.of("System user cannot be modified");
+        }
+
+        String normalizedEmail = email.trim();
+        String normalizedRole = role.trim().toUpperCase(Locale.ROOT);
+
+        if (appUserRepository.existsByEmailIgnoreCaseAndIdNot(normalizedEmail, id)) {
+            return Optional.of("Email already exists");
+        }
+
+        user.setEmail(normalizedEmail);
+        user.setRole(normalizedRole);
+
+        if (password != null && !password.trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(password));
+        }
+
+        appUserRepository.save(user);
+        return Optional.empty();
+    }
+
+    public synchronized Optional<String> deleteUser(Long id) {
+        if (id == null) return Optional.of("User id is required");
+
+        Optional<AppUser> maybeUser = appUserRepository.findById(id);
+        if (maybeUser.isEmpty()) return Optional.of("User not found");
+
+        AppUser user = maybeUser.get();
+        if (isReservedUsername(user.getUsername())) {
+            return Optional.of("System user cannot be deleted");
+        }
+
+        appUserRepository.deleteById(id);
+        return Optional.empty();
+    }
+
+    private UserInfo toUserInfo(AppUser user) {
+        return new UserInfo(user.getUsername(), user.getEmail(), user.getPassword(), user.getRole());
+    }
+
+    private boolean isReservedUsername(String username) {
+        if (username == null) return false;
+        String key = username.trim().toLowerCase(Locale.ROOT);
+        return "siva".equals(key) || "kevin".equals(key);
+    }
+
+    private boolean matchesAndMigrateIfLegacy(AppUser user, String rawPassword) {
+        String stored = user.getPassword();
+        if (stored == null || stored.isBlank()) {
+            return false;
+        }
+
+        if (isBcryptHash(stored)) {
+            return passwordEncoder.matches(rawPassword, stored);
+        }
+
+        // Backward compatibility for old plain-text rows: verify once, then migrate.
+        if (stored.equals(rawPassword)) {
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            appUserRepository.save(user);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
+    }
+}

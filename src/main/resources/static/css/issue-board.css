@@ -9,30 +9,24 @@
 .issue-board-title-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: space-between;
     background: #ffffff;
     color: #1f2937;
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid #e5e7eb;
-}
-
-.board-logo {
-    width: 54px;
-    height: auto;
 }
 
 .issue-board-title-row h2 {
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: 0.01em;
 }
 
-.review-meta {
+.review-dates {
     display: flex;
-    gap: 32px;
-    padding: 12px 16px;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
+    gap: 20px;
+    align-items: center;
+    font-size: 13px;
+    color: #4b5563;
 }
 
 .issue-table-wrap {
@@ -42,14 +36,15 @@
 .issue-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px;
-    font-size: 13px;
+    min-width: 1160px;
+    font-size: 12px;
+    table-layout: fixed;
 }
 
 .issue-table thead th {
     background: #f9fafb;
     color: #374151;
-    padding: 10px 8px;
+    padding: 8px 8px;
     border: 1px solid #e5e7eb;
     text-align: left;
     white-space: nowrap;
@@ -60,13 +55,39 @@
 
 .issue-table tbody td {
     border: 1px solid #e5e7eb;
-    padding: 8px;
-    vertical-align: top;
+    padding: 6px 8px;
+    vertical-align: middle;
     background: #ffffff;
 }
 
 .issue-table tbody tr:nth-child(even) td {
     background: #f9fafb;
+}
+
+.issue-table tbody tr:hover td {
+    background: #f5f5f5;
+}
+
+.issue-table td {
+    word-break: break-word;
+}
+
+.issue-table th:nth-child(1),
+.issue-table td:nth-child(1) {
+    width: 40px;
+    text-align: center;
+}
+
+.issue-table th:nth-child(9),
+.issue-table td:nth-child(9) {
+    width: 76px;
+    text-align: center;
+}
+
+.issue-table th:nth-child(10),
+.issue-table td:nth-child(10) {
+    width: 96px;
+    text-align: center;
 }
 
 .empty-row {
@@ -75,9 +96,46 @@
     padding: 18px;
 }
 
+.status-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle {
+    --progress: 0;
+    --size: 44px;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background: conic-gradient(#16a34a calc(var(--progress) * 1%), #e5e7eb 0);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle::before {
+    content: "";
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: #ffffff;
+}
+
+.progress-circle-label {
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
 .status-pill {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 2px 8px;
+    margin-top: 4px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
@@ -122,8 +180,9 @@
         font-size: 16px;
     }
 
-    .review-meta {
+    .review-dates {
         flex-direction: column;
         gap: 6px;
+        align-items: flex-end;
     }
 }

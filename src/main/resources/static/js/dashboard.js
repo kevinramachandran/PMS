@@ -1,18 +1,59 @@
 $(document).ready(function() {
-    // Navigation Parent/Child Toggle
+    // Toggle nav children open/close
     $('.nav-parent-toggle').on('click', function(e) {
         e.preventDefault();
-        $(this).toggleClass('expanded');
-        $(this).next('.nav-children').slideToggle(200);
-    });
+        e.stopPropagation();
+        var $toggle = $(this);
+        var $children = $toggle.next('.nav-children');
 
-    // Close children on mobile when child is clicked
-    $('.nav-child').on('click', function() {
-        if (window.innerWidth <= 768) {
-            $(this).closest('.nav-children').slideUp(200);
-            $(this).closest('.nav-parent').find('.nav-parent-toggle').removeClass('expanded');
+        if ($toggle.hasClass('expanded')) {
+            $toggle.removeClass('expanded');
+            $children.removeClass('show').slideUp(200);
+        } else {
+            $toggle.addClass('expanded');
+            $children.addClass('show').slideDown(200);
         }
     });
+
+    // Keep nav collapsed by default and only open the active branch
+    $('.nav-parent-toggle').removeClass('expanded');
+    $('.nav-children').removeClass('show').hide();
+
+    function highlightCurrentNavigation() {
+        const currentPath = window.location.pathname;
+        const currentUrl = currentPath + window.location.search;
+
+        $('.nav-item').removeClass('active');
+
+        const $matchedChild = $('.nav-child').filter(function() {
+            const href = $(this).attr('href');
+            return href && (href === currentUrl || href === currentPath);
+        }).first();
+
+        if ($matchedChild.length) {
+            $matchedChild.addClass('active');
+            return;
+        }
+
+        const $matchedTop = $('.nav-item').not('.nav-child, .nav-parent-toggle').filter(function() {
+            const href = $(this).attr('href');
+            return href && href === currentPath;
+        }).first();
+
+        if ($matchedTop.length) {
+            $matchedTop.addClass('active');
+        }
+    }
+
+    highlightCurrentNavigation();
+
+    const $activeChild = $('.nav-child.active');
+    if ($activeChild.length) {
+        const $parentChildren = $activeChild.closest('.nav-children');
+        const $parentToggle = $parentChildren.prev('.nav-parent-toggle');
+        $parentToggle.addClass('expanded');
+        $parentChildren.addClass('show').show();
+    }
 
     // Sidebar Toggle
     const hamburger = $('#hamburger');
@@ -43,6 +84,15 @@ $(document).ready(function() {
     hamburger.on('click', function() {
         if (window.innerWidth > 768) {
             localStorage.setItem('sidebarCollapsed', sidebar.hasClass('collapsed'));
+        }
+    });
+
+    bindDashboardModalEvents();
+    initializeOverviewCards();
+
+    $(document).on('click', '.chart-box canvas, .chart-card canvas', function() {
+        if (this.id) {
+            window.openChart(this.id);
         }
     });
 
@@ -93,7 +143,315 @@ const chartThemes = {
     }
 };
 
-const chartInstances = {};
+const chartInstances = window.chartInstances || {};
+window.chartInstances = chartInstances;
+let expandedChartInstance = null;
+let dashboardToastTimer = null;
+let lastToastSignature = '';
+let lastToastAt = 0;
+
+function cloneChartPayload(payload) {
+    return JSON.parse(JSON.stringify(payload || {}));
+}
+
+function resolveChartTitle(chartId) {
+    const canvas = document.getElementById(chartId);
+    if (!canvas) {
+        return 'Expanded KPI Chart';
+    }
+
+    const panel = canvas.closest('.chart-box, .chart-card');
+    if (!panel) {
+        return 'Expanded KPI Chart';
+    }
+
+    const titleEl = panel.querySelector('.chart-title-text');
+    const titleText = titleEl ? titleEl.textContent.trim() : '';
+    return titleText || 'Expanded KPI Chart';
+}
+
+function showToast(message, signature) {
+    const toast = document.getElementById('dashboardToast');
+    if (!toast || !message) {
+        return;
+    }
+
+    const resolvedSignature = signature || message;
+    const now = Date.now();
+    if (resolvedSignature === lastToastSignature && now - lastToastAt < 4000) {
+        return;
+    }
+
+    lastToastSignature = resolvedSignature;
+    lastToastAt = now;
+
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    if (dashboardToastTimer) {
+        window.clearTimeout(dashboardToastTimer);
+    }
+
+    dashboardToastTimer = window.setTimeout(function() {
+        toast.classList.remove('show');
+    }, 2800);
+}
+
+window.showToast = showToast;
+
+function closeChartModal() {
+    const modal = document.getElementById('chartModal');
+    if (!modal) {
+        return;
+    }
+
+    if (expandedChartInstance) {
+        expandedChartInstance.destroy();
+        expandedChartInstance = null;
+    }
+
+    const expandedCanvas = document.getElementById('expandedChart');
+    const customContent = document.getElementById('expandedCustomContent');
+    if (expandedCanvas) {
+        expandedCanvas.style.display = 'block';
+    }
+    if (customContent) {
+        customContent.innerHTML = '';
+        customContent.style.display = 'none';
+    }
+
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+window.closeChartModal = closeChartModal;
+
+function bindDashboardModalEvents() {
+    if (window.__dashboardModalBound) {
+        return;
+    }
+
+    const modal = document.getElementById('chartModal');
+    if (!modal) {
+        return;
+    }
+
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeChartModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeChartModal();
+        }
+    });
+
+    window.__dashboardModalBound = true;
+}
+
+window.openChart = function(chartId) {
+    if (!chartId || !window.chartInstances || !window.chartInstances[chartId]) {
+        showToast('No data available for selected period', 'chart-not-ready');
+        return;
+    }
+
+    const source = window.chartInstances[chartId];
+    const chartType = source.config && source.config.type ? source.config.type : 'bar';
+    const chartData = cloneChartPayload(source.data);
+
+    if (!chartData || !Array.isArray(chartData.datasets) || chartData.datasets.length === 0) {
+        showToast('No data available for selected period', 'chart-empty');
+        return;
+    }
+
+    const modal = document.getElementById('chartModal');
+    const expandedCanvas = document.getElementById('expandedChart');
+    const customContent = document.getElementById('expandedCustomContent');
+    const title = document.getElementById('expandedChartTitle');
+    if (!modal || !expandedCanvas) {
+        return;
+    }
+
+    if (customContent) {
+        customContent.innerHTML = '';
+        customContent.style.display = 'none';
+    }
+    expandedCanvas.style.display = 'block';
+
+    const expandedOptions = cloneChartPayload(source.options);
+    expandedOptions.responsive = true;
+    expandedOptions.maintainAspectRatio = false;
+    expandedOptions.animation = false;
+    expandedOptions.plugins = expandedOptions.plugins || {};
+    expandedOptions.plugins.legend = expandedOptions.plugins.legend || { display: true, position: 'top' };
+    expandedOptions.plugins.tooltip = expandedOptions.plugins.tooltip || { enabled: true };
+
+    if (expandedChartInstance) {
+        expandedChartInstance.destroy();
+    }
+
+    if (title) {
+        title.textContent = resolveChartTitle(chartId);
+    }
+
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    expandedChartInstance = new Chart(expandedCanvas.getContext('2d'), {
+        type: chartType,
+        data: chartData,
+        options: expandedOptions
+    });
+};
+
+window.openChartPopup = window.openChart;
+
+function parseFirstNumber(text, fallbackValue) {
+    const input = text === null || text === undefined ? '' : String(text);
+    const matched = input.match(/-?\d+(\.\d+)?/);
+    if (!matched) return fallbackValue;
+    const parsed = Number(matched[0]);
+    return Number.isFinite(parsed) ? parsed : fallbackValue;
+}
+
+function setMiniBoxState(boxEl, value, threshold) {
+    if (!boxEl) return;
+    boxEl.classList.remove('green', 'yellow', 'red');
+    if (value >= threshold.good) {
+        boxEl.classList.add('green');
+        return;
+    }
+    if (value >= threshold.warn) {
+        boxEl.classList.add('yellow');
+        return;
+    }
+    boxEl.classList.add('red');
+}
+
+// Update LSR Overview Card Display
+function refreshLsrOverview() {
+    const lsr1 = parseFirstNumber((document.getElementById('lsr1Score') || {}).textContent, 100);
+    const lsr23 = parseFirstNumber((document.getElementById('lsr23Score') || {}).textContent, 100);
+    const lsr4 = parseFirstNumber((document.getElementById('lsr4Score') || {}).textContent, 100);
+    const lsr5 = parseFirstNumber((document.getElementById('lsr5Score') || {}).textContent, 100);
+    const lsrContractor = parseFirstNumber((document.getElementById('lsrContractorScore') || {}).textContent, 100);
+    
+    const valueMap = {
+        lsr1ScoreDisplay: lsr1 + '%',
+        lsr23ScoreDisplay: lsr23 + '%',
+        lsr4ScoreDisplay: lsr4 + '%',
+        lsr5ScoreDisplay: lsr5 + '%',
+        lsrContractorScoreDisplay: lsrContractor + '%'
+    };
+    
+    Object.keys(valueMap).forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = String(valueMap[id]);
+        }
+    });
+    
+    // Update month/year
+    const now = new Date();
+    document.getElementById('lsrOverviewMonth').textContent = now.toLocaleString('default', { month: 'short' });
+    document.getElementById('lsrOverviewYear').textContent = String(now.getFullYear()).slice(-2);
+}
+
+// Update H&S Overview Card Display
+function refreshHsOverview() {
+    const accidentsCells = document.querySelectorAll('#accidentsCrossGrid .hs-cross-cell[data-has-incident="true"]');
+    const nearMissCells = document.querySelectorAll('#nearMissCrossGrid .hs-cross-cell[data-has-incident="true"]');
+    const safetyConcernCells = document.querySelectorAll('#safetyConcernCrossGrid .hs-cross-cell[data-has-incident="true"]');
+    
+    const accidents = accidentsCells ? accidentsCells.length : 0;
+    const nearMiss = nearMissCells ? nearMissCells.length : 0;
+    const safetyConcern = safetyConcernCells ? safetyConcernCells.length : 0;
+    
+    document.getElementById('hsAccidentCount').textContent = String(accidents);
+    document.getElementById('hsNearMissCount').textContent = String(nearMiss);
+    document.getElementById('hsSafetyConcernCount').textContent = String(safetyConcern);
+    
+    // Update month/year
+    const now = new Date();
+    document.getElementById('hsOverviewMonth').textContent = now.toLocaleString('default', { month: 'short' });
+    document.getElementById('hsOverviewYear').textContent = String(now.getFullYear()).slice(-2);
+}
+
+// Initialize overview cards with live updates
+function initializeOverviewCards() {
+    refreshLsrOverview();
+    refreshHsOverview();
+    window.setInterval(function () {
+        refreshLsrOverview();
+        refreshHsOverview();
+    }, 2000);
+}
+
+// Open LSR Overview in modal
+window.openLsrOverview = function () {
+    const modal = document.getElementById('chartModal');
+    const expandedCanvas = document.getElementById('expandedChart');
+    const customContent = document.getElementById('expandedCustomContent');
+    const title = document.getElementById('expandedChartTitle');
+
+    if (!modal || !customContent || !expandedCanvas) {
+        return;
+    }
+
+    if (expandedChartInstance) {
+        expandedChartInstance.destroy();
+        expandedChartInstance = null;
+    }
+
+    const lsrSection = document.querySelector('.lsr-tracking-section');
+    customContent.innerHTML = '';
+    if (lsrSection) {
+        customContent.appendChild(lsrSection.cloneNode(true));
+    }
+
+    if (title) {
+        title.textContent = 'Life Saving Rules - Full View';
+    }
+
+    expandedCanvas.style.display = 'none';
+    customContent.style.display = 'block';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+};
+
+// Open H&S Overview in modal
+window.openHsOverview = function () {
+    const modal = document.getElementById('chartModal');
+    const expandedCanvas = document.getElementById('expandedChart');
+    const customContent = document.getElementById('expandedCustomContent');
+    const title = document.getElementById('expandedChartTitle');
+
+    if (!modal || !customContent || !expandedCanvas) {
+        return;
+    }
+
+    if (expandedChartInstance) {
+        expandedChartInstance.destroy();
+        expandedChartInstance = null;
+    }
+
+    const hsSection = document.querySelector('.hs-cross-section');
+    customContent.innerHTML = '';
+    if (hsSection) {
+        customContent.appendChild(hsSection.cloneNode(true));
+    }
+
+    if (title) {
+        title.textContent = 'H&S Incidents - Full View';
+    }
+
+    expandedCanvas.style.display = 'none';
+    customContent.style.display = 'block';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+};
 
 let selectedKpiMonth = new Date().getMonth() + 1;
 let selectedKpiYear = new Date().getFullYear();
@@ -193,6 +551,7 @@ function loadProductionCharts(month, year) {
         error: function() {
             renderNoDataForAllCharts('API unavailable');
             renderDailyPerformanceTable([]);
+            showToast('Unable to load KPI dashboard data', 'kpi-load-error');
             updateSyncStatus('Sync failed');
         }
     });
@@ -279,6 +638,7 @@ function renderAllCharts(metrics) {
     });
 
     if (metrics.length === 0) {
+        showToast('No data available for selected period', 'kpi-empty-period');
         renderNoDataForAllCharts('No Data Available');
         return;
     }
@@ -491,12 +851,15 @@ function renderDailyPerformanceTable(metrics) {
     if (!tbody) return;
 
     if (!Array.isArray(metrics) || metrics.length === 0) {
+        updateDailyPerformanceAsOf(null, true);
         tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 14px; color:#6b7280;">No Data Available</td></tr>';
         return;
     }
 
     const todayRecord = metrics[metrics.length - 1] || null;
     const yesterdayRecord = metrics.length > 1 ? metrics[metrics.length - 2] : null;
+
+    updateDailyPerformanceAsOf(todayRecord ? todayRecord.date : null, true);
 
     const rows = kpiTableConfig.map(function(kpi, index) {
         const todayTarget = readNumber(todayRecord, kpi.targetField);
@@ -551,7 +914,10 @@ function loadDailyPerformanceSummary(month, year) {
 function renderDailyPerformanceSummary(performanceData) {
     const summaryTable = document.querySelector('.daily-perf-table');
     if (!summaryTable) return;
-    updateDailyPerformanceAsOf(performanceData ? performanceData.date : null);
+
+    if (performanceData && performanceData.date) {
+        updateDailyPerformanceAsOf(performanceData.date, true);
+    }
 
     const valueCells = summaryTable.querySelectorAll('td');
     if (!valueCells || valueCells.length < 4) return;
@@ -567,18 +933,22 @@ function renderDailyPerformanceSummary(performanceData) {
     setSummaryCell(valueCells[3], yesterdayActual, 0, getPerformanceClass(yesterdayActual, dailyTarget, true));
 }
 
-function updateDailyPerformanceAsOf(dateValue) {
+function updateDailyPerformanceAsOf(dateValue, forceUpdate) {
     const asOf = document.getElementById('dailyPerfAsOf');
     if (!asOf) return;
 
     if (!dateValue) {
-        asOf.textContent = 'As of: -';
+        if (forceUpdate) {
+            asOf.textContent = 'As of: -';
+        }
         return;
     }
 
     const parsed = new Date(dateValue);
     if (Number.isNaN(parsed.getTime())) {
-        asOf.textContent = 'As of: -';
+        if (forceUpdate) {
+            asOf.textContent = 'As of: -';
+        }
         return;
     }
 
@@ -711,6 +1081,8 @@ function renderChart(canvasId, config) {
             }
         }
     });
+
+    canvas.title = 'Click to expand chart';
 }
 
 function renderNoDataForAllCharts(message) {

@@ -11,15 +11,16 @@
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/issue-board.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
-<body class="modern-shell">
+<body class="modern-shell dashboard-bg">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
-                <img class="logo" src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
             </div>
         </div>
         <nav class="sidebar-nav">
@@ -32,18 +33,19 @@
             <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
             <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
             <div class="nav-parent">
-                <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
-                <div class="nav-children">
-                    <a href="/settings" class="nav-item nav-child" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
-                    <a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
-                    <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
-                    <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
-                    <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
-                    <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
-                    <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
-                    <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+<a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
+                            <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
+                            <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
+                            <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
+                            <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
+                            <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
+                            <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+                            <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily Config"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily Config</span></a>
+                            <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking Config"><i class="fas fa-life-ring"></i><span>LSR Tracking Config</span></a>
+                    </div>
                 </div>
-            </div>
         </nav>
     </aside>
 
@@ -51,7 +53,7 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>Issue Board</h1>
+                <h1>PMS 4 Deck V0</h1>
             </div>
             <div class="header-right">
                 <div class="sync-status" id="issueBoardSyncStatus">Last synced: --:--:--</div>
@@ -64,12 +66,11 @@
         <div class="content-area">
             <section class="issue-board-card">
                 <div class="issue-board-title-row">
-                    <img class="board-logo" src="/images/carlsberg-logo.svg" alt="Carlsberg">
-                    <h2>PMS 4 - ISSUES BOARD</h2>
-                </div>
-                <div class="review-meta">
-                    <div><strong>Last review date:</strong> <span id="lastReviewDate">-</span></div>
-                    <div><strong>Next review date:</strong> <span id="nextReviewDate">-</span></div>
+                    <h2>Issue Board</h2>
+                    <div class="review-dates">
+                        <span>Last: <strong id="lastReviewDate">-</strong></span>
+                        <span>Next: <strong id="nextReviewDate">-</strong></span>
+                    </div>
                 </div>
 
                 <div class="issue-table-wrap">
@@ -109,5 +110,9 @@
 </div>
 
 <script src="/js/issue-board.js"></script>
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
 </body>
 </html>
+
+

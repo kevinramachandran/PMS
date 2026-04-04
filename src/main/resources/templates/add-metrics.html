@@ -36,6 +36,21 @@
             --sidebar-collapsed-width: 80px;
             --header-height: 70px;
         }
+            .header-logo {
+                height: 32px;
+                width: auto;
+                object-fit: contain;
+            }
+            .solvex-watermark {
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                opacity: 0.08;
+                width: 120px;
+                pointer-events: none;
+                z-index: 10;
+            }
 
         body {
             font-family: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
@@ -123,13 +138,13 @@
             font-size: 18px;
         }
 
-        .nav-parent { position: relative; }
+        .nav-parent { position: relative; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
         .nav-parent-toggle { width: 100%; }
         .nav-chevron { margin-left: auto; transition: transform 0.3s ease; }
         .nav-parent-toggle.expanded .nav-chevron { transform: rotate(180deg); }
         .nav-children { display: none; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
         .nav-children.show { display: block; }
-        .nav-child { padding: 12px 24px 12px 48px; font-size: 14px; }
+        .nav-child { padding: 9px 18px 9px 42px; font-size: 12px; }
         .nav-child:hover { background-color: rgba(255, 255, 255, 0.1); }
         .nav-child.active { background-color: rgba(255, 255, 255, 0.15); font-weight: 600; }
 
@@ -549,6 +564,7 @@
             animation: fadeIn 0.5s ease;
         }
     </style>
+    <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
 <body>
     <!-- Sidebar Overlay -->
@@ -559,7 +575,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img class="logo" src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                    <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
                 </div>
                 <div class="sidebar-title">Carlsberg PMS</div>
             </div>
@@ -568,10 +584,46 @@
                     <i class="fas fa-chart-line"></i>
                     <span>KPI Dashboard</span>
                 </a>
+                <a href="/issue-board" class="nav-item" data-tooltip="Issue Board">
+                    <i class="fas fa-table-list"></i>
+                    <span>Issue Board</span>
+                </a>
+                <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk Schedule">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Gemba Walk Schedule</span>
+                </a>
+                <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Safety Gemba - Tracker">
+                    <i class="fas fa-route"></i>
+                    <span>Safety Gemba - Tracker</span>
+                </a>
+                <a href="/training-schedule" class="nav-item" data-tooltip="Training Schedule">
+                    <i class="fas fa-calendar-days"></i>
+                    <span>Training Schedule</span>
+                </a>
+                <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>PMS Agenda</span>
+                </a>
+                <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation">
+                    <i class="fas fa-list-check"></i>
+                    <span>PMS Process Confirmation</span>
+                </a>
+                <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>Abnormality Tracker</span>
+                </a>
                 <div class="nav-parent">
-                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
-                        <a href="/settings" class="nav-item nav-child" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
+                        <a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
+                        <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
+                        <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba Tracker Config</span></a>
+                        <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
+                        <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
+                        <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
+                        <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+                        <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily Config"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily Config</span></a>
+                        <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking Config"><i class="fas fa-life-ring"></i><span>LSR Tracking Config</span></a>
                     </div>
                 </div>
             </nav>
@@ -1114,5 +1166,9 @@
         });
     </script>
     <script src="/js/add-metrics-bulk.js"></script>
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
 </body>
 </html>
+
+
