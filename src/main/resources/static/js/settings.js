@@ -45,6 +45,9 @@ $(document).ready(function() {
         ]
     };
 
+    const todayIso = new Date().toISOString().split('T')[0];
+    $('input[type="date"]').attr('max', todayIso);
+
     initializeMetricsDateField();
     initializeIssueBoardConfigDateField();
     initializeGembaScheduleDateField();
@@ -111,6 +114,12 @@ $(document).ready(function() {
         } else if (config === 'process-confirmation') {
             $('#form-process-confirmation').addClass('active');
             loadProcessConfirmationByDate($('#pcConfigDate').val());
+        } else if (config === 'hs-cross') {
+            $('#form-hs-cross').addClass('active');
+            window.dispatchEvent(new Event('hs-cross-open'));
+        } else if (config === 'lsr-tracking') {
+            $('#form-lsr-tracking').addClass('active');
+            window.dispatchEvent(new Event('lsr-tracking-open'));
         }
     }
 
@@ -125,9 +134,16 @@ $(document).ready(function() {
         return titles[type] || type;
     }
 
+    function getLocalDateString() {
+        const today = new Date();
+        return today.getFullYear() + '-' +
+               String(today.getMonth() + 1).padStart(2, '0') + '-' +
+               String(today.getDate()).padStart(2, '0');
+    }
+
     // ==================== PRIORITIES FORM ====================
     function loadPrioritiesData() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateString();
 
         $.ajax({
             url: `/api/priorities/type/TOP_3/date/${today}`,
@@ -190,7 +206,7 @@ $(document).ready(function() {
 
     // ==================== WEEKLY PRIORITIES FORM ====================
     function loadWeeklyPrioritiesData() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateString();
 
         $.ajax({
             url: `/api/priorities/type/WEEKLY/date/${today}`,
@@ -706,19 +722,120 @@ $(document).ready(function() {
         dateInput.attr('max', today);
         dateInput.val(today);
 
-        dateInput.on('change', function() {
-            const selectedDate = $(this).val();
-            if (!selectedDate) {
+        applyIssueBoardDateLimits();
+
+        $('#issueBoardLastReviewDate, #issueBoardNextReviewDate').off('change').on('change', function() {
+            const selected = $(this).val();
+            if (!selected) {
                 return;
             }
 
-            if (isFutureDate(selectedDate)) {
-                showMessage('issueBoardMessage', 'Future dates are not allowed for Issue Board.', 'error');
+            if (isFutureDate(selected)) {
                 $(this).val(today);
-                return;
+                showIssueBoardPopup('Future review dates are not allowed.');
             }
+        });
+    }
 
-            loadIssueBoardByDate(selectedDate);
+    function showIssueBoardPopup(message) {
+        const $popup = $('#issueBoardPopup');
+        if ($popup.length === 0 || !message) {
+            return;
+        }
+
+        $popup.text(message).addClass('show');
+        window.clearTimeout(window.__issueBoardPopupTimer);
+        window.__issueBoardPopupTimer = window.setTimeout(function() {
+            $popup.removeClass('show');
+        }, 2600);
+    }
+
+    function applyIssueBoardDateLimits() {
+        const today = getTodayDateString();
+        $('#issueBoardLastReviewDate').attr('max', today);
+        $('#issueBoardNextReviewDate').attr('max', today);
+        $('#ibFormIssueDate, #ibFormCompletedDate, #ibFormTargetDate').attr('max', today);
+        $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date, #issueBoardConfigTableBody .ib-target-date').attr('max', today);
+    }
+
+    function normalizeIssueStatus(status) {
+        if (status === null || status === undefined || status === '') {
+            return '0%';
+        }
+
+        const normalized = String(status).trim().toLowerCase();
+        if (normalized.endsWith('%')) {
+            const parsed = Number(normalized.replace('%', ''));
+            if (Number.isFinite(parsed)) {
+                return Math.min(100, Math.max(0, Math.round(parsed))) + '%';
+            }
+        }
+
+        if (normalized === 'done' || normalized === 'closed') {
+            return '100%';
+        }
+
+        if (normalized === 'in-progress' || normalized === 'in progress') {
+            return '50%';
+        }
+
+        return '0%';
+    }
+
+    function calculateDueDaysFromTarget(targetDate) {
+        if (!targetDate) {
+            return '';
+        }
+
+        const target = new Date(targetDate + 'T00:00:00');
+        if (Number.isNaN(target.getTime())) {
+            return '';
+        }
+
+        const today = new Date();
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const msPerDay = 24 * 60 * 60 * 1000;
+        return Math.round((target.getTime() - todayDate.getTime()) / msPerDay);
+    }
+
+    function updateRowDueDays($row) {
+        const targetDate = $row.find('.ib-target-date').val();
+        const dueDays = calculateDueDaysFromTarget(targetDate);
+        $row.find('.ib-due-days').val(dueDays);
+    }
+
+    function updateCompletedDateRequirement($row) {
+        const status = $row.find('.ib-status').val();
+        const $completedDate = $row.find('.ib-completed-date');
+        const isCompleted = status === '100%';
+
+        $completedDate.prop('required', isCompleted);
+        $completedDate.toggleClass('required', isCompleted && !$completedDate.val());
+    }
+
+    function bindIssueBoardRowEvents() {
+        $('#issueBoardConfigTableBody .ib-target-date').off('change').on('change', function() {
+            const $row = $(this).closest('tr');
+            updateRowDueDays($row);
+        });
+
+        const today = getTodayDateString();
+
+        $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date').off('change').on('change', function() {
+            if ($(this).val() && $(this).val() > today) {
+                $(this).val(today);
+                showIssueBoardPopup('Future dates are not allowed.');
+            }
+            updateCompletedDateRequirement($(this).closest('tr'));
+        });
+
+        $('#issueBoardConfigTableBody .ib-status').off('change').on('change', function() {
+            updateCompletedDateRequirement($(this).closest('tr'));
+        });
+
+        $('#issueBoardConfigTableBody tr').each(function() {
+            updateRowDueDays($(this));
+            updateCompletedDateRequirement($(this));
         });
     }
 
@@ -743,11 +860,13 @@ $(document).ready(function() {
     function populateIssueBoardConfigTable(items) {
         const tbody = $('#issueBoardConfigTableBody');
         tbody.empty();
+        unlockIssueBoardRows();
+        applyIssueBoardDateLimits();
 
         if (!items || items.length === 0) {
             $('#issueBoardLastReviewDate').val('');
             $('#issueBoardNextReviewDate').val('');
-            tbody.html('<tr class="placeholder-row"><td colspan="11" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
+            tbody.html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
             return;
         }
 
@@ -759,50 +878,157 @@ $(document).ready(function() {
         });
 
         bindIssueBoardDeleteButtons();
+        bindIssueBoardRowEvents();
+        applyIssueBoardDateLimits();
+    }
+
+    function getIssueFormRowData() {
+        return {
+            problem: $('#ibFormProblem').val().trim(),
+            ownerName: $('#ibFormOwner').val().trim(),
+            issueDate: $('#ibFormIssueDate').val() || '',
+            rootCause: $('#ibFormRootCause').val().trim(),
+            actions: $('#ibFormActions').val().trim(),
+            responsible: $('#ibFormResponsible').val().trim(),
+            targetDate: $('#ibFormTargetDate').val() || '',
+            status: normalizeIssueStatus($('#ibFormStatus').val() || '0%'),
+            completedDate: $('#ibFormCompletedDate').val() || '',
+            remarks: $('#ibFormRemarks').val().trim()
+        };
+    }
+
+    function populateIssueFormFromRow($row) {
+        $('#ibFormProblem').val($row.find('.ib-problem').val() || '');
+        $('#ibFormOwner').val($row.find('.ib-owner').val() || '');
+        $('#ibFormIssueDate').val($row.find('.ib-issue-date').val() || '');
+        $('#ibFormRootCause').val($row.find('.ib-root-cause').val() || '');
+        $('#ibFormActions').val($row.find('.ib-actions').val() || '');
+        $('#ibFormResponsible').val($row.find('.ib-responsible').val() || '');
+        $('#ibFormTargetDate').val($row.find('.ib-target-date').val() || '');
+        $('#ibFormStatus').val(normalizeIssueStatus($row.find('.ib-status').val() || '0%'));
+        $('#ibFormCompletedDate').val($row.find('.ib-completed-date').val() || '');
+        $('#ibFormRemarks').val($row.find('.ib-remarks').val() || '');
+    }
+
+    function resetIssueFormInputs() {
+        $('#ibFormProblem, #ibFormOwner, #ibFormRootCause, #ibFormActions, #ibFormResponsible, #ibFormRemarks').val('');
+        $('#ibFormIssueDate, #ibFormTargetDate, #ibFormCompletedDate').val('');
+        $('#ibFormStatus').val('0%');
     }
 
     function createIssueBoardConfigRow(item) {
         const safeItem = item || {};
-        const due = safeItem.dueDays === null || safeItem.dueDays === undefined ? '' : safeItem.dueDays;
-        const status = safeItem.status || 'Open';
+        const status = normalizeIssueStatus(safeItem.status);
+        const completedDate = safeItem.completedDate || '';
 
         return '' +
             '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '">' +
             '<td><input type="text" class="ib-problem" value="' + escapeAttributeValue(safeItem.problem || '') + '" placeholder="Problem"></td>' +
             '<td><input type="text" class="ib-owner" value="' + escapeAttributeValue(safeItem.ownerName || '') + '" placeholder="Name"></td>' +
-            '<td><input type="text" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '" placeholder="e.g. 05.09.24"></td>' +
+            '<td><input type="date" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
             '<td><input type="text" class="ib-root-cause" value="' + escapeAttributeValue(safeItem.rootCause || '') + '" placeholder="Root Cause"></td>' +
             '<td><input type="text" class="ib-actions" value="' + escapeAttributeValue(safeItem.actions || '') + '" placeholder="Actions"></td>' +
             '<td><input type="text" class="ib-responsible" value="' + escapeAttributeValue(safeItem.responsible || '') + '" placeholder="Responsible"></td>' +
             '<td><input type="date" class="ib-target-date" value="' + escapeAttributeValue(safeItem.targetDate || '') + '"></td>' +
-            '<td><input type="number" class="ib-due-days" value="' + escapeAttributeValue(due) + '" step="1"></td>' +
+            '<td><input type="number" class="ib-due-days" value="" step="1" readonly></td>' +
             '<td>' +
             '<select class="ib-status">' +
-            '<option value="Open" ' + (status === 'Open' ? 'selected' : '') + '>Open</option>' +
-            '<option value="In-Progress" ' + (status === 'In-Progress' ? 'selected' : '') + '>In-Progress</option>' +
-            '<option value="Done" ' + (status === 'Done' ? 'selected' : '') + '>Done</option>' +
-            '<option value="Closed" ' + (status === 'Closed' ? 'selected' : '') + '>Closed</option>' +
+            '<option value="0%" ' + (status === '0%' ? 'selected' : '') + '>0%</option>' +
+            '<option value="25%" ' + (status === '25%' ? 'selected' : '') + '>25%</option>' +
+            '<option value="50%" ' + (status === '50%' ? 'selected' : '') + '>50%</option>' +
+            '<option value="75%" ' + (status === '75%' ? 'selected' : '') + '>75%</option>' +
+            '<option value="100%" ' + (status === '100%' ? 'selected' : '') + '>100%</option>' +
             '</select>' +
             '</td>' +
+            '<td><input type="date" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
             '<td><input type="text" class="ib-remarks" value="' + escapeAttributeValue(safeItem.remarks || '') + '" placeholder="Remarks"></td>' +
-            '<td><button type="button" class="btn-delete issue-delete">Delete</button></td>' +
+            '<td><button type="button" class="btn btn-secondary issue-edit">Edit</button> <button type="button" class="btn-delete issue-delete">Delete</button></td>' +
             '</tr>';
     }
 
     $('#addIssueBoardRowBtn').on('click', function() {
+        if ($('#issueBoardConfigTableBody').attr('data-locked') === '1') {
+            showIssueBoardPopup('Edit is locked after save. Use Cancel to unlock.');
+            return;
+        }
+
+        const formData = getIssueFormRowData();
+        if (!formData.problem || !formData.actions || !formData.responsible) {
+            showIssueBoardPopup('Problem, Actions, and Responsible are required before adding a row.');
+            return;
+        }
+
+        if (formData.completedDate && isFutureDate(formData.completedDate)) {
+            showIssueBoardPopup('Completed date cannot be in the future.');
+            return;
+        }
+
+        if (formData.issueDate && isFutureDate(formData.issueDate)) {
+            showIssueBoardPopup('Issue date cannot be in the future.');
+            return;
+        }
+
+        if (formData.status === '100%' && !formData.completedDate) {
+            showIssueBoardPopup('Completed date is required when status is 100%.');
+            return;
+        }
+
         $('#issueBoardConfigTableBody .placeholder-row').remove();
-        $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow());
+        $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow(formData));
         bindIssueBoardDeleteButtons();
+        bindIssueBoardRowEvents();
+        applyIssueBoardDateLimits();
+        resetIssueFormInputs();
     });
 
     function bindIssueBoardDeleteButtons() {
         $('.issue-delete').off('click').on('click', function() {
             $(this).closest('tr').remove();
             if ($('#issueBoardConfigTableBody tr').length === 0) {
-                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="11" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
+                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
             }
         });
+
+        $('.issue-edit').off('click').on('click', function() {
+            const $row = $(this).closest('tr');
+            populateIssueFormFromRow($row);
+            $row.remove();
+            if ($('#issueBoardConfigTableBody tr').length === 0) {
+                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
+            }
+            showIssueBoardPopup('Row loaded into form for editing. Update and click Add Row.');
+        });
     }
+
+    function lockIssueBoardRowsForStatusUpdates() {
+        const tbody = $('#issueBoardConfigTableBody');
+        tbody.attr('data-locked', '1');
+
+        tbody.find('tr').each(function() {
+            $(this).find('input, select').each(function() {
+                const isAllowed = $(this).hasClass('ib-status') || $(this).hasClass('ib-completed-date');
+                $(this).prop('disabled', !isAllowed);
+            });
+            $(this).find('.issue-delete').prop('disabled', true);
+            $(this).find('.issue-edit').prop('disabled', true);
+        });
+
+        $('#addIssueBoardRowBtn').prop('disabled', true);
+    }
+
+    function unlockIssueBoardRows() {
+        const tbody = $('#issueBoardConfigTableBody');
+        tbody.attr('data-locked', '0');
+        tbody.find('input, select, .issue-delete, .issue-edit').prop('disabled', false);
+        $('#addIssueBoardRowBtn').prop('disabled', false);
+    }
+
+    $('#cancelIssueBoardBtn').on('click', function() {
+        const saveDate = $('#issueBoardConfigDate').val() || getTodayDateString();
+        unlockIssueBoardRows();
+        loadIssueBoardByDate(saveDate);
+        showIssueBoardPopup('Changes discarded.');
+    });
 
     $('#saveIssueBoardBtn').on('click', function() {
         const saveDate = $('#issueBoardConfigDate').val();
@@ -810,12 +1036,22 @@ $(document).ready(function() {
         const nextReviewDate = $('#issueBoardNextReviewDate').val() || null;
 
         if (!saveDate) {
-            showMessage('issueBoardMessage', 'Please select a configuration date.', 'error');
+            showIssueBoardPopup('Issue date is not available. Reload the page and try again.');
             return;
         }
 
         if (isFutureDate(saveDate)) {
-            showMessage('issueBoardMessage', 'Future dates are not allowed for Issue Board.', 'error');
+            showIssueBoardPopup('Future dates are not allowed for Issue Board.');
+            return;
+        }
+
+        if (lastReviewDate && isFutureDate(lastReviewDate)) {
+            showIssueBoardPopup('Last review date cannot be in the future.');
+            return;
+        }
+
+        if (nextReviewDate && isFutureDate(nextReviewDate)) {
+            showIssueBoardPopup('Next review date cannot be in the future.');
             return;
         }
 
@@ -824,7 +1060,7 @@ $(document).ready(function() {
         });
 
         if (rows.length === 0) {
-            showMessage('issueBoardMessage', 'Please add at least one issue row before saving.', 'error');
+            showIssueBoardPopup('Please add at least one issue row before saving.');
             return;
         }
 
@@ -835,16 +1071,24 @@ $(document).ready(function() {
             const problem = $(this).find('.ib-problem').val().trim();
             const actions = $(this).find('.ib-actions').val().trim();
             const responsible = $(this).find('.ib-responsible').val().trim();
-            const dueRaw = $(this).find('.ib-due-days').val();
-            const dueParsed = dueRaw === '' ? null : Number(dueRaw);
+            const dueParsed = calculateDueDaysFromTarget($(this).find('.ib-target-date').val());
+            const statusValue = $(this).find('.ib-status').val();
+            const completedDate = $(this).find('.ib-completed-date').val() || null;
 
             if (!problem || !actions || !responsible) {
                 invalid = true;
                 return false;
             }
 
-            if (dueRaw !== '' && !Number.isFinite(dueParsed)) {
+            if (dueParsed !== '' && !Number.isFinite(dueParsed)) {
                 invalid = true;
+                return false;
+            }
+
+            if (statusValue === '100%' && !completedDate) {
+                invalid = true;
+                $(this).find('.ib-completed-date').addClass('required');
+                showIssueBoardPopup('Completed date is required when status is 100%.');
                 return false;
             }
 
@@ -857,8 +1101,8 @@ $(document).ready(function() {
                 actions: actions,
                 responsible: responsible,
                 targetDate: $(this).find('.ib-target-date').val() || null,
-                dueDays: dueParsed,
-                status: $(this).find('.ib-status').val(),
+                dueDays: dueParsed === '' ? null : dueParsed,
+                status: statusValue,
                 remarks: $(this).find('.ib-remarks').val().trim(),
                 lastReviewDate: lastReviewDate,
                 nextReviewDate: nextReviewDate,
@@ -867,7 +1111,7 @@ $(document).ready(function() {
         });
 
         if (invalid) {
-            showMessage('issueBoardMessage', 'Problem, Actions, and Responsible are required for each row.', 'error');
+            showIssueBoardPopup('Problem, Actions, and Responsible are required for each row.');
             return;
         }
 
@@ -879,12 +1123,13 @@ $(document).ready(function() {
             success: function(response) {
                 const count = Array.isArray(response) ? response.length : payload.length;
                 showMessage('issueBoardMessage', 'Saved ' + count + ' issue rows successfully!', 'success');
+                showIssueBoardPopup('Issue rows saved. Only Status and Completed Date remain editable.');
                 localStorage.setItem('issue-board-update', Date.now());
                 updateKPIDashboard();
-                loadIssueBoardByDate(saveDate);
+                lockIssueBoardRowsForStatusUpdates();
             },
             error: function() {
-                showMessage('issueBoardMessage', 'Error saving Issue Board data. Please try again.', 'error');
+                showIssueBoardPopup('Error saving Issue Board data. Please try again.');
             }
         });
     });
@@ -971,6 +1216,31 @@ $(document).ready(function() {
         bindGembaDeleteButtons();
     }
 
+    function getGembaFormRowData() {
+        return {
+            functionType: $('#gsFormFunctionType').val() || 'Packaging',
+            associateName: $('#gsFormAssociateName').val().trim(),
+            week1: $('#gsFormWeek1').val().trim(),
+            week2: $('#gsFormWeek2').val().trim(),
+            week3: $('#gsFormWeek3').val().trim(),
+            week4: $('#gsFormWeek4').val().trim()
+        };
+    }
+
+    function populateGembaFormFromRow($row) {
+        $('#gsFormFunctionType').val($row.find('.gs-function-type').val() || 'Packaging');
+        $('#gsFormAssociateName').val($row.find('.gs-associate-name').val() || '');
+        $('#gsFormWeek1').val($row.find('.gs-week1').val() || '');
+        $('#gsFormWeek2').val($row.find('.gs-week2').val() || '');
+        $('#gsFormWeek3').val($row.find('.gs-week3').val() || '');
+        $('#gsFormWeek4').val($row.find('.gs-week4').val() || '');
+    }
+
+    function resetGembaFormInputs() {
+        $('#gsFormFunctionType').val('Packaging');
+        $('#gsFormAssociateName, #gsFormWeek1, #gsFormWeek2, #gsFormWeek3, #gsFormWeek4').val('');
+    }
+
     function createGembaConfigRow(item) {
         const safeItem = item || {};
         const functionType = safeItem.functionType || 'Packaging';
@@ -996,14 +1266,21 @@ $(document).ready(function() {
             '<td><input type="text" class="gs-week2" value="' + escapeAttributeValue(safeItem.week2 || '') + '" placeholder="Week #2"></td>' +
             '<td><input type="text" class="gs-week3" value="' + escapeAttributeValue(safeItem.week3 || '') + '" placeholder="Week #3"></td>' +
             '<td><input type="text" class="gs-week4" value="' + escapeAttributeValue(safeItem.week4 || '') + '" placeholder="Week #4"></td>' +
-            '<td><button type="button" class="btn-delete gemba-delete">Delete</button></td>' +
+            '<td><button type="button" class="btn btn-secondary gemba-edit">Edit</button> <button type="button" class="btn-delete gemba-delete">Delete</button></td>' +
             '</tr>';
     }
 
     $('#addGembaRowBtn').on('click', function() {
+        const formData = getGembaFormRowData();
+        if (!formData.associateName) {
+            showMessage('gembaScheduleMessage', 'Associate name is required before adding a row.', 'error');
+            return;
+        }
+
         $('#gembaConfigTableBody .placeholder-row').remove();
-        $('#gembaConfigTableBody').append(createGembaConfigRow());
+        $('#gembaConfigTableBody').append(createGembaConfigRow(formData));
         bindGembaDeleteButtons();
+        resetGembaFormInputs();
     });
 
     function bindGembaDeleteButtons() {
@@ -1012,6 +1289,16 @@ $(document).ready(function() {
             if ($('#gembaConfigTableBody tr').length === 0) {
                 $('#gembaConfigTableBody').html('<tr class="placeholder-row"><td colspan="7" style="text-align:center; padding: 18px; color:#9ca3af;">No schedule for selected date. Click "Add New Row".</td></tr>');
             }
+        });
+
+        $('.gemba-edit').off('click').on('click', function() {
+            const $row = $(this).closest('tr');
+            populateGembaFormFromRow($row);
+            $row.remove();
+            if ($('#gembaConfigTableBody tr').length === 0) {
+                $('#gembaConfigTableBody').html('<tr class="placeholder-row"><td colspan="7" style="text-align:center; padding: 18px; color:#9ca3af;">No schedule for selected date. Click "Add New Row".</td></tr>');
+            }
+            showMessage('gembaScheduleMessage', 'Row loaded into form for editing. Update and click Add Row.', 'info');
         });
     }
 
@@ -2178,9 +2465,12 @@ $(document).ready(function() {
     // ==================== NAVIGATION TOGGLE ====================
     $('.nav-parent-toggle').on('click', function(e) {
         e.preventDefault();
-        $(this).toggleClass('expanded');
-        $(this).next('.nav-children').slideToggle(200).toggleClass('show');
+        $(this).addClass('expanded');
+        $(this).next('.nav-children').addClass('show').show();
     });
+
+    $('.nav-parent-toggle').addClass('expanded');
+    $('.nav-children').addClass('show').show();
 
     const $activeChild = $('.nav-child.active');
     if ($activeChild.length) {
@@ -2288,10 +2578,37 @@ $(document).ready(function() {
             return;
         }
 
+        if (requestedConfig === 'hs-cross') {
+            $('.settings-container').addClass('issue-board-full-page');
+            $('.config-item').removeClass('active');
+            const hsCrossConfigItem = $('.config-item[data-config="hs-cross"]').first();
+            if (hsCrossConfigItem.length) {
+                hsCrossConfigItem.addClass('active');
+            }
+            showForm('hs-cross', '');
+
+            $('.nav-child').removeClass('active');
+            $('.nav-child[data-nav="hs-cross-config"]').addClass('active');
+            return;
+        }
+
+        if (requestedConfig === 'lsr-tracking') {
+            $('.settings-container').addClass('issue-board-full-page');
+            $('.config-item').removeClass('active');
+            const lsrConfigItem = $('.config-item[data-config="lsr-tracking"]').first();
+            if (lsrConfigItem.length) {
+                lsrConfigItem.addClass('active');
+            }
+            showForm('lsr-tracking', '');
+
+            $('.nav-child').removeClass('active');
+            $('.nav-child[data-nav="lsr-tracking-config"]').addClass('active');
+            return;
+        }
+
         $('.settings-container').removeClass('issue-board-full-page');
         loadPrioritiesData();
         $('.nav-child').removeClass('active');
-        $('.nav-child[data-nav="pms-data"]').addClass('active');
     }
 
     // Initialize

@@ -11,15 +11,16 @@
     <link rel="stylesheet" href="/css/dashboard.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
-<body class="modern-shell">
+<body class="modern-shell dashboard-bg">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <img class="logo" src="/images/carlsberg-logo.svg" alt="Carlsberg Logo">
+                    <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
                 </div>
             </div>
             <nav class="sidebar-nav">
@@ -31,17 +32,18 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <div class="nav-parent">
-                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS 4 Deck V0 Configuration"><i class="fas fa-cog"></i><span>PMS 4 Deck V0 Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                <div class="nav-parent" th:if="${session.role == 'ADMIN'}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
-                        <a href="/settings" class="nav-item nav-child" data-tooltip="PMS Data"><i class="fas fa-database"></i><span>PMS Data</span></a>
-                        <a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
-                        <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
-                        <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
-                        <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
-                        <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
-                        <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
-                        <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+<a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
+                                <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
+                                <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
+                                <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
+                                <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
+                                <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
+                                <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
+                                <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily Config"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily Config</span></a>
+                                <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking Config"><i class="fas fa-life-ring"></i><span>LSR Tracking Config</span></a>
                     </div>
                 </div>
             </nav>
@@ -61,13 +63,29 @@
                     <div class="sync-status" id="chartSyncStatus">Last synced: --:--:--</div>
                     <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
                     <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
-                    <div class="user-avatar"><i class="fas fa-user"></i></div>
+                    <div class="user-info-header">
+                        <i class="fa-solid profile-role-icon" th:classappend="${session.role == 'ADMIN'} ? ' fa-user-shield' : ' fa-user'"></i>
+                        <div class="profile-meta">
+                            <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
+                            <div class="profile-subline">
+                                <span class="header-role-badge" th:text="${session.role}">ROLE</span>
+                                <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/logout" class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
                 </div>
             </header>
 
             <div class="content-area">
+                <div class="dashboard-scroll">
+                    <div class="dashboard-container">
                 <!-- Horizontal Scroll Dashboard -->
-                <div class="horizontal-dashboard">
+                <div class="dashboard-main">
+                    <div class="dashboard-left">
                     <!-- Column 1: KPI Table Section -->
                     <div class="dashboard-column">
                         <div class="pms-deck-banner" aria-label="PMS 4 deck header">
@@ -81,15 +99,15 @@
                             <div class="table-container compact-table-container">
                                 <table class="priorities-table">
                                     <tbody id="top3PrioritiesBody">
-                                        <tr><td class="priority-num">Top 1</td><td id="top1Data">Not configured</td></tr>
-                                        <tr><td class="priority-num">Top 2</td><td id="top2Data">Not configured</td></tr>
-                                        <tr><td class="priority-num">Top 3</td><td id="top3Data">Not configured</td></tr>
+                                        <tr><td class="priority-num">Top 1</td><td id="top1Data">-</td></tr>
+                                        <tr><td class="priority-num">Top 2</td><td id="top2Data">-</td></tr>
+                                        <tr><td class="priority-num">Top 3</td><td id="top3Data">-</td></tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="daily-perf-header">DAILY PERFORMANCE</div>
+                            <div class="daily-perf-header section-title">DAILY PERFORMANCE</div>
                             <div class="daily-perf-asof" id="dailyPerfAsOf">As of: -</div>
-                            <div class="table-container">
+                            <div class="table-container daily-perf-table-container">
                                 <table class="daily-perf-table">
                                     <tbody>
                                         <tr>
@@ -136,19 +154,21 @@
                                 </table>
                             </div>
 
-                            <div class="subsection-header">Top 3 Weekly Priorities - Review every Monday</div>
+                            <div class="subsection-header section-title">Top 3 Weekly Priorities - Review every Monday</div>
                             <div class="table-container compact-table-container">
                                 <table class="priorities-table">
                                     <tbody id="weeklyPrioritiesBody">
-                                        <tr><td class="priority-num">1</td><td id="weekly1Data">Not configured</td></tr>
-                                        <tr><td class="priority-num">2</td><td id="weekly2Data">Not configured</td></tr>
-                                        <tr><td class="priority-num">3</td><td id="weekly3Data">Not configured</td></tr>
+                                        <tr><td class="priority-num">1</td><td id="weekly1Data">-</td></tr>
+                                        <tr><td class="priority-num">2</td><td id="weekly2Data">-</td></tr>
+                                        <tr><td class="priority-num">3</td><td id="weekly3Data">-</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
+                    </div><!-- end dashboard-left -->
 
+                    <div class="dashboard-right">
                     <!-- Column 2: People Daily -->
                     <div class="dashboard-column">
                         <div class="column-header people-bg">People - Daily</div>
@@ -160,7 +180,73 @@
                             </table>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title">Productivity (Production + Logistics)</div><div class="chart-container"><canvas id="peopleProductivityChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Productivity (Production + Logistics)</span><span class="expand-icon" title="Expand" onclick="openChart('peopleProductivityChart')">?</span></div><div class="chart-container"><canvas id="peopleProductivityChart"></canvas></div></div>
+
+                        <!-- LSR Overview Card -->
+                        <div class="chart-box enterprise-overview-card lsr-overview-card kpi-card" role="button" tabindex="0" aria-label="LSR Overview" onclick="openLsrOverview()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLsrOverview();}">
+                            <div class="overview-header">
+                                <h3 class="overview-title">Life Saving Rules - Overview</h3>
+                                <div class="overview-month"><span id="lsrOverviewMonth">Apr</span> '<span id="lsrOverviewYear">26</span></div>
+                            </div>
+                            <div class="overview-badges">
+                                <span class="badge badge-safe"><i class="fas fa-check"></i> Safe Behavior</span>
+                                <span class="badge badge-unsafe"><i class="fas fa-circle-exclamation"></i> Unsafe Behavior</span>
+                                <span class="badge badge-target">Target: <span id="lsrTargetText">85%</span></span>
+                            </div>
+                            <div class="overview-content">
+                                <div class="lsr-targets">
+                                    <div class="target-box">
+                                        <div class="target-label">LSR 1-2 LOTO<br>SAFEGUARD</div>
+                                        <div class="target-percent" id="lsr12Target">Target 50%</div>
+                                    </div>
+                                    <div class="target-box">
+                                        <div class="target-label">LSR 5 ENTRO</div>
+                                        <div class="target-percent" id="lsr5Target">Target 100%</div>
+                                    </div>
+                                </div>
+                                <div class="lsr-scores">
+                                    <div class="score-item"><span class="score-label" id="lsr1Label">LSR 1</span><span class="score-value" id="lsr1ScoreDisplay">100%</span></div>
+                                    <div class="score-item"><span class="score-label" id="lsr23Label">LSR 2-3</span><span class="score-value" id="lsr23ScoreDisplay">100%</span></div>
+                                    <div class="score-item"><span class="score-label" id="lsr4Label">LSR 4</span><span class="score-value" id="lsr4ScoreDisplay">100%</span></div>
+                                    <div class="score-item"><span class="score-label" id="lsr5Label">LSR 5</span><span class="score-value" id="lsr5ScoreDisplay">100%</span></div>
+                                    <div class="score-item"><span class="score-label" id="lsrContractorLabel">Contractor</span><span class="score-value" id="lsrContractorScoreDisplay">100%</span></div>
+                                </div>
+                            </div>
+                            <div class="overview-expand" title="Expand"><i class="fas fa-expand"></i></div>
+                        </div>
+
+                        <!-- H&S Incidents Overview Card -->
+                        <div class="chart-box enterprise-overview-card hs-overview-card kpi-card" role="button" tabindex="0" aria-label="H&S Incidents Overview" onclick="openHsOverview()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHsOverview();}">
+                            <div class="overview-header">
+                                <h3 class="overview-title">Incidents - Month Overview</h3>
+                                <div class="overview-month"><span id="hsOverviewMonth">Apr</span> '<span id="hsOverviewYear">26</span></div>
+                            </div>
+                            <div class="overview-badges">
+                                <span class="badge badge-safe"><i class="fas fa-check"></i> No Accident</span>
+                                <span class="badge badge-warn"><i class="fas fa-triangle-exclamation"></i> Near Miss</span>
+                                <span class="badge badge-unsafe"><i class="fas fa-fire"></i> Safety Concern</span>
+                            </div>
+                            <div class="overview-content">
+                                <div class="hs-incidents-summary">
+                                    <div class="incident-type">
+                                        <div class="incident-title">Accidents</div>
+                                        <div class="incident-count" id="hsAccidentCount">0</div>
+                                    </div>
+                                    <div class="incident-type">
+                                        <div class="incident-title">Near Miss</div>
+                                        <div class="incident-count" id="hsNearMissCount">0</div>
+                                    </div>
+                                    <div class="incident-type">
+                                        <div class="incident-title">Safety Concern</div>
+                                        <div class="incident-count" id="hsSafetyConcernCount">0</div>
+                                    </div>
+                                </div>
+                                <div class="kpi-responsible">
+                                    <div class="responsible-item">KPI Responsible<br>H&amp;S Lead</div>
+                                </div>
+                            </div>
+                            <div class="overview-expand" title="Expand"><i class="fas fa-expand"></i></div>
+                        </div>
                     </div>
 
                     <!-- Column 3: Quality Daily -->
@@ -174,8 +260,8 @@
                             </table>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title">KPI - Sensory</div><div class="chart-container"><canvas id="qualitySensoryChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title">Complaint - Customer & Consumer</div><div class="chart-container"><canvas id="qualityComplaintChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Sensory</span><span class="expand-icon" title="Expand" onclick="openChart('qualitySensoryChart')">?</span></div><div class="chart-container"><canvas id="qualitySensoryChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Complaint - Customer & Consumer</span><span class="expand-icon" title="Expand" onclick="openChart('qualityComplaintChart')">?</span></div><div class="chart-container"><canvas id="qualityComplaintChart"></canvas></div></div>
                     </div>
 
                     <!-- Column 4: Service Daily -->
@@ -189,9 +275,9 @@
                             </table>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title">KPI - OEE</div><div class="chart-container"><canvas id="serviceOeeChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title">KPI - Beer Loss</div><div class="chart-container"><canvas id="serviceBeerLossChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title">KPI - WUR (HL/HL)</div><div class="chart-container"><canvas id="serviceWurChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - OEE</span><span class="expand-icon" title="Expand" onclick="openChart('serviceOeeChart')">?</span></div><div class="chart-container"><canvas id="serviceOeeChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Beer Loss</span><span class="expand-icon" title="Expand" onclick="openChart('serviceBeerLossChart')">?</span></div><div class="chart-container"><canvas id="serviceBeerLossChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - WUR (HL/HL)</span><span class="expand-icon" title="Expand" onclick="openChart('serviceWurChart')">?</span></div><div class="chart-container"><canvas id="serviceWurChart"></canvas></div></div>
                     </div>
 
                     <!-- Column 5: Cost Daily -->
@@ -205,35 +291,172 @@
                             </table>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title">KPI - Electricity</div><div class="chart-container"><canvas id="costElectricityChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title">KPI - Energy</div><div class="chart-container"><canvas id="costEnergyChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title">KPI - RGB Ratio</div><div class="chart-container"><canvas id="costRgbChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Electricity</span><span class="expand-icon" title="Expand" onclick="openChart('costElectricityChart')">?</span></div><div class="chart-container"><canvas id="costElectricityChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Energy</span><span class="expand-icon" title="Expand" onclick="openChart('costEnergyChart')">?</span></div><div class="chart-container"><canvas id="costEnergyChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - RGB Ratio</span><span class="expand-icon" title="Expand" onclick="openChart('costRgbChart')">?</span></div><div class="chart-container"><canvas id="costRgbChart"></canvas></div></div>
+                    </div>
+                    </div><!-- end dashboard-right -->
+                </div><!-- end dashboard-main -->
+
+                <!-- H&S Cross Daily -->
+                <div class="hs-cross-section">
+                    <div class="hs-cross-header">
+                        <div class="hs-cross-title-block">
+                            <span class="hs-cross-title">KPI - H&amp;S Cross - Daily</span>
+                        </div>
+                        <div class="hs-cross-month-badge">MONTH : <span id="hsCrossMonthLabel">---</span></div>
+                        <div class="hs-zero-badge"><i class="fas fa-shield-halved"></i> ZERO ACCIDENTS</div>
+                    </div>
+
+                    <div class="hs-cross-legend">
+                        <div class="hs-legend-pair">
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- zero accident day</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-diag"></div><span>- accident with/without lost days</span></div>
+                        </div>
+                        <div class="hs-legend-pair">
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- Near Miss</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Near Miss</span></div>
+                        </div>
+                        <div class="hs-legend-pair">
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- Safety Concern</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Safety Concern</span></div>
+                        </div>
+                    </div>
+
+                    <div class="hs-crosses-row">
+                        <div class="hs-cross-block">
+                            <div class="hs-cross-block-title">Accidents</div>
+                            <div class="hs-cross-grid" id="accidentsCrossGrid"></div>
+                        </div>
+                        <div class="hs-cross-block">
+                            <div class="hs-cross-block-title">Near Miss</div>
+                            <div class="hs-cross-grid" id="nearMissCrossGrid"></div>
+                        </div>
+                        <div class="hs-cross-block">
+                            <div class="hs-cross-block-title">Safety Concern</div>
+                            <div class="hs-cross-grid" id="safetyConcernCrossGrid"></div>
+                        </div>
+                    </div>
+
+                    <div class="hs-cross-footer-row">
+                        <div class="hs-footer-cell">Level &amp; Period<br><strong>L4 &amp; Daily</strong></div>
+                        <div class="hs-footer-cell">KPI Responsible<br><strong>H&amp;S Lead</strong></div>
+                        <div class="hs-footer-cell">Update Responsible<br><strong>H&amp;S Lead</strong></div>
                     </div>
                 </div>
 
-                <!-- Bottom H&S and LSR -->
-                <div class="bottom-section">
-                    <div class="hs-section">
-                        <div class="section-header">H&S</div>
-                        <div class="hs-grid">
-                            <div class="hs-item"><div class="hs-label">Near Miss</div><div class="hs-indicator green"></div></div>
-                            <div class="hs-item"><div class="hs-label">First Aid</div><div class="hs-indicator green"></div></div>
-                            <div class="hs-item"><div class="hs-label">LTI</div><div class="hs-indicator green"></div></div>
-                            <div class="hs-item"><div class="hs-label">MTI</div><div class="hs-indicator green"></div></div>
+                <!-- LSR Daily Tracking -->
+                <div class="lsr-tracking-section">
+                    <div class="lsr-header">
+                        <div class="lsr-title-block">
+                            <span class="lsr-title">Life Saving Rules - Monthly Adherence</span>
                         </div>
+                        <div class="lsr-month-badge">Month : <span id="lsrMonthLabel">---</span></div>
+                        <div class="lsr-target-badge">Target : 100% Compliance</div>
                     </div>
-                    <div class="lsr-section">
-                        <div class="section-header">LSR</div>
-                        <div class="lsr-grid">
-                            <div class="lsr-day"><div class="day-label">Mon</div><div class="lsr-status red"></div><div class="lsr-status green"></div></div>
-                            <div class="lsr-day"><div class="day-label">Tue</div><div class="lsr-status green"></div><div class="lsr-status green"></div></div>
-                            <div class="lsr-day"><div class="day-label">Wed</div><div class="lsr-status green"></div><div class="lsr-status red"></div></div>
-                            <div class="lsr-day"><div class="day-label">Thu</div><div class="lsr-status green"></div><div class="lsr-status green"></div></div>
-                            <div class="lsr-day"><div class="day-label">Fri</div><div class="lsr-status green"></div><div class="lsr-status green"></div></div>
-                        </div>
+
+                    <div class="lsr-table-wrapper">
+                        <table class="lsr-main-table" id="lsrMainTable">
+                            <thead>
+                                <!-- Row 1: Category titles (each spans 6 cols: 3 safe + 3 unsafe) -->
+                                <tr>
+                                    <th class="lsr-th-category" colspan="6">LSR 1:<br>TRAFFIC RULES</th>
+                                    <th class="lsr-th-category" colspan="6">LSR 2 &amp; 3: LOTO,<br>SAFEGUARD &amp;</th>
+                                    <th class="lsr-th-category" colspan="6">LSR 4: WORKING AT<br>HEIGHT</th>
+                                    <th class="lsr-th-category" colspan="6">LSR 5: CONFINED<br>SPACE ENTRY</th>
+                                    <th class="lsr-th-category" colspan="6">CONTRACTOR<br>MANAGEMENT</th>
+                                </tr>
+                                <!-- Row 2: Monthly adherence score -->
+                                <tr>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr1Score">100%</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr23Score">100%</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr4Score">100%</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr5Score">100%</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsrContractorScore">100%</span></td>
+                                </tr>
+                                <!-- Row 3: Safe / Unsafe behaviour headers (each spans 3 sub-cols) -->
+                                <tr>
+                                    <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
+                                    <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
+                                </tr>
+                                <!-- Row 4: Sub-column labels 1,2,3 repeated 10 times -->
+                                <tr class="lsr-subnums-row">
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                    <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
+                                </tr>
+                            </thead>
+                            <tbody id="lsrTableBody">
+                                <!-- 3 days per row injected by JS -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td class="lsr-focus-header" colspan="30">Primary Focus Behaviours</td>
+                                </tr>
+                                <tr class="lsr-focus-row">
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Slow down when Pedestrian in 2-3 truck length.</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Use LOTO when servicing or repairing equipment's</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Use PPE/harness while working at height</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Verify Oxygen content before entering</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">ESI/PF (Legal documents) to be checked</td>
+                                </tr>
+                                <tr class="lsr-focus-row">
+                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Never block walkways and fire exits</td>
+                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Place locks and warning labels</td>
+                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Rope of work areas post warning signs</td>
+                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Never enter Confined space without work permit</td>
+                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">PPE adherence to be checked</td>
+                                </tr>
+                                <tr class="lsr-focus-row">
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Follow speed limits</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Check the presence and working condition of protective devices</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Never access roof/fragile surface without work permit</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Never enter Confined space without Watchmen</td>
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Work Permit adherence to be checked</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="lsr-footer-row">
+                        <div class="lsr-footer-cell">Level &amp; Period<br><strong>L4 &amp; Monthly</strong></div>
+                        <div class="lsr-footer-cell">Target<br><strong>100% Compliance</strong></div>
+                        <div class="lsr-footer-cell">Owner<br><strong>Safety Team</strong></div>
+                    </div>
+                </div>
                     </div>
                 </div>
             </div>
+
+            <div id="chartModal" class="chart-modal" aria-hidden="true">
+                <div class="chart-modal-content" role="dialog" aria-modal="true" aria-labelledby="expandedChartTitle">
+                    <div class="chart-modal-header">
+                        <button type="button" class="chart-modal-back" onclick="closeChartModal()">&larr; Back</button>
+                        <div class="chart-modal-title" id="expandedChartTitle">Expanded KPI Chart</div>
+                    </div>
+                    <div class="chart-modal-body">
+                        <canvas id="expandedChart"></canvas>
+                        <div id="expandedCustomContent" class="chart-modal-custom-content" aria-live="polite"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboardToast" class="dashboard-toast" aria-live="polite" aria-atomic="true"></div>
 
             <footer class="footer">
                 <div class="footer-brand">
@@ -245,18 +468,6 @@
     </div>
 
     <script>
-        (function () {
-            const dateElement = document.getElementById("pmsDeckDate");
-            if (!dateElement) return;
-
-            const today = new Date();
-            const day = String(today.getDate()).padStart(2, "0");
-            const month = String(today.getMonth() + 1).padStart(2, "0");
-            const year = today.getFullYear();
-            dateElement.textContent = `${day}-${month}-${year}`;
-        })();
-    </script>
-    <script>
         // KPI Dashboard - Dynamic Data Loading
         $(document).ready(function() {
             const sections = ['PEOPLE', 'QUALITY', 'SERVICE', 'COST'];
@@ -266,6 +477,14 @@
                 'SERVICE': '#serviceDailyBody',
                 'COST': '#costDailyBody'
             };
+            const emptyPriorityText = '-';
+
+            function getLocalDateString() {
+                const today = new Date();
+                return today.getFullYear() + '-' +
+                    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(today.getDate()).padStart(2, '0');
+            }
 
             // Load all data on page load
             function loadAllData() {
@@ -276,7 +495,7 @@
 
             // Load TOP 3 Priorities
             function loadPrioritiesData() {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString();
 
                 $.ajax({
                     url: `/api/priorities/type/TOP_3/date/${today}`,
@@ -284,26 +503,26 @@
                     success: function(data) {
                         if (data && data.length > 0) {
                             const item = data[0];
-                            $('#top1Data').text(item.priority1 || 'Not configured');
-                            $('#top2Data').text(item.priority2 || 'Not configured');
-                            $('#top3Data').text(item.priority3 || 'Not configured');
+                            $('#top1Data').text(item.priority1 || emptyPriorityText);
+                            $('#top2Data').text(item.priority2 || emptyPriorityText);
+                            $('#top3Data').text(item.priority3 || emptyPriorityText);
                         } else {
-                            $('#top1Data').text('Not configured');
-                            $('#top2Data').text('Not configured');
-                            $('#top3Data').text('Not configured');
+                            $('#top1Data').text(emptyPriorityText);
+                            $('#top2Data').text(emptyPriorityText);
+                            $('#top3Data').text(emptyPriorityText);
                         }
                     },
                     error: function() {
-                        $('#top1Data').text('Not configured');
-                        $('#top2Data').text('Not configured');
-                        $('#top3Data').text('Not configured');
+                        $('#top1Data').text(emptyPriorityText);
+                        $('#top2Data').text(emptyPriorityText);
+                        $('#top3Data').text(emptyPriorityText);
                     }
                 });
             }
 
             // Load Weekly Priorities
             function loadWeeklyPrioritiesData() {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString();
 
                 $.ajax({
                     url: `/api/priorities/type/WEEKLY/date/${today}`,
@@ -311,19 +530,19 @@
                     success: function(data) {
                         if (data && data.length > 0) {
                             const item = data[0];
-                            $('#weekly1Data').text(item.priority1 || 'Not configured');
-                            $('#weekly2Data').text(item.priority2 || 'Not configured');
-                            $('#weekly3Data').text(item.priority3 || 'Not configured');
+                            $('#weekly1Data').text(item.priority1 || emptyPriorityText);
+                            $('#weekly2Data').text(item.priority2 || emptyPriorityText);
+                            $('#weekly3Data').text(item.priority3 || emptyPriorityText);
                         } else {
-                            $('#weekly1Data').text('Not configured');
-                            $('#weekly2Data').text('Not configured');
-                            $('#weekly3Data').text('Not configured');
+                            $('#weekly1Data').text(emptyPriorityText);
+                            $('#weekly2Data').text(emptyPriorityText);
+                            $('#weekly3Data').text(emptyPriorityText);
                         }
                     },
                     error: function() {
-                        $('#weekly1Data').text('Not configured');
-                        $('#weekly2Data').text('Not configured');
-                        $('#weekly3Data').text('Not configured');
+                        $('#weekly1Data').text(emptyPriorityText);
+                        $('#weekly2Data').text(emptyPriorityText);
+                        $('#weekly3Data').text(emptyPriorityText);
                     }
                 });
             }
@@ -337,7 +556,7 @@
 
             // Load data for a specific section
             function loadDailyDataForSection(type) {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString();
 
                 $.ajax({
                     url: `/api/daily-data/type/${type}/date/${today}`,
@@ -398,6 +617,384 @@
             });
         });
     </script>
+
+    <script>
+    (function () {
+        const miniCharts = window.chartInstances || (window.chartInstances = {});
+
+        function upsertMiniChart(canvasId, configBuilder) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || typeof Chart === 'undefined') return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            if (miniCharts[canvasId]) {
+                miniCharts[canvasId].destroy();
+            }
+
+            miniCharts[canvasId] = new Chart(ctx, configBuilder());
+        }
+
+        window.renderMiniTrendChart = function (canvasId, labels, values, color) {
+            upsertMiniChart(canvasId, function () {
+                return {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            borderColor: color,
+                            backgroundColor: color,
+                            pointRadius: 1,
+                            pointHoverRadius: 2,
+                            borderWidth: 2,
+                            tension: 0.25,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                        scales: {
+                            x: { ticks: { display: false }, grid: { display: false } },
+                            y: { beginAtZero: true, ticks: { stepSize: 1, maxTicksLimit: 4, font: { size: 9 } }, grid: { color: '#e5e7eb' } }
+                        }
+                    }
+                };
+            });
+        };
+
+        window.renderMiniLsrChart = function (canvasId, safeCount, unsafeCount) {
+            upsertMiniChart(canvasId, function () {
+                return {
+                    type: 'bar',
+                    data: {
+                        labels: ['Safe', 'Unsafe'],
+                        datasets: [{
+                            data: [safeCount, unsafeCount],
+                            backgroundColor: ['#16a34a', '#ef4444'],
+                            borderRadius: 4,
+                            maxBarThickness: 26
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                            y: { beginAtZero: true, ticks: { maxTicksLimit: 4, font: { size: 9 } }, grid: { color: '#e5e7eb' } }
+                        }
+                    }
+                };
+            });
+        };
+    })();
+    </script>
+
+    <!-- H&S Cross Daily Script -->
+    <script>
+    (function () {
+        // Cross layout: [row, col, dayNumber] for a 9-column x 9-row grid
+        const CROSS_POSITIONS = [
+            [0, 3, 31], [0, 5, 1],
+            [1, 3, 30], [1, 5, 2],
+            [2, 3, 29], [2, 5, 3],
+            [3, 0, 25], [3, 1, 26], [3, 2, 27], [3, 3, 28], [3, 5, 4], [3, 6, 5], [3, 7, 6], [3, 8, 7],
+            [4, 0, 24], [4, 8, 8],
+            [5, 0, 23], [5, 1, 22], [5, 2, 21], [5, 3, 20], [5, 5, 12], [5, 6, 11], [5, 7, 10], [5, 8, 9],
+            [6, 3, 19], [6, 5, 13],
+            [7, 3, 18], [7, 5, 14],
+            [8, 3, 17], [8, 4, 16], [8, 5, 15]
+        ];
+
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        function daysInMonth(year, month) {
+            return new Date(year, month, 0).getDate();
+        }
+
+        function getStatusClass(entry, category) {
+            if (!entry) return 'hs-cell-unknown';
+            if (category === 'accident') {
+                if (entry.accidentStatus === 'ZERO') return 'hs-cell-green';
+                if (entry.accidentStatus === 'WITH_LOST') return 'hs-cell-red';
+                if (entry.accidentStatus === 'WITHOUT_LOST') return 'hs-cell-diag';
+            } else if (category === 'nearMiss') {
+                if (entry.nearMissStatus === 'NONE') return 'hs-cell-green';
+                if (entry.nearMissStatus === 'OCCURRED') return 'hs-cell-red';
+            } else if (category === 'safetyConcern') {
+                if (entry.safetyConcernStatus === 'NONE') return 'hs-cell-green';
+                if (entry.safetyConcernStatus === 'OCCURRED') return 'hs-cell-red';
+            }
+            return 'hs-cell-unknown';
+        }
+
+        function buildCrossGrid(containerId, hsData, category, maxDays) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            const dataByDay = {};
+            (hsData || []).forEach(d => dataByDay[d.day] = d);
+
+            // Build grid array 9x9
+            const grid = Array.from({length: 9}, () => Array(9).fill(null));
+            CROSS_POSITIONS.forEach(([row, col, day]) => {
+                grid[row][col] = day;
+            });
+
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const day = grid[r][c];
+                    const cell = document.createElement('div');
+                    if (day === null) {
+                        cell.className = 'hs-cell hs-cell-empty';
+                    } else if (day > maxDays) {
+                        cell.className = 'hs-cell hs-cell-inactive';
+                        cell.textContent = day;
+                    } else {
+                        const entry = dataByDay[day];
+                        const statusClass = getStatusClass(entry, category);
+                        cell.className = 'hs-cell ' + statusClass;
+                        cell.textContent = day;
+                    }
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function updateMiniHsCharts(hsData, maxDays) {
+            const dataByDay = {};
+            (hsData || []).forEach(d => dataByDay[d.day] = d);
+
+            const labels = [];
+            const accidentsSeries = [];
+            const nearMissSeries = [];
+            const safetyConcernSeries = [];
+
+            let accidentsTotal = 0;
+            let nearMissTotal = 0;
+            let safetyConcernTotal = 0;
+
+            for (let day = 1; day <= maxDays; day++) {
+                labels.push(String(day));
+                const entry = dataByDay[day] || {};
+
+                const accVal = (entry.accidentStatus && entry.accidentStatus !== 'ZERO') ? 1 : 0;
+                const nearVal = entry.nearMissStatus === 'OCCURRED' ? 1 : 0;
+                const safetyVal = entry.safetyConcernStatus === 'OCCURRED' ? 1 : 0;
+
+                accidentsSeries.push(accVal);
+                nearMissSeries.push(nearVal);
+                safetyConcernSeries.push(safetyVal);
+
+                accidentsTotal += accVal;
+                nearMissTotal += nearVal;
+                safetyConcernTotal += safetyVal;
+            }
+
+            if (window.renderMiniTrendChart) {
+                window.renderMiniTrendChart('miniHsAccidentsChart', labels, accidentsSeries, '#dc2626');
+                window.renderMiniTrendChart('miniHsNearMissChart', labels, nearMissSeries, '#f59e0b');
+                window.renderMiniTrendChart('miniHsSafetyConcernChart', labels, safetyConcernSeries, '#7c3aed');
+            }
+
+            const accidentsSummary = document.getElementById('miniHsAccidentsSummary');
+            const nearSummary = document.getElementById('miniHsNearMissSummary');
+            const safetySummary = document.getElementById('miniHsSafetyConcernSummary');
+            if (accidentsSummary) accidentsSummary.textContent = 'Incidents: ' + accidentsTotal;
+            if (nearSummary) nearSummary.textContent = 'Occurrences: ' + nearMissTotal;
+            if (safetySummary) safetySummary.textContent = 'Occurrences: ' + safetyConcernTotal;
+        }
+
+        function loadHsCross(year, month) {
+            const maxDays = daysInMonth(year, month);
+            document.getElementById('hsCrossMonthLabel').textContent =
+                MONTH_NAMES[month - 1] + "'" + String(year).slice(2);
+
+            fetch('/api/hs-daily/' + year + '/' + month)
+                .then(r => r.json())
+                .then(data => {
+                    buildCrossGrid('accidentsCrossGrid',         data, 'accident',     maxDays);
+                    buildCrossGrid('nearMissCrossGrid',          data, 'nearMiss',     maxDays);
+                    buildCrossGrid('safetyConcernCrossGrid',     data, 'safetyConcern',maxDays);
+                    updateMiniHsCharts(data, maxDays);
+                })
+                .catch(() => {
+                    buildCrossGrid('accidentsCrossGrid',         [], 'accident',     maxDays);
+                    buildCrossGrid('nearMissCrossGrid',          [], 'nearMiss',     maxDays);
+                    buildCrossGrid('safetyConcernCrossGrid',     [], 'safetyConcern',maxDays);
+                    updateMiniHsCharts([], maxDays);
+                });
+        }
+
+        function initHsCross() {
+            const now = new Date();
+            loadHsCross(now.getFullYear(), now.getMonth() + 1);
+            const monthFilter = document.getElementById('kpiMonthFilter');
+            if (monthFilter) {
+                monthFilter.addEventListener('change', function () {
+                    const val = this.value || '';
+                    const parts = val.split('-');
+                    if (parts.length === 2) {
+                        const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+                        if (!isNaN(y) && !isNaN(m)) loadHsCross(y, m);
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initHsCross);
+
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'hs-cross-update') {
+                const monthFilter = document.getElementById('kpiMonthFilter');
+                if (monthFilter && monthFilter.value) {
+                    const parts = monthFilter.value.split('-');
+                    if (parts.length === 2) loadHsCross(parseInt(parts[0], 10), parseInt(parts[1], 10));
+                } else {
+                    const now = new Date();
+                    loadHsCross(now.getFullYear(), now.getMonth() + 1);
+                }
+            }
+        });
+    })();
+    </script>
+    <!-- LSR Daily Tracking Script -->
+    <script>
+    (function () {
+        const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const LSR_CATEGORIES = [
+            { statusField: 'lsr1Status',       scoreId: 'lsr1Score' },
+            { statusField: 'lsr23Status',      scoreId: 'lsr23Score' },
+            { statusField: 'lsr4Status',       scoreId: 'lsr4Score' },
+            { statusField: 'lsr5Status',       scoreId: 'lsr5Score' },
+            { statusField: 'contractorStatus', scoreId: 'lsrContractorScore' }
+        ];
+
+        function daysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
+
+        function buildLsrTable(lsrData, maxDays) {
+            const dataByDay = {};
+            (lsrData || []).forEach(d => { dataByDay[d.day] = d; });
+
+            let totalSafe = 0;
+            let totalUnsafe = 0;
+
+            // Compute adherence scores
+            LSR_CATEGORIES.forEach(cat => {
+                let safe = 0, total = 0;
+                for (let day = 1; day <= maxDays; day++) {
+                    const e = dataByDay[day];
+                    if (e && e[cat.statusField]) {
+                        total++;
+                        if (e[cat.statusField] === 'SAFE') {
+                            safe++;
+                            totalSafe++;
+                        } else if (e[cat.statusField] === 'UNSAFE') {
+                            totalUnsafe++;
+                        }
+                    }
+                }
+                const el = document.getElementById(cat.scoreId);
+                if (el) el.textContent = total > 0 ? Math.round((safe / total) * 100) + '%' : '100%';
+            });
+
+            if (window.renderMiniLsrChart) {
+                window.renderMiniLsrChart('miniLsrChart', totalSafe, totalUnsafe);
+            }
+            const lsrSummary = document.getElementById('miniLsrSummary');
+            if (lsrSummary) {
+                const denom = totalSafe + totalUnsafe;
+                const adherence = denom > 0 ? Math.round((totalSafe / denom) * 100) : 100;
+                lsrSummary.textContent = 'Adherence: ' + adherence + '%';
+            }
+
+            // Build rows � 3 days per row, 30 cells per row (5 cats � 3 safe + 3 unsafe)
+            const tbody = document.getElementById('lsrTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const numRows = Math.ceil(maxDays / 3);
+            for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
+                const tr = document.createElement('tr');
+                const days = [rowIdx * 3 + 1, rowIdx * 3 + 2, rowIdx * 3 + 3];
+
+                LSR_CATEGORIES.forEach(cat => {
+                    // Safe behaviours � 3 cells
+                    days.forEach(day => {
+                        const td = document.createElement('td');
+                        if (day > maxDays) {
+                            td.className = 'lsr-dc lsr-dc-out';
+                        } else {
+                            td.textContent = day;
+                            const status = dataByDay[day] ? dataByDay[day][cat.statusField] : null;
+                            td.className = 'lsr-dc ' + (status === 'SAFE' ? 'lsr-dc-safe' : status === 'UNSAFE' ? 'lsr-dc-neutral' : 'lsr-dc-neutral');
+                        }
+                        tr.appendChild(td);
+                    });
+                    // Unsafe behaviours � 3 cells
+                    days.forEach(day => {
+                        const td = document.createElement('td');
+                        if (day > maxDays) {
+                            td.className = 'lsr-dc lsr-dc-out';
+                        } else {
+                            td.textContent = day;
+                            const status = dataByDay[day] ? dataByDay[day][cat.statusField] : null;
+                            td.className = 'lsr-dc ' + (status === 'UNSAFE' ? 'lsr-dc-unsafe' : status === 'SAFE' ? 'lsr-dc-safe' : 'lsr-dc-neutral');
+                        }
+                        tr.appendChild(td);
+                    });
+                });
+
+                tbody.appendChild(tr);
+            }
+        }
+
+        function loadLsrTracking(year, month) {
+            const maxDays = daysInMonth(year, month);
+            const lbl = document.getElementById('lsrMonthLabel');
+            if (lbl) lbl.textContent = MONTH_NAMES[month - 1] + "'" + String(year).slice(2);
+            fetch('/api/lsr-daily/' + year + '/' + month)
+                .then(r => r.json())
+                .then(data => buildLsrTable(data, maxDays))
+                .catch(() => buildLsrTable([], maxDays));
+        }
+
+        function initLsr() {
+            const now = new Date();
+            loadLsrTracking(now.getFullYear(), now.getMonth() + 1);
+            const monthFilter = document.getElementById('kpiMonthFilter');
+            if (monthFilter) {
+                monthFilter.addEventListener('change', function () {
+                    const parts = (this.value || '').split('-');
+                    if (parts.length === 2) {
+                        const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+                        if (!isNaN(y) && !isNaN(m)) loadLsrTracking(y, m);
+                    }
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initLsr);
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'lsr-tracking-update') {
+                const monthFilter = document.getElementById('kpiMonthFilter');
+                if (monthFilter && monthFilter.value) {
+                    const parts = monthFilter.value.split('-');
+                    if (parts.length === 2) loadLsrTracking(parseInt(parts[0], 10), parseInt(parts[1], 10));
+                } else {
+                    const now = new Date();
+                    loadLsrTracking(now.getFullYear(), now.getMonth() + 1);
+                }
+            }
+        });
+    })();
+    </script>
     <script src="/js/dashboard.js"></script>
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
 </body>
 </html>
+
+
