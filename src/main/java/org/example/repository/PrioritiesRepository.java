@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface PrioritiesRepository extends JpaRepository<Priorities, Long> {
 
@@ -13,6 +14,8 @@ public interface PrioritiesRepository extends JpaRepository<Priorities, Long> {
     List<Priorities> findByTypeAndDate(String type, LocalDate date);
 
     List<Priorities> findByType(String type);
+
+    Optional<Priorities> findTopByTypeAndDateBetweenOrderByDateDescIdDesc(String type, LocalDate startDate, LocalDate endDate);
 
     void deleteByTypeAndDate(String type, LocalDate date);
 

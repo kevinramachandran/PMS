@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -55,6 +56,13 @@ public class PrioritiesService {
     // Get by Type
     public List<Priorities> getByType(String type) {
         return repo.findByType(type);
+    }
+
+    public List<Priorities> getLatestByTypeAndMonth(String type, int month, int year) {
+        YearMonth selectedMonth = YearMonth.of(year, month);
+        return repo.findTopByTypeAndDateBetweenOrderByDateDescIdDesc(type, selectedMonth.atDay(1), selectedMonth.atEndOfMonth())
+                .map(List::of)
+                .orElseGet(List::of);
     }
 
     @Transactional

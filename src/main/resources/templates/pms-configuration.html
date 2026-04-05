@@ -31,7 +31,7 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
                 <a href="/pms-configuration" class="nav-item active" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -52,7 +52,7 @@
                         <div class="profile-meta">
                             <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
                             <div class="profile-subline">
-                                <span class="header-role-badge" th:text="${session.role}">ROLE</span>
+                                <span class="header-role-badge" th:text="${session.roleLabel != null ? session.roleLabel : session.role}">ROLE</span>
                                 <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
                             </div>
                         </div>
@@ -117,8 +117,9 @@
                                         <div class="form-group">
                                             <label class="form-label">Role</label>
                                             <select id="newRole" class="form-select">
-                                                <option value="USER">USER</option>
-                                                <option value="ADMIN">ADMIN</option>
+                                                <option value="L1_USER">L1 User</option>
+                                                <option value="L2_USER">L2 User</option>
+                                                <option value="ADMIN">Admin</option>
                                             </select>
                                         </div>
                                     </div>
@@ -154,8 +155,9 @@
                     <div class="form-group">
                         <label class="form-label">Role</label>
                         <select id="editRole" class="form-select">
-                            <option value="USER">USER</option>
-                            <option value="ADMIN">ADMIN</option>
+                            <option value="L1_USER">L1 User</option>
+                            <option value="L2_USER">L2 User</option>
+                            <option value="ADMIN">Admin</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -172,6 +174,26 @@
                     </div>
                     <div id="editUserMessage" class="form-message" style="margin-top:10px;"></div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="pms-modal-backdrop" id="deleteUserModal" style="display:none;">
+        <div class="pms-modal-card pms-confirm-card">
+            <div class="pms-modal-header">
+                <h3><i class="fas fa-trash-alt"></i> Delete User</h3>
+                <button type="button" class="pms-modal-close" id="closeDeleteModal">&times;</button>
+            </div>
+            <div class="pms-modal-body">
+                <p class="pms-confirm-text">Delete this user account? This action cannot be undone.</p>
+                <div class="form-actions" style="margin-top:14px;">
+                    <button type="button" class="btn pms-confirm-delete-btn" id="confirmDeleteBtn">
+                        <i class="fas fa-trash"></i> Delete User
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">
+                        Cancel
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -32,7 +32,7 @@
             <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
             <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
             <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+            <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
             <a href="/pms-configuration" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
         </nav>
         <div class="sidebar-footer">

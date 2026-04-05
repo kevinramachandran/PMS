@@ -20,6 +20,35 @@
     const closeEditModalBtn = document.getElementById('closeEditModal');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
 
+    const deleteModalEl = document.getElementById('deleteUserModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const closeDeleteModalBtn = document.getElementById('closeDeleteModal');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+    let pendingDeleteUserId = null;
+
+    function normalizeRole(role) {
+        const value = String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
+        if (value === 'USER' || value === 'L1_USER') {
+            return 'L1_USER';
+        }
+        if (value === 'L2_USER') {
+            return 'L2_USER';
+        }
+        return value === 'ADMIN' ? 'ADMIN' : 'L1_USER';
+    }
+
+    function roleLabel(role) {
+        switch (normalizeRole(role)) {
+            case 'ADMIN':
+                return 'Admin';
+            case 'L2_USER':
+                return 'L2 User';
+            default:
+                return 'L1 User';
+        }
+    }
+
     function showMessage(targetEl, text, type) {
         if (!targetEl) return;
         targetEl.textContent = text;
@@ -31,11 +60,17 @@
     }
 
     function userIcon(role) {
-        return role === 'ADMIN' ? 'fa-user-shield' : 'fa-user';
+        const normalized = normalizeRole(role);
+        if (normalized === 'ADMIN') return 'fa-user-shield';
+        if (normalized === 'L2_USER') return 'fa-chart-line';
+        return 'fa-user';
     }
 
     function roleClass(role) {
-        return role === 'ADMIN' ? 'admin' : 'user';
+        const normalized = normalizeRole(role);
+        if (normalized === 'ADMIN') return 'admin';
+        if (normalized === 'L2_USER') return 'l2';
+        return 'l1';
     }
 
     function renderUsers(users) {
@@ -51,7 +86,7 @@
                 '<tr>' +
                 '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i>' + escapeHtml(u.username) + '</td>' +
                 '<td>' + escapeHtml(u.email || '-') + '</td>' +
-                '<td><span class="pms-role-badge ' + roleClass(u.role) + '">' + escapeHtml(u.role) + '</span></td>' +
+                '<td><span class="pms-role-badge ' + roleClass(u.role) + '">' + escapeHtml(u.roleLabel || roleLabel(u.role)) + '</span></td>' +
                 '<td><span class="pms-status-badge active">' + escapeHtml(u.status || 'Active') + '</span></td>' +
                 '<td class="pms-user-actions">' +
                 '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-email="' + escapeHtml(u.email || '') + '" data-role="' + escapeHtml(u.role) + '"><i class="fas fa-pen"></i> Edit</button>' +
@@ -93,7 +128,7 @@
         const username = (usernameEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
-        const role = roleEl.value || 'USER';
+        const role = normalizeRole(roleEl.value || 'L1_USER');
 
         if (!username || !email || !password) {
             showMessage(messageEl, 'Please fill username, email, and password.', 'warning');
@@ -114,7 +149,7 @@
                     showMessage(messageEl, 'User added successfully.', 'success');
                     showMessage(tableMessageEl, 'User created successfully.', 'success');
                     form.reset();
-                    roleEl.value = 'USER';
+                    roleEl.value = 'L1_USER';
                     loadUsers();
                 } else {
                     showMessage(messageEl, data.message || 'Failed to add user.', 'error');
@@ -133,7 +168,7 @@
         if (!modalEl) return;
         editUserIdEl.value = id;
         editEmailEl.value = email || '';
-        editRoleEl.value = role || 'USER';
+        editRoleEl.value = normalizeRole(role || 'L1_USER');
         editPasswordEl.value = '';
         editMessageEl.className = 'form-message';
         editMessageEl.textContent = '';
@@ -145,10 +180,24 @@
         modalEl.style.display = 'none';
     }
 
+    function openDeleteModal(id) {
+        if (!deleteModalEl || !id) return;
+        pendingDeleteUserId = id;
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete User';
+        deleteModalEl.style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        if (!deleteModalEl) return;
+        deleteModalEl.style.display = 'none';
+        pendingDeleteUserId = null;
+    }
+
     function saveEdit() {
         const id = editUserIdEl.value;
         const email = (editEmailEl.value || '').trim();
-        const role = editRoleEl.value || 'USER';
+        const role = normalizeRole(editRoleEl.value || 'L1_USER');
         const password = editPasswordEl.value || '';
 
         if (!id || !email) {
@@ -185,14 +234,16 @@
 
     function deleteUser(id) {
         if (!id) return;
-        const ok = window.confirm('Are you sure?');
-        if (!ok) return;
+
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
 
         fetch('/api/users/' + encodeURIComponent(id), { method: 'DELETE' })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.status === 'success') {
                     showMessage(tableMessageEl, 'User deleted successfully.', 'success');
+                    closeDeleteModal();
                     loadUsers();
                 } else {
                     showMessage(tableMessageEl, data.message || 'Failed to delete user.', 'error');
@@ -200,6 +251,13 @@
             })
             .catch(function () {
                 showMessage(tableMessageEl, 'Server error while deleting user.', 'error');
+            })
+            .finally(function () {
+                if (!deleteModalEl || deleteModalEl.style.display === 'none') {
+                    return;
+                }
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete User';
             });
     }
 
@@ -215,7 +273,7 @@
 
         deleteButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                deleteUser(btn.dataset.id);
+                openDeleteModal(btn.dataset.id);
             });
         });
     }
@@ -236,11 +294,39 @@
         cancelEditBtn.addEventListener('click', closeEditModal);
     }
 
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function () {
+            if (!pendingDeleteUserId) return;
+            deleteUser(pendingDeleteUserId);
+        });
+    }
+
+    if (closeDeleteModalBtn) {
+        closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+    }
+
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+    }
+
     if (modalEl) {
         modalEl.addEventListener('click', function (e) {
             if (e.target === modalEl) closeEditModal();
         });
     }
+
+    if (deleteModalEl) {
+        deleteModalEl.addEventListener('click', function (e) {
+            if (e.target === deleteModalEl) closeDeleteModal();
+        });
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeEditModal();
+            closeDeleteModal();
+        }
+    });
 
     [usernameEl, emailEl, passwordEl].forEach(function (el) {
         if (!el) return;

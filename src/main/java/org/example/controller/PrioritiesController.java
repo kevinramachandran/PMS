@@ -67,6 +67,14 @@ public class PrioritiesController {
         return service.getByTypeAndDate(type, LocalDate.parse(date));
     }
 
+    @GetMapping("/type/{type}/month")
+    public List<Priorities> getLatestByTypeAndMonth(
+            @PathVariable String type,
+            @RequestParam int month,
+            @RequestParam int year) {
+        return service.getLatestByTypeAndMonth(type, month, year);
+    }
+
     // ✅ REPLACE BY TYPE AND DATE (overwrite mode)
     @PostMapping("/replace/type/{type}/date/{date}")
     public Priorities replaceByTypeAndDate(

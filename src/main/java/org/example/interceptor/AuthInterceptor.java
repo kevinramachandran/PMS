@@ -3,14 +3,12 @@ package org.example.interceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.example.util.RoleAccess;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
-
-    private static final String ROLE_ADMIN = "ADMIN";
-    private static final String ROLE_USER = "USER";
 
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -36,29 +34,36 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (ROLE_ADMIN.equals(role)) {
+        if (RoleAccess.isAdmin(role)) {
             return true;
         }
 
-        // USER role: restricted to KPI dashboard and read-only dashboard APIs.
-        if (ROLE_USER.equals(role)) {
-            if (path.startsWith("/settings") || path.startsWith("/pms/") || path.startsWith("/config/") || path.startsWith("/pms-configuration")) {
+        if (path.startsWith("/pms-configuration")) {
+            response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
+            return false;
+        }
+
+        if (path.startsWith("/settings") || path.startsWith("/pms/") || path.startsWith("/config/")
+                || path.startsWith("/add-metrics") || path.startsWith("/add-daily-data")) {
+            if (!RoleAccess.canAccessPmsDataEntry(role)) {
                 response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
                 return false;
             }
+        }
 
-            if (path.startsWith("/api/") && !path.startsWith("/api/auth/")) {
-                String method = request.getMethod();
-                if (!"GET".equalsIgnoreCase(method)) {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
-                    return false;
-                }
-            }
+        if (path.startsWith("/api/users")) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
+            return false;
+        }
 
-            if (!"/kpi-dashboard".equals(path) && !path.startsWith("/api/") && !"/logout".equals(path)) {
-                response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
+        if (path.startsWith("/api/") && !path.startsWith("/api/auth/")) {
+            String method = request.getMethod();
+            if (!RoleAccess.canAccessPmsDataEntry(role) && !"GET".equalsIgnoreCase(method)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
                 return false;
             }
         }

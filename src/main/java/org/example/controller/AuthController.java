@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpSession;
 import org.example.entity.AppUser;
 import org.example.model.UserInfo;
 import org.example.service.AuthService;
+import org.example.util.RoleAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -42,12 +43,15 @@ public class AuthController {
 
         Optional<UserInfo> user = authService.authenticate(username, password);
         if (user.isPresent()) {
+            String normalizedRole = RoleAccess.normalize(user.get().getRole());
             session.setAttribute("username", user.get().getUsername());
-            session.setAttribute("role",     user.get().getRole());
+            session.setAttribute("role", normalizedRole);
+            session.setAttribute("roleLabel", RoleAccess.displayName(normalizedRole));
             session.setAttribute("email",    user.get().getEmail());
             return Map.of(
                     "status",   "success",
-                    "role",     user.get().getRole(),
+                    "role", normalizedRole,
+                    "roleLabel", RoleAccess.displayName(normalizedRole),
                 "username", user.get().getUsername(),
                 "email",    user.get().getEmail()
             );
@@ -137,7 +141,7 @@ public class AuthController {
 
     private boolean isAdmin(HttpSession session) {
         String role = (String) session.getAttribute("role");
-        return "ADMIN".equals(role);
+        return RoleAccess.isAdmin(role);
     }
 
     private Map<String, Object> toUserResponse(AppUser user) {
@@ -145,7 +149,8 @@ public class AuthController {
         row.put("id", user.getId());
         row.put("username", user.getUsername());
         row.put("email", user.getEmail());
-        row.put("role", user.getRole());
+        row.put("role", RoleAccess.normalize(user.getRole()));
+        row.put("roleLabel", RoleAccess.displayName(user.getRole()));
         row.put("status", "Active");
         return row;
     }

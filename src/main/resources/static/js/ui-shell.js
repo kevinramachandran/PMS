@@ -4,6 +4,18 @@
         return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     }
 
+    function formatTodayDate() {
+        const now = new Date();
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const day = dayNames[now.getDay()];
+        const month = monthNames[now.getMonth()];
+        const date = now.getDate();
+        const year = now.getFullYear();
+        return day + ', ' + month + ' ' + date + ', ' + year;
+    }
+
     function createToastIfNeeded() {
         let toast = document.getElementById('pmsGlobalToast');
         if (!toast) {
@@ -41,28 +53,144 @@
         return path === '/settings' || path === '/pms-configuration';
     }
 
+    function normalizeCellText(cell) {
+        return (cell && cell.textContent ? cell.textContent : '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function hasTextInputLikeContent(cell) {
+        return !!(cell && cell.querySelector('textarea, select, input:not([type="checkbox"]):not([type="radio"]), button'));
+    }
+
+    function hasVisualOnlyContent(cell) {
+        if (!cell) {
+            return false;
+        }
+        const text = normalizeCellText(cell);
+        return !text && !!cell.querySelector('i, svg, img, input[type="checkbox"], input[type="radio"]');
+    }
+
+    function isNumericLikeText(text) {
+        if (!text) {
+            return false;
+        }
+        return /^((top\s*)?\d+([.,:/-]\d+)*(\.\d+)?%?|#\d+|w\d+|sl\s*no|s\.no|\d{1,2}:\d{2}(\s?[ap]m)?)$/i.test(text);
+    }
+
+    function isCenterCandidateCell(cell) {
+        if (!cell || cell.classList.contains('text-left') || hasTextInputLikeContent(cell)) {
+            return false;
+        }
+        if (cell.colSpan > 1) {
+            return true;
+        }
+
+        const text = normalizeCellText(cell);
+        if (hasVisualOnlyContent(cell)) {
+            return true;
+        }
+        if (cell.querySelector('i, svg, img') && text.length <= 4) {
+            return true;
+        }
+        return isNumericLikeText(text);
+    }
+
+    function applyCellAlignment(cell, shouldCenter) {
+        if (!cell) {
+            return;
+        }
+        cell.classList.remove('pms-cell-left', 'pms-cell-center');
+        cell.classList.add(shouldCenter ? 'pms-cell-center' : 'pms-cell-left');
+    }
+
+    function standardizeTableAlignment(root) {
+        const scope = root || document;
+        scope.querySelectorAll('table').forEach(function (table) {
+            const bodyRows = Array.from(table.tBodies || []).flatMap(function (tbody) {
+                return Array.from(tbody.rows || []);
+            });
+            const centerColumns = [];
+
+            bodyRows.forEach(function (row) {
+                Array.from(row.cells || []).forEach(function (cell, cellIndex) {
+                    if (cell.colSpan !== 1 || hasTextInputLikeContent(cell)) {
+                        return;
+                    }
+                    if (!centerColumns[cellIndex]) {
+                        centerColumns[cellIndex] = { samples: 0, centered: 0 };
+                    }
+                    centerColumns[cellIndex].samples += 1;
+                    if (isCenterCandidateCell(cell)) {
+                        centerColumns[cellIndex].centered += 1;
+                    }
+                });
+            });
+
+            table.querySelectorAll('thead tr, tbody tr, tfoot tr').forEach(function (row) {
+                Array.from(row.cells || []).forEach(function (cell, cellIndex) {
+                    const score = centerColumns[cellIndex];
+                    const centerByColumn = !!(score && score.samples > 0 && (score.centered / score.samples) >= 0.6);
+                    const shouldCenter = centerByColumn || isCenterCandidateCell(cell);
+                    applyCellAlignment(cell, shouldCenter);
+                });
+            });
+        });
+    }
+
+    function bindTableAlignmentObserver() {
+        if (window.__pmsTableAlignmentObserverBound) {
+            return;
+        }
+
+        let pendingTimer = null;
+        const scheduleRefresh = function () {
+            window.clearTimeout(pendingTimer);
+            pendingTimer = window.setTimeout(function () {
+                standardizeTableAlignment(document);
+            }, 120);
+        };
+
+        const observer = new MutationObserver(function (mutations) {
+            const hasTableMutation = mutations.some(function (mutation) {
+                if (mutation.target && mutation.target.nodeType === 1) {
+                    const element = mutation.target;
+                    if (element.tagName === 'TABLE' || element.tagName === 'TR' || element.tagName === 'TD' || element.tagName === 'TH' || element.closest('table')) {
+                        return true;
+                    }
+                }
+                return Array.from(mutation.addedNodes || []).some(function (node) {
+                    return node.nodeType === 1 && (node.tagName === 'TABLE' || (node.querySelector && node.querySelector('table')));
+                });
+            });
+
+            if (hasTableMutation) {
+                scheduleRefresh();
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+
+        window.__pmsTableAlignmentObserverBound = true;
+    }
+
     function enhanceHeader(header) {
         const headerLeft = header.querySelector('.header-left');
-        const allowMonthPicker = !isConfigPage();
         const headerCenter = header.querySelector('.header-center');
         const headerRight = header.querySelector('.header-right') || (function () {
             const div = document.createElement('div');
             div.className = 'header-right';
             return div;
         })();
+        const existingRoleBadge = header.querySelector('.header-role-badge');
+        const existingRole = existingRoleBadge ? existingRoleBadge.textContent.trim().toUpperCase().replace(/\s+/g, '_') : '';
+        const canAccessPmsDataEntry = existingRole === 'ADMIN' || existingRole === 'L1_USER' || existingRole === 'USER';
+        const canManageUsers = existingRole === 'ADMIN';
 
-        if (allowMonthPicker) {
-            const center = headerCenter || (function () {
-                const div = document.createElement('div');
-                div.className = 'header-center';
-                return div;
-            })();
-            if (!header.contains(center)) {
-                header.insertBefore(center, headerRight);
-            }
-        } else if (headerCenter && header.contains(headerCenter)) {
-            headerCenter.remove();
-        }
         if (!header.contains(headerRight)) {
             header.appendChild(headerRight);
         }
@@ -82,18 +210,6 @@
             el.remove();
         });
 
-        if (allowMonthPicker) {
-            const center = header.querySelector('.header-center');
-            if (center && !center.querySelector('.pms-month-picker')) {
-                const monthInput = document.createElement('input');
-                monthInput.type = 'month';
-                monthInput.className = 'pms-month-picker';
-                monthInput.value = getMonthValue();
-                center.innerHTML = '';
-                center.appendChild(monthInput);
-            }
-        }
-
         if (!headerRight.querySelector('.pms-profile')) {
             const existingName = (header.querySelector('.profile-name') && header.querySelector('.profile-name').textContent.trim())
                 || (header.querySelector('.user-avatar') && header.querySelector('.user-avatar').textContent.trim())
@@ -106,6 +222,14 @@
 
             const profile = document.createElement('div');
             profile.className = 'pms-profile';
+            const menuLinks = [];
+            if (canAccessPmsDataEntry) {
+                menuLinks.push('<a href="/settings">PMS Data Entry</a>');
+            }
+            if (canManageUsers) {
+                menuLinks.push('<a href="/pms-configuration">User Management</a>');
+            }
+            menuLinks.push('<a href="' + logoutHref + '">Logout</a>');
             profile.innerHTML = '' +
                 '<button type="button" class="pms-profile-btn">' +
                 '<i class="fas fa-user-circle"></i>' +
@@ -113,10 +237,16 @@
                 '<i class="fas fa-chevron-down"></i>' +
                 '</button>' +
                 '<div class="pms-profile-menu">' +
-                '<a href="/pms-configuration">Profile</a>' +
-                '<a href="' + logoutHref + '">Logout</a>' +
+                menuLinks.join('') +
                 '</div>';
             headerRight.innerHTML = '';
+            
+            // Add today's date display
+            const dateDisplay = document.createElement('div');
+            dateDisplay.className = 'pms-today-date';
+            dateDisplay.textContent = formatTodayDate();
+            headerRight.appendChild(dateDisplay);
+            
             headerRight.appendChild(profile);
 
             const btn = profile.querySelector('.pms-profile-btn');
@@ -166,5 +296,7 @@
         document.querySelectorAll('.top-header').forEach(enhanceHeader);
         normalizeSidebarLabels();
         fixFooterBranding();
+        standardizeTableAlignment(document);
+        bindTableAlignmentObserver();
     });
 })();

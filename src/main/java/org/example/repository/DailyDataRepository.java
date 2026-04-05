@@ -18,6 +18,9 @@ public interface DailyDataRepository extends JpaRepository<DailyData, Long> {
     @Query("SELECT d FROM DailyData d WHERE d.type = :type ORDER BY d.date DESC, d.id DESC")
     List<DailyData> findByType(@Param("type") String type);
 
+    @Query("SELECT MAX(d.date) FROM DailyData d WHERE d.type = :type AND d.date BETWEEN :startDate AND :endDate")
+    LocalDate findLatestDateByTypeWithinRange(@Param("type") String type, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
     void deleteByTypeAndDate(String type, LocalDate date);
 
 }

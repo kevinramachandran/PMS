@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -55,6 +56,15 @@ public class DailyDataService {
     // Get by Type
     public List<DailyData> getByType(String type) {
         return repo.findByType(type);
+    }
+
+    public List<DailyData> getLatestByTypeAndMonth(String type, int month, int year) {
+        YearMonth selectedMonth = YearMonth.of(year, month);
+        LocalDate latestDate = repo.findLatestDateByTypeWithinRange(type, selectedMonth.atDay(1), selectedMonth.atEndOfMonth());
+        if (latestDate == null) {
+            return List.of();
+        }
+        return repo.findByTypeAndDate(type, latestDate);
     }
 
     @Transactional

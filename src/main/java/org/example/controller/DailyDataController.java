@@ -67,6 +67,14 @@ public class DailyDataController {
         return service.getByTypeAndDate(type, LocalDate.parse(date));
     }
 
+    @GetMapping("/type/{type}/month")
+    public List<DailyData> getLatestByTypeAndMonth(
+            @PathVariable String type,
+            @RequestParam int month,
+            @RequestParam int year) {
+        return service.getLatestByTypeAndMonth(type, month, year);
+    }
+
     // ✅ REPLACE BY TYPE AND DATE (overwrite mode)
     @PostMapping("/replace/type/{type}/date/{date}")
     public List<DailyData> replaceByTypeAndDate(

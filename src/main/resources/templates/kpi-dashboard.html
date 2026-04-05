@@ -32,7 +32,7 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
                 <a href="/pms-configuration" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -47,7 +47,7 @@
                     <h1>KPI Dashboard</h1>
                 </div>
                 <div class="header-center">
-                    <label for="kpiMonthFilter" class="header-filter-label">Month</label>
+                    <label for="kpiMonthFilter" class="header-filter-label">Month &amp; Year</label>
                     <select id="kpiMonthFilter" class="header-filter-select"></select>
                 </div>
                 <div class="header-right">
@@ -59,7 +59,7 @@
                         <div class="profile-meta">
                             <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
                             <div class="profile-subline">
-                                <span class="header-role-badge" th:text="${session.role}">ROLE</span>
+                                <span class="header-role-badge" th:text="${session.roleLabel != null ? session.roleLabel : session.role}">ROLE</span>
                                 <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
                             </div>
                         </div>
@@ -71,7 +71,7 @@
                 </div>
             </header>
 
-            <div class="content-area">
+            <div class="content-area kpi-content-area">
                 <div class="dashboard-scroll">
                     <div class="dashboard-container">
                 <!-- Horizontal Scroll Dashboard -->
@@ -329,11 +329,11 @@
                             <div class="hs-legend-item"><div class="hs-swatch hs-swatch-diag"></div><span>- accident with/without lost days</span></div>
                         </div>
                         <div class="hs-legend-pair">
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- Near Miss</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-green"></div><span>- Near Miss</span></div>
                             <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Near Miss</span></div>
                         </div>
                         <div class="hs-legend-pair">
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- Safety Concern</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-red"></div><span>- Safety Concern</span></div>
                             <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Safety Concern</span></div>
                         </div>
                     </div>
@@ -423,6 +423,14 @@
                         <div class="lsr-footer-cell">Target<br><strong>100% Compliance</strong></div>
                         <div class="lsr-footer-cell">Owner<br><strong>Safety Team</strong></div>
                     </div>
+
+                </div>
+            </div>
+
+            <div class="kpi-footer-slot">
+                <div class="kpi-footer-buttons" id="kpiFooterButtons">
+                    <a id="kpiFooterBtn1" href="https://www.solvexes.com/" target="_blank" class="kpi-footer-btn">Solvex</a>
+                    <a id="kpiFooterBtn2" href="https://www.carlsberg.com/" target="_blank" class="kpi-footer-btn">Carlsbridge</a>
                 </div>
             </div>
 
@@ -469,19 +477,34 @@
                     String(today.getDate()).padStart(2, '0');
             }
 
+            function getSelectedKpiPeriod() {
+                const monthFilter = document.getElementById('kpiMonthFilter');
+                const value = monthFilter ? (monthFilter.value || '') : '';
+                const parts = value.split('-');
+                if (parts.length === 2) {
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10);
+                    if (!isNaN(year) && !isNaN(month)) {
+                        return { year, month };
+                    }
+                }
+
+                const today = new Date();
+                return { year: today.getFullYear(), month: today.getMonth() + 1 };
+            }
+
             // Load all data on page load
             function loadAllData() {
-                loadPrioritiesData();
-                loadWeeklyPrioritiesData();
-                loadAllDailyData();
+                const period = getSelectedKpiPeriod();
+                loadPrioritiesData(period.year, period.month);
+                loadWeeklyPrioritiesData(period.year, period.month);
+                loadAllDailyData(period.year, period.month);
             }
 
             // Load TOP 3 Priorities
-            function loadPrioritiesData() {
-                const today = getLocalDateString();
-
+            function loadPrioritiesData(year, month) {
                 $.ajax({
-                    url: `/api/priorities/type/TOP_3/date/${today}`,
+                    url: `/api/priorities/type/TOP_3/month?month=${month}&year=${year}`,
                     type: 'GET',
                     success: function(data) {
                         if (data && data.length > 0) {
@@ -504,11 +527,9 @@
             }
 
             // Load Weekly Priorities
-            function loadWeeklyPrioritiesData() {
-                const today = getLocalDateString();
-
+            function loadWeeklyPrioritiesData(year, month) {
                 $.ajax({
-                    url: `/api/priorities/type/WEEKLY/date/${today}`,
+                    url: `/api/priorities/type/WEEKLY/month?month=${month}&year=${year}`,
                     type: 'GET',
                     success: function(data) {
                         if (data && data.length > 0) {
@@ -531,18 +552,16 @@
             }
 
             // Load daily data for all sections
-            function loadAllDailyData() {
+            function loadAllDailyData(year, month) {
                 sections.forEach(section => {
-                    loadDailyDataForSection(section);
+                    loadDailyDataForSection(section, year, month);
                 });
             }
 
             // Load data for a specific section
-            function loadDailyDataForSection(type) {
-                const today = getLocalDateString();
-
+            function loadDailyDataForSection(type, year, month) {
                 $.ajax({
-                    url: `/api/daily-data/type/${type}/date/${today}`,
+                    url: `/api/daily-data/type/${type}/month?month=${month}&year=${year}`,
                     type: 'GET',
                     success: function(data) {
                         populateDailyTable(bodyIds[type], data);
@@ -587,6 +606,13 @@
 
             // Initial load
             loadAllData();
+
+            const monthFilter = document.getElementById('kpiMonthFilter');
+            if (monthFilter) {
+                monthFilter.addEventListener('change', function() {
+                    loadAllData();
+                });
+            }
 
             // Refresh data every 30 seconds
             setInterval(loadAllData, 30000);

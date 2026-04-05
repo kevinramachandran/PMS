@@ -207,6 +207,7 @@ body {
 
 .nav-item {
     padding: 10px 14px;
+    min-height: 44px;
     margin: 2px 10px;
     display: flex;
     align-items: center;
@@ -215,7 +216,7 @@ body {
     text-decoration: none;
     border-radius: 10px;
     border-left: 3px solid transparent;
-    transition: background 0.25s ease, transform 0.25s ease, border-left-color 0.25s ease;
+    transition: background 0.25s ease, border-left-color 0.25s ease, color 0.25s ease;
     font-size: 13px;
     font-weight: 500;
 }
@@ -223,10 +224,8 @@ body {
 .nav-item:hover {
     background: rgba(255, 255, 255, 0.08);
     border-left-color: #2ecc71;
-    transform: translateX(4px);
     color: #ffffff;
     filter: none;
-    padding-left: 14px;
 }
 
 .nav-item.active {
@@ -239,10 +238,21 @@ body {
 
 .nav-item i {
     width: 20px;
+    height: 20px;
     margin-right: 0;
-    font-size: 16px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
     color: rgba(200, 200, 200, 0.85);
     flex-shrink: 0;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.nav-item span {
+    line-height: 1;
 }
 
 .nav-item:hover i {
@@ -492,6 +502,16 @@ body {
 .content-area {
     flex: 1;
     padding: 20px;
+}
+
+.kpi-content-area {
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-footer-slot {
+    margin: 14px 0 8px;
+    padding: 8px 0;
 }
 
 /* Daily Status Grid */
@@ -1036,6 +1056,63 @@ body {
     object-fit: contain;
 }
 
+/* KPI Footer Buttons */
+.kpi-footer,
+.kpi-footer-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 0;
+    flex-wrap: wrap;
+}
+
+.kpi-footer-button,
+.kpi-footer-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.kpi-footer-button:hover,
+.kpi-footer-btn:hover {
+    background-color: var(--accent-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 107, 46, 0.3);
+}
+
+.kpi-footer-button:active,
+.kpi-footer-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(11, 107, 46, 0.2);
+}
+
+.kpi-footer-button svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.kpi-footer-button.secondary {
+    background-color: var(--border-color);
+    color: var(--text-dark);
+}
+
+.kpi-footer-button.secondary:hover {
+    background-color: #d1d5db;
+}
+
 /* Sidebar Overlay */
 .sidebar-overlay {
     display: none;
@@ -1540,22 +1617,23 @@ body.modern-shell .sidebar-nav {
 }
 
 body.modern-shell .nav-item {
+    display: flex;
+    align-items: center;
     color: rgba(255, 255, 255, 0.82);
     margin: 2px 10px;
     border-radius: 10px;
     border-left: 3px solid transparent;
     padding: 10px 14px;
+    min-height: 44px;
     gap: 12px;
-    transition: background 0.25s ease, transform 0.25s ease, border-left-color 0.25s ease;
+    transition: background 0.25s ease, border-left-color 0.25s ease, color 0.25s ease;
 }
 
 body.modern-shell .nav-item:hover {
     background: rgba(255, 255, 255, 0.08);
     border-left-color: #2ecc71;
-    transform: translateX(4px);
     color: #ffffff;
     filter: none;
-    padding-left: 14px;
 }
 
 body.modern-shell .nav-item.active {
@@ -1569,8 +1647,19 @@ body.modern-shell .nav-item.active {
 body.modern-shell .nav-item i {
     margin-right: 0;
     width: 20px;
-    font-size: 16px;
+    height: 20px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
     color: rgba(200, 200, 200, 0.85);
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+body.modern-shell .nav-item span {
+    line-height: 1;
 }
 
 body.modern-shell .nav-item:hover i,
@@ -2375,7 +2464,7 @@ body.modern-shell .footer p {
 
 .um-layout {
     display: grid;
-    grid-template-columns: 340px 1fr;
+    grid-template-columns: minmax(520px, 1.55fr) minmax(320px, 0.85fr);
     gap: 22px;
     align-items: start;
 }
@@ -2383,6 +2472,14 @@ body.modern-shell .footer p {
 .um-left,
 .um-right {
     min-width: 0;
+}
+
+.um-right {
+    max-width: 440px;
+}
+
+.um-left .pms-config-card-body {
+    overflow-x: auto;
 }
 
 @media (max-width: 900px) {
@@ -2482,9 +2579,15 @@ body.modern-shell .footer p {
     color: #166534;
 }
 
-.pms-role-badge.user {
+.pms-role-badge.user,
+.pms-role-badge.l1 {
     background: #dbeafe;
     color: #1e40af;
+}
+
+.pms-role-badge.l2 {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .pms-status-badge {
@@ -2593,6 +2696,28 @@ body.modern-shell .footer p {
 
 .pms-modal-body {
     padding: 16px;
+}
+
+.pms-confirm-card {
+    width: min(100%, 420px);
+}
+
+.pms-confirm-text {
+    margin: 0;
+    font-size: 0.96rem;
+    line-height: 1.55;
+    color: #334155;
+}
+
+.pms-confirm-delete-btn {
+    background: #dc2626;
+    color: #ffffff;
+    border: 1px solid #dc2626;
+}
+
+.pms-confirm-delete-btn:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
 }
 
 @media (max-width: 600px) {
@@ -2802,8 +2927,8 @@ body {
 }
 
 .chart-modal-content {
-    width: min(1100px, 100%);
-    height: min(78vh, 760px);
+    width: min(1400px, 95%);
+    height: min(85vh, 850px);
     display: flex;
     flex-direction: column;
     background: #ffffff;
@@ -2889,7 +3014,7 @@ body {
     }
 
     .chart-modal-content {
-        height: min(82vh, 760px);
+        height: min(85vh, 850px);
     }
 }
 
@@ -3134,6 +3259,31 @@ body.modern-shell .footer {
     transition: all 0.2s ease;
     padding: 8px !important;
     height: auto !important;
+}
+
+/* Keep compact/fixed-footer overrides limited to TV mode only.
+   For normal dashboard/config pages, restore full-height flowing layout. */
+body:not(.kpi-tv-layout) .content,
+body:not(.kpi-tv-layout) .content-area {
+    padding: 20px !important;
+}
+
+body:not(.kpi-tv-layout) .main-content {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body:not(.kpi-tv-layout) .content-area {
+    flex: 1 1 auto;
+}
+
+body:not(.kpi-tv-layout) .footer,
+body:not(.kpi-tv-layout).modern-shell .footer {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
 }
 
 /* ===== KPI Dashboard TV Fit Overrides ===== */

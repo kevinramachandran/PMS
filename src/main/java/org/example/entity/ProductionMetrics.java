@@ -28,12 +28,24 @@ public class ProductionMetrics {
     @Column(name = "production_productivity_ftd_target")
     private Double productionProductivityFtdTarget;
 
+    @Column(name = "production_productivity_mtd_actual")
+    private Double productionProductivityMtdActual;
+
+    @Column(name = "production_productivity_ytd_actual")
+    private Double productionProductivityYtdActual;
+
     // Logistics Productivity
     @Column(name = "logistics_productivity_ftd_actual")
     private Double logisticsProductivityFtdActual;
 
     @Column(name = "logistics_productivity_ftd_target")
     private Double logisticsProductivityFtdTarget;
+
+    @Column(name = "logistics_productivity_mtd_actual")
+    private Double logisticsProductivityMtdActual;
+
+    @Column(name = "logistics_productivity_ytd_actual")
+    private Double logisticsProductivityYtdActual;
 
     // KPI Sensory Score
     @Column(name = "kpi_sensory_score_ftd_actual")
@@ -48,12 +60,21 @@ public class ProductionMetrics {
     @Column(name = "kpi_sensory_score_mtd_target")
     private Double kpiSensoryScoreMtdTarget;
 
+    @Column(name = "kpi_sensory_score_ytd_actual")
+    private Double kpiSensoryScoreYtdActual;
+
     // KPI Consumer Complaint
     @Column(name = "kpi__consumer_complaint_units_/_mhl_ftd_actual")
     private Double kpiConsumerComplaintUnitsMhlFtdActual;
 
     @Column(name = "kpi__consumer_complaint__units_/_mhl_ftd_target")
     private Double kpiConsumerComplaintUnitsMhlFtdTarget;
+
+    @Column(name = "kpi_consumer_complaint_units_mhl_mtd_actual")
+    private Double kpiConsumerComplaintUnitsMhlMtdActual;
+
+    @Column(name = "kpi_consumer_complaint_units_mhl_ytd_actual")
+    private Double kpiConsumerComplaintUnitsMhlYtdActual;
 
     // KPI Customer Complaint
     @Column(name = "kpi__customer_complaint__units_/_mhl_ftd_actual")
@@ -62,6 +83,12 @@ public class ProductionMetrics {
     @Column(name = "kpi__customer_complaint__units_/_mhl_ftd_target")
     private Double kpiCustomerComplaintUnitsMhlFtdTarget;
 
+    @Column(name = "kpi_customer_complaint_units_mhl_mtd_actual")
+    private Double kpiCustomerComplaintUnitsMhlMtdActual;
+
+    @Column(name = "kpi_customer_complaint_units_mhl_ytd_actual")
+    private Double kpiCustomerComplaintUnitsMhlYtdActual;
+
     // Process Confirmation B&P
     @Column(name = "process_confirmation_b&p_ftd_actual")
     private Double processConfirmationBpFtdActual;
@@ -69,12 +96,21 @@ public class ProductionMetrics {
     @Column(name = "process_confirmation_b&p_ftd_target")
     private Double processConfirmationBpFtdTarget;
 
+    @Column(name = "process_confirmation_bp_mtd_actual")
+    private Double processConfirmationBpMtdActual;
+
+    @Column(name = "process_confirmation_bp_ytd_actual")
+    private Double processConfirmationBpYtdActual;
+
     // Process Confirmation Pack
     @Column(name = "process_confirmation_pack_mtd_actual")
     private Double processConfirmationPackMtdActual;
 
     @Column(name = "process_confirmation_pack_mtd_target")
     private Double processConfirmationPackMtdTarget;
+
+    @Column(name = "process_confirmation_pack_ytd_actual")
+    private Double processConfirmationPackYtdActual;
 
     // KPI OEE
     @Column(name = "kpi__oee__ftd_actual")
@@ -89,6 +125,9 @@ public class ProductionMetrics {
     @Column(name = "kpi__oee__mtd_target")
     private Double kpiOeeMtdTarget;
 
+    @Column(name = "kpi_oee_ytd_actual")
+    private Double kpiOeeYtdActual;
+
     // KPI Beer Loss
     @Column(name = "kpi__beer_loss__ftd_actual")
     private Double kpiBeerLossFtdActual;
@@ -101,6 +140,9 @@ public class ProductionMetrics {
 
     @Column(name = "kpi__beer_loss__mtd_target")
     private Double kpiBeerLossMtdTarget;
+
+    @Column(name = "kpi_beer_loss_ytd_actual")
+    private Double kpiBeerLossYtdActual;
 
     // KPI WUR
     @Column(name = "kpi__wur_hl/hl_ftd_actual")
@@ -115,6 +157,9 @@ public class ProductionMetrics {
     @Column(name = "kpi__wur_hl/hl_mtd_target")
     private Double kpiWurHlHlMtdTarget;
 
+    @Column(name = "kpi_wur_hlhl_ytd_actual")
+    private Double kpiWurHlHlYtdActual;
+
     // KPI Electricity
     @Column(name = "kpi__electricity_kwh/hl_ftd_actual")
     private Double kpiElectricityKwhHlFtdActual;
@@ -127,6 +172,9 @@ public class ProductionMetrics {
 
     @Column(name = "kpi__electricity_kwh/hl_mtd_target")
     private Double kpiElectricityKwhHlMtdTarget;
+
+    @Column(name = "kpi_electricity_kwh_hl_ytd_actual")
+    private Double kpiElectricityKwhHlYtdActual;
 
     // KPI Energy
     @Column(name = "kpi__energy_kwh/hl_ftd_actual")
@@ -141,6 +189,9 @@ public class ProductionMetrics {
     @Column(name = "kpi__energy_kwh/hl_mtd_target")
     private Double kpiEnergyKwhHlMtdTarget;
 
+    @Column(name = "kpi_energy_kwh_hl_ytd_actual")
+    private Double kpiEnergyKwhHlYtdActual;
+
     // KPI RGB Ratio
     @Column(name = "kpi__rgb_ratio__ftd_actual")
     private Double kpiRgbRatioFtdActual;
@@ -153,6 +204,9 @@ public class ProductionMetrics {
 
     @Column(name = "kpi__rgb_ratio__mtd_target")
     private Double kpiRgbRatioMtdTarget;
+
+    @Column(name = "kpi_rgb_ratio_ytd_actual")
+    private Double kpiRgbRatioYtdActual;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

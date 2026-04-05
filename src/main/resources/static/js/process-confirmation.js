@@ -228,18 +228,37 @@ $(document).ready(function() {
         });
 
         const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        months.sort(function(a, b) { return a - b; }).forEach(function(m) {
-            monthFilter.append('<option value="' + m + '">' + monthNames[m] + '</option>');
-        });
-
         years.sort(function(a, b) { return b - a; }).forEach(function(y) {
             yearFilter.append('<option value="' + y + '">' + y + '</option>');
         });
 
-        if (parsed.length > 0) {
-            monthFilter.val(String(parsed[0].parsed.month));
-            yearFilter.val(String(parsed[0].parsed.year));
+        function refreshMonths(selectedYear, preferredMonth) {
+            monthFilter.empty();
+            const monthsForYear = parsed
+                .filter(function(item) { return item.parsed.year === selectedYear; })
+                .map(function(item) { return item.parsed.month; })
+                .filter(function(month, index, arr) { return arr.indexOf(month) === index; })
+                .sort(function(a, b) { return a - b; });
+
+            monthsForYear.forEach(function(m) {
+                monthFilter.append('<option value="' + m + '">' + monthNames[m] + '</option>');
+            });
+
+            const fallbackMonth = monthsForYear.length ? monthsForYear[monthsForYear.length - 1] : '';
+            const resolvedMonth = monthsForYear.includes(Number(preferredMonth)) ? Number(preferredMonth) : fallbackMonth;
+            monthFilter.val(resolvedMonth ? String(resolvedMonth) : '');
         }
+
+        if (parsed.length > 0) {
+            const currentYear = new Date().getFullYear();
+            const preferredYear = years.includes(currentYear) ? currentYear : years[0];
+            yearFilter.val(String(preferredYear));
+            refreshMonths(preferredYear, parsed[0].parsed.month);
+        }
+
+        yearFilter.off('change.pcFilterSync').on('change.pcFilterSync', function() {
+            refreshMonths(Number($(this).val()), monthFilter.val());
+        });
     }
 
     function loadByPeriod(periodLabel) {

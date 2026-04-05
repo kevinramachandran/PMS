@@ -718,6 +718,36 @@ function renderLsrFocusRules(rulesMatrix) {
     foot.innerHTML = html.join('');
 }
 
+function applyKpiFooterButtons(config) {
+    const btn1 = document.getElementById('kpiFooterBtn1');
+    const btn2 = document.getElementById('kpiFooterBtn2');
+
+    if (!btn1 || !btn2 || !config) {
+        return;
+    }
+
+    const btn1Label = (config.kpiButton1Label || config.button1Label || btn1.textContent || 'Solvex').trim();
+    const btn1Url = (config.kpiButton1Url || config.button1Url || btn1.getAttribute('href') || 'https://www.solvexes.com/').trim();
+    const btn2Label = (config.kpiButton2Label || config.button2Label || btn2.textContent || 'Carlsbridge').trim();
+    const btn2Url = (config.kpiButton2Url || config.button2Url || btn2.getAttribute('href') || 'https://www.carlsberg.com/').trim();
+
+    if (btn1Label && btn1Url) {
+        btn1.textContent = btn1Label;
+        btn1.href = btn1Url;
+        btn1.style.display = 'inline-flex';
+    } else {
+        btn1.style.display = 'none';
+    }
+
+    if (btn2Label && btn2Url) {
+        btn2.textContent = btn2Label;
+        btn2.href = btn2Url;
+        btn2.style.display = 'inline-flex';
+    } else {
+        btn2.style.display = 'none';
+    }
+}
+
 function loadKpiDashboardMeta() {
     if (kpiDashboardMetaLoaded) {
         return;
@@ -736,11 +766,13 @@ function loadKpiDashboardMeta() {
             setElementText('lsr12Target', config.lsrTarget12);
             setElementText('lsr5Target', config.lsrTarget5);
             renderLsrFocusRules(config.lsrFocusRules);
+            applyKpiFooterButtons(config);
             kpiDashboardMetaLoaded = true;
         })
         .catch(function() {
             setElementText('pmsDeckTitle', '-');
             renderLsrFocusRules([]);
+            applyKpiFooterButtons({});
         });
 }
 
@@ -750,6 +782,8 @@ const kpiTableConfig = [
         unit: '%',
         actualField: 'kpiOeeFtdActual',
         targetField: 'kpiOeeFtdTarget',
+        mtdField: 'kpiOeeMtdActual',
+        ytdField: 'kpiOeeYtdActual',
         decimals: 1,
         higherIsBetter: true
     },
@@ -758,6 +792,8 @@ const kpiTableConfig = [
         unit: 'HL/HI',
         actualField: 'kpiSensoryScoreFtdActual',
         targetField: 'kpiSensoryScoreFtdTarget',
+        mtdField: 'kpiSensoryScoreMtdActual',
+        ytdField: 'kpiSensoryScoreYtdActual',
         decimals: 1,
         higherIsBetter: true
     },
@@ -766,6 +802,8 @@ const kpiTableConfig = [
         unit: 'HL/HI',
         actualField: 'kpiWurHlHlFtdActual',
         targetField: 'kpiWurHlHlFtdTarget',
+        mtdField: 'kpiWurHlHlMtdActual',
+        ytdField: 'kpiWurHlHlYtdActual',
         decimals: 2,
         higherIsBetter: false
     },
@@ -774,6 +812,8 @@ const kpiTableConfig = [
         unit: 'Kwh/HI',
         actualField: 'kpiElectricityKwhHlFtdActual',
         targetField: 'kpiElectricityKwhHlFtdTarget',
+        mtdField: 'kpiElectricityKwhHlMtdActual',
+        ytdField: 'kpiElectricityKwhHlYtdActual',
         decimals: 1,
         higherIsBetter: false
     },
@@ -782,6 +822,8 @@ const kpiTableConfig = [
         unit: 'Kwh/HI',
         actualField: 'kpiEnergyKwhHlFtdActual',
         targetField: 'kpiEnergyKwhHlFtdTarget',
+        mtdField: 'kpiEnergyKwhHlMtdActual',
+        ytdField: 'kpiEnergyKwhHlYtdActual',
         decimals: 2,
         higherIsBetter: false
     },
@@ -790,6 +832,8 @@ const kpiTableConfig = [
         unit: 'Nos & HL',
         actualField: null,
         targetField: null,
+        mtdField: null,
+        ytdField: null,
         decimals: 0,
         higherIsBetter: true
     },
@@ -798,6 +842,8 @@ const kpiTableConfig = [
         unit: 'No. of Cases & HL',
         actualField: null,
         targetField: null,
+        mtdField: null,
+        ytdField: null,
         decimals: 0,
         higherIsBetter: true
     },
@@ -806,6 +852,8 @@ const kpiTableConfig = [
         unit: 'HL/FTE',
         actualField: 'productionProductivityFtdActual',
         targetField: 'productionProductivityFtdTarget',
+        mtdField: 'productionProductivityMtdActual',
+        ytdField: 'productionProductivityYtdActual',
         decimals: 0,
         higherIsBetter: true
     },
@@ -814,6 +862,8 @@ const kpiTableConfig = [
         unit: 'HL/FTE',
         actualField: 'logisticsProductivityFtdActual',
         targetField: 'logisticsProductivityFtdTarget',
+        mtdField: 'logisticsProductivityMtdActual',
+        ytdField: 'logisticsProductivityYtdActual',
         decimals: 0,
         higherIsBetter: true
     }
@@ -1170,8 +1220,8 @@ function renderDailyPerformanceTable(metrics) {
         const todayTarget = readNumber(todayRecord, kpi.targetField);
         const todayActual = readNumber(todayRecord, kpi.actualField);
         const yesterdayActual = readNumber(yesterdayRecord, kpi.actualField);
-        const mtdValue = calcAverage(metrics, kpi.actualField);
-        const ytdValue = mtdValue;
+        const mtdValue = readNumber(todayRecord, kpi.mtdField) ?? calcAverage(metrics, kpi.actualField);
+        const ytdValue = readNumber(todayRecord, kpi.ytdField) ?? mtdValue;
 
         const yesterdayClass = getPerformanceClass(yesterdayActual, todayTarget, kpi.higherIsBetter);
         const todayClass = getPerformanceClass(todayActual, todayTarget, kpi.higherIsBetter);

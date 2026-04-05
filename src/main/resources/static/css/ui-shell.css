@@ -87,6 +87,15 @@ body.modern-shell .top-header {
     position: relative;
 }
 
+.pms-today-date {
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 0 10px;
+    border-right: 1px solid #e0e0e0;
+}
+
 .pms-profile-btn {
     height: 34px;
     border: 1px solid #d1d5db;
@@ -168,6 +177,26 @@ table th,
 .issue-table tbody td,
 .issue-table thead th {
     vertical-align: middle;
+}
+
+/* Hide pages not in the keep list */
+a[href="/leadership-gemba-tracker"],
+a[href="/meeting-agenda"],
+a[href="/process-confirmation"],
+a[href*="config=leadership-gemba-tracker"],
+a[href*="config=meeting-agenda"],
+a[href*="config=process-confirmation"] {
+    display: none !important;
+}
+
+table td.pms-cell-left,
+table th.pms-cell-left {
+    text-align: left !important;
+}
+
+table td.pms-cell-center,
+table th.pms-cell-center {
+    text-align: center !important;
 }
 
 .btn,

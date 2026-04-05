@@ -6,42 +6,42 @@ $(document).ready(function() {
     const requestedConfig = (new URLSearchParams(window.location.search).get('config') || '').trim().toLowerCase();
 
     const metricFields = [
-        'productionProductivityFtdActual', 'productionProductivityFtdTarget',
-        'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget',
-        'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget',
-        'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget',
-        'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget',
-        'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget',
-        'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget',
-        'kpiOeeFtdActual', 'kpiOeeFtdTarget',
-        'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget',
-        'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget',
-        'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget',
-        'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget',
-        'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget'
+        'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityYtdActual',
+        'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget', 'logisticsProductivityMtdActual', 'logisticsProductivityYtdActual',
+        'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget', 'kpiSensoryScoreMtdActual', 'kpiSensoryScoreYtdActual',
+        'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget', 'kpiConsumerComplaintUnitsMhlMtdActual', 'kpiConsumerComplaintUnitsMhlYtdActual',
+        'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget', 'kpiCustomerComplaintUnitsMhlMtdActual', 'kpiCustomerComplaintUnitsMhlYtdActual',
+        'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpYtdActual',
+        'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual',
+        'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeYtdActual',
+        'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget', 'kpiBeerLossMtdActual', 'kpiBeerLossYtdActual',
+        'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget', 'kpiWurHlHlMtdActual', 'kpiWurHlHlYtdActual',
+        'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget', 'kpiElectricityKwhHlMtdActual', 'kpiElectricityKwhHlYtdActual',
+        'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget', 'kpiEnergyKwhHlMtdActual', 'kpiEnergyKwhHlYtdActual',
+        'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget', 'kpiRgbRatioMtdActual', 'kpiRgbRatioYtdActual'
     ];
 
     const metricSections = {
         people: [
-            'productionProductivityFtdActual', 'productionProductivityFtdTarget',
-            'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget'
+            'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityYtdActual',
+            'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget', 'logisticsProductivityMtdActual', 'logisticsProductivityYtdActual'
         ],
         quality: [
-            'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget',
-            'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget',
-            'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget'
+            'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget', 'kpiSensoryScoreMtdActual', 'kpiSensoryScoreYtdActual',
+            'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget', 'kpiConsumerComplaintUnitsMhlMtdActual', 'kpiConsumerComplaintUnitsMhlYtdActual',
+            'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget', 'kpiCustomerComplaintUnitsMhlMtdActual', 'kpiCustomerComplaintUnitsMhlYtdActual'
         ],
         service: [
-            'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget',
-            'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget',
-            'kpiOeeFtdActual', 'kpiOeeFtdTarget',
-            'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget',
-            'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget'
+            'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpYtdActual',
+            'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual',
+            'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeYtdActual',
+            'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget', 'kpiBeerLossMtdActual', 'kpiBeerLossYtdActual',
+            'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget', 'kpiWurHlHlMtdActual', 'kpiWurHlHlYtdActual'
         ],
         cost: [
-            'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget',
-            'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget',
-            'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget'
+            'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget', 'kpiElectricityKwhHlMtdActual', 'kpiElectricityKwhHlYtdActual',
+            'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget', 'kpiEnergyKwhHlMtdActual', 'kpiEnergyKwhHlYtdActual',
+            'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget', 'kpiRgbRatioMtdActual', 'kpiRgbRatioYtdActual'
         ]
     };
 
@@ -119,6 +119,9 @@ $(document).ready(function() {
         } else if (config === 'lsr-tracking') {
             $('#form-lsr-tracking').addClass('active');
             window.dispatchEvent(new Event('lsr-tracking-open'));
+        } else if (config === 'kpi-footer-buttons') {
+            $('#form-kpi-footer-buttons').addClass('active');
+            loadKpiFooterButtonsConfig();
         }
     }
 
@@ -183,7 +186,6 @@ $(document).ready(function() {
             date: dateStr
         };
 
-        // Replace for today (overwrite mode)
         $.ajax({
             url: '/api/priorities/replace/type/TOP_3/date/' + dateStr,
             type: 'POST',
@@ -726,11 +728,134 @@ $(document).ready(function() {
         }, 2600);
     }
 
+    function showIssueBoardToast(message, type) {
+        const $toast = $('#issueBoardToast');
+        if ($toast.length === 0 || !message) {
+            return;
+        }
+
+        $toast.removeClass('success error show').addClass(type || 'success').text(message);
+        $toast.addClass('show');
+
+        window.clearTimeout(window.__issueBoardToastTimer);
+        window.__issueBoardToastTimer = window.setTimeout(function() {
+            $toast.removeClass('show');
+        }, 2800);
+    }
+
     function applyIssueBoardDateLimits() {
         $('#issueBoardLastReviewDate').removeAttr('max');
         $('#issueBoardNextReviewDate').removeAttr('max');
-        $('#ibFormIssueDate, #ibFormCompletedDate, #ibFormTargetDate').removeAttr('max');
         $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date, #issueBoardConfigTableBody .ib-target-date').removeAttr('max');
+    }
+
+    function statusToPercent(status) {
+        const normalized = normalizeIssueStatus(status);
+        return Math.max(0, Math.min(100, Number(normalized.replace('%', '')) || 0));
+    }
+
+    function updateStatusProgressUI($row) {
+        const percent = statusToPercent($row.find('.ib-status').val());
+        const $bar = $row.find('.ib-progress-bar');
+        const $label = $row.find('.ib-progress-label');
+        $bar.css('width', percent + '%');
+        $bar.removeClass('low medium high');
+        if (percent < 30) {
+            $bar.addClass('low');
+        } else if (percent < 70) {
+            $bar.addClass('medium');
+        } else {
+            $bar.addClass('high');
+        }
+        $label.text(percent + '%');
+    }
+
+    function clearIssueFieldError($field) {
+        $field.removeClass('ib-invalid');
+    }
+
+    function validateIssueRow($row) {
+        const requiredFields = [
+            $row.find('.ib-problem'),
+            $row.find('.ib-actions'),
+            $row.find('.ib-responsible')
+        ];
+
+        let rowValid = true;
+        requiredFields.forEach(function($field) {
+            if (!$field.val().trim()) {
+                $field.addClass('ib-invalid');
+                rowValid = false;
+            }
+        });
+
+        const status = $row.find('.ib-status').val();
+        const $completed = $row.find('.ib-completed-date');
+        if (status === '100%' && !$completed.val()) {
+            $completed.addClass('ib-invalid');
+            rowValid = false;
+        }
+
+        return rowValid;
+    }
+
+    function hasAtLeastOneIssueRow() {
+        return $('#issueBoardConfigTableBody tr').filter(function() {
+            return $(this).find('.ib-problem').length > 0;
+        }).length > 0;
+    }
+
+    function validateIssueBoardRows(showErrors) {
+        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
+            return $(this).find('.ib-problem').length > 0;
+        });
+
+        if (rows.length === 0) {
+            return false;
+        }
+
+        let valid = true;
+        rows.each(function() {
+            const $row = $(this);
+            if (showErrors) {
+                if (!validateIssueRow($row)) {
+                    valid = false;
+                }
+            } else {
+                const requiredOk = $row.find('.ib-problem').val().trim() && $row.find('.ib-actions').val().trim() && $row.find('.ib-responsible').val().trim();
+                const status = $row.find('.ib-status').val();
+                const completedOk = status !== '100%' || !!$row.find('.ib-completed-date').val();
+                if (!(requiredOk && completedOk)) {
+                    valid = false;
+                }
+            }
+        });
+
+        return valid;
+    }
+
+    function setIssueBoardSaveState() {
+        const hasRows = hasAtLeastOneIssueRow();
+        const isValid = validateIssueBoardRows(false);
+        $('#saveIssueBoardBtn').prop('disabled', !(hasRows && isValid));
+    }
+
+    function setIssueBoardSaveLoading(isLoading) {
+        const $saveBtn = $('#saveIssueBoardBtn');
+        if (isLoading) {
+            $saveBtn.prop('disabled', true);
+            $saveBtn.data('original-html', $saveBtn.html());
+            $saveBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            $('#cancelIssueBoardBtn, #addIssueBoardRowTableBtn').prop('disabled', true);
+            return;
+        }
+
+        const original = $saveBtn.data('original-html');
+        if (original) {
+            $saveBtn.html(original);
+        }
+        $('#cancelIssueBoardBtn, #addIssueBoardRowTableBtn').prop('disabled', false);
+        setIssueBoardSaveState();
     }
 
     function normalizeIssueStatus(status) {
@@ -796,16 +921,30 @@ $(document).ready(function() {
 
         $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date').off('change').on('change', function() {
             updateCompletedDateRequirement($(this).closest('tr'));
+            clearIssueFieldError($(this));
+            setIssueBoardSaveState();
         });
 
         $('#issueBoardConfigTableBody .ib-status').off('change').on('change', function() {
-            updateCompletedDateRequirement($(this).closest('tr'));
+            const $row = $(this).closest('tr');
+            updateCompletedDateRequirement($row);
+            updateStatusProgressUI($row);
+            setIssueBoardSaveState();
+        });
+
+        $('#issueBoardConfigTableBody input, #issueBoardConfigTableBody select').off('input.issue change.issue').on('input.issue change.issue', function() {
+            clearIssueFieldError($(this));
+            setIssueBoardSaveState();
         });
 
         $('#issueBoardConfigTableBody tr').each(function() {
-            updateRowDueDays($(this));
-            updateCompletedDateRequirement($(this));
+            const $row = $(this);
+            updateRowDueDays($row);
+            updateCompletedDateRequirement($row);
+            updateStatusProgressUI($row);
         });
+
+        setIssueBoardSaveState();
     }
 
     function loadIssueBoardByDate(dateStr) {
@@ -836,6 +975,7 @@ $(document).ready(function() {
             $('#issueBoardLastReviewDate').val('');
             $('#issueBoardNextReviewDate').val('');
             tbody.html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
+            setIssueBoardSaveState();
             return;
         }
 
@@ -849,40 +989,7 @@ $(document).ready(function() {
         bindIssueBoardDeleteButtons();
         bindIssueBoardRowEvents();
         applyIssueBoardDateLimits();
-    }
-
-    function getIssueFormRowData() {
-        return {
-            problem: $('#ibFormProblem').val().trim(),
-            ownerName: $('#ibFormOwner').val().trim(),
-            issueDate: $('#ibFormIssueDate').val() || '',
-            rootCause: $('#ibFormRootCause').val().trim(),
-            actions: $('#ibFormActions').val().trim(),
-            responsible: $('#ibFormResponsible').val().trim(),
-            targetDate: $('#ibFormTargetDate').val() || '',
-            status: normalizeIssueStatus($('#ibFormStatus').val() || '0%'),
-            completedDate: $('#ibFormCompletedDate').val() || '',
-            remarks: $('#ibFormRemarks').val().trim()
-        };
-    }
-
-    function populateIssueFormFromRow($row) {
-        $('#ibFormProblem').val($row.find('.ib-problem').val() || '');
-        $('#ibFormOwner').val($row.find('.ib-owner').val() || '');
-        $('#ibFormIssueDate').val($row.find('.ib-issue-date').val() || '');
-        $('#ibFormRootCause').val($row.find('.ib-root-cause').val() || '');
-        $('#ibFormActions').val($row.find('.ib-actions').val() || '');
-        $('#ibFormResponsible').val($row.find('.ib-responsible').val() || '');
-        $('#ibFormTargetDate').val($row.find('.ib-target-date').val() || '');
-        $('#ibFormStatus').val(normalizeIssueStatus($row.find('.ib-status').val() || '0%'));
-        $('#ibFormCompletedDate').val($row.find('.ib-completed-date').val() || '');
-        $('#ibFormRemarks').val($row.find('.ib-remarks').val() || '');
-    }
-
-    function resetIssueFormInputs() {
-        $('#ibFormProblem, #ibFormOwner, #ibFormRootCause, #ibFormActions, #ibFormResponsible, #ibFormRemarks').val('');
-        $('#ibFormIssueDate, #ibFormTargetDate, #ibFormCompletedDate').val('');
-        $('#ibFormStatus').val('0%');
+        setIssueBoardSaveState();
     }
 
     function createIssueBoardConfigRow(item) {
@@ -892,71 +999,66 @@ $(document).ready(function() {
 
         return '' +
             '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '">' +
-            '<td><input type="text" class="ib-problem" value="' + escapeAttributeValue(safeItem.problem || '') + '" placeholder="Problem"></td>' +
-            '<td><input type="text" class="ib-owner" value="' + escapeAttributeValue(safeItem.ownerName || '') + '" placeholder="Name"></td>' +
-            '<td><input type="date" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
-            '<td><input type="text" class="ib-root-cause" value="' + escapeAttributeValue(safeItem.rootCause || '') + '" placeholder="Root Cause"></td>' +
-            '<td><input type="text" class="ib-actions" value="' + escapeAttributeValue(safeItem.actions || '') + '" placeholder="Actions"></td>' +
-            '<td><input type="text" class="ib-responsible" value="' + escapeAttributeValue(safeItem.responsible || '') + '" placeholder="Responsible"></td>' +
-            '<td><input type="date" class="ib-target-date" value="' + escapeAttributeValue(safeItem.targetDate || '') + '"></td>' +
-            '<td><input type="number" class="ib-due-days" value="" step="1" readonly></td>' +
-            '<td>' +
-            '<select class="ib-status">' +
+            '<td class="ib-text-cell"><input type="text" class="ib-problem" value="' + escapeAttributeValue(safeItem.problem || '') + '" placeholder="Describe issue"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-owner" value="' + escapeAttributeValue(safeItem.ownerName || '') + '" placeholder="Owner name"></td>' +
+            '<td><input type="date" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '" placeholder="Issue date"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-root-cause" value="' + escapeAttributeValue(safeItem.rootCause || '') + '" placeholder="Root cause"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-actions" value="' + escapeAttributeValue(safeItem.actions || '') + '" placeholder="Action plan"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-responsible" value="' + escapeAttributeValue(safeItem.responsible || '') + '" placeholder="Responsible"></td>' +
+            '<td><input type="date" class="ib-target-date" value="' + escapeAttributeValue(safeItem.targetDate || '') + '" placeholder="Target date"></td>' +
+            '<td><input type="number" class="ib-due-days" value="" step="1" readonly placeholder="0"></td>' +
+            '<td class="ib-status-cell">' +
+            '<div class="ib-status-wrap">' +
+            '<div class="ib-progress" aria-hidden="true"><div class="ib-progress-bar"></div></div>' +
+            '<div class="ib-progress-label">0%</div>' +
+            '<select class="ib-status" aria-label="Issue progress status">' +
             '<option value="0%" ' + (status === '0%' ? 'selected' : '') + '>0%</option>' +
             '<option value="25%" ' + (status === '25%' ? 'selected' : '') + '>25%</option>' +
             '<option value="50%" ' + (status === '50%' ? 'selected' : '') + '>50%</option>' +
             '<option value="75%" ' + (status === '75%' ? 'selected' : '') + '>75%</option>' +
             '<option value="100%" ' + (status === '100%' ? 'selected' : '') + '>100%</option>' +
             '</select>' +
+            '</div>' +
             '</td>' +
-            '<td><input type="date" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
-            '<td><input type="text" class="ib-remarks" value="' + escapeAttributeValue(safeItem.remarks || '') + '" placeholder="Remarks"></td>' +
-            '<td><button type="button" class="btn btn-secondary issue-edit">Edit</button> <button type="button" class="btn-delete issue-delete">Delete</button></td>' +
+            '<td class="ib-completed-cell"><input type="date" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '" placeholder="Completed date"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-remarks" value="' + escapeAttributeValue(safeItem.remarks || '') + '" placeholder="Remarks"></td>' +
+            '<td class="ib-action-cell"><button type="button" class="issue-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></td>' +
             '</tr>';
     }
 
-    $('#addIssueBoardRowBtn').on('click', function() {
+    function addIssueBoardInlineRow() {
         if ($('#issueBoardConfigTableBody').attr('data-locked') === '1') {
             showIssueBoardPopup('Edit is locked after save. Use Cancel to unlock.');
             return;
         }
 
-        const formData = getIssueFormRowData();
-        if (!formData.problem || !formData.actions || !formData.responsible) {
-            showIssueBoardPopup('Problem, Actions, and Responsible are required before adding a row.');
-            return;
-        }
-
-        if (formData.status === '100%' && !formData.completedDate) {
-            showIssueBoardPopup('Completed date is required when status is 100%.');
-            return;
-        }
-
         $('#issueBoardConfigTableBody .placeholder-row').remove();
-        $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow(formData));
+        $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow({
+            status: '0%'
+        }));
         bindIssueBoardDeleteButtons();
         bindIssueBoardRowEvents();
         applyIssueBoardDateLimits();
-        resetIssueFormInputs();
+        setIssueBoardSaveState();
+    }
+
+    $('#addIssueBoardRowTableBtn').on('click', function() {
+        addIssueBoardInlineRow();
     });
 
     function bindIssueBoardDeleteButtons() {
         $('.issue-delete').off('click').on('click', function() {
+            const confirmed = window.confirm('Delete this issue row? This change will be lost if you do not save.');
+            if (!confirmed) {
+                return;
+            }
             $(this).closest('tr').remove();
             if ($('#issueBoardConfigTableBody tr').length === 0) {
                 $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
             }
+            setIssueBoardSaveState();
         });
 
-        $('.issue-edit').off('click').on('click', function() {
-            const $row = $(this).closest('tr');
-            populateIssueFormFromRow($row);
-            $row.remove();
-            if ($('#issueBoardConfigTableBody tr').length === 0) {
-                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
-            }
-            showIssueBoardPopup('Row loaded into form for editing. Update and click Add Row.');
-        });
     }
 
     function lockIssueBoardRowsForStatusUpdates() {
@@ -969,17 +1071,17 @@ $(document).ready(function() {
                 $(this).prop('disabled', !isAllowed);
             });
             $(this).find('.issue-delete').prop('disabled', true);
-            $(this).find('.issue-edit').prop('disabled', true);
         });
 
-        $('#addIssueBoardRowBtn').prop('disabled', true);
+        $('#addIssueBoardRowTableBtn').prop('disabled', true);
     }
 
     function unlockIssueBoardRows() {
         const tbody = $('#issueBoardConfigTableBody');
         tbody.attr('data-locked', '0');
-        tbody.find('input, select, .issue-delete, .issue-edit').prop('disabled', false);
-        $('#addIssueBoardRowBtn').prop('disabled', false);
+        tbody.find('input, select, .issue-delete').prop('disabled', false);
+        $('#addIssueBoardRowTableBtn').prop('disabled', false);
+        setIssueBoardSaveState();
     }
 
     $('#cancelIssueBoardBtn').on('click', function() {
@@ -987,6 +1089,7 @@ $(document).ready(function() {
         unlockIssueBoardRows();
         loadIssueBoardByDate(saveDate);
         showIssueBoardPopup('Changes discarded.');
+        showIssueBoardToast('Issue Board changes were canceled.', 'error');
     });
 
     $('#saveIssueBoardBtn').on('click', function() {
@@ -1008,6 +1111,12 @@ $(document).ready(function() {
             return;
         }
 
+        if (!validateIssueBoardRows(true)) {
+            showIssueBoardPopup('Problem, Actions, Responsible, and completion date for 100% are required.');
+            setIssueBoardSaveState();
+            return;
+        }
+
         const payload = [];
         let invalid = false;
 
@@ -1021,6 +1130,11 @@ $(document).ready(function() {
 
             if (!problem || !actions || !responsible) {
                 invalid = true;
+                $(this).find('.ib-problem, .ib-actions, .ib-responsible').each(function() {
+                    if (!$(this).val().trim()) {
+                        $(this).addClass('ib-invalid');
+                    }
+                });
                 return false;
             }
 
@@ -1031,7 +1145,7 @@ $(document).ready(function() {
 
             if (statusValue === '100%' && !completedDate) {
                 invalid = true;
-                $(this).find('.ib-completed-date').addClass('required');
+                $(this).find('.ib-completed-date').addClass('required ib-invalid');
                 showIssueBoardPopup('Completed date is required when status is 100%.');
                 return false;
             }
@@ -1056,8 +1170,11 @@ $(document).ready(function() {
 
         if (invalid) {
             showIssueBoardPopup('Problem, Actions, and Responsible are required for each row.');
+            setIssueBoardSaveState();
             return;
         }
+
+        setIssueBoardSaveLoading(true);
 
         $.ajax({
             url: '/api/issue-board/replace/date/' + saveDate,
@@ -1068,12 +1185,17 @@ $(document).ready(function() {
                 const count = Array.isArray(response) ? response.length : payload.length;
                 showMessage('issueBoardMessage', 'Saved ' + count + ' issue rows successfully!', 'success');
                 showIssueBoardPopup('Issue rows saved. Only Status and Completed Date remain editable.');
+                showIssueBoardToast('Issue Board saved successfully.', 'success');
                 localStorage.setItem('issue-board-update', Date.now());
                 updateKPIDashboard();
                 lockIssueBoardRowsForStatusUpdates();
             },
             error: function() {
                 showIssueBoardPopup('Error saving Issue Board data. Please try again.');
+                showIssueBoardToast('Save failed. Please retry.', 'error');
+            },
+            complete: function() {
+                setIssueBoardSaveLoading(false);
             }
         });
     });
@@ -2339,6 +2461,71 @@ $(document).ready(function() {
         });
     });
 
+    // ==================== KPI FOOTER BUTTONS ====================
+    function loadKpiFooterButtonsConfig() {
+        $.ajax({
+            url: '/api/dashboard-config/kpi-footer-buttons',
+            type: 'GET',
+            success: function(data) {
+                $('#kpiButton1Name').val(data.button1Label || '');
+                $('#kpiButton1Url').val(data.button1Url || '');
+                $('#kpiButton2Name').val(data.button2Label || '');
+                $('#kpiButton2Url').val(data.button2Url || '');
+            },
+            error: function() {
+                showMessage('kpiButtonsMessage', 'Unable to load footer button configuration.', 'error');
+            }
+        });
+    }
+
+    $('#cancelKpiButtonsBtn').on('click', function() {
+        loadKpiFooterButtonsConfig();
+        showMessage('kpiButtonsMessage', 'Changes discarded.', 'success');
+    });
+
+    $('#saveKpiButtonsBtn').on('click', function() {
+        const payload = {
+            button1Label: ($('#kpiButton1Name').val() || '').trim(),
+            button1Url: ($('#kpiButton1Url').val() || '').trim(),
+            button2Label: ($('#kpiButton2Name').val() || '').trim(),
+            button2Url: ($('#kpiButton2Url').val() || '').trim()
+        };
+
+        if ((payload.button1Label && !payload.button1Url) || (!payload.button1Label && payload.button1Url)) {
+            showMessage('kpiButtonsMessage', 'Button 1 requires both Label and URL.', 'error');
+            return;
+        }
+
+        if ((payload.button2Label && !payload.button2Url) || (!payload.button2Label && payload.button2Url)) {
+            showMessage('kpiButtonsMessage', 'Button 2 requires both Label and URL.', 'error');
+            return;
+        }
+
+        const $btn = $('#saveKpiButtonsBtn');
+        $btn.prop('disabled', true);
+        $btn.data('original-html', $btn.html());
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+        $.ajax({
+            url: '/api/dashboard-config/kpi-footer-buttons',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            success: function() {
+                showMessage('kpiButtonsMessage', 'KPI footer buttons saved successfully!', 'success');
+                updateKPIDashboard();
+                loadKpiFooterButtonsConfig();
+            },
+            error: function() {
+                showMessage('kpiButtonsMessage', 'Error saving KPI footer buttons. Please try again.', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+                $btn.html($btn.data('original-html'));
+            }
+        });
+    });
+
     // ==================== UTILITY FUNCTIONS ====================
     function showMessage(elementId, message, type) {
         const $msg = $('#' + elementId);
@@ -2506,6 +2693,19 @@ $(document).ready(function() {
 
             $('.nav-child').removeClass('active');
             $('.nav-child[data-nav="lsr-tracking-config"]').addClass('active');
+            return;
+        }
+
+        if (requestedConfig === 'kpi-footer-buttons') {
+            $('.settings-container').addClass('issue-board-full-page');
+            $('.config-item').removeClass('active');
+            const kpiFooterButtonsConfigItem = $('.config-item[data-config="kpi-footer-buttons"]').first();
+            if (kpiFooterButtonsConfigItem.length) {
+                kpiFooterButtonsConfigItem.addClass('active');
+            }
+            showForm('kpi-footer-buttons', '');
+
+            $('.nav-child').removeClass('active');
             return;
         }
 

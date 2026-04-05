@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.entity.AppUser;
 import org.example.model.UserInfo;
 import org.example.repository.AppUserRepository;
+import org.example.util.RoleAccess;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,11 +59,11 @@ public class AuthService {
         if (username == null || username.trim().isEmpty()) return Optional.of("Username is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
         if (password == null || password.trim().isEmpty()) return Optional.of("Password is required");
-        if (role == null || (!"ADMIN".equals(role) && !"USER".equals(role))) return Optional.of("Role must be ADMIN or USER");
+        if (!RoleAccess.isSupported(role)) return Optional.of("Role must be Admin, L1 User, or L2 User");
 
         String normalizedUsername = username.trim();
         String normalizedEmail = email.trim();
-        String normalizedRole = role.trim().toUpperCase();
+        String normalizedRole = RoleAccess.normalize(role);
 
         if (isReservedUsername(normalizedUsername)) {
             return Optional.of("Username is reserved for system admin");
@@ -93,7 +94,7 @@ public class AuthService {
     public synchronized Optional<String> updateUser(Long id, String email, String password, String role) {
         if (id == null) return Optional.of("User id is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
-        if (role == null || (!"ADMIN".equals(role) && !"USER".equals(role))) return Optional.of("Role must be ADMIN or USER");
+        if (!RoleAccess.isSupported(role)) return Optional.of("Role must be Admin, L1 User, or L2 User");
 
         Optional<AppUser> maybeUser = appUserRepository.findById(id);
         if (maybeUser.isEmpty()) return Optional.of("User not found");
@@ -104,7 +105,7 @@ public class AuthService {
         }
 
         String normalizedEmail = email.trim();
-        String normalizedRole = role.trim().toUpperCase(Locale.ROOT);
+        String normalizedRole = RoleAccess.normalize(role);
 
         if (appUserRepository.existsByEmailIgnoreCaseAndIdNot(normalizedEmail, id)) {
             return Optional.of("Email already exists");
@@ -137,7 +138,7 @@ public class AuthService {
     }
 
     private UserInfo toUserInfo(AppUser user) {
-        return new UserInfo(user.getUsername(), user.getEmail(), user.getPassword(), user.getRole());
+        return new UserInfo(user.getUsername(), user.getEmail(), user.getPassword(), RoleAccess.normalize(user.getRole()));
     }
 
     private boolean isReservedUsername(String username) {

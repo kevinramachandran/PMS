@@ -32,7 +32,7 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <a href="/settings" class="nav-item active" th:if="${session.role == 'ADMIN'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <a href="/settings" class="nav-item active" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
                 <a href="/pms-configuration" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -54,7 +54,7 @@
                         <div class="profile-meta">
                             <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
                             <div class="profile-subline">
-                                <span class="header-role-badge" th:text="${session.role}">ROLE</span>
+                                <span class="header-role-badge" th:text="${session.roleLabel != null ? session.roleLabel : session.role}">ROLE</span>
                                 <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
                             </div>
                         </div>
@@ -73,65 +73,69 @@
                         <div class="config-list">
                             <div class="config-group">
                                 <div class="config-group-title">PMS Data Entry</div>
-                                <div class="config-item active" data-config="priorities" data-type="">
-                                    <i class="fas fa-star"></i>
-                                    <span>Top 3 Priorities</span>
+                                <div class="config-item menu-item active" data-config="priorities" data-type="">
+                                    <i class="fas fa-star menu-icon"></i>
+                                    <span class="menu-text">Top 3 Priorities</span>
                                 </div>
-                                <div class="config-item" data-config="weekly-priorities" data-type="">
-                                    <i class="fas fa-calendar-week"></i>
-                                    <span>Top 3 Weekly Priorities</span>
+                                <div class="config-item menu-item" data-config="weekly-priorities" data-type="">
+                                    <i class="fas fa-calendar-alt menu-icon"></i>
+                                    <span class="menu-text">Top 3 Weekly Priorities</span>
                                 </div>
-                                <div class="config-item" data-config="daily-performance" data-type="">
-                                    <i class="fas fa-chart-line"></i>
-                                    <span>Daily Performance</span>
+                                <div class="config-item menu-item" data-config="daily-performance" data-type="">
+                                    <i class="fas fa-chart-line menu-icon"></i>
+                                    <span class="menu-text">Daily Performance</span>
                                 </div>
-                                <div class="config-item" data-config="daily-section" data-type="PEOPLE">
-                                    <i class="fas fa-users"></i>
-                                    <span>People - Daily</span>
+                                <div class="config-item menu-item" data-config="daily-section" data-type="PEOPLE">
+                                    <i class="fas fa-users menu-icon"></i>
+                                    <span class="menu-text">People - Daily</span>
                                 </div>
-                                <div class="config-item" data-config="daily-section" data-type="QUALITY">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span>Quality - Daily</span>
+                                <div class="config-item menu-item" data-config="daily-section" data-type="QUALITY">
+                                    <i class="fas fa-check-circle menu-icon"></i>
+                                    <span class="menu-text">Quality - Daily</span>
                                 </div>
-                                <div class="config-item" data-config="daily-section" data-type="SERVICE">
-                                    <i class="fas fa-wrench"></i>
-                                    <span>Service - Daily</span>
+                                <div class="config-item menu-item" data-config="daily-section" data-type="SERVICE">
+                                    <i class="fas fa-wrench menu-icon"></i>
+                                    <span class="menu-text">Service - Daily</span>
                                 </div>
-                                <div class="config-item" data-config="daily-section" data-type="COST">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    <span>Cost - Daily</span>
+                                <div class="config-item menu-item" data-config="daily-section" data-type="COST">
+                                    <i class="fas fa-money-bill-wave menu-icon"></i>
+                                    <span class="menu-text">Cost - Daily</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="metrics-data" data-type="">
-                                    <i class="fas fa-chart-area"></i>
-                                    <span>Production Metrics Data</span>
+                                <div class="config-item menu-item config-sub-child" data-config="metrics-data" data-type="">
+                                    <i class="fas fa-chart-area menu-icon"></i>
+                                    <span class="menu-text">Production Metrics Data</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="issue-board" data-type="">
-                                    <i class="fas fa-table-list"></i>
-                                    <span>Issue Board Configuration</span>
+                                <div class="config-item menu-item config-sub-child" data-config="issue-board" data-type="">
+                                    <i class="fas fa-table-list menu-icon"></i>
+                                    <span class="menu-text">Issue Board Configuration</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="gemba-schedule" data-type="">
-                                    <i class="fas fa-clipboard-list"></i>
-                                    <span>Gemba Walk Configuration</span>
+                                <div class="config-item menu-item config-sub-child" data-config="gemba-schedule" data-type="">
+                                    <i class="fas fa-clipboard-list menu-icon"></i>
+                                    <span class="menu-text">Gemba Walk Configuration</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="leadership-gemba-tracker" data-type="">
-                                    <i class="fas fa-route"></i>
-                                    <span>Safety Gemba - Tracker Config</span>
+                                <div class="config-item menu-item config-sub-child" data-config="leadership-gemba-tracker" data-type="">
+                                    <i class="fas fa-route menu-icon"></i>
+                                    <span class="menu-text">Safety Gemba - Tracker Config</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="training-schedule" data-type="">
-                                    <i class="fas fa-calendar-days"></i>
-                                    <span>Training Schedule Config</span>
+                                <div class="config-item menu-item config-sub-child" data-config="training-schedule" data-type="">
+                                    <i class="fas fa-calendar-days menu-icon"></i>
+                                    <span class="menu-text">Training Schedule Config</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="meeting-agenda" data-type="">
-                                    <i class="fas fa-clipboard-check"></i>
-                                    <span>PMS Agenda Config</span>
+                                <div class="config-item menu-item config-sub-child" data-config="meeting-agenda" data-type="">
+                                    <i class="fas fa-clipboard-check menu-icon"></i>
+                                    <span class="menu-text">PMS Agenda Config</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="process-confirmation" data-type="">
-                                    <i class="fas fa-list-check"></i>
-                                    <span>PMS Process Confirmation Config</span>
+                                <div class="config-item menu-item config-sub-child" data-config="process-confirmation" data-type="">
+                                    <i class="fas fa-list-check menu-icon"></i>
+                                    <span class="menu-text">PMS Process Confirmation Config</span>
                                 </div>
-                                <div class="config-item config-sub-child" data-config="abnormality-tracker" data-type="">
-                                    <i class="fas fa-triangle-exclamation"></i>
-                                    <span>Abnormality Tracker Config</span>
+                                <div class="config-item menu-item config-sub-child" data-config="abnormality-tracker" data-type="">
+                                    <i class="fas fa-triangle-exclamation menu-icon"></i>
+                                    <span class="menu-text">Abnormality Tracker Config</span>
+                                </div>
+                                <div class="config-item menu-item config-sub-child" data-config="kpi-footer-buttons" data-type="">
+                                    <i class="fas fa-link menu-icon"></i>
+                                    <span class="menu-text">KPI Footer Buttons</span>
                                 </div>
                             </div>
                         </div>
@@ -287,12 +291,28 @@
                                                     <input type="number" id="productionProductivityFtdTarget" name="productionProductivityFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="productionProductivityMtdActual">Production Productivity - MTD Actual</label>
+                                                    <input type="number" id="productionProductivityMtdActual" name="productionProductivityMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="productionProductivityYtdActual">Production Productivity - YTD Actual</label>
+                                                    <input type="number" id="productionProductivityYtdActual" name="productionProductivityYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="logisticsProductivityFtdActual">Logistics Productivity - FTD Actual</label>
                                                     <input type="number" id="logisticsProductivityFtdActual" name="logisticsProductivityFtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="logisticsProductivityFtdTarget">Logistics Productivity - FTD Target</label>
                                                     <input type="number" id="logisticsProductivityFtdTarget" name="logisticsProductivityFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="logisticsProductivityMtdActual">Logistics Productivity - MTD Actual</label>
+                                                    <input type="number" id="logisticsProductivityMtdActual" name="logisticsProductivityMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="logisticsProductivityYtdActual">Logistics Productivity - YTD Actual</label>
+                                                    <input type="number" id="logisticsProductivityYtdActual" name="logisticsProductivityYtdActual" min="0" step="0.01">
                                                 </div>
                                             </div>
                                         </div>
@@ -316,6 +336,14 @@
                                                     <input type="number" id="kpiSensoryScoreFtdTarget" name="kpiSensoryScoreFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="kpiSensoryScoreMtdActual">Sensory Score - MTD Actual</label>
+                                                    <input type="number" id="kpiSensoryScoreMtdActual" name="kpiSensoryScoreMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiSensoryScoreYtdActual">Sensory Score - YTD Actual</label>
+                                                    <input type="number" id="kpiSensoryScoreYtdActual" name="kpiSensoryScoreYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="kpiConsumerComplaintUnitsMhlFtdActual">Consumer Complaint - FTD Actual</label>
                                                     <input type="number" id="kpiConsumerComplaintUnitsMhlFtdActual" name="kpiConsumerComplaintUnitsMhlFtdActual" min="0" step="0.01">
                                                 </div>
@@ -324,12 +352,28 @@
                                                     <input type="number" id="kpiConsumerComplaintUnitsMhlFtdTarget" name="kpiConsumerComplaintUnitsMhlFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="kpiConsumerComplaintUnitsMhlMtdActual">Consumer Complaint - MTD Actual</label>
+                                                    <input type="number" id="kpiConsumerComplaintUnitsMhlMtdActual" name="kpiConsumerComplaintUnitsMhlMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiConsumerComplaintUnitsMhlYtdActual">Consumer Complaint - YTD Actual</label>
+                                                    <input type="number" id="kpiConsumerComplaintUnitsMhlYtdActual" name="kpiConsumerComplaintUnitsMhlYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="kpiCustomerComplaintUnitsMhlFtdActual">Customer Complaint - FTD Actual</label>
                                                     <input type="number" id="kpiCustomerComplaintUnitsMhlFtdActual" name="kpiCustomerComplaintUnitsMhlFtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="kpiCustomerComplaintUnitsMhlFtdTarget">Customer Complaint - FTD Target</label>
                                                     <input type="number" id="kpiCustomerComplaintUnitsMhlFtdTarget" name="kpiCustomerComplaintUnitsMhlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiCustomerComplaintUnitsMhlMtdActual">Customer Complaint - MTD Actual</label>
+                                                    <input type="number" id="kpiCustomerComplaintUnitsMhlMtdActual" name="kpiCustomerComplaintUnitsMhlMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiCustomerComplaintUnitsMhlYtdActual">Customer Complaint - YTD Actual</label>
+                                                    <input type="number" id="kpiCustomerComplaintUnitsMhlYtdActual" name="kpiCustomerComplaintUnitsMhlYtdActual" min="0" step="0.01">
                                                 </div>
                                             </div>
                                         </div>
@@ -353,12 +397,24 @@
                                                     <input type="number" id="processConfirmationBpFtdTarget" name="processConfirmationBpFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="processConfirmationBpMtdActual">Process Confirmation B&P - MTD Actual</label>
+                                                    <input type="number" id="processConfirmationBpMtdActual" name="processConfirmationBpMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationBpYtdActual">Process Confirmation B&P - YTD Actual</label>
+                                                    <input type="number" id="processConfirmationBpYtdActual" name="processConfirmationBpYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="processConfirmationPackMtdActual">Process Confirmation Pack - MTD Actual</label>
                                                     <input type="number" id="processConfirmationPackMtdActual" name="processConfirmationPackMtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="processConfirmationPackMtdTarget">Process Confirmation Pack - MTD Target</label>
                                                     <input type="number" id="processConfirmationPackMtdTarget" name="processConfirmationPackMtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationPackYtdActual">Process Confirmation Pack - YTD Actual</label>
+                                                    <input type="number" id="processConfirmationPackYtdActual" name="processConfirmationPackYtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="kpiOeeFtdActual">OEE - FTD Actual</label>
@@ -369,6 +425,14 @@
                                                     <input type="number" id="kpiOeeFtdTarget" name="kpiOeeFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="kpiOeeMtdActual">OEE - MTD Actual</label>
+                                                    <input type="number" id="kpiOeeMtdActual" name="kpiOeeMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiOeeYtdActual">OEE - YTD Actual</label>
+                                                    <input type="number" id="kpiOeeYtdActual" name="kpiOeeYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="kpiBeerLossFtdActual">Beer Loss - FTD Actual</label>
                                                     <input type="number" id="kpiBeerLossFtdActual" name="kpiBeerLossFtdActual" min="0" step="0.01">
                                                 </div>
@@ -377,12 +441,28 @@
                                                     <input type="number" id="kpiBeerLossFtdTarget" name="kpiBeerLossFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="kpiBeerLossMtdActual">Beer Loss - MTD Actual</label>
+                                                    <input type="number" id="kpiBeerLossMtdActual" name="kpiBeerLossMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiBeerLossYtdActual">Beer Loss - YTD Actual</label>
+                                                    <input type="number" id="kpiBeerLossYtdActual" name="kpiBeerLossYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="kpiWurHlHlFtdActual">WUR - FTD Actual</label>
                                                     <input type="number" id="kpiWurHlHlFtdActual" name="kpiWurHlHlFtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="kpiWurHlHlFtdTarget">WUR - FTD Target</label>
                                                     <input type="number" id="kpiWurHlHlFtdTarget" name="kpiWurHlHlFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiWurHlHlMtdActual">WUR - MTD Actual</label>
+                                                    <input type="number" id="kpiWurHlHlMtdActual" name="kpiWurHlHlMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiWurHlHlYtdActual">WUR - YTD Actual</label>
+                                                    <input type="number" id="kpiWurHlHlYtdActual" name="kpiWurHlHlYtdActual" min="0" step="0.01">
                                                 </div>
                                             </div>
                                         </div>
@@ -406,6 +486,14 @@
                                                     <input type="number" id="kpiElectricityKwhHlFtdTarget" name="kpiElectricityKwhHlFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="kpiElectricityKwhHlMtdActual">Electricity - MTD Actual</label>
+                                                    <input type="number" id="kpiElectricityKwhHlMtdActual" name="kpiElectricityKwhHlMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiElectricityKwhHlYtdActual">Electricity - YTD Actual</label>
+                                                    <input type="number" id="kpiElectricityKwhHlYtdActual" name="kpiElectricityKwhHlYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="kpiEnergyKwhHlFtdActual">Energy - FTD Actual</label>
                                                     <input type="number" id="kpiEnergyKwhHlFtdActual" name="kpiEnergyKwhHlFtdActual" min="0" step="0.01">
                                                 </div>
@@ -414,12 +502,28 @@
                                                     <input type="number" id="kpiEnergyKwhHlFtdTarget" name="kpiEnergyKwhHlFtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="kpiEnergyKwhHlMtdActual">Energy - MTD Actual</label>
+                                                    <input type="number" id="kpiEnergyKwhHlMtdActual" name="kpiEnergyKwhHlMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiEnergyKwhHlYtdActual">Energy - YTD Actual</label>
+                                                    <input type="number" id="kpiEnergyKwhHlYtdActual" name="kpiEnergyKwhHlYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="kpiRgbRatioFtdActual">RGB Ratio - FTD Actual</label>
                                                     <input type="number" id="kpiRgbRatioFtdActual" name="kpiRgbRatioFtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="kpiRgbRatioFtdTarget">RGB Ratio - FTD Target</label>
                                                     <input type="number" id="kpiRgbRatioFtdTarget" name="kpiRgbRatioFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiRgbRatioMtdActual">RGB Ratio - MTD Actual</label>
+                                                    <input type="number" id="kpiRgbRatioMtdActual" name="kpiRgbRatioMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="kpiRgbRatioYtdActual">RGB Ratio - YTD Actual</label>
+                                                    <input type="number" id="kpiRgbRatioYtdActual" name="kpiRgbRatioYtdActual" min="0" step="0.01">
                                                 </div>
                                             </div>
                                         </div>
@@ -434,53 +538,26 @@
                                 <div id="metricsToast" class="metrics-toast" aria-live="polite"></div>
                             </div>
 
-                            <div id="form-issue-board" class="form-section">
-                                <h2>Edit Issue</h2>
+                            <div id="form-issue-board" class="form-section issue-board-enterprise">
+                                <h2>Add Issues</h2>
 
                                 <input type="hidden" id="issueBoardConfigDate" name="issueBoardConfigDate">
 
-                                <div class="config-form-section">
+                                <div class="config-form-section issue-board-form-card">
                                     <div class="section-subtitle">Form Section</div>
                                     <div class="issue-board-meta-grid form-grid">
                                         <div class="form-group">
-                                            <label for="issueBoardLastReviewDate">Last review date</label>
-                                            <input type="date" id="issueBoardLastReviewDate" name="issueBoardLastReviewDate">
+                                            <label for="issueBoardLastReviewDate">Last Review Date</label>
+                                            <input type="date" id="issueBoardLastReviewDate" name="issueBoardLastReviewDate" placeholder="Select last review date">
                                         </div>
                                         <div class="form-group">
-                                            <label for="issueBoardNextReviewDate">Next review date</label>
-                                            <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate">
+                                            <label for="issueBoardNextReviewDate">Next Review Date</label>
+                                            <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate" placeholder="Select next review date">
                                         </div>
-                                    </div>
-
-                                    <div class="form-grid" id="issueRowFormGrid">
-                                        <div class="form-group"><label for="ibFormProblem">Problem</label><input type="text" id="ibFormProblem"></div>
-                                        <div class="form-group"><label for="ibFormOwner">Name</label><input type="text" id="ibFormOwner"></div>
-                                        <div class="form-group"><label for="ibFormIssueDate">Date</label><input type="date" id="ibFormIssueDate"></div>
-                                        <div class="form-group"><label for="ibFormRootCause">Root Cause</label><input type="text" id="ibFormRootCause"></div>
-                                        <div class="form-group"><label for="ibFormActions">Actions</label><input type="text" id="ibFormActions"></div>
-                                        <div class="form-group"><label for="ibFormResponsible">Resp.</label><input type="text" id="ibFormResponsible"></div>
-                                        <div class="form-group"><label for="ibFormTargetDate">Target date</label><input type="date" id="ibFormTargetDate"></div>
-                                        <div class="form-group"><label for="ibFormStatus">Status</label>
-                                            <select id="ibFormStatus">
-                                                <option value="0%">0%</option>
-                                                <option value="25%">25%</option>
-                                                <option value="50%">50%</option>
-                                                <option value="75%">75%</option>
-                                                <option value="100%">100%</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group"><label for="ibFormCompletedDate">Completed date</label><input type="date" id="ibFormCompletedDate"></div>
-                                        <div class="form-group"><label for="ibFormRemarks">Remarks</label><input type="text" id="ibFormRemarks"></div>
-                                    </div>
-
-                                    <div class="form-actions compact-actions">
-                                        <button type="button" class="btn btn-secondary" id="addIssueBoardRowBtn">
-                                            <i class="fas fa-plus"></i> Add Row
-                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="config-table-section">
+                                <div class="config-table-section issue-board-table-card">
                                     <div class="section-subtitle">Table Section</div>
                                     <div class="daily-data-table issue-config-table-wrap">
                                         <table id="issueBoardConfigTable">
@@ -503,6 +580,11 @@
                                             <tbody id="issueBoardConfigTableBody"></tbody>
                                         </table>
                                     </div>
+                                    <div class="form-actions compact-actions" style="margin-top: 12px;">
+                                        <button type="button" class="btn btn-secondary issue-add-row-btn" id="addIssueBoardRowTableBtn">
+                                            <i class="fas fa-plus"></i> Add New Row
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="form-actions sticky-save-bar">
@@ -515,6 +597,7 @@
                                 </div>
                                 <div id="issueBoardMessage" class="form-message"></div>
                                 <div id="issueBoardPopup" class="issue-popup" aria-live="polite"></div>
+                                <div id="issueBoardToast" class="issue-board-toast" aria-live="polite"></div>
                             </div>
 
                             <div id="form-gemba-schedule" class="form-section">                                <h2>Gemba Walk Configuration</h2>
@@ -1151,6 +1234,41 @@
                                     </div>
                                     <div id="lsrMessage" class="form-message"></div>
                                 </div>
+                            </div>
+
+                            <!-- KPI Footer Buttons Configuration -->
+                            <div id="form-kpi-footer-buttons" class="form-section">
+                                <h2>KPI Footer Buttons</h2>
+                                <p class="form-subtitle">Configure 2 buttons to display at the bottom of KPI Dashboard. URLs will open in a new tab.</p>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="kpiButton1Name">Button 1 Label</label>
+                                        <input type="text" id="kpiButton1Name" placeholder="e.g., View Reports">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="kpiButton1Url">Button 1 URL</label>
+                                        <input type="url" id="kpiButton1Url" placeholder="e.g., https://example.com/reports">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="kpiButton2Name">Button 2 Label</label>
+                                        <input type="text" id="kpiButton2Name" placeholder="e.g., More Info">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="kpiButton2Url">Button 2 URL</label>
+                                        <input type="url" id="kpiButton2Url" placeholder="e.g., https://example.com/info">
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button id="cancelKpiButtonsBtn" type="button" class="btn btn-secondary">
+                                        <i class="fas fa-ban"></i> Cancel
+                                    </button>
+                                    <button id="saveKpiButtonsBtn" type="button" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Buttons
+                                    </button>
+                                </div>
+                                <div id="kpiButtonsMessage" class="form-message"></div>
                             </div>
 
                         </div>
