@@ -76,7 +76,13 @@ $(document).ready(function() {
         sidebarOverlay.removeClass('active');
     });
 
-    if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 768) {
+    const isTvDashboard = document.body.classList.contains('kpi-tv-layout');
+
+    if (isTvDashboard && window.innerWidth > 1024 && localStorage.getItem('sidebarCollapsed') !== 'false') {
+        sidebar.addClass('collapsed');
+        mainContent.addClass('expanded');
+        localStorage.setItem('sidebarCollapsed', 'true');
+    } else if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 768) {
         sidebar.addClass('collapsed');
         mainContent.addClass('expanded');
     }
@@ -84,11 +90,14 @@ $(document).ready(function() {
     hamburger.on('click', function() {
         if (window.innerWidth > 768) {
             localStorage.setItem('sidebarCollapsed', sidebar.hasClass('collapsed'));
+            window.setTimeout(scheduleKpiTvFit, 320);
         }
     });
 
     bindDashboardModalEvents();
     initializeOverviewCards();
+    initializeKpiTvFit();
+    initializeDailyTopRowSync();
 
     $(document).on('click', '.chart-box canvas, .chart-card canvas', function() {
         if (this.id) {
@@ -101,6 +110,147 @@ $(document).ready(function() {
         loadProductionCharts(selectedKpiMonth, selectedKpiYear);
     }, 300000);
 });
+
+let kpiTvFitFrame = 0;
+let kpiTvFitResizeObserver = null;
+
+function isKpiTvLayout() {
+    return document.body && document.body.classList.contains('kpi-tv-layout');
+}
+
+function resetKpiTvFit(shell, stage) {
+    if (!shell || !stage) {
+        return;
+    }
+
+    stage.style.width = '';
+    stage.style.transform = '';
+    shell.style.height = '';
+}
+
+function applyKpiTvFit() {
+    const shell = document.getElementById('dashboardMainFitShell');
+    const stage = document.getElementById('dashboardMainStage');
+
+    if (!shell || !stage) {
+        return;
+    }
+
+    // Keep fixed-fit mode only on wide screens; allow natural overflow + scroll on laptop-sized windows.
+    if (!isKpiTvLayout() || window.innerWidth <= 1440 || window.innerHeight <= 680) {
+        resetKpiTvFit(shell, stage);
+        return;
+    }
+
+    stage.style.width = '';
+    stage.style.transform = 'scale(1)';
+    shell.style.height = 'auto';
+
+    const availableWidth = shell.clientWidth;
+    const shellTop = shell.getBoundingClientRect().top;
+    const availableHeight = Math.max(window.innerHeight - shellTop - 12, 320);
+    const naturalWidth = Math.ceil(stage.scrollWidth);
+    const naturalHeight = Math.ceil(stage.offsetHeight);
+
+    if (!availableWidth || !naturalWidth || !naturalHeight) {
+        resetKpiTvFit(shell, stage);
+        return;
+    }
+
+    const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight, 1);
+
+    stage.style.width = naturalWidth + 'px';
+    stage.style.transform = 'scale(' + scale + ')';
+    shell.style.height = Math.ceil(naturalHeight * scale) + 'px';
+}
+
+function syncDailyTopRowHeight() {
+    const row = document.querySelector('.dashboard-right');
+    const boxes = Array.from(document.querySelectorAll('.dashboard-right .daily-top-box'));
+
+    if (!row || boxes.length === 0) {
+        return;
+    }
+
+    boxes.forEach(function(box) {
+        box.style.minHeight = '';
+    });
+
+    const tallest = boxes.reduce(function(maxValue, box) {
+        return Math.max(maxValue, Math.ceil(box.scrollHeight));
+    }, 0);
+
+    const resolved = Math.max(tallest, isKpiTvLayout() ? 118 : 146);
+    row.style.setProperty('--daily-row-box-height', resolved + 'px');
+
+    boxes.forEach(function(box) {
+        box.style.minHeight = resolved + 'px';
+    });
+}
+
+function initializeDailyTopRowSync() {
+    syncDailyTopRowHeight();
+
+    window.addEventListener('resize', function() {
+        window.requestAnimationFrame(syncDailyTopRowHeight);
+    });
+
+    const targets = document.querySelectorAll(
+        '#peopleDailyBody, #qualityDailyBody, #serviceDailyBody, #costDailyBody'
+    );
+
+    if ('MutationObserver' in window) {
+        const observer = new MutationObserver(function() {
+            window.requestAnimationFrame(syncDailyTopRowHeight);
+        });
+
+        targets.forEach(function(target) {
+            observer.observe(target, { childList: true, subtree: true, characterData: true });
+        });
+    }
+
+    window.setInterval(syncDailyTopRowHeight, 2000);
+}
+
+function scheduleKpiTvFit() {
+    if (!isKpiTvLayout()) {
+        return;
+    }
+
+    if (kpiTvFitFrame) {
+        window.cancelAnimationFrame(kpiTvFitFrame);
+    }
+
+    kpiTvFitFrame = window.requestAnimationFrame(function() {
+        kpiTvFitFrame = 0;
+        applyKpiTvFit();
+    });
+}
+
+function initializeKpiTvFit() {
+    const stage = document.getElementById('dashboardMainStage');
+
+    if (!isKpiTvLayout() || !stage || window.__kpiTvFitBound) {
+        scheduleKpiTvFit();
+        return;
+    }
+
+    window.addEventListener('resize', scheduleKpiTvFit);
+    window.addEventListener('load', scheduleKpiTvFit);
+
+    if ('ResizeObserver' in window) {
+        kpiTvFitResizeObserver = new ResizeObserver(function() {
+            scheduleKpiTvFit();
+        });
+        kpiTvFitResizeObserver.observe(stage);
+    }
+
+    window.__kpiTvFitBound = true;
+
+    scheduleKpiTvFit();
+    window.setTimeout(scheduleKpiTvFit, 250);
+    window.setTimeout(scheduleKpiTvFit, 1000);
+}
 
 const chartThemes = {
     peopleProductivityChart: {
@@ -316,6 +466,90 @@ function parseFirstNumber(text, fallbackValue) {
     return Number.isFinite(parsed) ? parsed : fallbackValue;
 }
 
+function monthShortName(monthNumber) {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const idx = Number(monthNumber) - 1;
+    return monthNames[idx] || '--';
+}
+
+function applyOverviewMonthYear(monthElId, yearElId, year, month) {
+    const monthEl = document.getElementById(monthElId);
+    const yearEl = document.getElementById(yearElId);
+    if (monthEl) {
+        monthEl.textContent = monthShortName(month);
+    }
+    if (yearEl) {
+        const yy = Number(year);
+        yearEl.textContent = Number.isFinite(yy) ? String(yy).slice(-2) : '--';
+    }
+}
+
+window.updateHsOverviewFromApi = function(hsData, maxDays, year, month) {
+    const byDay = {};
+    (hsData || []).forEach(function(item) {
+        if (item && Number.isFinite(Number(item.day))) {
+            byDay[Number(item.day)] = item;
+        }
+    });
+
+    let accidents = 0;
+    let nearMiss = 0;
+    let safetyConcern = 0;
+
+    for (let day = 1; day <= maxDays; day++) {
+        const entry = byDay[day] || {};
+        if (entry.accidentStatus === 'WITH_LOST' || entry.accidentStatus === 'WITHOUT_LOST') {
+            accidents++;
+        }
+        if (entry.nearMissStatus === 'OCCURRED') {
+            nearMiss++;
+        }
+        if (entry.safetyConcernStatus === 'OCCURRED') {
+            safetyConcern++;
+        }
+    }
+
+    setElementText('hsAccidentCount', accidents);
+    setElementText('hsNearMissCount', nearMiss);
+    setElementText('hsSafetyConcernCount', safetyConcern);
+    applyOverviewMonthYear('hsOverviewMonth', 'hsOverviewYear', year, month);
+};
+
+window.updateLsrOverviewFromApi = function(lsrData, maxDays, year, month) {
+    const byDay = {};
+    (lsrData || []).forEach(function(item) {
+        if (item && Number.isFinite(Number(item.day))) {
+            byDay[Number(item.day)] = item;
+        }
+    });
+
+    const fields = [
+        { key: 'lsr1Status', outputId: 'lsr1ScoreDisplay' },
+        { key: 'lsr23Status', outputId: 'lsr23ScoreDisplay' },
+        { key: 'lsr4Status', outputId: 'lsr4ScoreDisplay' },
+        { key: 'lsr5Status', outputId: 'lsr5ScoreDisplay' },
+        { key: 'contractorStatus', outputId: 'lsrContractorScoreDisplay' }
+    ];
+
+    fields.forEach(function(field) {
+        let safe = 0;
+        let considered = 0;
+        for (let day = 1; day <= maxDays; day++) {
+            const value = (byDay[day] || {})[field.key];
+            if (value === 'SAFE' || value === 'UNSAFE') {
+                considered++;
+                if (value === 'SAFE') {
+                    safe++;
+                }
+            }
+        }
+        const text = considered > 0 ? Math.round((safe / considered) * 100) + '%' : '-';
+        setElementText(field.outputId, text);
+    });
+
+    applyOverviewMonthYear('lsrOverviewMonth', 'lsrOverviewYear', year, month);
+};
+
 function setMiniBoxState(boxEl, value, threshold) {
     if (!boxEl) return;
     boxEl.classList.remove('green', 'yellow', 'red');
@@ -332,18 +566,18 @@ function setMiniBoxState(boxEl, value, threshold) {
 
 // Update LSR Overview Card Display
 function refreshLsrOverview() {
-    const lsr1 = parseFirstNumber((document.getElementById('lsr1Score') || {}).textContent, 100);
-    const lsr23 = parseFirstNumber((document.getElementById('lsr23Score') || {}).textContent, 100);
-    const lsr4 = parseFirstNumber((document.getElementById('lsr4Score') || {}).textContent, 100);
-    const lsr5 = parseFirstNumber((document.getElementById('lsr5Score') || {}).textContent, 100);
-    const lsrContractor = parseFirstNumber((document.getElementById('lsrContractorScore') || {}).textContent, 100);
+    const lsr1 = parseFirstNumber((document.getElementById('lsr1Score') || {}).textContent, null);
+    const lsr23 = parseFirstNumber((document.getElementById('lsr23Score') || {}).textContent, null);
+    const lsr4 = parseFirstNumber((document.getElementById('lsr4Score') || {}).textContent, null);
+    const lsr5 = parseFirstNumber((document.getElementById('lsr5Score') || {}).textContent, null);
+    const lsrContractor = parseFirstNumber((document.getElementById('lsrContractorScore') || {}).textContent, null);
     
     const valueMap = {
-        lsr1ScoreDisplay: lsr1 + '%',
-        lsr23ScoreDisplay: lsr23 + '%',
-        lsr4ScoreDisplay: lsr4 + '%',
-        lsr5ScoreDisplay: lsr5 + '%',
-        lsrContractorScoreDisplay: lsrContractor + '%'
+        lsr1ScoreDisplay: lsr1 === null ? '-' : lsr1 + '%',
+        lsr23ScoreDisplay: lsr23 === null ? '-' : lsr23 + '%',
+        lsr4ScoreDisplay: lsr4 === null ? '-' : lsr4 + '%',
+        lsr5ScoreDisplay: lsr5 === null ? '-' : lsr5 + '%',
+        lsrContractorScoreDisplay: lsrContractor === null ? '-' : lsrContractor + '%'
     };
     
     Object.keys(valueMap).forEach(function (id) {
@@ -353,17 +587,13 @@ function refreshLsrOverview() {
         }
     });
     
-    // Update month/year
-    const now = new Date();
-    document.getElementById('lsrOverviewMonth').textContent = now.toLocaleString('default', { month: 'short' });
-    document.getElementById('lsrOverviewYear').textContent = String(now.getFullYear()).slice(-2);
 }
 
 // Update H&S Overview Card Display
 function refreshHsOverview() {
-    const accidentsCells = document.querySelectorAll('#accidentsCrossGrid .hs-cross-cell[data-has-incident="true"]');
-    const nearMissCells = document.querySelectorAll('#nearMissCrossGrid .hs-cross-cell[data-has-incident="true"]');
-    const safetyConcernCells = document.querySelectorAll('#safetyConcernCrossGrid .hs-cross-cell[data-has-incident="true"]');
+    const accidentsCells = document.querySelectorAll('#accidentsCrossGrid .hs-cell-red, #accidentsCrossGrid .hs-cell-diag');
+    const nearMissCells = document.querySelectorAll('#nearMissCrossGrid .hs-cell-red');
+    const safetyConcernCells = document.querySelectorAll('#safetyConcernCrossGrid .hs-cell-red');
     
     const accidents = accidentsCells ? accidentsCells.length : 0;
     const nearMiss = nearMissCells ? nearMissCells.length : 0;
@@ -373,20 +603,12 @@ function refreshHsOverview() {
     document.getElementById('hsNearMissCount').textContent = String(nearMiss);
     document.getElementById('hsSafetyConcernCount').textContent = String(safetyConcern);
     
-    // Update month/year
-    const now = new Date();
-    document.getElementById('hsOverviewMonth').textContent = now.toLocaleString('default', { month: 'short' });
-    document.getElementById('hsOverviewYear').textContent = String(now.getFullYear()).slice(-2);
 }
 
 // Initialize overview cards with live updates
 function initializeOverviewCards() {
     refreshLsrOverview();
     refreshHsOverview();
-    window.setInterval(function () {
-        refreshLsrOverview();
-        refreshHsOverview();
-    }, 2000);
 }
 
 // Open LSR Overview in modal
@@ -455,6 +677,72 @@ window.openHsOverview = function () {
 
 let selectedKpiMonth = new Date().getMonth() + 1;
 let selectedKpiYear = new Date().getFullYear();
+let kpiDashboardMetaLoaded = false;
+
+function setElementText(id, value) {
+    const el = document.getElementById(id);
+    if (!el) {
+        return;
+    }
+    el.textContent = value === null || value === undefined || value === '' ? '-' : String(value);
+}
+
+function renderLsrFocusRules(rulesMatrix) {
+    const foot = document.getElementById('lsrFocusFoot');
+    if (!foot) {
+        return;
+    }
+
+    const rows = Array.isArray(rulesMatrix) ? rulesMatrix : [];
+    const html = ['<tr><td class="lsr-focus-header" colspan="30">Primary Focus Behaviours</td></tr>'];
+
+    if (rows.length === 0) {
+        html.push('<tr class="lsr-focus-row"><td class="lsr-focus-cell lsr-focus-yellow" colspan="30">No focus behaviours configured.</td></tr>');
+        foot.innerHTML = html.join('');
+        return;
+    }
+
+    rows.forEach(function(ruleRow, rowIndex) {
+        const cssClass = rowIndex % 2 === 0 ? 'lsr-focus-yellow' : 'lsr-focus-blue';
+        const cells = Array.isArray(ruleRow) ? ruleRow.slice(0, 5) : [];
+
+        while (cells.length < 5) {
+            cells.push('-');
+        }
+
+        html.push('<tr class="lsr-focus-row">' + cells.map(function(ruleText) {
+            return '<td class="lsr-focus-cell ' + cssClass + '" colspan="6">' + escapeHtmlText(ruleText || '-') + '</td>';
+        }).join('') + '</tr>');
+    });
+
+    foot.innerHTML = html.join('');
+}
+
+function loadKpiDashboardMeta() {
+    if (kpiDashboardMetaLoaded) {
+        return;
+    }
+
+    fetch('/api/dashboard-config/kpi')
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Dashboard config request failed');
+            }
+            return response.json();
+        })
+        .then(function(config) {
+            setElementText('pmsDeckTitle', config.deckTitle);
+            setElementText('lsrTargetText', config.lsrOverviewTarget);
+            setElementText('lsr12Target', config.lsrTarget12);
+            setElementText('lsr5Target', config.lsrTarget5);
+            renderLsrFocusRules(config.lsrFocusRules);
+            kpiDashboardMetaLoaded = true;
+        })
+        .catch(function() {
+            setElementText('pmsDeckTitle', '-');
+            renderLsrFocusRules([]);
+        });
+}
 
 const kpiTableConfig = [
     {
@@ -535,6 +823,7 @@ function loadProductionCharts(month, year) {
     const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
     const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
 
+    loadKpiDashboardMeta();
     updateSyncStatus('Syncing...');
     loadDailyPerformanceSummary(safeMonth, safeYear);
     updateKpiDeckMonthLabel(safeMonth, safeYear);
@@ -665,7 +954,19 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 3) QUALITY - Complaint (Customer & Consumer)
+    // 3) QUALITY - Process Confirmation (B&P and Pack)
+    renderKpiMixedChart('qualityProcessConfirmationChart', labels, metrics, {
+        actualSeries: [
+            { label: 'B&P Actual', key: 'processConfirmationBpFtdActual' },
+            { label: 'Pack Actual', key: 'processConfirmationPackMtdActual' }
+        ],
+        targetSeries: [
+            { label: 'B&P Target', key: 'processConfirmationBpFtdTarget' },
+            { label: 'Pack Target', key: 'processConfirmationPackMtdTarget' }
+        ]
+    });
+
+    // 4) QUALITY - Complaint (Customer & Consumer)
     renderKpiMixedChart('qualityComplaintChart', labels, metrics, {
         actualSeries: [
             { label: 'Consumer Actual', key: 'kpiConsumerComplaintUnitsMhlFtdActual' },
@@ -677,7 +978,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 4) SERVICE - OEE
+    // 5) SERVICE - OEE
     renderKpiMixedChart('serviceOeeChart', labels, metrics, {
         actualSeries: [
             { label: 'Actual', key: 'kpiOeeFtdActual' }
@@ -687,7 +988,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 5) SERVICE - Beer Loss
+    // 6) SERVICE - Beer Loss
     renderKpiMixedChart('serviceBeerLossChart', labels, metrics, {
         actualSeries: [
             { label: 'Actual', key: 'kpiBeerLossFtdActual' }
@@ -697,7 +998,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 6) SERVICE - WUR
+    // 7) SERVICE - WUR
     renderKpiMixedChart('serviceWurChart', labels, metrics, {
         actualSeries: [
             { label: 'Actual', key: 'kpiWurHlHlFtdActual' }
@@ -707,7 +1008,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 7) COST - Electricity
+    // 8) COST - Electricity
     renderKpiMixedChart('costElectricityChart', labels, metrics, {
         actualSeries: [
             { label: 'Actual', key: 'kpiElectricityKwhHlFtdActual' }
@@ -717,7 +1018,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 8) COST - Energy
+    // 9) COST - Energy
     renderKpiMixedChart('costEnergyChart', labels, metrics, {
         actualSeries: [
             { label: 'Actual', key: 'kpiEnergyKwhHlFtdActual' }
@@ -727,7 +1028,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 9) COST - RGB Ratio
+    // 10) COST - RGB Ratio
     renderKpiMixedChart('costRgbChart', labels, metrics, {
         actualSeries: [
             { label: 'Actual', key: 'kpiRgbRatioFtdActual' }
@@ -746,6 +1047,10 @@ const kpiChartPalettes = {
     qualitySensoryChart: {
         bars: ['#A855F7', '#C084FC', '#7E22CE'],
         lines: ['#6D28D9', '#1F2937', '#EC4899']
+    },
+    qualityProcessConfirmationChart: {
+        bars: ['#0D9488', '#5EEAD4', '#0F766E'],
+        lines: ['#134E4A', '#1F2937', '#0F766E']
     },
     qualityComplaintChart: {
         bars: ['#F97316', '#FDBA74', '#EA580C'],
@@ -1089,6 +1394,7 @@ function renderNoDataForAllCharts(message) {
     const ids = [
         'peopleProductivityChart',
         'qualitySensoryChart',
+        'qualityProcessConfirmationChart',
         'qualityComplaintChart',
         'serviceOeeChart',
         'serviceBeerLossChart',

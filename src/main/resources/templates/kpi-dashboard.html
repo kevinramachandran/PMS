@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg kpi-tv-layout">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -32,21 +32,12 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <div class="nav-parent" th:if="${session.role == 'ADMIN'}">
-                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
-                    <div class="nav-children">
-<a href="/settings?config=issue-board" class="nav-item nav-child" data-tooltip="Issue Board Configuration"><i class="fas fa-table-list"></i><span>Issue Board Configuration</span></a>
-                                <a href="/settings?config=gemba-schedule" class="nav-item nav-child" data-tooltip="Gemba Walk Configuration"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Configuration</span></a>
-                                <a href="/settings?config=leadership-gemba-tracker" class="nav-item nav-child" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-route"></i><span>Safety Gemba - Tracker Config</span></a>
-                                <a href="/settings?config=training-schedule" class="nav-item nav-child" data-tooltip="Training Schedule Config"><i class="fas fa-calendar-days"></i><span>Training Schedule Config</span></a>
-                                <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda Config"><i class="fas fa-clipboard-check"></i><span>PMS Agenda Config</span></a>
-                                <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-list-check"></i><span>PMS Process Confirmation Config</span></a>
-                                <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker Config"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker Config</span></a>
-                                <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily Config"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily Config</span></a>
-                                <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking Config"><i class="fas fa-life-ring"></i><span>LSR Tracking Config</span></a>
-                    </div>
-                </div>
+                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <a href="/pms-configuration" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
             </nav>
+            <div class="sidebar-footer">
+                <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
+            </div>
         </aside>
 
         <main class="main-content">
@@ -84,12 +75,13 @@
                 <div class="dashboard-scroll">
                     <div class="dashboard-container">
                 <!-- Horizontal Scroll Dashboard -->
-                <div class="dashboard-main">
+                <div class="dashboard-main-fit-shell" id="dashboardMainFitShell">
+                    <div class="dashboard-main dashboard-main-fit-stage" id="dashboardMainStage">
                     <div class="dashboard-left">
                     <!-- Column 1: KPI Table Section -->
                     <div class="dashboard-column">
                         <div class="pms-deck-banner" aria-label="PMS 4 deck header">
-                            <div class="pms-deck-title">PMS 4 deck V0_Dharuhera Brewery</div>
+                            <div class="pms-deck-title" id="pmsDeckTitle">-</div>
                             <div class="pms-deck-date" id="pmsDeckDate"></div>
                         </div>
 
@@ -171,45 +163,57 @@
                     <div class="dashboard-right">
                     <!-- Column 2: People Daily -->
                     <div class="dashboard-column">
-                        <div class="column-header people-bg">People - Daily</div>
-                        <div class="table-container compact-table-container">
-                            <table class="daily-status-table">
-                                <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
-                                <tbody id="peopleDailyBody">
-                                </tbody>
-                            </table>
+                        <div class="daily-top-box">
+                            <div class="column-header people-bg">People - Daily</div>
+                            <div class="table-container compact-table-container">
+                                <table class="daily-status-table">
+                                    <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
+                                    <tbody id="peopleDailyBody">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Productivity (Production + Logistics)</span><span class="expand-icon" title="Expand" onclick="openChart('peopleProductivityChart')">?</span></div><div class="chart-container"><canvas id="peopleProductivityChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Productivity (Production + Logistics)</span><span class="expand-icon" title="Expand" onclick="openChart('peopleProductivityChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="peopleProductivityChart"></canvas></div></div>
 
                         <!-- LSR Overview Card -->
                         <div class="chart-box enterprise-overview-card lsr-overview-card kpi-card" role="button" tabindex="0" aria-label="LSR Overview" onclick="openLsrOverview()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLsrOverview();}">
                             <div class="overview-header">
-                                <h3 class="overview-title">Life Saving Rules - Overview</h3>
-                                <div class="overview-month"><span id="lsrOverviewMonth">Apr</span> '<span id="lsrOverviewYear">26</span></div>
-                            </div>
-                            <div class="overview-badges">
-                                <span class="badge badge-safe"><i class="fas fa-check"></i> Safe Behavior</span>
-                                <span class="badge badge-unsafe"><i class="fas fa-circle-exclamation"></i> Unsafe Behavior</span>
-                                <span class="badge badge-target">Target: <span id="lsrTargetText">85%</span></span>
+                                <h3 class="overview-title">LSR</h3>
+                                <div class="overview-month"><span id="lsrOverviewMonth">--</span> '<span id="lsrOverviewYear">--</span></div>
                             </div>
                             <div class="overview-content">
-                                <div class="lsr-targets">
-                                    <div class="target-box">
-                                        <div class="target-label">LSR 1-2 LOTO<br>SAFEGUARD</div>
-                                        <div class="target-percent" id="lsr12Target">Target 50%</div>
-                                    </div>
-                                    <div class="target-box">
-                                        <div class="target-label">LSR 5 ENTRO</div>
-                                        <div class="target-percent" id="lsr5Target">Target 100%</div>
-                                    </div>
+                                <div class="lsr-mini-meta">
+                                    <span class="lsr-mini-target">Target: <span id="lsrTargetText">-</span></span>
+                                    <span class="lsr-mini-target" id="lsr12Target">-</span>
+                                    <span class="lsr-mini-target" id="lsr5Target">-</span>
                                 </div>
-                                <div class="lsr-scores">
-                                    <div class="score-item"><span class="score-label" id="lsr1Label">LSR 1</span><span class="score-value" id="lsr1ScoreDisplay">100%</span></div>
-                                    <div class="score-item"><span class="score-label" id="lsr23Label">LSR 2-3</span><span class="score-value" id="lsr23ScoreDisplay">100%</span></div>
-                                    <div class="score-item"><span class="score-label" id="lsr4Label">LSR 4</span><span class="score-value" id="lsr4ScoreDisplay">100%</span></div>
-                                    <div class="score-item"><span class="score-label" id="lsr5Label">LSR 5</span><span class="score-value" id="lsr5ScoreDisplay">100%</span></div>
-                                    <div class="score-item"><span class="score-label" id="lsrContractorLabel">Contractor</span><span class="score-value" id="lsrContractorScoreDisplay">100%</span></div>
+                                <div class="lsr-mini-board">
+                                    <div class="lsr-mini-col">
+                                        <div class="lsr-mini-col-head" id="lsr1Label">LSR 1</div>
+                                        <div class="lsr-mini-col-score" id="lsr1ScoreDisplay">-</div>
+                                        <div class="lsr-mini-col-grid"></div>
+                                    </div>
+                                    <div class="lsr-mini-col">
+                                        <div class="lsr-mini-col-head" id="lsr23Label">LSR 2-3</div>
+                                        <div class="lsr-mini-col-score" id="lsr23ScoreDisplay">-</div>
+                                        <div class="lsr-mini-col-grid"></div>
+                                    </div>
+                                    <div class="lsr-mini-col">
+                                        <div class="lsr-mini-col-head" id="lsr4Label">LSR 4</div>
+                                        <div class="lsr-mini-col-score" id="lsr4ScoreDisplay">-</div>
+                                        <div class="lsr-mini-col-grid"></div>
+                                    </div>
+                                    <div class="lsr-mini-col">
+                                        <div class="lsr-mini-col-head" id="lsr5Label">LSR 5</div>
+                                        <div class="lsr-mini-col-score" id="lsr5ScoreDisplay">-</div>
+                                        <div class="lsr-mini-col-grid"></div>
+                                    </div>
+                                    <div class="lsr-mini-col">
+                                        <div class="lsr-mini-col-head" id="lsrContractorLabel">Contractor</div>
+                                        <div class="lsr-mini-col-score" id="lsrContractorScoreDisplay">-</div>
+                                        <div class="lsr-mini-col-grid"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="overview-expand" title="Expand"><i class="fas fa-expand"></i></div>
@@ -218,27 +222,25 @@
                         <!-- H&S Incidents Overview Card -->
                         <div class="chart-box enterprise-overview-card hs-overview-card kpi-card" role="button" tabindex="0" aria-label="H&S Incidents Overview" onclick="openHsOverview()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openHsOverview();}">
                             <div class="overview-header">
-                                <h3 class="overview-title">Incidents - Month Overview</h3>
-                                <div class="overview-month"><span id="hsOverviewMonth">Apr</span> '<span id="hsOverviewYear">26</span></div>
-                            </div>
-                            <div class="overview-badges">
-                                <span class="badge badge-safe"><i class="fas fa-check"></i> No Accident</span>
-                                <span class="badge badge-warn"><i class="fas fa-triangle-exclamation"></i> Near Miss</span>
-                                <span class="badge badge-unsafe"><i class="fas fa-fire"></i> Safety Concern</span>
+                                <h3 class="overview-title">H&amp;S</h3>
+                                <div class="overview-month"><span id="hsOverviewMonth">--</span> '<span id="hsOverviewYear">--</span></div>
                             </div>
                             <div class="overview-content">
-                                <div class="hs-incidents-summary">
-                                    <div class="incident-type">
-                                        <div class="incident-title">Accidents</div>
-                                        <div class="incident-count" id="hsAccidentCount">0</div>
+                                <div class="hs-mini-board">
+                                    <div class="hs-mini-tile">
+                                        <div class="hs-mini-title">Accidents</div>
+                                        <div class="hs-mini-cross"></div>
+                                        <div class="hs-mini-value" id="hsAccidentCount">0</div>
                                     </div>
-                                    <div class="incident-type">
-                                        <div class="incident-title">Near Miss</div>
-                                        <div class="incident-count" id="hsNearMissCount">0</div>
+                                    <div class="hs-mini-tile">
+                                        <div class="hs-mini-title">Near Miss</div>
+                                        <div class="hs-mini-cross"></div>
+                                        <div class="hs-mini-value" id="hsNearMissCount">0</div>
                                     </div>
-                                    <div class="incident-type">
-                                        <div class="incident-title">Safety Concern</div>
-                                        <div class="incident-count" id="hsSafetyConcernCount">0</div>
+                                    <div class="hs-mini-tile">
+                                        <div class="hs-mini-title">Safety Concern</div>
+                                        <div class="hs-mini-cross"></div>
+                                        <div class="hs-mini-value" id="hsSafetyConcernCount">0</div>
                                     </div>
                                 </div>
                                 <div class="kpi-responsible">
@@ -251,54 +253,68 @@
 
                     <!-- Column 3: Quality Daily -->
                     <div class="dashboard-column">
-                        <div class="column-header quality-bg">Quality - Daily</div>
-                        <div class="table-container compact-table-container">
-                            <table class="daily-status-table">
-                                <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
-                                <tbody id="qualityDailyBody">
-                                </tbody>
-                            </table>
+                        <div class="daily-top-box">
+                            <div class="column-header quality-bg">Quality - Daily</div>
+                            <div class="table-container compact-table-container">
+                                <table class="daily-status-table">
+                                    <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
+                                    <tbody id="qualityDailyBody">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Sensory</span><span class="expand-icon" title="Expand" onclick="openChart('qualitySensoryChart')">?</span></div><div class="chart-container"><canvas id="qualitySensoryChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Complaint - Customer & Consumer</span><span class="expand-icon" title="Expand" onclick="openChart('qualityComplaintChart')">?</span></div><div class="chart-container"><canvas id="qualityComplaintChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Sensory</span><span class="expand-icon" title="Expand" onclick="openChart('qualitySensoryChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="qualitySensoryChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Process Confirmation - B&amp;P and Pack</span><span class="expand-icon" title="Expand" onclick="openChart('qualityProcessConfirmationChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="qualityProcessConfirmationChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Complaint - Customer & Consumer</span><span class="expand-icon" title="Expand" onclick="openChart('qualityComplaintChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="qualityComplaintChart"></canvas></div></div>
                     </div>
 
                     <!-- Column 4: Service Daily -->
                     <div class="dashboard-column">
-                        <div class="column-header service-bg">Service - Daily</div>
-                        <div class="table-container compact-table-container">
-                            <table class="daily-status-table">
-                                <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
-                                <tbody id="serviceDailyBody">
-                                </tbody>
-                            </table>
+                        <div class="daily-top-box">
+                            <div class="column-header service-bg">Service - Daily</div>
+                            <div class="table-container compact-table-container">
+                                <table class="daily-status-table">
+                                    <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
+                                    <tbody id="serviceDailyBody">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - OEE</span><span class="expand-icon" title="Expand" onclick="openChart('serviceOeeChart')">?</span></div><div class="chart-container"><canvas id="serviceOeeChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Beer Loss</span><span class="expand-icon" title="Expand" onclick="openChart('serviceBeerLossChart')">?</span></div><div class="chart-container"><canvas id="serviceBeerLossChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - WUR (HL/HL)</span><span class="expand-icon" title="Expand" onclick="openChart('serviceWurChart')">?</span></div><div class="chart-container"><canvas id="serviceWurChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - OEE</span><span class="expand-icon" title="Expand" onclick="openChart('serviceOeeChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="serviceOeeChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Beer Loss</span><span class="expand-icon" title="Expand" onclick="openChart('serviceBeerLossChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="serviceBeerLossChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - WUR (HL/HL)</span><span class="expand-icon" title="Expand" onclick="openChart('serviceWurChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="serviceWurChart"></canvas></div></div>
                     </div>
 
                     <!-- Column 5: Cost Daily -->
                     <div class="dashboard-column">
-                        <div class="column-header cost-bg">Cost - Daily</div>
-                        <div class="table-container compact-table-container">
-                            <table class="daily-status-table">
-                                <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
-                                <tbody id="costDailyBody">
-                                </tbody>
-                            </table>
+                        <div class="daily-top-box">
+                            <div class="column-header cost-bg">Cost - Daily</div>
+                            <div class="table-container compact-table-container">
+                                <table class="daily-status-table">
+                                    <thead><tr><th>TO DO</th><th>FPR</th><th>Status</th></tr></thead>
+                                    <tbody id="costDailyBody">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Electricity</span><span class="expand-icon" title="Expand" onclick="openChart('costElectricityChart')">?</span></div><div class="chart-container"><canvas id="costElectricityChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Energy</span><span class="expand-icon" title="Expand" onclick="openChart('costEnergyChart')">?</span></div><div class="chart-container"><canvas id="costEnergyChart"></canvas></div></div>
-                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - RGB Ratio</span><span class="expand-icon" title="Expand" onclick="openChart('costRgbChart')">?</span></div><div class="chart-container"><canvas id="costRgbChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Electricity</span><span class="expand-icon" title="Expand" onclick="openChart('costElectricityChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="costElectricityChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Energy</span><span class="expand-icon" title="Expand" onclick="openChart('costEnergyChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="costEnergyChart"></canvas></div></div>
+                        <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - RGB Ratio</span><span class="expand-icon" title="Expand" onclick="openChart('costRgbChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="costRgbChart"></canvas></div></div>
                     </div>
                     </div><!-- end dashboard-right -->
                 </div><!-- end dashboard-main -->
+                </div>
 
-                <!-- H&S Cross Daily -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden data containers: scripts write here; modal clones content from here -->
+            <div style="display:none;" aria-hidden="true">
+                <!-- H&S Cross Daily (hidden) -->
                 <div class="hs-cross-section">
                     <div class="hs-cross-header">
                         <div class="hs-cross-title-block">
@@ -307,7 +323,6 @@
                         <div class="hs-cross-month-badge">MONTH : <span id="hsCrossMonthLabel">---</span></div>
                         <div class="hs-zero-badge"><i class="fas fa-shield-halved"></i> ZERO ACCIDENTS</div>
                     </div>
-
                     <div class="hs-cross-legend">
                         <div class="hs-legend-pair">
                             <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- zero accident day</span></div>
@@ -322,7 +337,6 @@
                             <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Safety Concern</span></div>
                         </div>
                     </div>
-
                     <div class="hs-crosses-row">
                         <div class="hs-cross-block">
                             <div class="hs-cross-block-title">Accidents</div>
@@ -337,7 +351,6 @@
                             <div class="hs-cross-grid" id="safetyConcernCrossGrid"></div>
                         </div>
                     </div>
-
                     <div class="hs-cross-footer-row">
                         <div class="hs-footer-cell">Level &amp; Period<br><strong>L4 &amp; Daily</strong></div>
                         <div class="hs-footer-cell">KPI Responsible<br><strong>H&amp;S Lead</strong></div>
@@ -345,7 +358,7 @@
                     </div>
                 </div>
 
-                <!-- LSR Daily Tracking -->
+                <!-- LSR Daily Tracking (hidden) -->
                 <div class="lsr-tracking-section">
                     <div class="lsr-header">
                         <div class="lsr-title-block">
@@ -354,11 +367,9 @@
                         <div class="lsr-month-badge">Month : <span id="lsrMonthLabel">---</span></div>
                         <div class="lsr-target-badge">Target : 100% Compliance</div>
                     </div>
-
                     <div class="lsr-table-wrapper">
                         <table class="lsr-main-table" id="lsrMainTable">
                             <thead>
-                                <!-- Row 1: Category titles (each spans 6 cols: 3 safe + 3 unsafe) -->
                                 <tr>
                                     <th class="lsr-th-category" colspan="6">LSR 1:<br>TRAFFIC RULES</th>
                                     <th class="lsr-th-category" colspan="6">LSR 2 &amp; 3: LOTO,<br>SAFEGUARD &amp;</th>
@@ -366,15 +377,13 @@
                                     <th class="lsr-th-category" colspan="6">LSR 5: CONFINED<br>SPACE ENTRY</th>
                                     <th class="lsr-th-category" colspan="6">CONTRACTOR<br>MANAGEMENT</th>
                                 </tr>
-                                <!-- Row 2: Monthly adherence score -->
                                 <tr>
-                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr1Score">100%</span></td>
-                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr23Score">100%</span></td>
-                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr4Score">100%</span></td>
-                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr5Score">100%</span></td>
-                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsrContractorScore">100%</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr1Score">-</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr23Score">-</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr4Score">-</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsr5Score">-</span></td>
+                                    <td class="lsr-th-score" colspan="6">Monthly Adherence Score Result (%)<br><span class="lsr-score-val" id="lsrContractorScore">-</span></td>
                                 </tr>
-                                <!-- Row 3: Safe / Unsafe behaviour headers (each spans 3 sub-cols) -->
                                 <tr>
                                     <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
                                     <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
@@ -387,7 +396,6 @@
                                     <th colspan="3" class="lsr-th-safe">Safe<br>behaviours</th>
                                     <th colspan="3" class="lsr-th-unsafe">Unsafe<br>behaviours</th>
                                 </tr>
-                                <!-- Row 4: Sub-column labels 1,2,3 repeated 10 times -->
                                 <tr class="lsr-subnums-row">
                                     <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
                                     <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
@@ -401,44 +409,19 @@
                                     <td class="lsr-sub-num">1</td><td class="lsr-sub-num">2</td><td class="lsr-sub-num">3</td>
                                 </tr>
                             </thead>
-                            <tbody id="lsrTableBody">
-                                <!-- 3 days per row injected by JS -->
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td class="lsr-focus-header" colspan="30">Primary Focus Behaviours</td>
-                                </tr>
-                                <tr class="lsr-focus-row">
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Slow down when Pedestrian in 2-3 truck length.</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Use LOTO when servicing or repairing equipment's</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Use PPE/harness while working at height</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Verify Oxygen content before entering</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">ESI/PF (Legal documents) to be checked</td>
-                                </tr>
-                                <tr class="lsr-focus-row">
-                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Never block walkways and fire exits</td>
-                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Place locks and warning labels</td>
-                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Rope of work areas post warning signs</td>
-                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">Never enter Confined space without work permit</td>
-                                    <td class="lsr-focus-cell lsr-focus-blue" colspan="6">PPE adherence to be checked</td>
-                                </tr>
-                                <tr class="lsr-focus-row">
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Follow speed limits</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Check the presence and working condition of protective devices</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Never access roof/fragile surface without work permit</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Never enter Confined space without Watchmen</td>
-                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="6">Work Permit adherence to be checked</td>
+                            <tbody id="lsrTableBody"></tbody>
+                            <tfoot id="lsrFocusFoot">
+                                <tr><td class="lsr-focus-header" colspan="30">Primary Focus Behaviours</td></tr>
+                                <tr class="lsr-focus-row" id="lsrFocusLoadingRow">
+                                    <td class="lsr-focus-cell lsr-focus-yellow" colspan="30">Loading focus behaviours...</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
-
                     <div class="lsr-footer-row">
                         <div class="lsr-footer-cell">Level &amp; Period<br><strong>L4 &amp; Monthly</strong></div>
                         <div class="lsr-footer-cell">Target<br><strong>100% Compliance</strong></div>
                         <div class="lsr-footer-cell">Owner<br><strong>Safety Team</strong></div>
-                    </div>
-                </div>
                     </div>
                 </div>
             </div>
@@ -462,7 +445,7 @@
                 <div class="footer-brand">
                     <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
                 </div>
-                <p>&copy; 2026 Carlsberg Production Management System | Powered by SolveX Engineering Solutions</p>
+                <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
             </footer>
         </main>
     </div>
@@ -819,12 +802,18 @@
                     buildCrossGrid('nearMissCrossGrid',          data, 'nearMiss',     maxDays);
                     buildCrossGrid('safetyConcernCrossGrid',     data, 'safetyConcern',maxDays);
                     updateMiniHsCharts(data, maxDays);
+                    if (window.updateHsOverviewFromApi) {
+                        window.updateHsOverviewFromApi(data, maxDays, year, month);
+                    }
                 })
                 .catch(() => {
                     buildCrossGrid('accidentsCrossGrid',         [], 'accident',     maxDays);
                     buildCrossGrid('nearMissCrossGrid',          [], 'nearMiss',     maxDays);
                     buildCrossGrid('safetyConcernCrossGrid',     [], 'safetyConcern',maxDays);
                     updateMiniHsCharts([], maxDays);
+                    if (window.updateHsOverviewFromApi) {
+                        window.updateHsOverviewFromApi([], maxDays, year, month);
+                    }
                 });
         }
 
@@ -897,7 +886,7 @@
                     }
                 }
                 const el = document.getElementById(cat.scoreId);
-                if (el) el.textContent = total > 0 ? Math.round((safe / total) * 100) + '%' : '100%';
+                if (el) el.textContent = total > 0 ? Math.round((safe / total) * 100) + '%' : '-';
             });
 
             if (window.renderMiniLsrChart) {
@@ -906,11 +895,15 @@
             const lsrSummary = document.getElementById('miniLsrSummary');
             if (lsrSummary) {
                 const denom = totalSafe + totalUnsafe;
-                const adherence = denom > 0 ? Math.round((totalSafe / denom) * 100) : 100;
-                lsrSummary.textContent = 'Adherence: ' + adherence + '%';
+                if (denom > 0) {
+                    const adherence = Math.round((totalSafe / denom) * 100);
+                    lsrSummary.textContent = 'Adherence: ' + adherence + '%';
+                } else {
+                    lsrSummary.textContent = 'Adherence: -';
+                }
             }
 
-            // Build rows � 3 days per row, 30 cells per row (5 cats � 3 safe + 3 unsafe)
+            // Build rows ? 3 days per row, 30 cells per row (5 cats ? 3 safe + 3 unsafe)
             const tbody = document.getElementById('lsrTableBody');
             if (!tbody) return;
             tbody.innerHTML = '';
@@ -921,7 +914,7 @@
                 const days = [rowIdx * 3 + 1, rowIdx * 3 + 2, rowIdx * 3 + 3];
 
                 LSR_CATEGORIES.forEach(cat => {
-                    // Safe behaviours � 3 cells
+                    // Safe behaviours ? 3 cells
                     days.forEach(day => {
                         const td = document.createElement('td');
                         if (day > maxDays) {
@@ -933,7 +926,7 @@
                         }
                         tr.appendChild(td);
                     });
-                    // Unsafe behaviours � 3 cells
+                    // Unsafe behaviours ? 3 cells
                     days.forEach(day => {
                         const td = document.createElement('td');
                         if (day > maxDays) {
@@ -957,8 +950,18 @@
             if (lbl) lbl.textContent = MONTH_NAMES[month - 1] + "'" + String(year).slice(2);
             fetch('/api/lsr-daily/' + year + '/' + month)
                 .then(r => r.json())
-                .then(data => buildLsrTable(data, maxDays))
-                .catch(() => buildLsrTable([], maxDays));
+                .then(data => {
+                    buildLsrTable(data, maxDays);
+                    if (window.updateLsrOverviewFromApi) {
+                        window.updateLsrOverviewFromApi(data, maxDays, year, month);
+                    }
+                })
+                .catch(() => {
+                    buildLsrTable([], maxDays);
+                    if (window.updateLsrOverviewFromApi) {
+                        window.updateLsrOverviewFromApi([], maxDays, year, month);
+                    }
+                });
         }
 
         function initLsr() {

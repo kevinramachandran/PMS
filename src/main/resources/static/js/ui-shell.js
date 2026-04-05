@@ -36,21 +36,32 @@
         }
     };
 
+    function isConfigPage() {
+        const path = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '');
+        return path === '/settings' || path === '/pms-configuration';
+    }
+
     function enhanceHeader(header) {
         const headerLeft = header.querySelector('.header-left');
-        const headerCenter = header.querySelector('.header-center') || (function () {
-            const div = document.createElement('div');
-            div.className = 'header-center';
-            return div;
-        })();
+        const allowMonthPicker = !isConfigPage();
+        const headerCenter = header.querySelector('.header-center');
         const headerRight = header.querySelector('.header-right') || (function () {
             const div = document.createElement('div');
             div.className = 'header-right';
             return div;
         })();
 
-        if (!header.contains(headerCenter)) {
-            header.insertBefore(headerCenter, headerRight);
+        if (allowMonthPicker) {
+            const center = headerCenter || (function () {
+                const div = document.createElement('div');
+                div.className = 'header-center';
+                return div;
+            })();
+            if (!header.contains(center)) {
+                header.insertBefore(center, headerRight);
+            }
+        } else if (headerCenter && header.contains(headerCenter)) {
+            headerCenter.remove();
         }
         if (!header.contains(headerRight)) {
             header.appendChild(headerRight);
@@ -71,13 +82,16 @@
             el.remove();
         });
 
-        if (!headerCenter.querySelector('.pms-month-picker')) {
-            const monthInput = document.createElement('input');
-            monthInput.type = 'month';
-            monthInput.className = 'pms-month-picker';
-            monthInput.value = getMonthValue();
-            headerCenter.innerHTML = '';
-            headerCenter.appendChild(monthInput);
+        if (allowMonthPicker) {
+            const center = header.querySelector('.header-center');
+            if (center && !center.querySelector('.pms-month-picker')) {
+                const monthInput = document.createElement('input');
+                monthInput.type = 'month';
+                monthInput.className = 'pms-month-picker';
+                monthInput.value = getMonthValue();
+                center.innerHTML = '';
+                center.appendChild(monthInput);
+            }
         }
 
         if (!headerRight.querySelector('.pms-profile')) {

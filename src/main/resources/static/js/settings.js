@@ -45,8 +45,7 @@ $(document).ready(function() {
         ]
     };
 
-    const todayIso = new Date().toISOString().split('T')[0];
-    $('input[type="date"]').attr('max', todayIso);
+    $('input[type="date"]').removeAttr('max');
 
     initializeMetricsDateField();
     initializeIssueBoardConfigDateField();
@@ -514,13 +513,6 @@ $(document).ready(function() {
             return;
         }
 
-        if (isFutureDate(selectedDate)) {
-            showMessage('metricsDataMessage', 'Future dates are not allowed for metrics data.', 'error');
-            $(this).val(getTodayDateString());
-            resetMetricsForm();
-            return;
-        }
-
         loadMetricsDataByDate(selectedDate);
     });
 
@@ -544,12 +536,6 @@ $(document).ready(function() {
         if (!selectedDate) {
             showMessage('metricsDataMessage', 'Please select a metrics date.', 'error');
             showMetricsToast('Please select a metrics date.', 'error');
-            return;
-        }
-
-        if (isFutureDate(selectedDate)) {
-            showMessage('metricsDataMessage', 'Future dates are not allowed for metrics data.', 'error');
-            showMetricsToast('Future dates are not allowed.', 'error');
             return;
         }
 
@@ -595,7 +581,7 @@ $(document).ready(function() {
     function initializeMetricsDateField() {
         const today = getTodayDateString();
         const dateInput = $('#metricsDateInput');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
     }
 
@@ -710,16 +696,11 @@ $(document).ready(function() {
             String(today.getDate()).padStart(2, '0');
     }
 
-    function isFutureDate(dateStr) {
-        const today = getTodayDateString();
-        return dateStr > today;
-    }
-
     // ==================== ISSUE BOARD CONFIGURATION ====================
     function initializeIssueBoardConfigDateField() {
         const today = getTodayDateString();
         const dateInput = $('#issueBoardConfigDate');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
 
         applyIssueBoardDateLimits();
@@ -728,11 +709,6 @@ $(document).ready(function() {
             const selected = $(this).val();
             if (!selected) {
                 return;
-            }
-
-            if (isFutureDate(selected)) {
-                $(this).val(today);
-                showIssueBoardPopup('Future review dates are not allowed.');
             }
         });
     }
@@ -751,11 +727,10 @@ $(document).ready(function() {
     }
 
     function applyIssueBoardDateLimits() {
-        const today = getTodayDateString();
-        $('#issueBoardLastReviewDate').attr('max', today);
-        $('#issueBoardNextReviewDate').attr('max', today);
-        $('#ibFormIssueDate, #ibFormCompletedDate, #ibFormTargetDate').attr('max', today);
-        $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date, #issueBoardConfigTableBody .ib-target-date').attr('max', today);
+        $('#issueBoardLastReviewDate').removeAttr('max');
+        $('#issueBoardNextReviewDate').removeAttr('max');
+        $('#ibFormIssueDate, #ibFormCompletedDate, #ibFormTargetDate').removeAttr('max');
+        $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date, #issueBoardConfigTableBody .ib-target-date').removeAttr('max');
     }
 
     function normalizeIssueStatus(status) {
@@ -819,13 +794,7 @@ $(document).ready(function() {
             updateRowDueDays($row);
         });
 
-        const today = getTodayDateString();
-
         $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date').off('change').on('change', function() {
-            if ($(this).val() && $(this).val() > today) {
-                $(this).val(today);
-                showIssueBoardPopup('Future dates are not allowed.');
-            }
             updateCompletedDateRequirement($(this).closest('tr'));
         });
 
@@ -958,16 +927,6 @@ $(document).ready(function() {
             return;
         }
 
-        if (formData.completedDate && isFutureDate(formData.completedDate)) {
-            showIssueBoardPopup('Completed date cannot be in the future.');
-            return;
-        }
-
-        if (formData.issueDate && isFutureDate(formData.issueDate)) {
-            showIssueBoardPopup('Issue date cannot be in the future.');
-            return;
-        }
-
         if (formData.status === '100%' && !formData.completedDate) {
             showIssueBoardPopup('Completed date is required when status is 100%.');
             return;
@@ -1037,21 +996,6 @@ $(document).ready(function() {
 
         if (!saveDate) {
             showIssueBoardPopup('Issue date is not available. Reload the page and try again.');
-            return;
-        }
-
-        if (isFutureDate(saveDate)) {
-            showIssueBoardPopup('Future dates are not allowed for Issue Board.');
-            return;
-        }
-
-        if (lastReviewDate && isFutureDate(lastReviewDate)) {
-            showIssueBoardPopup('Last review date cannot be in the future.');
-            return;
-        }
-
-        if (nextReviewDate && isFutureDate(nextReviewDate)) {
-            showIssueBoardPopup('Next review date cannot be in the future.');
             return;
         }
 
@@ -1138,7 +1082,7 @@ $(document).ready(function() {
     function initializeGembaScheduleDateField() {
         const today = getTodayDateString();
         const dateInput = $('#gembaScheduleDate');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
         updateGembaMonthLabel(today);
 
@@ -1146,13 +1090,6 @@ $(document).ready(function() {
             const selectedDate = $(this).val();
             if (!selectedDate) {
                 updateGembaMonthLabel('');
-                return;
-            }
-
-            if (isFutureDate(selectedDate)) {
-                showMessage('gembaScheduleMessage', 'Future dates are not allowed for Gemba schedule.', 'error');
-                $(this).val(today);
-                updateGembaMonthLabel(today);
                 return;
             }
 
@@ -1387,19 +1324,13 @@ $(document).ready(function() {
     function initializeAtConfigDateField() {
         const today = getTodayDateString();
         const $dateInput = $('#atConfigDate');
-        $dateInput.attr('max', today);
+        $dateInput.removeAttr('max');
         $dateInput.val(today);
         updateAtPeriodLabel(today);
 
         $dateInput.on('change', function () {
             const selected = $(this).val();
             if (!selected) { updateAtPeriodLabel(''); return; }
-            if (isFutureDate(selected)) {
-                showMessage('atConfigMessage', 'Future dates are not allowed.', 'error');
-                $(this).val(today);
-                updateAtPeriodLabel(today);
-                return;
-            }
             updateAtPeriodLabel(selected);
             loadAtConfigByDate(selected);
         });
@@ -1556,7 +1487,7 @@ $(document).ready(function() {
     function initializeLgtConfigDateField() {
         const today = getTodayDateString();
         const dateInput = $('#lgtConfigDate');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
         updateLgtPeriodLabel(today);
 
@@ -1564,13 +1495,6 @@ $(document).ready(function() {
             const selectedDate = $(this).val();
             if (!selectedDate) {
                 updateLgtPeriodLabel('');
-                return;
-            }
-
-            if (isFutureDate(selectedDate)) {
-                showMessage('lgtConfigMessage', 'Future dates are not allowed.', 'error');
-                $(this).val(today);
-                updateLgtPeriodLabel(today);
                 return;
             }
 
@@ -1744,7 +1668,7 @@ $(document).ready(function() {
     function initializeTrainingScheduleDateField() {
         const today = getTodayDateString();
         const dateInput = $('#trainingConfigDate');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
         updateTrainingPeriodLabel(today);
 
@@ -1752,13 +1676,6 @@ $(document).ready(function() {
             const selectedDate = $(this).val();
             if (!selectedDate) {
                 updateTrainingPeriodLabel('');
-                return;
-            }
-
-            if (isFutureDate(selectedDate)) {
-                showMessage('trainingScheduleMessage', 'Future dates are not allowed.', 'error');
-                $(this).val(today);
-                updateTrainingPeriodLabel(today);
                 return;
             }
 
@@ -1927,7 +1844,7 @@ $(document).ready(function() {
     function initializeMeetingAgendaDateField() {
         const today = getTodayDateString();
         const dateInput = $('#meetingAgendaConfigDate');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
         updateMeetingAgendaPeriodLabel(today);
 
@@ -1935,13 +1852,6 @@ $(document).ready(function() {
             const selectedDate = $(this).val();
             if (!selectedDate) {
                 updateMeetingAgendaPeriodLabel('');
-                return;
-            }
-
-            if (isFutureDate(selectedDate)) {
-                showMessage('meetingAgendaMessage', 'Future dates are not allowed.', 'error');
-                $(this).val(today);
-                updateMeetingAgendaPeriodLabel(today);
                 return;
             }
 
@@ -2234,7 +2144,7 @@ $(document).ready(function() {
     function initializeProcessConfirmationDateField() {
         const today = getTodayDateString();
         const dateInput = $('#pcConfigDate');
-        dateInput.attr('max', today);
+        dateInput.removeAttr('max');
         dateInput.val(today);
         updateProcessConfirmationPeriodLabel(today);
 
@@ -2242,13 +2152,6 @@ $(document).ready(function() {
             const selectedDate = $(this).val();
             if (!selectedDate) {
                 updateProcessConfirmationPeriodLabel('');
-                return;
-            }
-
-            if (isFutureDate(selectedDate)) {
-                showMessage('processConfirmationMessage', 'Future dates are not allowed.', 'error');
-                $(this).val(today);
-                updateProcessConfirmationPeriodLabel(today);
                 return;
             }
 

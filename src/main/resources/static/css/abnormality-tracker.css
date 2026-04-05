@@ -41,21 +41,21 @@
 }
 
 .at-dashboard .sidebar-nav {
-    padding: 16px 0;
+    padding: 12px 0;
 }
 
 .at-dashboard .nav-item {
     border-left: 3px solid transparent;
     color: rgba(255, 255, 255, 0.88);
-    padding: 12px 20px;
-    margin: 3px 10px;
+    padding: 10px 14px;
+    margin: 2px 10px;
     border-radius: 10px;
     transition: all 0.25s ease;
 }
 
 .at-dashboard .nav-item i {
     width: 20px;
-    margin-right: 10px;
+    margin-right: 0;
     font-size: 16px;
 }
 
@@ -63,7 +63,7 @@
     background: var(--at-sidebar-hover);
     color: #ffffff;
     border-left-color: var(--at-primary-soft);
-    padding-left: 20px;
+    padding-left: 14px;
 }
 
 .at-dashboard .nav-item.active {
@@ -92,7 +92,7 @@
 }
 
 .at-dashboard .sidebar.collapsed .nav-item {
-    margin: 4px 8px;
+    margin: 2px 6px;
     padding: 12px;
     justify-content: center;
 }
