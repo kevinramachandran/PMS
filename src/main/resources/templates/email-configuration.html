@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Configuration - Carlsberg Brewery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/settings.css">
+    <link rel="stylesheet" href="/css/ui-shell.css">
+</head>
+<body class="modern-shell dashboard-bg">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/kpi-dashboard" class="nav-item" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+                <a href="/issue-board" class="nav-item" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
+                <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+                <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-route"></i><span>Safety Gemba - Tracker</span></a>
+                <a href="/training-schedule" class="nav-item" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
+                <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
+                <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
+                <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
+                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <a href="/pms-configuration" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                <a href="/email-configuration" class="nav-item active" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+                    <h1>Email Configuration</h1>
+                </div>
+                <div class="header-right">
+                    <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
+                    <div class="user-info-header">
+                        <i class="fa-solid profile-role-icon" th:classappend="${session.role == 'ADMIN'} ? ' fa-user-shield' : ' fa-user'"></i>
+                        <div class="profile-meta">
+                            <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
+                            <div class="profile-subline">
+                                <span class="header-role-badge" th:text="${session.roleLabel != null ? session.roleLabel : session.role}">ROLE</span>
+                                <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/logout" class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="pms-config-page email-config-page">
+                    <div class="email-config-hero pms-config-card">
+                        <div class="pms-config-card-body email-config-hero-body">
+                            <div>
+                                <div class="email-config-kicker">System Notifications</div>
+                                <h2>SMTP Setup</h2>
+                                <p>Configure the outgoing mail server used by the application for alerts, workflow messages, and automated communication.</p>
+                            </div>
+                            <div class="email-config-status">
+                                <span class="email-config-status-label">Email Sending</span>
+                                <label class="email-toggle">
+                                    <input type="checkbox" id="emailEnabled">
+                                    <span class="email-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="email-config-grid">
+                        <div class="pms-config-card">
+                            <div class="pms-config-card-header">
+                                <h2><i class="fas fa-server"></i> SMTP Details</h2>
+                            </div>
+                            <div class="pms-config-card-body">
+                                <form id="emailConfigForm" onsubmit="return false;">
+                                    <div class="email-form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label" for="smtpHost">SMTP Host <span class="field-required">*</span></label>
+                                            <input type="text" id="smtpHost" class="form-select" placeholder="smtp.example.com">
+                                            <div id="smtpHostError" class="field-inline-error"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="smtpPort">SMTP Port <span class="field-required">*</span></label>
+                                            <input type="number" id="smtpPort" class="form-select" min="1" max="65535" placeholder="587">
+                                            <div id="smtpPortError" class="field-inline-error"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="smtpUsername">Username / Email <span class="field-required">*</span></label>
+                                            <input type="text" id="smtpUsername" class="form-select" placeholder="test@example.com">
+                                            <div id="smtpUsernameError" class="field-inline-error"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="smtpEncryption">Encryption Type <span class="field-required">*</span></label>
+                                            <select id="smtpEncryption" class="form-select">
+                                                <option value="NONE">None</option>
+                                                <option value="SSL">SSL</option>
+                                                <option value="TLS">TLS</option>
+                                            </select>
+                                            <div id="smtpEncryptionError" class="field-inline-error"></div>
+                                        </div>
+                                        <div class="form-group email-password-group email-form-grid-full">
+                                            <label class="form-label" for="smtpPassword">Password <span class="field-required">*</span></label>
+                                            <div class="email-password-wrap">
+                                                <input type="password" id="smtpPassword" class="form-select" placeholder="Enter SMTP password">
+                                                <button type="button" id="togglePasswordBtn" class="email-password-toggle" aria-label="Show password">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="email-password-meta" id="passwordMeta"></div>
+                                            <div id="smtpPasswordError" class="field-inline-error"></div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="pms-config-card">
+                            <div class="pms-config-card-header">
+                                <h2><i class="fas fa-paper-plane"></i> Sender Details</h2>
+                            </div>
+                            <div class="pms-config-card-body">
+                                <div class="email-form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="fromEmail">From Email Address <span class="field-required">*</span></label>
+                                        <input type="text" id="fromEmail" class="form-select" placeholder="noreply@example.com">
+                                        <div id="fromEmailError" class="field-inline-error"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="fromName">From Name <span class="field-required">*</span></label>
+                                        <input type="text" id="fromName" class="form-select" placeholder="System">
+                                        <div id="fromNameError" class="field-inline-error"></div>
+                                    </div>
+                                    <div class="form-group email-form-grid-full">
+                                        <label class="form-label" for="replyTo">Reply-To Email</label>
+                                        <input type="text" id="replyTo" class="form-select" placeholder="support@example.com">
+                                        <div id="replyToError" class="field-inline-error"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pms-config-card">
+                        <div class="pms-config-card-body email-config-actions">
+                            <div class="email-config-hints">
+                                <div class="email-config-hint"><i class="fas fa-shield-halved"></i> Password stays encrypted at rest and is never returned by the API.</div>
+                                <div class="email-config-hint"><i class="fas fa-circle-info"></i> Recommended combinations: port 465 with SSL, port 587 with TLS.</div>
+                            </div>
+                            <div class="form-actions email-action-row">
+                                <button type="button" class="btn btn-secondary" id="testConnectionBtn" disabled>
+                                    <i class="fas fa-plug"></i> Test Connection
+                                </button>
+                                <button type="button" class="btn btn-primary" id="saveEmailConfigBtn">
+                                    <i class="fas fa-save"></i> Save Configuration
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pms-config-card-body pt-0">
+                            <div id="emailConfigMessage" class="form-message"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/email-configuration.js"></script>
+    <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+    <script src="/js/ui-shell.js"></script>
+</body>
+</html>

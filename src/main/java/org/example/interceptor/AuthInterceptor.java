@@ -43,6 +43,19 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        if (path.startsWith("/email-configuration") || path.startsWith("/api/email-config")) {
+            if (!RoleAccess.canAccessEmailConfiguration(role)) {
+                if (path.startsWith("/api/")) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
+                }
+                return false;
+            }
+        }
+
         if (path.startsWith("/settings") || path.startsWith("/pms/") || path.startsWith("/config/")
                 || path.startsWith("/add-metrics") || path.startsWith("/add-daily-data")) {
             if (!RoleAccess.canAccessPmsDataEntry(role)) {
