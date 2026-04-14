@@ -114,6 +114,9 @@
 }
 
 .metrics-date-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+    gap: 12px 16px;
     margin-bottom: 8px;
 }
 
@@ -183,6 +186,31 @@
 
 .metrics-tab-actions {
     margin-top: 14px;
+}
+
+.metrics-entry-groups {
+    display: grid;
+    gap: 16px;
+}
+
+.metrics-entry-group {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px;
+    background: #ffffff;
+}
+
+.metrics-entry-group-title {
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary-green);
+}
+
+.metrics-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px 16px;
 }
 
 .metrics-toast {
@@ -1315,6 +1343,10 @@
     }
 
     .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-entry-grid {
         grid-template-columns: 1fr;
     }
 

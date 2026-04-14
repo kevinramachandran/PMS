@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.model.MetricsEntryBundlePayload;
 import org.example.model.MetricsEntryPayload;
 import org.example.service.ProductionMetricsService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -27,7 +28,7 @@ public class MetricsEntryController {
     public ResponseEntity<?> getMetricsByDate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         try {
-            return productionMetricsService.getMetricsEntry(date)
+            return productionMetricsService.getMetricsEntryBundle(date)
                     .<ResponseEntity<?>>map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.noContent().build());
         } catch (IllegalArgumentException e) {
@@ -36,9 +37,9 @@ public class MetricsEntryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveMetricsEntry(@RequestBody MetricsEntryPayload payload) {
+    public ResponseEntity<?> saveMetricsEntry(@RequestBody MetricsEntryBundlePayload payload) {
         try {
-            return ResponseEntity.ok(productionMetricsService.saveMetricsEntry(payload));
+            return ResponseEntity.ok(productionMetricsService.saveMetricsEntryBundle(payload));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

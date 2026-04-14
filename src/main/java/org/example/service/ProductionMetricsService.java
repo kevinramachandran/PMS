@@ -6,9 +6,12 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.example.entity.ProductionMetrics;
+import org.example.model.MetricsEntryBundlePayload;
 import org.example.model.MetricsEntryPayload;
 import org.example.repository.ProductionMetricsRepository;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,29 +33,66 @@ public class ProductionMetricsService {
 
     private final ProductionMetricsRepository repository;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String ENTRY_TYPE_ACTUAL = "ACTUAL";
+    private static final String ENTRY_TYPE_TARGET = "TARGET";
     private static final List<String> PEOPLE_FIELDS = List.of(
-        "productionProductivityFtdActual", "productionProductivityFtdTarget", "productionProductivityMtdActual", "productionProductivityYtdActual",
-        "logisticsProductivityFtdActual", "logisticsProductivityFtdTarget", "logisticsProductivityMtdActual", "logisticsProductivityYtdActual"
+        "productionProductivityFtdActual", "productionProductivityFtdTarget", "productionProductivityMtdActual", "productionProductivityMtdTarget", "productionProductivityYtdActual", "productionProductivityYtdTarget",
+        "logisticsProductivityFtdActual", "logisticsProductivityFtdTarget", "logisticsProductivityMtdActual", "logisticsProductivityMtdTarget", "logisticsProductivityYtdActual", "logisticsProductivityYtdTarget"
     );
     private static final List<String> QUALITY_FIELDS = List.of(
-        "kpiSensoryScoreFtdActual", "kpiSensoryScoreFtdTarget", "kpiSensoryScoreMtdActual", "kpiSensoryScoreYtdActual",
-        "kpiConsumerComplaintUnitsMhlFtdActual", "kpiConsumerComplaintUnitsMhlFtdTarget", "kpiConsumerComplaintUnitsMhlMtdActual", "kpiConsumerComplaintUnitsMhlYtdActual",
-        "kpiCustomerComplaintUnitsMhlFtdActual", "kpiCustomerComplaintUnitsMhlFtdTarget", "kpiCustomerComplaintUnitsMhlMtdActual", "kpiCustomerComplaintUnitsMhlYtdActual"
+        "kpiSensoryScoreFtdActual", "kpiSensoryScoreFtdTarget", "kpiSensoryScoreMtdActual", "kpiSensoryScoreMtdTarget", "kpiSensoryScoreYtdActual", "kpiSensoryScoreYtdTarget",
+        "kpiConsumerComplaintUnitsMhlFtdActual", "kpiConsumerComplaintUnitsMhlFtdTarget", "kpiConsumerComplaintUnitsMhlMtdActual", "kpiConsumerComplaintUnitsMhlMtdTarget", "kpiConsumerComplaintUnitsMhlYtdActual", "kpiConsumerComplaintUnitsMhlYtdTarget",
+        "kpiCustomerComplaintUnitsMhlFtdActual", "kpiCustomerComplaintUnitsMhlFtdTarget", "kpiCustomerComplaintUnitsMhlMtdActual", "kpiCustomerComplaintUnitsMhlMtdTarget", "kpiCustomerComplaintUnitsMhlYtdActual", "kpiCustomerComplaintUnitsMhlYtdTarget"
     );
     private static final List<String> SERVICE_FIELDS = List.of(
-        "noOfBrewsFtdActual", "noOfBrewsFtdTarget", "noOfBrewsMtdActual", "noOfBrewsYtdActual",
-        "dispatchFtdActual", "dispatchFtdTarget", "dispatchMtdActual", "dispatchYtdActual",
-        "processConfirmationBpFtdActual", "processConfirmationBpFtdTarget", "processConfirmationBpMtdActual", "processConfirmationBpYtdActual",
-        "processConfirmationPackMtdActual", "processConfirmationPackMtdTarget", "processConfirmationPackYtdActual",
-        "kpiOeeFtdActual", "kpiOeeFtdTarget", "kpiOeeMtdActual", "kpiOeeYtdActual",
-        "kpiBeerLossFtdActual", "kpiBeerLossFtdTarget", "kpiBeerLossMtdActual", "kpiBeerLossYtdActual",
-        "kpiWurHlHlFtdActual", "kpiWurHlHlFtdTarget", "kpiWurHlHlMtdActual", "kpiWurHlHlYtdActual"
+        "noOfBrewsFtdActual", "noOfBrewsFtdTarget", "noOfBrewsMtdActual", "noOfBrewsMtdTarget", "noOfBrewsYtdActual", "noOfBrewsYtdTarget",
+        "dispatchFtdActual", "dispatchFtdTarget", "dispatchMtdActual", "dispatchMtdTarget", "dispatchYtdActual", "dispatchYtdTarget",
+        "processConfirmationBpFtdActual", "processConfirmationBpFtdTarget", "processConfirmationBpMtdActual", "processConfirmationBpMtdTarget", "processConfirmationBpYtdActual", "processConfirmationBpYtdTarget",
+        "processConfirmationPackMtdActual", "processConfirmationPackMtdTarget", "processConfirmationPackYtdActual", "processConfirmationPackYtdTarget",
+        "kpiOeeFtdActual", "kpiOeeFtdTarget", "kpiOeeMtdActual", "kpiOeeMtdTarget", "kpiOeeYtdActual", "kpiOeeYtdTarget",
+        "kpiBeerLossFtdActual", "kpiBeerLossFtdTarget", "kpiBeerLossMtdActual", "kpiBeerLossMtdTarget", "kpiBeerLossYtdActual", "kpiBeerLossYtdTarget",
+        "kpiWurHlHlFtdActual", "kpiWurHlHlFtdTarget", "kpiWurHlHlMtdActual", "kpiWurHlHlMtdTarget", "kpiWurHlHlYtdActual", "kpiWurHlHlYtdTarget"
     );
     private static final List<String> COST_FIELDS = List.of(
-        "kpiElectricityKwhHlFtdActual", "kpiElectricityKwhHlFtdTarget", "kpiElectricityKwhHlMtdActual", "kpiElectricityKwhHlYtdActual",
-        "kpiEnergyKwhHlFtdActual", "kpiEnergyKwhHlFtdTarget", "kpiEnergyKwhHlMtdActual", "kpiEnergyKwhHlYtdActual",
-        "kpiRgbRatioFtdActual", "kpiRgbRatioFtdTarget", "kpiRgbRatioMtdActual", "kpiRgbRatioYtdActual"
+        "kpiElectricityKwhHlFtdActual", "kpiElectricityKwhHlFtdTarget", "kpiElectricityKwhHlMtdActual", "kpiElectricityKwhHlMtdTarget", "kpiElectricityKwhHlYtdActual", "kpiElectricityKwhHlYtdTarget",
+        "kpiEnergyKwhHlFtdActual", "kpiEnergyKwhHlFtdTarget", "kpiEnergyKwhHlMtdActual", "kpiEnergyKwhHlMtdTarget", "kpiEnergyKwhHlYtdActual", "kpiEnergyKwhHlYtdTarget",
+        "kpiRgbRatioFtdActual", "kpiRgbRatioFtdTarget", "kpiRgbRatioMtdActual", "kpiRgbRatioMtdTarget", "kpiRgbRatioYtdActual", "kpiRgbRatioYtdTarget"
     );
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void consolidateLegacySplitRows() {
+        List<ProductionMetrics> allRecords = repository.findAll();
+        if (allRecords.isEmpty()) {
+            return;
+        }
+
+        List<ProductionMetrics> targetRowsToDelete = new ArrayList<>();
+        for (ProductionMetrics record : allRecords) {
+            if (record.getDate() == null || ENTRY_TYPE_TARGET.equalsIgnoreCase(record.getEntryType())) {
+                continue;
+            }
+
+            LocalDate actualDate = record.getDate().toLocalDate();
+            if (record.getTargetDate() == null) {
+                record.setTargetDate(actualDate.plusDays(1).atStartOfDay());
+            }
+
+            findLegacyTargetRecord(record.getTargetDate().toLocalDate()).ifPresent(legacyTarget -> {
+                copyTargetFields(record, legacyTarget);
+                targetRowsToDelete.add(legacyTarget);
+            });
+
+            if (record.getEntryType() != null && !record.getEntryType().isBlank()) {
+                record.setEntryType(null);
+            }
+            repository.save(record);
+        }
+
+        if (!targetRowsToDelete.isEmpty()) {
+            repository.deleteAll(targetRowsToDelete);
+        }
+    }
 
     // CRUD Operations
     public List<ProductionMetrics> getAllRecords() {
@@ -67,11 +108,11 @@ public class ProductionMetricsService {
     }
 
     public Optional<ProductionMetrics> getRecordByDate(LocalDate date) {
-        return repository.findByDate(date);
+        return findNormalizedRecordByActualDate(date);
     }
 
     public Optional<ProductionMetrics> getRecordByDay(LocalDate date) {
-        return repository.findByDate(date);
+        return findNormalizedRecordByActualDate(date);
     }
 
     public List<ProductionMetrics> getRecordsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
@@ -83,22 +124,17 @@ public class ProductionMetricsService {
         LocalDate firstDay = today.withDayOfMonth(1);
         LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
 
-        LocalDateTime startDate = firstDay.atStartOfDay();
-        LocalDateTime endDate = lastDay.atTime(23, 59, 59);
-
-        return repository.findByDateBetweenOrderByDateAsc(startDate, endDate);
+        return buildNormalizedRecordsBetween(firstDay, lastDay);
     }
 
     public List<ProductionMetrics> getRecordsByMonth(int month, int year) {
         YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime startDate = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
-        return repository.findByDateBetweenOrderByDateAsc(startDate, endDate);
+        return buildNormalizedRecordsBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth());
     }
 
     public Optional<MetricsEntryPayload> getMetricsEntry(LocalDate date) {
-        validateEntryDate(date);
-        return repository.findByDate(date).map(this::toMetricsEntryPayload);
+        validateActualEntryDate(date);
+        return findNormalizedRecordByActualDate(date).map(this::toMetricsEntryPayload);
     }
 
     @Transactional
@@ -108,10 +144,11 @@ public class ProductionMetricsService {
         }
 
         LocalDate date = payload.getDate();
-        validateEntryDate(date);
-
-        ProductionMetrics metrics = repository.findByDate(date).orElseGet(ProductionMetrics::new);
+        validateActualEntryDate(date);
+        ProductionMetrics metrics = findPrimaryRecordByActualDate(date).orElseGet(ProductionMetrics::new);
         metrics.setDate(date.atStartOfDay());
+        metrics.setTargetDate(date.plusDays(1).atStartOfDay());
+        metrics.setEntryType(null);
 
         boolean updated = false;
         updated |= applySectionValuesIfPresent(metrics, payload.getPeople(), PEOPLE_FIELDS, "People");
@@ -124,6 +161,52 @@ public class ProductionMetricsService {
         }
 
         return toMetricsEntryPayload(repository.save(metrics));
+    }
+
+    public Optional<MetricsEntryBundlePayload> getMetricsEntryBundle(LocalDate actualDate) {
+        validateActualEntryDate(actualDate);
+        return findNormalizedRecordByActualDate(actualDate).map(this::toMetricsEntryBundlePayload);
+    }
+
+    @Transactional
+    public MetricsEntryBundlePayload saveMetricsEntryBundle(MetricsEntryBundlePayload payload) {
+        if (payload == null) {
+            throw new IllegalArgumentException("Metrics payload is required");
+        }
+
+        LocalDate actualDate = payload.getActualDate();
+        validateActualEntryDate(actualDate);
+
+        LocalDate targetDate = actualDate.plusDays(1);
+        if (payload.getTargetDate() != null && !targetDate.equals(payload.getTargetDate())) {
+            throw new IllegalArgumentException("Target date must be the next day of Actual date");
+        }
+
+        ProductionMetrics metrics = findPrimaryRecordByActualDate(actualDate).orElseGet(ProductionMetrics::new);
+        metrics.setDate(actualDate.atStartOfDay());
+        metrics.setTargetDate(targetDate.atStartOfDay());
+        metrics.setEntryType(null);
+
+        MetricsEntryPayload actualPayload = payload.getActual() != null ? payload.getActual() : new MetricsEntryPayload();
+        MetricsEntryPayload targetPayload = payload.getTarget() != null ? payload.getTarget() : new MetricsEntryPayload();
+
+        boolean updated = false;
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getPeople(), PEOPLE_FIELDS, "People");
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getQuality(), QUALITY_FIELDS, "Quality");
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getService(), SERVICE_FIELDS, "Service");
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getCost(), COST_FIELDS, "Cost");
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getPeople(), PEOPLE_FIELDS, "People");
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getQuality(), QUALITY_FIELDS, "Quality");
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getService(), SERVICE_FIELDS, "Service");
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getCost(), COST_FIELDS, "Cost");
+
+        if (!updated) {
+            throw new IllegalArgumentException("At least one metrics category is required");
+        }
+
+        deleteLegacyTargetRecord(targetDate);
+        ProductionMetrics saved = repository.save(metrics);
+        return toMetricsEntryBundlePayload(saved);
     }
 
     public ProductionMetrics createRecord(ProductionMetrics metrics) {
@@ -154,7 +237,7 @@ public class ProductionMetricsService {
     @Transactional
     public ProductionMetrics patchRecordByDate(LocalDate date, ProductionMetrics patch) {
         LocalDateTime normalizedDate = date.atStartOfDay();
-        validateEntryDate(date);
+        validateActualEntryDate(date);
 
         List<ProductionMetrics> dayRecords = repository.findByDateBetweenOrderByDateAsc(
                 normalizedDate,
@@ -203,132 +286,57 @@ public class ProductionMetricsService {
     }
 
     private void applyPartialUpdate(ProductionMetrics existing, ProductionMetrics update) {
-        setIfPresent(existing::setProductionProductivityFtdActual, update.getProductionProductivityFtdActual(), "productionProductivityFtdActual");
-        setIfPresent(existing::setProductionProductivityFtdTarget, update.getProductionProductivityFtdTarget(), "productionProductivityFtdTarget");
-        setIfPresent(existing::setProductionProductivityMtdActual, update.getProductionProductivityMtdActual(), "productionProductivityMtdActual");
-        setIfPresent(existing::setProductionProductivityYtdActual, update.getProductionProductivityYtdActual(), "productionProductivityYtdActual");
-        setIfPresent(existing::setLogisticsProductivityFtdActual, update.getLogisticsProductivityFtdActual(), "logisticsProductivityFtdActual");
-        setIfPresent(existing::setLogisticsProductivityFtdTarget, update.getLogisticsProductivityFtdTarget(), "logisticsProductivityFtdTarget");
-        setIfPresent(existing::setLogisticsProductivityMtdActual, update.getLogisticsProductivityMtdActual(), "logisticsProductivityMtdActual");
-        setIfPresent(existing::setLogisticsProductivityYtdActual, update.getLogisticsProductivityYtdActual(), "logisticsProductivityYtdActual");
-        setIfPresent(existing::setProcessConfirmationBpFtdActual, update.getProcessConfirmationBpFtdActual(), "processConfirmationBpFtdActual");
-        setIfPresent(existing::setProcessConfirmationBpFtdTarget, update.getProcessConfirmationBpFtdTarget(), "processConfirmationBpFtdTarget");
-        setIfPresent(existing::setProcessConfirmationBpMtdActual, update.getProcessConfirmationBpMtdActual(), "processConfirmationBpMtdActual");
-        setIfPresent(existing::setProcessConfirmationBpYtdActual, update.getProcessConfirmationBpYtdActual(), "processConfirmationBpYtdActual");
-        setIfPresent(existing::setProcessConfirmationPackMtdActual, update.getProcessConfirmationPackMtdActual(), "processConfirmationPackMtdActual");
-        setIfPresent(existing::setProcessConfirmationPackMtdTarget, update.getProcessConfirmationPackMtdTarget(), "processConfirmationPackMtdTarget");
-        setIfPresent(existing::setProcessConfirmationPackYtdActual, update.getProcessConfirmationPackYtdActual(), "processConfirmationPackYtdActual");
-        setIfPresent(existing::setKpiOeeFtdActual, update.getKpiOeeFtdActual(), "kpiOeeFtdActual");
-        setIfPresent(existing::setKpiOeeFtdTarget, update.getKpiOeeFtdTarget(), "kpiOeeFtdTarget");
-        setIfPresent(existing::setKpiOeeMtdActual, update.getKpiOeeMtdActual(), "kpiOeeMtdActual");
-        setIfPresent(existing::setKpiOeeYtdActual, update.getKpiOeeYtdActual(), "kpiOeeYtdActual");
-        setIfPresent(existing::setKpiSensoryScoreFtdActual, update.getKpiSensoryScoreFtdActual(), "kpiSensoryScoreFtdActual");
-        setIfPresent(existing::setKpiSensoryScoreFtdTarget, update.getKpiSensoryScoreFtdTarget(), "kpiSensoryScoreFtdTarget");
-        setIfPresent(existing::setKpiSensoryScoreMtdActual, update.getKpiSensoryScoreMtdActual(), "kpiSensoryScoreMtdActual");
-        setIfPresent(existing::setKpiSensoryScoreYtdActual, update.getKpiSensoryScoreYtdActual(), "kpiSensoryScoreYtdActual");
-        setIfPresent(existing::setKpiWurHlHlFtdActual, update.getKpiWurHlHlFtdActual(), "kpiWurHlHlFtdActual");
-        setIfPresent(existing::setKpiWurHlHlFtdTarget, update.getKpiWurHlHlFtdTarget(), "kpiWurHlHlFtdTarget");
-        setIfPresent(existing::setKpiWurHlHlMtdActual, update.getKpiWurHlHlMtdActual(), "kpiWurHlHlMtdActual");
-        setIfPresent(existing::setKpiWurHlHlYtdActual, update.getKpiWurHlHlYtdActual(), "kpiWurHlHlYtdActual");
-        setIfPresent(existing::setKpiElectricityKwhHlFtdActual, update.getKpiElectricityKwhHlFtdActual(), "kpiElectricityKwhHlFtdActual");
-        setIfPresent(existing::setKpiElectricityKwhHlFtdTarget, update.getKpiElectricityKwhHlFtdTarget(), "kpiElectricityKwhHlFtdTarget");
-        setIfPresent(existing::setKpiElectricityKwhHlMtdActual, update.getKpiElectricityKwhHlMtdActual(), "kpiElectricityKwhHlMtdActual");
-        setIfPresent(existing::setKpiElectricityKwhHlYtdActual, update.getKpiElectricityKwhHlYtdActual(), "kpiElectricityKwhHlYtdActual");
-        setIfPresent(existing::setKpiEnergyKwhHlFtdActual, update.getKpiEnergyKwhHlFtdActual(), "kpiEnergyKwhHlFtdActual");
-        setIfPresent(existing::setKpiEnergyKwhHlFtdTarget, update.getKpiEnergyKwhHlFtdTarget(), "kpiEnergyKwhHlFtdTarget");
-        setIfPresent(existing::setKpiEnergyKwhHlMtdActual, update.getKpiEnergyKwhHlMtdActual(), "kpiEnergyKwhHlMtdActual");
-        setIfPresent(existing::setKpiEnergyKwhHlYtdActual, update.getKpiEnergyKwhHlYtdActual(), "kpiEnergyKwhHlYtdActual");
-        setIfPresent(existing::setKpiRgbRatioFtdActual, update.getKpiRgbRatioFtdActual(), "kpiRgbRatioFtdActual");
-        setIfPresent(existing::setKpiRgbRatioFtdTarget, update.getKpiRgbRatioFtdTarget(), "kpiRgbRatioFtdTarget");
-        setIfPresent(existing::setKpiRgbRatioMtdActual, update.getKpiRgbRatioMtdActual(), "kpiRgbRatioMtdActual");
-        setIfPresent(existing::setKpiRgbRatioYtdActual, update.getKpiRgbRatioYtdActual(), "kpiRgbRatioYtdActual");
-        setIfPresent(existing::setKpiBeerLossFtdActual, update.getKpiBeerLossFtdActual(), "kpiBeerLossFtdActual");
-        setIfPresent(existing::setKpiBeerLossFtdTarget, update.getKpiBeerLossFtdTarget(), "kpiBeerLossFtdTarget");
-        setIfPresent(existing::setKpiBeerLossMtdActual, update.getKpiBeerLossMtdActual(), "kpiBeerLossMtdActual");
-        setIfPresent(existing::setKpiBeerLossYtdActual, update.getKpiBeerLossYtdActual(), "kpiBeerLossYtdActual");
-        setIfPresent(existing::setKpiConsumerComplaintUnitsMhlFtdActual, update.getKpiConsumerComplaintUnitsMhlFtdActual(), "kpiConsumerComplaintUnitsMhlFtdActual");
-        setIfPresent(existing::setKpiConsumerComplaintUnitsMhlFtdTarget, update.getKpiConsumerComplaintUnitsMhlFtdTarget(), "kpiConsumerComplaintUnitsMhlFtdTarget");
-        setIfPresent(existing::setKpiConsumerComplaintUnitsMhlMtdActual, update.getKpiConsumerComplaintUnitsMhlMtdActual(), "kpiConsumerComplaintUnitsMhlMtdActual");
-        setIfPresent(existing::setKpiConsumerComplaintUnitsMhlYtdActual, update.getKpiConsumerComplaintUnitsMhlYtdActual(), "kpiConsumerComplaintUnitsMhlYtdActual");
-        setIfPresent(existing::setKpiCustomerComplaintUnitsMhlFtdActual, update.getKpiCustomerComplaintUnitsMhlFtdActual(), "kpiCustomerComplaintUnitsMhlFtdActual");
-        setIfPresent(existing::setKpiCustomerComplaintUnitsMhlFtdTarget, update.getKpiCustomerComplaintUnitsMhlFtdTarget(), "kpiCustomerComplaintUnitsMhlFtdTarget");
-        setIfPresent(existing::setKpiCustomerComplaintUnitsMhlMtdActual, update.getKpiCustomerComplaintUnitsMhlMtdActual(), "kpiCustomerComplaintUnitsMhlMtdActual");
-        setIfPresent(existing::setKpiCustomerComplaintUnitsMhlYtdActual, update.getKpiCustomerComplaintUnitsMhlYtdActual(), "kpiCustomerComplaintUnitsMhlYtdActual");
-    }
+        BeanWrapperImpl sourceWrapper = new BeanWrapperImpl(update);
+        BeanWrapperImpl targetWrapper = new BeanWrapperImpl(existing);
 
-    private void setIfPresent(java.util.function.Consumer<Double> setter, Double value, String fieldName) {
-        if (value == null) {
-            return;
+        for (java.beans.PropertyDescriptor descriptor : sourceWrapper.getPropertyDescriptors()) {
+            String field = descriptor.getName();
+            if (isReadOnlyMetricsField(field)) {
+                continue;
+            }
+
+            Object value = sourceWrapper.getPropertyValue(field);
+            if (value == null) {
+                continue;
+            }
+
+            if (value instanceof Number numberValue && numberValue.doubleValue() < 0) {
+                throw new IllegalArgumentException(field + " cannot be negative");
+            }
+
+            targetWrapper.setPropertyValue(field, value);
         }
-        if (value < 0) {
-            throw new IllegalArgumentException(fieldName + " cannot be negative");
-        }
-        setter.accept(value);
     }
 
     private ProductionMetrics updateFields(ProductionMetrics existing, ProductionMetrics metrics) {
         metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
         validateMetricsDateForEntry(metrics);
         existing.setDate(metrics.getDate());
-        existing.setProductionProductivityFtdActual(metrics.getProductionProductivityFtdActual());
-        existing.setProductionProductivityFtdTarget(metrics.getProductionProductivityFtdTarget());
-        existing.setProductionProductivityMtdActual(metrics.getProductionProductivityMtdActual());
-        existing.setProductionProductivityYtdActual(metrics.getProductionProductivityYtdActual());
-        existing.setLogisticsProductivityFtdActual(metrics.getLogisticsProductivityFtdActual());
-        existing.setLogisticsProductivityFtdTarget(metrics.getLogisticsProductivityFtdTarget());
-        existing.setLogisticsProductivityMtdActual(metrics.getLogisticsProductivityMtdActual());
-        existing.setLogisticsProductivityYtdActual(metrics.getLogisticsProductivityYtdActual());
-        existing.setKpiSensoryScoreFtdActual(metrics.getKpiSensoryScoreFtdActual());
-        existing.setKpiSensoryScoreFtdTarget(metrics.getKpiSensoryScoreFtdTarget());
-        existing.setKpiSensoryScoreMtdActual(metrics.getKpiSensoryScoreMtdActual());
-        existing.setKpiSensoryScoreMtdTarget(metrics.getKpiSensoryScoreMtdTarget());
-        existing.setKpiSensoryScoreYtdActual(metrics.getKpiSensoryScoreYtdActual());
-        existing.setKpiConsumerComplaintUnitsMhlFtdActual(metrics.getKpiConsumerComplaintUnitsMhlFtdActual());
-        existing.setKpiConsumerComplaintUnitsMhlFtdTarget(metrics.getKpiConsumerComplaintUnitsMhlFtdTarget());
-        existing.setKpiConsumerComplaintUnitsMhlMtdActual(metrics.getKpiConsumerComplaintUnitsMhlMtdActual());
-        existing.setKpiConsumerComplaintUnitsMhlYtdActual(metrics.getKpiConsumerComplaintUnitsMhlYtdActual());
-        existing.setKpiCustomerComplaintUnitsMhlFtdActual(metrics.getKpiCustomerComplaintUnitsMhlFtdActual());
-        existing.setKpiCustomerComplaintUnitsMhlFtdTarget(metrics.getKpiCustomerComplaintUnitsMhlFtdTarget());
-        existing.setKpiCustomerComplaintUnitsMhlMtdActual(metrics.getKpiCustomerComplaintUnitsMhlMtdActual());
-        existing.setKpiCustomerComplaintUnitsMhlYtdActual(metrics.getKpiCustomerComplaintUnitsMhlYtdActual());
-        existing.setProcessConfirmationBpFtdActual(metrics.getProcessConfirmationBpFtdActual());
-        existing.setProcessConfirmationBpFtdTarget(metrics.getProcessConfirmationBpFtdTarget());
-        existing.setProcessConfirmationBpMtdActual(metrics.getProcessConfirmationBpMtdActual());
-        existing.setProcessConfirmationBpYtdActual(metrics.getProcessConfirmationBpYtdActual());
-        existing.setProcessConfirmationPackMtdActual(metrics.getProcessConfirmationPackMtdActual());
-        existing.setProcessConfirmationPackMtdTarget(metrics.getProcessConfirmationPackMtdTarget());
-        existing.setProcessConfirmationPackYtdActual(metrics.getProcessConfirmationPackYtdActual());
-        existing.setKpiOeeFtdActual(metrics.getKpiOeeFtdActual());
-        existing.setKpiOeeFtdTarget(metrics.getKpiOeeFtdTarget());
-        existing.setKpiOeeMtdActual(metrics.getKpiOeeMtdActual());
-        existing.setKpiOeeMtdTarget(metrics.getKpiOeeMtdTarget());
-        existing.setKpiOeeYtdActual(metrics.getKpiOeeYtdActual());
-        existing.setKpiBeerLossFtdActual(metrics.getKpiBeerLossFtdActual());
-        existing.setKpiBeerLossFtdTarget(metrics.getKpiBeerLossFtdTarget());
-        existing.setKpiBeerLossMtdActual(metrics.getKpiBeerLossMtdActual());
-        existing.setKpiBeerLossMtdTarget(metrics.getKpiBeerLossMtdTarget());
-        existing.setKpiBeerLossYtdActual(metrics.getKpiBeerLossYtdActual());
-        existing.setKpiWurHlHlFtdActual(metrics.getKpiWurHlHlFtdActual());
-        existing.setKpiWurHlHlFtdTarget(metrics.getKpiWurHlHlFtdTarget());
-        existing.setKpiWurHlHlMtdActual(metrics.getKpiWurHlHlMtdActual());
-        existing.setKpiWurHlHlMtdTarget(metrics.getKpiWurHlHlMtdTarget());
-        existing.setKpiWurHlHlYtdActual(metrics.getKpiWurHlHlYtdActual());
-        existing.setKpiElectricityKwhHlFtdActual(metrics.getKpiElectricityKwhHlFtdActual());
-        existing.setKpiElectricityKwhHlFtdTarget(metrics.getKpiElectricityKwhHlFtdTarget());
-        existing.setKpiElectricityKwhHlMtdActual(metrics.getKpiElectricityKwhHlMtdActual());
-        existing.setKpiElectricityKwhHlMtdTarget(metrics.getKpiElectricityKwhHlMtdTarget());
-        existing.setKpiElectricityKwhHlYtdActual(metrics.getKpiElectricityKwhHlYtdActual());
-        existing.setKpiEnergyKwhHlFtdActual(metrics.getKpiEnergyKwhHlFtdActual());
-        existing.setKpiEnergyKwhHlFtdTarget(metrics.getKpiEnergyKwhHlFtdTarget());
-        existing.setKpiEnergyKwhHlMtdActual(metrics.getKpiEnergyKwhHlMtdActual());
-        existing.setKpiEnergyKwhHlMtdTarget(metrics.getKpiEnergyKwhHlMtdTarget());
-        existing.setKpiEnergyKwhHlYtdActual(metrics.getKpiEnergyKwhHlYtdActual());
-        existing.setKpiRgbRatioFtdActual(metrics.getKpiRgbRatioFtdActual());
-        existing.setKpiRgbRatioFtdTarget(metrics.getKpiRgbRatioFtdTarget());
-        existing.setKpiRgbRatioMtdActual(metrics.getKpiRgbRatioMtdActual());
-        existing.setKpiRgbRatioMtdTarget(metrics.getKpiRgbRatioMtdTarget());
-        existing.setKpiRgbRatioYtdActual(metrics.getKpiRgbRatioYtdActual());
+        BeanWrapperImpl sourceWrapper = new BeanWrapperImpl(metrics);
+        BeanWrapperImpl targetWrapper = new BeanWrapperImpl(existing);
+
+        for (java.beans.PropertyDescriptor descriptor : sourceWrapper.getPropertyDescriptors()) {
+            String field = descriptor.getName();
+            if (isReadOnlyMetricsField(field)) {
+                continue;
+            }
+
+            Object value = sourceWrapper.getPropertyValue(field);
+            if (value instanceof Number numberValue && numberValue.doubleValue() < 0) {
+                throw new IllegalArgumentException(field + " cannot be negative");
+            }
+            targetWrapper.setPropertyValue(field, value);
+        }
         return repository.save(existing);
+    }
+
+    private boolean isReadOnlyMetricsField(String field) {
+        return "class".equals(field)
+                || "id".equals(field)
+                || "date".equals(field)
+                || "entryType".equals(field)
+                || "createdAt".equals(field)
+                || "updatedAt".equals(field);
     }
 
     private LocalDateTime normalizeToStartOfDay(LocalDateTime dateTime) {
@@ -341,11 +349,31 @@ public class ProductionMetricsService {
     private MetricsEntryPayload toMetricsEntryPayload(ProductionMetrics metrics) {
         MetricsEntryPayload payload = new MetricsEntryPayload();
         payload.setDate(metrics.getDate() != null ? metrics.getDate().toLocalDate() : null);
+        payload.setEntryType(ENTRY_TYPE_ACTUAL);
         payload.setPeople(extractSectionValues(metrics, PEOPLE_FIELDS));
         payload.setQuality(extractSectionValues(metrics, QUALITY_FIELDS));
         payload.setService(extractSectionValues(metrics, SERVICE_FIELDS));
         payload.setCost(extractSectionValues(metrics, COST_FIELDS));
         return payload;
+    }
+
+    private MetricsEntryBundlePayload toMetricsEntryBundlePayload(ProductionMetrics metrics) {
+        LocalDate actualDate = metrics.getDate() != null ? metrics.getDate().toLocalDate() : null;
+        LocalDate targetDate = metrics.getTargetDate() != null
+                ? metrics.getTargetDate().toLocalDate()
+                : (actualDate != null ? actualDate.plusDays(1) : null);
+
+        MetricsEntryPayload actualPayload = emptyEntryPayload(actualDate, ENTRY_TYPE_ACTUAL);
+        MetricsEntryPayload targetPayload = emptyEntryPayload(targetDate, ENTRY_TYPE_TARGET);
+        actualPayload.setPeople(extractSectionValues(metrics, PEOPLE_FIELDS));
+        actualPayload.setQuality(extractSectionValues(metrics, QUALITY_FIELDS));
+        actualPayload.setService(extractSectionValues(metrics, SERVICE_FIELDS));
+        actualPayload.setCost(extractSectionValues(metrics, COST_FIELDS));
+        targetPayload.setPeople(extractSectionValues(metrics, PEOPLE_FIELDS));
+        targetPayload.setQuality(extractSectionValues(metrics, QUALITY_FIELDS));
+        targetPayload.setService(extractSectionValues(metrics, SERVICE_FIELDS));
+        targetPayload.setCost(extractSectionValues(metrics, COST_FIELDS));
+        return new MetricsEntryBundlePayload(actualDate, targetDate, actualPayload, targetPayload);
     }
 
     private Map<String, Double> extractSectionValues(ProductionMetrics metrics, List<String> fields) {
@@ -380,7 +408,35 @@ public class ProductionMetricsService {
         return true;
     }
 
-    private void validateEntryDate(LocalDate date) {
+    private MetricsEntryPayload emptyEntryPayload(LocalDate date, String entryType) {
+        MetricsEntryPayload payload = new MetricsEntryPayload();
+        payload.setDate(date);
+        payload.setEntryType(entryType);
+        payload.setPeople(new LinkedHashMap<>());
+        payload.setQuality(new LinkedHashMap<>());
+        payload.setService(new LinkedHashMap<>());
+        payload.setCost(new LinkedHashMap<>());
+        return payload;
+    }
+
+    private boolean isEntryPayloadEmpty(MetricsEntryPayload payload) {
+        if (payload == null) {
+            return true;
+        }
+        return isSectionEmpty(payload.getPeople())
+                && isSectionEmpty(payload.getQuality())
+                && isSectionEmpty(payload.getService())
+                && isSectionEmpty(payload.getCost());
+    }
+
+    private boolean isSectionEmpty(Map<String, Double> section) {
+        if (section == null || section.isEmpty()) {
+            return true;
+        }
+        return section.values().stream().allMatch(value -> value == null);
+    }
+
+    private void validateActualEntryDate(LocalDate date) {
         if (date == null) {
             throw new IllegalArgumentException("Metrics date is required");
         }
@@ -398,7 +454,7 @@ public class ProductionMetricsService {
         if (dateTime == null) {
             throw new IllegalArgumentException("Metrics date is required");
         }
-        validateEntryDate(dateTime.toLocalDate());
+        validateActualEntryDate(dateTime.toLocalDate());
     }
 
     private void validateMetricsDateForEntry(ProductionMetrics metrics) {
@@ -406,6 +462,122 @@ public class ProductionMetricsService {
             throw new IllegalArgumentException("Metrics payload is required");
         }
         validateDateAllowedForEntry(metrics.getDate());
+    }
+
+    private Optional<ProductionMetrics> findPrimaryRecordByActualDate(LocalDate date) {
+        if (date == null) {
+            return Optional.empty();
+        }
+
+        List<ProductionMetrics> dayRecords = repository.findByDateBetweenOrderByDateAsc(
+                date.atStartOfDay(),
+                date.atTime(23, 59, 59)
+        );
+
+        return dayRecords.stream()
+                .filter(record -> !ENTRY_TYPE_TARGET.equalsIgnoreCase(record.getEntryType()))
+                .findFirst();
+    }
+
+    private Optional<ProductionMetrics> findLegacyTargetRecord(LocalDate date) {
+        if (date == null) {
+            return Optional.empty();
+        }
+
+        return repository.findByDateBetweenOrderByDateAsc(date.atStartOfDay(), date.atTime(23, 59, 59))
+                .stream()
+                .filter(record -> ENTRY_TYPE_TARGET.equalsIgnoreCase(record.getEntryType()))
+                .findFirst();
+    }
+
+    private Optional<ProductionMetrics> findNormalizedRecordByActualDate(LocalDate date) {
+        if (date == null) {
+            return Optional.empty();
+        }
+
+        Optional<ProductionMetrics> primaryRecord = findPrimaryRecordByActualDate(date);
+        if (primaryRecord.isPresent()) {
+            return Optional.of(normalizeStoredRecord(primaryRecord.get()));
+        }
+
+        Optional<ProductionMetrics> legacyActual = repository.findByDateBetweenOrderByDateAsc(
+                        date.atStartOfDay(),
+                        date.atTime(23, 59, 59))
+                .stream()
+                .filter(record -> ENTRY_TYPE_ACTUAL.equalsIgnoreCase(record.getEntryType()))
+                .findFirst();
+
+        return legacyActual.map(this::normalizeStoredRecord);
+    }
+
+    private List<ProductionMetrics> buildNormalizedRecordsBetween(LocalDate startDate, LocalDate endDate) {
+        List<ProductionMetrics> rawRecords = repository.findByDateBetweenOrderByDateAsc(
+                startDate.atStartOfDay(),
+                endDate.atTime(23, 59, 59)
+        );
+        if (rawRecords.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProductionMetrics> normalizedRecords = new ArrayList<>();
+        for (ProductionMetrics record : rawRecords) {
+            if (record.getDate() == null || ENTRY_TYPE_TARGET.equalsIgnoreCase(record.getEntryType())) {
+                continue;
+            }
+            normalizedRecords.add(normalizeStoredRecord(record));
+        }
+        return normalizedRecords;
+    }
+
+    private ProductionMetrics normalizeStoredRecord(ProductionMetrics source) {
+        ProductionMetrics normalized = copyMetricsRecord(source);
+        if (normalized.getTargetDate() == null && normalized.getDate() != null) {
+            normalized.setTargetDate(normalized.getDate().toLocalDate().plusDays(1).atStartOfDay());
+        }
+
+        LocalDate targetLookupDate = normalized.getTargetDate() != null
+                ? normalized.getTargetDate().toLocalDate()
+                : null;
+        Optional<ProductionMetrics> legacyTarget = findLegacyTargetRecord(targetLookupDate);
+        legacyTarget.ifPresent(targetRecord -> copyTargetFields(normalized, targetRecord));
+        return normalized;
+    }
+
+    private ProductionMetrics copyMetricsRecord(ProductionMetrics source) {
+        ProductionMetrics copy = new ProductionMetrics();
+        BeanWrapperImpl sourceWrapper = new BeanWrapperImpl(source);
+        BeanWrapperImpl targetWrapper = new BeanWrapperImpl(copy);
+        for (java.beans.PropertyDescriptor descriptor : sourceWrapper.getPropertyDescriptors()) {
+            String field = descriptor.getName();
+            if ("class".equals(field)) {
+                continue;
+            }
+            targetWrapper.setPropertyValue(field, sourceWrapper.getPropertyValue(field));
+        }
+        return copy;
+    }
+
+    private void copyTargetFields(ProductionMetrics target, ProductionMetrics source) {
+        BeanWrapperImpl sourceWrapper = new BeanWrapperImpl(source);
+        BeanWrapperImpl targetWrapper = new BeanWrapperImpl(target);
+        for (java.beans.PropertyDescriptor descriptor : sourceWrapper.getPropertyDescriptors()) {
+            String field = descriptor.getName();
+            if (!field.endsWith("Target")) {
+                continue;
+            }
+            Object value = sourceWrapper.getPropertyValue(field);
+            if (value != null) {
+                targetWrapper.setPropertyValue(field, value);
+            }
+        }
+    }
+
+    private void deleteLegacyTargetRecord(LocalDate targetDate) {
+        findLegacyTargetRecord(targetDate).ifPresent(record -> {
+            if (record.getId() != null) {
+                repository.deleteById(record.getId());
+            }
+        });
     }
 
     public void deleteRecord(Long id) {

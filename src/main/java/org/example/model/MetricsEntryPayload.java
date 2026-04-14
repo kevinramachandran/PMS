@@ -14,6 +14,7 @@ import java.util.Map;
 public class MetricsEntryPayload {
 
     private LocalDate date;
+    private String entryType;
     private Map<String, Double> people = new LinkedHashMap<>();
     private Map<String, Double> quality = new LinkedHashMap<>();
     private Map<String, Double> service = new LinkedHashMap<>();

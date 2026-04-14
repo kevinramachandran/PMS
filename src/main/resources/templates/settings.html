@@ -275,13 +275,17 @@
                                 <form id="metricsDataForm" class="dynamic-form">
                                     <div class="metrics-date-row">
                                         <div class="form-group metrics-date-group">
-                                            <label for="metricsDateInput">Metrics Date</label>
+                                            <label for="metricsDateInput">Actual Date</label>
                                             <input type="date" id="metricsDateInput" name="metricsDate" required>
+                                        </div>
+                                        <div class="form-group metrics-date-group">
+                                            <label for="metricsTargetDateInput">Target Date</label>
+                                            <input type="date" id="metricsTargetDateInput" name="metricsTargetDate" disabled>
                                         </div>
                                     </div>
                                     <div class="metrics-meta-card">
-                                        <div id="metricsSelectedDateLabel" class="metrics-selected-date">Selected date: -</div>
-                                        <div class="metrics-dashboard-note">Data entered for selected date will reflect in KPI Dashboard as Yesterday's values.</div>
+                                        <div id="metricsSelectedDateLabel" class="metrics-selected-date">Actual date: - | Target date: -</div>
+                                        <div class="metrics-dashboard-note">Today&apos;s Target reads Target data for the current date, Yesterday&apos;s Actual reads Actual data for the previous date, and FTD Yesterday reads the previous day&apos;s Target.</div>
                                     </div>
 
                                     <div class="metrics-tabs" role="tablist" aria-label="Production Metrics Sections">
@@ -1425,4 +1429,3 @@
 <script src="/js/ui-shell.js"></script>
 </body>
 </html>
-

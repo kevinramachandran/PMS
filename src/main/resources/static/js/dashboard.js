@@ -792,7 +792,9 @@ const kpiTableConfig = [
         actualField: 'kpiOeeFtdActual',
         targetField: 'kpiOeeFtdTarget',
         mtdField: 'kpiOeeMtdActual',
+        targetMtdField: 'kpiOeeMtdTarget',
         ytdField: 'kpiOeeYtdActual',
+        targetYtdField: 'kpiOeeYtdTarget',
         decimals: 1,
         higherIsBetter: true
     },
@@ -802,7 +804,9 @@ const kpiTableConfig = [
         actualField: 'kpiSensoryScoreFtdActual',
         targetField: 'kpiSensoryScoreFtdTarget',
         mtdField: 'kpiSensoryScoreMtdActual',
+        targetMtdField: 'kpiSensoryScoreMtdTarget',
         ytdField: 'kpiSensoryScoreYtdActual',
+        targetYtdField: 'kpiSensoryScoreYtdTarget',
         decimals: 1,
         higherIsBetter: true
     },
@@ -812,7 +816,9 @@ const kpiTableConfig = [
         actualField: 'kpiWurHlHlFtdActual',
         targetField: 'kpiWurHlHlFtdTarget',
         mtdField: 'kpiWurHlHlMtdActual',
+        targetMtdField: 'kpiWurHlHlMtdTarget',
         ytdField: 'kpiWurHlHlYtdActual',
+        targetYtdField: 'kpiWurHlHlYtdTarget',
         decimals: 2,
         higherIsBetter: false
     },
@@ -822,7 +828,9 @@ const kpiTableConfig = [
         actualField: 'kpiElectricityKwhHlFtdActual',
         targetField: 'kpiElectricityKwhHlFtdTarget',
         mtdField: 'kpiElectricityKwhHlMtdActual',
+        targetMtdField: 'kpiElectricityKwhHlMtdTarget',
         ytdField: 'kpiElectricityKwhHlYtdActual',
+        targetYtdField: 'kpiElectricityKwhHlYtdTarget',
         decimals: 1,
         higherIsBetter: false
     },
@@ -832,7 +840,9 @@ const kpiTableConfig = [
         actualField: 'kpiEnergyKwhHlFtdActual',
         targetField: 'kpiEnergyKwhHlFtdTarget',
         mtdField: 'kpiEnergyKwhHlMtdActual',
+        targetMtdField: 'kpiEnergyKwhHlMtdTarget',
         ytdField: 'kpiEnergyKwhHlYtdActual',
+        targetYtdField: 'kpiEnergyKwhHlYtdTarget',
         decimals: 2,
         higherIsBetter: false
     },
@@ -842,7 +852,9 @@ const kpiTableConfig = [
         actualField: 'noOfBrewsFtdActual',
         targetField: 'noOfBrewsFtdTarget',
         mtdField: 'noOfBrewsMtdActual',
+        targetMtdField: 'noOfBrewsMtdTarget',
         ytdField: 'noOfBrewsYtdActual',
+        targetYtdField: 'noOfBrewsYtdTarget',
         decimals: 0,
         higherIsBetter: true
     },
@@ -852,7 +864,9 @@ const kpiTableConfig = [
         actualField: 'dispatchFtdActual',
         targetField: 'dispatchFtdTarget',
         mtdField: 'dispatchMtdActual',
+        targetMtdField: 'dispatchMtdTarget',
         ytdField: 'dispatchYtdActual',
+        targetYtdField: 'dispatchYtdTarget',
         decimals: 0,
         higherIsBetter: true
     },
@@ -862,7 +876,9 @@ const kpiTableConfig = [
         actualField: 'productionProductivityFtdActual',
         targetField: 'productionProductivityFtdTarget',
         mtdField: 'productionProductivityMtdActual',
+        targetMtdField: 'productionProductivityMtdTarget',
         ytdField: 'productionProductivityYtdActual',
+        targetYtdField: 'productionProductivityYtdTarget',
         decimals: 0,
         higherIsBetter: true
     },
@@ -872,7 +888,9 @@ const kpiTableConfig = [
         actualField: 'logisticsProductivityFtdActual',
         targetField: 'logisticsProductivityFtdTarget',
         mtdField: 'logisticsProductivityMtdActual',
+        targetMtdField: 'logisticsProductivityMtdTarget',
         ytdField: 'logisticsProductivityYtdActual',
+        targetYtdField: 'logisticsProductivityYtdTarget',
         decimals: 0,
         higherIsBetter: true
     }
@@ -1221,26 +1239,48 @@ function renderDailyPerformanceTable(metrics) {
         return;
     }
 
-    const todayRecord = metrics[metrics.length - 1] || null;
-    // If only 1 record exists, it IS yesterday's data (past-date entry) — use it for both
-    const yesterdayRecord = metrics.length > 1 ? metrics[metrics.length - 2] : metrics[metrics.length - 1] || null;
+    const today = new Date();
+    const currentDateKey = toLocalDateKey(today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayDateKey = toLocalDateKey(yesterday);
 
-    updateDailyPerformanceAsOf(todayRecord ? todayRecord.date : null, true);
-    updateYesterdayDataDate(yesterdayRecord && metrics.length > 1 ? yesterdayRecord.date : (todayRecord ? todayRecord.date : null));
+    const metricsByActualDate = new Map();
+    const metricsByTargetDate = new Map();
+    metrics.forEach(function(record) {
+        if (!record || !record.date) {
+            return;
+        }
+        const actualDateKey = String(record.date).split('T')[0];
+        metricsByActualDate.set(actualDateKey, record);
+        const targetDateKey = record.targetDate ? String(record.targetDate).split('T')[0] : '';
+        if (targetDateKey) {
+            metricsByTargetDate.set(targetDateKey, record);
+        }
+    });
+
+    const lastRecord = metrics[metrics.length - 1] || null;
+    const todayTargetRecord = metricsByTargetDate.get(currentDateKey) || lastRecord;
+    const yesterdayTargetRecord = metricsByTargetDate.get(yesterdayDateKey) || lastRecord;
+    const yesterdayActualRecord = metricsByActualDate.get(yesterdayDateKey) || (metrics.length > 1 ? metrics[metrics.length - 2] : lastRecord);
+
+    updateDailyPerformanceAsOf(todayTargetRecord ? todayTargetRecord.targetDate || todayTargetRecord.date : null, true);
+    updateYesterdayDataDate(yesterdayActualRecord ? yesterdayActualRecord.date : (todayTargetRecord ? todayTargetRecord.date : null));
 
     const rows = kpiTableConfig.map(function(kpi, index) {
-        const todayTarget = readNumber(todayRecord, kpi.targetField);
-        const todayActual = readNumber(todayRecord, kpi.actualField);
-        const yesterdayTarget = readNumber(yesterdayRecord, kpi.targetField);
-        const yesterdayActual = readNumber(yesterdayRecord, kpi.actualField);
-        const mtdValue = readNumber(todayRecord, kpi.mtdField) ?? calcAverage(metrics, kpi.actualField);
-        const ytdValue = readNumber(todayRecord, kpi.ytdField) ?? mtdValue;
+        const todayTarget = readNumber(todayTargetRecord, kpi.targetField);
+        const yesterdayTarget = readNumber(yesterdayTargetRecord, kpi.targetField);
+        const yesterdayActual = readNumber(yesterdayActualRecord, kpi.actualField);
+        const targetMtdValue = readNumber(todayTargetRecord, kpi.targetMtdField || kpi.mtdField);
+        const targetYtdValue = readNumber(todayTargetRecord, kpi.targetYtdField || kpi.ytdField);
+        const actualMtdValue = readNumber(yesterdayActualRecord, kpi.mtdField);
+        const actualYtdValue = readNumber(yesterdayActualRecord, kpi.ytdField);
 
         const yesterdayTargetClass = getPerformanceClass(yesterdayTarget, todayTarget, kpi.higherIsBetter);
+        const todayTargetClass = getPerformanceClass(todayTarget, yesterdayTarget, kpi.higherIsBetter);
+        const targetMtdClass = getPerformanceClass(targetMtdValue, todayTarget, kpi.higherIsBetter);
         const yesterdayActualClass = getPerformanceClass(yesterdayActual, todayTarget, kpi.higherIsBetter);
-        const todayClass = getPerformanceClass(todayActual, todayTarget, kpi.higherIsBetter);
-        const actualFtdClass = getPerformanceClass(todayActual, todayTarget, kpi.higherIsBetter);
-        const actualMtdClass = getPerformanceClass(mtdValue, todayTarget, kpi.higherIsBetter);
+        const actualMtdClass = getPerformanceClass(actualMtdValue, targetMtdValue, kpi.higherIsBetter);
 
         return '' +
             '<tr>' +
@@ -1248,16 +1288,27 @@ function renderDailyPerformanceTable(metrics) {
                 '<td class="text-left">' + escapeHtmlText(kpi.name) + '</td>' +
                 '<td>' + escapeHtmlText(kpi.unit) + '</td>' +
                 '<td' + classAttr(yesterdayTargetClass) + '>' + formatMetric(yesterdayTarget, kpi.decimals) + '</td>' +
-                '<td' + classAttr(todayClass) + '>' + formatMetric(todayActual, kpi.decimals) + '</td>' +
-                '<td' + classAttr(actualMtdClass) + '>' + formatMetric(mtdValue, kpi.decimals) + '</td>' +
-                '<td>' + formatMetric(ytdValue, kpi.decimals) + '</td>' +
+                '<td' + classAttr(todayTargetClass) + '>' + formatMetric(todayTarget, kpi.decimals) + '</td>' +
+                '<td' + classAttr(targetMtdClass) + '>' + formatMetric(targetMtdValue, kpi.decimals) + '</td>' +
+                '<td>' + formatMetric(targetYtdValue, kpi.decimals) + '</td>' +
                 '<td' + classAttr(yesterdayActualClass) + '>' + formatMetric(yesterdayActual, kpi.decimals) + '</td>' +
-                '<td' + classAttr(actualMtdClass) + '>' + formatMetric(mtdValue, kpi.decimals) + '</td>' +
-                '<td>' + formatMetric(ytdValue, kpi.decimals) + '</td>' +
+                '<td' + classAttr(actualMtdClass) + '>' + formatMetric(actualMtdValue, kpi.decimals) + '</td>' +
+                '<td>' + formatMetric(actualYtdValue, kpi.decimals) + '</td>' +
             '</tr>';
     });
 
     tbody.innerHTML = rows.join('');
+}
+
+function toLocalDateKey(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return year + '-' + month + '-' + day;
 }
 
 function loadDailyPerformanceSummary(month, year) {
@@ -1354,19 +1405,6 @@ function readNumber(record, fieldName) {
     if (value === null || value === undefined || value === '') return null;
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : null;
-}
-
-function calcAverage(metrics, fieldName) {
-    if (!fieldName || !Array.isArray(metrics) || metrics.length === 0) return null;
-
-    const values = metrics
-        .map(function(item) { return readNumber(item, fieldName); })
-        .filter(function(v) { return v !== null; });
-
-    if (values.length === 0) return null;
-
-    const total = values.reduce(function(sum, value) { return sum + value; }, 0);
-    return total / values.length;
 }
 
 function setSummaryCell(cell, value, decimals, className) {

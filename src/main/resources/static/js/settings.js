@@ -5,52 +5,56 @@ $(document).ready(function() {
     let currentType = '';
     const requestedConfig = (new URLSearchParams(window.location.search).get('config') || '').trim().toLowerCase();
 
-    const metricFields = [
-        'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityYtdActual',
-        'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget', 'logisticsProductivityMtdActual', 'logisticsProductivityYtdActual',
-        'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget', 'kpiSensoryScoreMtdActual', 'kpiSensoryScoreYtdActual',
-        'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget', 'kpiConsumerComplaintUnitsMhlMtdActual', 'kpiConsumerComplaintUnitsMhlYtdActual',
-        'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget', 'kpiCustomerComplaintUnitsMhlMtdActual', 'kpiCustomerComplaintUnitsMhlYtdActual',
-        'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpYtdActual',
-        'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual',
-        'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeYtdActual',
-        'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget', 'kpiBeerLossMtdActual', 'kpiBeerLossYtdActual',
-        'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget', 'kpiWurHlHlMtdActual', 'kpiWurHlHlYtdActual',
-        'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget', 'kpiElectricityKwhHlMtdActual', 'kpiElectricityKwhHlYtdActual',
-        'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget', 'kpiEnergyKwhHlMtdActual', 'kpiEnergyKwhHlYtdActual',
-        'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget', 'kpiRgbRatioMtdActual', 'kpiRgbRatioYtdActual'
-    ];
-
     const metricSections = {
         people: [
-            'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityYtdActual',
-            'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget', 'logisticsProductivityMtdActual', 'logisticsProductivityYtdActual'
+            'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityMtdTarget', 'productionProductivityYtdActual', 'productionProductivityYtdTarget',
+            'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget', 'logisticsProductivityMtdActual', 'logisticsProductivityMtdTarget', 'logisticsProductivityYtdActual', 'logisticsProductivityYtdTarget'
         ],
         quality: [
-            'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget', 'kpiSensoryScoreMtdActual', 'kpiSensoryScoreYtdActual',
-            'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget', 'kpiConsumerComplaintUnitsMhlMtdActual', 'kpiConsumerComplaintUnitsMhlYtdActual',
-            'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget', 'kpiCustomerComplaintUnitsMhlMtdActual', 'kpiCustomerComplaintUnitsMhlYtdActual'
+            'kpiSensoryScoreFtdActual', 'kpiSensoryScoreFtdTarget', 'kpiSensoryScoreMtdActual', 'kpiSensoryScoreMtdTarget', 'kpiSensoryScoreYtdActual', 'kpiSensoryScoreYtdTarget',
+            'kpiConsumerComplaintUnitsMhlFtdActual', 'kpiConsumerComplaintUnitsMhlFtdTarget', 'kpiConsumerComplaintUnitsMhlMtdActual', 'kpiConsumerComplaintUnitsMhlMtdTarget', 'kpiConsumerComplaintUnitsMhlYtdActual', 'kpiConsumerComplaintUnitsMhlYtdTarget',
+            'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget', 'kpiCustomerComplaintUnitsMhlMtdActual', 'kpiCustomerComplaintUnitsMhlMtdTarget', 'kpiCustomerComplaintUnitsMhlYtdActual', 'kpiCustomerComplaintUnitsMhlYtdTarget'
         ],
         service: [
-            'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsYtdActual',
-            'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchYtdActual',
-            'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpYtdActual',
-            'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual',
-            'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeYtdActual',
-            'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget', 'kpiBeerLossMtdActual', 'kpiBeerLossYtdActual',
-            'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget', 'kpiWurHlHlMtdActual', 'kpiWurHlHlYtdActual'
+            'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsMtdTarget', 'noOfBrewsYtdActual', 'noOfBrewsYtdTarget',
+            'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchMtdTarget', 'dispatchYtdActual', 'dispatchYtdTarget',
+            'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpMtdTarget', 'processConfirmationBpYtdActual', 'processConfirmationBpYtdTarget',
+            'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual', 'processConfirmationPackYtdTarget',
+            'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeMtdTarget', 'kpiOeeYtdActual', 'kpiOeeYtdTarget',
+            'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget', 'kpiBeerLossMtdActual', 'kpiBeerLossMtdTarget', 'kpiBeerLossYtdActual', 'kpiBeerLossYtdTarget',
+            'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget', 'kpiWurHlHlMtdActual', 'kpiWurHlHlMtdTarget', 'kpiWurHlHlYtdActual', 'kpiWurHlHlYtdTarget'
         ],
         cost: [
-            'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget', 'kpiElectricityKwhHlMtdActual', 'kpiElectricityKwhHlYtdActual',
-            'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget', 'kpiEnergyKwhHlMtdActual', 'kpiEnergyKwhHlYtdActual',
-            'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget', 'kpiRgbRatioMtdActual', 'kpiRgbRatioYtdActual'
+            'kpiElectricityKwhHlFtdActual', 'kpiElectricityKwhHlFtdTarget', 'kpiElectricityKwhHlMtdActual', 'kpiElectricityKwhHlMtdTarget', 'kpiElectricityKwhHlYtdActual', 'kpiElectricityKwhHlYtdTarget',
+            'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget', 'kpiEnergyKwhHlMtdActual', 'kpiEnergyKwhHlMtdTarget', 'kpiEnergyKwhHlYtdActual', 'kpiEnergyKwhHlYtdTarget',
+            'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget', 'kpiRgbRatioMtdActual', 'kpiRgbRatioMtdTarget', 'kpiRgbRatioYtdActual', 'kpiRgbRatioYtdTarget'
         ]
     };
     const metricSectionOrder = ['people', 'quality', 'service', 'cost'];
+    const metricFields = metricSectionOrder.flatMap(function(section) {
+        return metricSections[section] || [];
+    });
+    const metricFieldGroups = {};
+    metricSectionOrder.forEach(function(section) {
+        const sectionFields = metricSections[section] || [];
+        metricFieldGroups[section] = {
+            actual: sectionFields.filter(function(field) {
+                return field.endsWith('Actual');
+            }),
+            target: sectionFields.filter(function(field) {
+                return field.endsWith('Target');
+            })
+        };
+    });
+    const optionalMetricFields = new Set([
+        'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsYtdActual',
+        'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchYtdActual'
+    ]);
 
     $('input[type="date"]').removeAttr('max');
 
     initializeMetricsDateField();
+    initializeMetricsFieldGrouping();
     initializeIssueBoardConfigDateField();
     initializeGembaScheduleDateField();
     initializeAtConfigDateField();
@@ -529,7 +533,8 @@ $(document).ready(function() {
     $('#metricsDateInput').on('change', function() {
         const selectedDate = $(this).val();
         if (!selectedDate) {
-            updateMetricsSelectedDateLabel('');
+            updateMetricsTargetDate('');
+            updateMetricsSelectedDateLabel('', '');
             return;
         }
 
@@ -539,11 +544,14 @@ $(document).ready(function() {
             showMessage('metricsDataMessage', validation.message, 'error');
             showMetricsToast(validation.message, 'error');
             $(this).val('');
-            updateMetricsSelectedDateLabel('');
+            updateMetricsTargetDate('');
+            updateMetricsSelectedDateLabel('', '');
             return;
         }
 
-        updateMetricsSelectedDateLabel(selectedDate);
+        const targetDate = calculateMetricsTargetDate(selectedDate);
+        updateMetricsTargetDate(targetDate);
+        updateMetricsSelectedDateLabel(selectedDate, targetDate);
         loadMetricsDataByDate(selectedDate);
     });
 
@@ -560,17 +568,17 @@ $(document).ready(function() {
     });
 
     $('.metrics-save-btn').on('click', function() {
-        const section = $(this).data('section');
-        const selectedDate = $('#metricsDateInput').val();
+        const actualDate = $('#metricsDateInput').val();
+        const targetDate = $('#metricsTargetDateInput').val();
         const $btn = $(this);
 
-        if (!selectedDate) {
+        if (!actualDate || !targetDate) {
             showMessage('metricsDataMessage', 'Please select a valid past metrics date.', 'error');
             showMetricsToast('Please select a valid past metrics date.', 'error');
             return;
         }
 
-        const buildResult = buildMetricsPayload(selectedDate, section);
+        const buildResult = buildMetricsPayload(actualDate, targetDate);
         if (!buildResult.ok) {
             showMessage('metricsDataMessage', buildResult.message, 'error');
             showMetricsToast(buildResult.message, 'error');
@@ -585,11 +593,10 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify(buildResult.payload),
             success: function() {
-                const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
-                const successMessage = sectionLabel + ' metrics saved successfully. Data entered for selected date will reflect in KPI Dashboard as Yesterday\'s values.';
+                const successMessage = 'Production Metrics Actual and Target data saved successfully.';
                 showMessage('metricsDataMessage', successMessage, 'success');
                 updateKPIDashboard();
-                loadMetricsDataByDate(selectedDate);
+                loadMetricsDataByDate(actualDate);
             },
             error: function(xhr) {
                 const message = xhr.responseText || 'Error saving metrics data. Please try again.';
@@ -609,7 +616,9 @@ $(document).ready(function() {
         if (!dateInput.val()) {
             dateInput.val(yesterday);
         }
-        updateMetricsSelectedDateLabel(dateInput.val());
+        const targetDate = calculateMetricsTargetDate(dateInput.val());
+        updateMetricsTargetDate(targetDate);
+        updateMetricsSelectedDateLabel(dateInput.val(), targetDate);
     }
 
     function loadMetricsDataByDate(dateStr) {
@@ -620,6 +629,9 @@ $(document).ready(function() {
             return;
         }
 
+        const targetDate = calculateMetricsTargetDate(dateStr);
+        updateMetricsTargetDate(targetDate);
+        updateMetricsSelectedDateLabel(dateStr, targetDate);
         resetMetricsForm();
 
         $.ajax({
@@ -646,9 +658,13 @@ $(document).ready(function() {
 
     function fillMetricsForm(data) {
         metricSectionOrder.forEach(function(section) {
-            const sectionData = data[section] || {};
-            (metricSections[section] || []).forEach(function(field) {
-                $('#' + field).val(sectionData[field] ?? '');
+            const actualSection = (data.actual && data.actual[section]) || {};
+            const targetSection = (data.target && data.target[section]) || {};
+            (metricFieldGroups[section].actual || []).forEach(function(field) {
+                $('#' + field).val(actualSection[field] ?? '');
+            });
+            (metricFieldGroups[section].target || []).forEach(function(field) {
+                $('#' + field).val(targetSection[field] ?? '');
             });
         });
     }
@@ -659,8 +675,8 @@ $(document).ready(function() {
         });
     }
 
-    function buildMetricsPayload(selectedDate, section) {
-        const validation = validateMetricsDate(selectedDate);
+    function buildMetricsPayload(actualDate, targetDate) {
+        const validation = validateMetricsDate(actualDate);
         if (!validation.ok) {
             return {
                 ok: false,
@@ -669,21 +685,45 @@ $(document).ready(function() {
         }
 
         const payload = {
-            date: selectedDate
+            actualDate: actualDate,
+            targetDate: targetDate,
+            actual: {
+                date: actualDate,
+                entryType: 'ACTUAL'
+            },
+            target: {
+                date: targetDate,
+                entryType: 'TARGET'
+            }
         };
-        const fields = metricSections[section] || [];
-        const sectionLabel = section ? section.charAt(0).toUpperCase() + section.slice(1) : 'Selected';
-        payload[section] = {};
 
-        const optionalFields = new Set([
-            'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsYtdActual',
-            'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchYtdActual'
-        ]);
+        for (const section of metricSectionOrder) {
+            const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
+            payload.actual[section] = {};
+            payload.target[section] = {};
 
+            const actualBuild = buildMetricsSectionValues(metricFieldGroups[section].actual || [], payload.actual[section], sectionLabel);
+            if (!actualBuild.ok) {
+                return actualBuild;
+            }
+
+            const targetBuild = buildMetricsSectionValues(metricFieldGroups[section].target || [], payload.target[section], sectionLabel);
+            if (!targetBuild.ok) {
+                return targetBuild;
+            }
+        }
+
+        return {
+            ok: true,
+            payload: payload
+        };
+    }
+
+    function buildMetricsSectionValues(fields, targetSection, sectionLabel) {
         for (const field of fields) {
             const rawValue = $('#' + field).val();
             if (rawValue === null || rawValue === undefined || rawValue === '') {
-                if (optionalFields.has(field)) {
+                if (optionalMetricFields.has(field)) {
                     continue;
                 }
                 return {
@@ -707,12 +747,11 @@ $(document).ready(function() {
                 };
             }
 
-            payload[section][field] = parsed;
+            targetSection[field] = parsed;
         }
 
         return {
-            ok: true,
-            payload: payload
+            ok: true
         };
     }
 
@@ -745,9 +784,118 @@ $(document).ready(function() {
         };
     }
 
-    function updateMetricsSelectedDateLabel(dateStr) {
-        const text = dateStr ? 'Selected date: ' + dateStr : 'Selected date: -';
+    function updateMetricsSelectedDateLabel(actualDate, targetDate) {
+        const text = actualDate
+            ? 'Actual date: ' + actualDate + ' | Target date: ' + (targetDate || '-')
+            : 'Actual date: - | Target date: -';
         $('#metricsSelectedDateLabel').text(text);
+    }
+
+    function updateMetricsTargetDate(targetDate) {
+        $('#metricsTargetDateInput').val(targetDate || '');
+    }
+
+    function calculateMetricsTargetDate(actualDate) {
+        if (!actualDate) {
+            return '';
+        }
+
+        const actual = new Date(actualDate + 'T00:00:00');
+        if (Number.isNaN(actual.getTime())) {
+            return '';
+        }
+
+        actual.setDate(actual.getDate() + 1);
+        return formatLocalDateValue(actual);
+    }
+
+    function formatLocalDateValue(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function initializeMetricsFieldGrouping() {
+        ensureMetricsTargetInputs();
+
+        $('.metrics-tab-panel .metrics-grid').each(function() {
+            const $grid = $(this);
+            const $groups = $grid.children('.form-group');
+            if ($groups.length === 0) {
+                return;
+            }
+
+            const $actualWrap = $('<div class="metrics-entry-group metrics-entry-group-actual"></div>');
+            $actualWrap.append('<div class="metrics-entry-group-title">Actual</div>');
+            $actualWrap.append('<div class="metrics-entry-grid metrics-entry-grid-actual"></div>');
+
+            const $targetWrap = $('<div class="metrics-entry-group metrics-entry-group-target"></div>');
+            $targetWrap.append('<div class="metrics-entry-group-title">Target</div>');
+            $targetWrap.append('<div class="metrics-entry-grid metrics-entry-grid-target"></div>');
+
+            $groups.each(function() {
+                const $field = $(this);
+                const inputId = $field.find('input').attr('id') || '';
+                if (inputId.endsWith('Target')) {
+                    $targetWrap.find('.metrics-entry-grid-target').append($field);
+                    return;
+                }
+                $actualWrap.find('.metrics-entry-grid-actual').append($field);
+            });
+
+            const $container = $('<div class="metrics-entry-groups"></div>');
+            $container.append($actualWrap).append($targetWrap);
+            $grid.replaceWith($container);
+        });
+    }
+
+    function ensureMetricsTargetInputs() {
+        metricSectionOrder.forEach(function(section) {
+            const fields = metricSections[section] || [];
+            fields.forEach(function(field) {
+                if (!field.endsWith('Target')) {
+                    return;
+                }
+                if ($('#' + field).length) {
+                    return;
+                }
+
+                const actualFieldId = field.replace(/Target$/, 'Actual');
+                const $actualGroup = $('#' + actualFieldId).closest('.form-group');
+                if ($actualGroup.length === 0) {
+                    return;
+                }
+
+                const actualLabel = $actualGroup.find('label').text().trim();
+                const targetLabel = actualLabel.replace(/\bActual\b/, 'Target');
+                const nameAttr = field.charAt(0).toLowerCase() + field.slice(1);
+                const inputStep = $actualGroup.find('input').attr('step') || '0.01';
+                const inputMin = $actualGroup.find('input').attr('min') || '0';
+
+                const $newGroup = $('<div class="form-group"></div>');
+                $newGroup.append('<label for="' + field + '">' + escapeHtml(targetLabel) + '</label>');
+                $newGroup.append('<input type="number" id="' + field + '" name="' + nameAttr + '" min="' + inputMin + '" step="' + inputStep + '">');
+                $actualGroup.after($newGroup);
+            });
+        });
     }
 
     function setMetricsSaveLoading($btn, isLoading) {
