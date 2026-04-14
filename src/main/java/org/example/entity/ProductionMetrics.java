@@ -192,6 +192,32 @@ public class ProductionMetrics {
     @Column(name = "kpi_energy_kwh_hl_ytd_actual")
     private Double kpiEnergyKwhHlYtdActual;
 
+    // No. of Brews & Volume
+    @Column(name = "no_of_brews_ftd_actual")
+    private Double noOfBrewsFtdActual;
+
+    @Column(name = "no_of_brews_ftd_target")
+    private Double noOfBrewsFtdTarget;
+
+    @Column(name = "no_of_brews_mtd_actual")
+    private Double noOfBrewsMtdActual;
+
+    @Column(name = "no_of_brews_ytd_actual")
+    private Double noOfBrewsYtdActual;
+
+    // Dispatch
+    @Column(name = "dispatch_ftd_actual")
+    private Double dispatchFtdActual;
+
+    @Column(name = "dispatch_ftd_target")
+    private Double dispatchFtdTarget;
+
+    @Column(name = "dispatch_mtd_actual")
+    private Double dispatchMtdActual;
+
+    @Column(name = "dispatch_ytd_actual")
+    private Double dispatchYtdActual;
+
     // KPI RGB Ratio
     @Column(name = "kpi__rgb_ratio__ftd_actual")
     private Double kpiRgbRatioFtdActual;

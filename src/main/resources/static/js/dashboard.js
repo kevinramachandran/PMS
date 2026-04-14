@@ -254,42 +254,42 @@ function initializeKpiTvFit() {
 
 const chartThemes = {
     peopleProductivityChart: {
-        primary: '#2E7D32',
-        secondary: '#66BB6A',
+        primary: '#1B5E20',
+        secondary: '#43A047',
         targetA: '#90A4AE',
         targetB: '#B0BEC5'
     },
     qualitySensoryChart: {
-        primary: '#1565C0',
-        targetA: '#64B5F6'
+        primary: '#2E7D32',
+        targetA: '#66BB6A'
     },
     qualityComplaintChart: {
-        primary: '#EF6C00',
-        secondary: '#FB8C00'
+        primary: '#388E3C',
+        secondary: '#81C784'
     },
     serviceOeeChart: {
-        primary: '#6A1B9A',
-        targetA: '#BA68C8'
+        primary: '#004D40',
+        targetA: '#26A69A'
     },
     serviceBeerLossChart: {
-        primary: '#C62828',
-        targetA: '#EF9A9A'
+        primary: '#33691E',
+        targetA: '#8BC34A'
     },
     serviceWurChart: {
-        primary: '#00838F',
-        targetA: '#4DD0E1'
+        primary: '#00695C',
+        targetA: '#4DB6AC'
     },
     costElectricityChart: {
-        primary: '#F9A825',
-        targetA: '#FFD54F'
+        primary: '#558B2F',
+        targetA: '#AED581'
     },
     costEnergyChart: {
-        primary: '#283593',
-        targetA: '#9FA8DA'
+        primary: '#1B5E20',
+        targetA: '#A5D6A7'
     },
     costRgbChart: {
-        primary: '#4E342E',
-        targetA: '#A1887F'
+        primary: '#2E7D32',
+        targetA: '#C8E6C9'
     }
 };
 
@@ -727,13 +727,21 @@ function applyKpiFooterButtons(config) {
     }
 
     const btn1Label = (config.kpiButton1Label || config.button1Label || btn1.textContent || 'Solvex').trim();
-    const btn1Url = (config.kpiButton1Url || config.button1Url || btn1.getAttribute('href') || 'https://www.solvexes.com/').trim();
+    const btn1Type  = (config.kpiButton1Type  || config.button1Type  || 'link').trim();
+    const btn1Url   = btn1Type === 'file'
+        ? '/api/dashboard-config/kpi-footer-buttons/file/1'
+        : (config.kpiButton1Url || config.button1Url || '').trim();
+
     const btn2Label = (config.kpiButton2Label || config.button2Label || btn2.textContent || 'Carlsbridge').trim();
-    const btn2Url = (config.kpiButton2Url || config.button2Url || btn2.getAttribute('href') || 'https://www.carlsberg.com/').trim();
+    const btn2Type  = (config.kpiButton2Type  || config.button2Type  || 'link').trim();
+    const btn2Url   = btn2Type === 'file'
+        ? '/api/dashboard-config/kpi-footer-buttons/file/2'
+        : (config.kpiButton2Url || config.button2Url || '').trim();
 
     if (btn1Label && btn1Url) {
         btn1.textContent = btn1Label;
         btn1.href = btn1Url;
+        btn1.target = '_blank';
         btn1.style.display = 'inline-flex';
     } else {
         btn1.style.display = 'none';
@@ -742,6 +750,7 @@ function applyKpiFooterButtons(config) {
     if (btn2Label && btn2Url) {
         btn2.textContent = btn2Label;
         btn2.href = btn2Url;
+        btn2.target = '_blank';
         btn2.style.display = 'inline-flex';
     } else {
         btn2.style.display = 'none';
@@ -830,20 +839,20 @@ const kpiTableConfig = [
     {
         name: 'No. of Brews & Volume',
         unit: 'Nos & HL',
-        actualField: null,
-        targetField: null,
-        mtdField: null,
-        ytdField: null,
+        actualField: 'noOfBrewsFtdActual',
+        targetField: 'noOfBrewsFtdTarget',
+        mtdField: 'noOfBrewsMtdActual',
+        ytdField: 'noOfBrewsYtdActual',
         decimals: 0,
         higherIsBetter: true
     },
     {
         name: 'Dispatch',
         unit: 'No. of Cases & HL',
-        actualField: null,
-        targetField: null,
-        mtdField: null,
-        ytdField: null,
+        actualField: 'dispatchFtdActual',
+        targetField: 'dispatchFtdTarget',
+        mtdField: 'dispatchMtdActual',
+        ytdField: 'dispatchYtdActual',
         decimals: 0,
         higherIsBetter: true
     },
@@ -1091,44 +1100,44 @@ function renderAllCharts(metrics) {
 
 const kpiChartPalettes = {
     peopleProductivityChart: {
-        bars: ['#2563EB', '#38BDF8', '#1D4ED8'],
-        lines: ['#0F172A', '#F59E0B', '#334155']
+        bars: ['#1B5E20', '#43A047', '#2E7D32'],
+        lines: ['#0a2e0a', '#66BB6A', '#1B5E20']
     },
     qualitySensoryChart: {
-        bars: ['#A855F7', '#C084FC', '#7E22CE'],
-        lines: ['#6D28D9', '#1F2937', '#EC4899']
+        bars: ['#2E7D32', '#4CAF50', '#1B5E20'],
+        lines: ['#1B5E20', '#388E3C', '#2E7D32']
     },
     qualityProcessConfirmationChart: {
-        bars: ['#0D9488', '#5EEAD4', '#0F766E'],
-        lines: ['#134E4A', '#1F2937', '#0F766E']
+        bars: ['#388E3C', '#66BB6A', '#2E7D32'],
+        lines: ['#1B5E20', '#43A047', '#2E7D32']
     },
     qualityComplaintChart: {
-        bars: ['#F97316', '#FDBA74', '#EA580C'],
-        lines: ['#7C2D12', '#B45309', '#1F2937']
+        bars: ['#43A047', '#81C784', '#388E3C'],
+        lines: ['#1B5E20', '#4CAF50', '#2E7D32']
     },
     serviceOeeChart: {
-        bars: ['#14B8A6', '#5EEAD4', '#0F766E'],
-        lines: ['#115E59', '#1F2937', '#0EA5E9']
+        bars: ['#00695C', '#26A69A', '#004D40'],
+        lines: ['#003D30', '#2E7D32', '#00695C']
     },
     serviceBeerLossChart: {
-        bars: ['#EF4444', '#FCA5A5', '#DC2626'],
-        lines: ['#7F1D1D', '#1F2937', '#B91C1C']
+        bars: ['#2E7D32', '#66BB6A', '#1B5E20'],
+        lines: ['#003300', '#388E3C', '#1B5E20']
     },
     serviceWurChart: {
-        bars: ['#84CC16', '#BEF264', '#65A30D'],
-        lines: ['#365314', '#1F2937', '#4D7C0F']
+        bars: ['#33691E', '#7CB342', '#558B2F'],
+        lines: ['#1B3300', '#2E7D32', '#33691E']
     },
     costElectricityChart: {
-        bars: ['#EAB308', '#FDE047', '#CA8A04'],
-        lines: ['#713F12', '#1F2937', '#B45309']
+        bars: ['#558B2F', '#AED581', '#33691E'],
+        lines: ['#1B5E20', '#43A047', '#33691E']
     },
     costEnergyChart: {
-        bars: ['#0EA5E9', '#7DD3FC', '#0284C7'],
-        lines: ['#0C4A6E', '#1F2937', '#0369A1']
+        bars: ['#00796B', '#4DB6AC', '#00695C'],
+        lines: ['#003D30', '#1B5E20', '#004D40']
     },
     costRgbChart: {
-        bars: ['#8B5CF6', '#C4B5FD', '#7C3AED'],
-        lines: ['#4C1D95', '#1F2937', '#6D28D9']
+        bars: ['#1B5E20', '#A5D6A7', '#2E7D32'],
+        lines: ['#003300', '#388E3C', '#2E7D32']
     }
 };
 
@@ -1207,23 +1216,28 @@ function renderDailyPerformanceTable(metrics) {
 
     if (!Array.isArray(metrics) || metrics.length === 0) {
         updateDailyPerformanceAsOf(null, true);
+        updateYesterdayDataDate(null);
         tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 14px; color:#6b7280;">No Data Available</td></tr>';
         return;
     }
 
     const todayRecord = metrics[metrics.length - 1] || null;
-    const yesterdayRecord = metrics.length > 1 ? metrics[metrics.length - 2] : null;
+    // If only 1 record exists, it IS yesterday's data (past-date entry) — use it for both
+    const yesterdayRecord = metrics.length > 1 ? metrics[metrics.length - 2] : metrics[metrics.length - 1] || null;
 
     updateDailyPerformanceAsOf(todayRecord ? todayRecord.date : null, true);
+    updateYesterdayDataDate(yesterdayRecord && metrics.length > 1 ? yesterdayRecord.date : (todayRecord ? todayRecord.date : null));
 
     const rows = kpiTableConfig.map(function(kpi, index) {
         const todayTarget = readNumber(todayRecord, kpi.targetField);
         const todayActual = readNumber(todayRecord, kpi.actualField);
+        const yesterdayTarget = readNumber(yesterdayRecord, kpi.targetField);
         const yesterdayActual = readNumber(yesterdayRecord, kpi.actualField);
         const mtdValue = readNumber(todayRecord, kpi.mtdField) ?? calcAverage(metrics, kpi.actualField);
         const ytdValue = readNumber(todayRecord, kpi.ytdField) ?? mtdValue;
 
-        const yesterdayClass = getPerformanceClass(yesterdayActual, todayTarget, kpi.higherIsBetter);
+        const yesterdayTargetClass = getPerformanceClass(yesterdayTarget, todayTarget, kpi.higherIsBetter);
+        const yesterdayActualClass = getPerformanceClass(yesterdayActual, todayTarget, kpi.higherIsBetter);
         const todayClass = getPerformanceClass(todayActual, todayTarget, kpi.higherIsBetter);
         const actualFtdClass = getPerformanceClass(todayActual, todayTarget, kpi.higherIsBetter);
         const actualMtdClass = getPerformanceClass(mtdValue, todayTarget, kpi.higherIsBetter);
@@ -1233,11 +1247,11 @@ function renderDailyPerformanceTable(metrics) {
                 '<td>' + (index + 1) + '</td>' +
                 '<td class="text-left">' + escapeHtmlText(kpi.name) + '</td>' +
                 '<td>' + escapeHtmlText(kpi.unit) + '</td>' +
-                '<td' + classAttr(yesterdayClass) + '>' + formatMetric(yesterdayActual, kpi.decimals) + '</td>' +
+                '<td' + classAttr(yesterdayTargetClass) + '>' + formatMetric(yesterdayTarget, kpi.decimals) + '</td>' +
                 '<td' + classAttr(todayClass) + '>' + formatMetric(todayActual, kpi.decimals) + '</td>' +
                 '<td' + classAttr(actualMtdClass) + '>' + formatMetric(mtdValue, kpi.decimals) + '</td>' +
                 '<td>' + formatMetric(ytdValue, kpi.decimals) + '</td>' +
-                '<td' + classAttr(actualFtdClass) + '>' + formatMetric(todayActual, kpi.decimals) + '</td>' +
+                '<td' + classAttr(yesterdayActualClass) + '>' + formatMetric(yesterdayActual, kpi.decimals) + '</td>' +
                 '<td' + classAttr(actualMtdClass) + '>' + formatMetric(mtdValue, kpi.decimals) + '</td>' +
                 '<td>' + formatMetric(ytdValue, kpi.decimals) + '</td>' +
             '</tr>';
@@ -1311,6 +1325,27 @@ function updateDailyPerformanceAsOf(dateValue, forceUpdate) {
     const month = String(parsed.getMonth() + 1).padStart(2, '0');
     const year = parsed.getFullYear();
     asOf.textContent = 'As of: ' + day + '-' + month + '-' + year;
+}
+
+function updateYesterdayDataDate(dateValue) {
+    const dateLabel = document.getElementById('yesterdayDataDate');
+    if (!dateLabel) return;
+
+    if (!dateValue) {
+        dateLabel.textContent = '';
+        return;
+    }
+
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+        dateLabel.textContent = '';
+        return;
+    }
+
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    dateLabel.textContent = '[' + day + '-' + month + '-' + year + ']';
 }
 
 function readNumber(record, fieldName) {

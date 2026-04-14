@@ -41,7 +41,7 @@ public class ProductionMetricsController {
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         return service.getRecordByDate(date)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.ok(Collections.emptyMap()));
+            .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

@@ -6,8 +6,14 @@ body.login-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.58)), url('/images/carlsbergLoginBackground.png') no-repeat center center;
+    background-color: #1a1a1a;
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), 
+        url('/images/carlsbergLoginBackground.png');
+    background-position: center;
+    background-repeat: no-repeat;
     background-size: cover;
+    background-attachment: fixed;
     font-family: 'Segoe UI', sans-serif;
     position: relative;
 }

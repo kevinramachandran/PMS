@@ -32,9 +32,16 @@ public class KpiFooterButtonsConfigService {
         KpiFooterButtonsConfig target = getOrCreateDefaults();
         target.setButton1Label(sanitize(incoming.getButton1Label()));
         target.setButton1Url(sanitize(incoming.getButton1Url()));
+        target.setButton1Type(sanitize(incoming.getButton1Type()));
         target.setButton2Label(sanitize(incoming.getButton2Label()));
         target.setButton2Url(sanitize(incoming.getButton2Url()));
+        target.setButton2Type(sanitize(incoming.getButton2Type()));
+        // File fields (button1File, button1FileName, etc.) are only updated via the upload endpoint
         return repository.save(target);
+    }
+
+    public KpiFooterButtonsConfig saveEntity(KpiFooterButtonsConfig entity) {
+        return repository.save(entity);
     }
 
     private String sanitize(String value) {

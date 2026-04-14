@@ -6,7 +6,9 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.example.entity.ProductionMetrics;
+import org.example.model.MetricsEntryPayload;
 import org.example.repository.ProductionMetricsRepository;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,7 +18,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -25,6 +29,29 @@ public class ProductionMetricsService {
 
     private final ProductionMetricsRepository repository;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final List<String> PEOPLE_FIELDS = List.of(
+        "productionProductivityFtdActual", "productionProductivityFtdTarget", "productionProductivityMtdActual", "productionProductivityYtdActual",
+        "logisticsProductivityFtdActual", "logisticsProductivityFtdTarget", "logisticsProductivityMtdActual", "logisticsProductivityYtdActual"
+    );
+    private static final List<String> QUALITY_FIELDS = List.of(
+        "kpiSensoryScoreFtdActual", "kpiSensoryScoreFtdTarget", "kpiSensoryScoreMtdActual", "kpiSensoryScoreYtdActual",
+        "kpiConsumerComplaintUnitsMhlFtdActual", "kpiConsumerComplaintUnitsMhlFtdTarget", "kpiConsumerComplaintUnitsMhlMtdActual", "kpiConsumerComplaintUnitsMhlYtdActual",
+        "kpiCustomerComplaintUnitsMhlFtdActual", "kpiCustomerComplaintUnitsMhlFtdTarget", "kpiCustomerComplaintUnitsMhlMtdActual", "kpiCustomerComplaintUnitsMhlYtdActual"
+    );
+    private static final List<String> SERVICE_FIELDS = List.of(
+        "noOfBrewsFtdActual", "noOfBrewsFtdTarget", "noOfBrewsMtdActual", "noOfBrewsYtdActual",
+        "dispatchFtdActual", "dispatchFtdTarget", "dispatchMtdActual", "dispatchYtdActual",
+        "processConfirmationBpFtdActual", "processConfirmationBpFtdTarget", "processConfirmationBpMtdActual", "processConfirmationBpYtdActual",
+        "processConfirmationPackMtdActual", "processConfirmationPackMtdTarget", "processConfirmationPackYtdActual",
+        "kpiOeeFtdActual", "kpiOeeFtdTarget", "kpiOeeMtdActual", "kpiOeeYtdActual",
+        "kpiBeerLossFtdActual", "kpiBeerLossFtdTarget", "kpiBeerLossMtdActual", "kpiBeerLossYtdActual",
+        "kpiWurHlHlFtdActual", "kpiWurHlHlFtdTarget", "kpiWurHlHlMtdActual", "kpiWurHlHlYtdActual"
+    );
+    private static final List<String> COST_FIELDS = List.of(
+        "kpiElectricityKwhHlFtdActual", "kpiElectricityKwhHlFtdTarget", "kpiElectricityKwhHlMtdActual", "kpiElectricityKwhHlYtdActual",
+        "kpiEnergyKwhHlFtdActual", "kpiEnergyKwhHlFtdTarget", "kpiEnergyKwhHlMtdActual", "kpiEnergyKwhHlYtdActual",
+        "kpiRgbRatioFtdActual", "kpiRgbRatioFtdTarget", "kpiRgbRatioMtdActual", "kpiRgbRatioYtdActual"
+    );
 
     // CRUD Operations
     public List<ProductionMetrics> getAllRecords() {
@@ -69,9 +96,39 @@ public class ProductionMetricsService {
         return repository.findByDateBetweenOrderByDateAsc(startDate, endDate);
     }
 
+    public Optional<MetricsEntryPayload> getMetricsEntry(LocalDate date) {
+        validateEntryDate(date);
+        return repository.findByDate(date).map(this::toMetricsEntryPayload);
+    }
+
+    @Transactional
+    public MetricsEntryPayload saveMetricsEntry(MetricsEntryPayload payload) {
+        if (payload == null) {
+            throw new IllegalArgumentException("Metrics payload is required");
+        }
+
+        LocalDate date = payload.getDate();
+        validateEntryDate(date);
+
+        ProductionMetrics metrics = repository.findByDate(date).orElseGet(ProductionMetrics::new);
+        metrics.setDate(date.atStartOfDay());
+
+        boolean updated = false;
+        updated |= applySectionValuesIfPresent(metrics, payload.getPeople(), PEOPLE_FIELDS, "People");
+        updated |= applySectionValuesIfPresent(metrics, payload.getQuality(), QUALITY_FIELDS, "Quality");
+        updated |= applySectionValuesIfPresent(metrics, payload.getService(), SERVICE_FIELDS, "Service");
+        updated |= applySectionValuesIfPresent(metrics, payload.getCost(), COST_FIELDS, "Cost");
+
+        if (!updated) {
+            throw new IllegalArgumentException("At least one metrics category is required");
+        }
+
+        return toMetricsEntryPayload(repository.save(metrics));
+    }
+
     public ProductionMetrics createRecord(ProductionMetrics metrics) {
         metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
-        validateMetricsDateNotInFuture(metrics);
+        validateMetricsDateForEntry(metrics);
         if (repository.existsByDate(metrics.getDate())) {
             throw new RuntimeException("Record already exists for date: " + metrics.getDate());
         }
@@ -86,7 +143,7 @@ public class ProductionMetricsService {
 
     public ProductionMetrics upsertByDate(ProductionMetrics metrics) {
         metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
-        validateMetricsDateNotInFuture(metrics);
+        validateMetricsDateForEntry(metrics);
         Optional<ProductionMetrics> existing = repository.findByDate(metrics.getDate().toLocalDate());
         if (existing.isPresent()) {
             return updateFields(existing.get(), metrics);
@@ -97,7 +154,7 @@ public class ProductionMetricsService {
     @Transactional
     public ProductionMetrics patchRecordByDate(LocalDate date, ProductionMetrics patch) {
         LocalDateTime normalizedDate = date.atStartOfDay();
-        validateDateNotInFuture(normalizedDate);
+        validateEntryDate(date);
 
         List<ProductionMetrics> dayRecords = repository.findByDateBetweenOrderByDateAsc(
                 normalizedDate,
@@ -135,6 +192,8 @@ public class ProductionMetricsService {
 
             ProductionMetrics existing = repository.findById(update.getId())
                     .orElseThrow(() -> new RuntimeException("Record not found with id: " + update.getId()));
+
+            validateDateAllowedForEntry(existing.getDate());
 
             applyPartialUpdate(existing, update);
             persisted.add(repository.save(existing));
@@ -209,7 +268,7 @@ public class ProductionMetricsService {
 
     private ProductionMetrics updateFields(ProductionMetrics existing, ProductionMetrics metrics) {
         metrics.setDate(normalizeToStartOfDay(metrics.getDate()));
-        validateMetricsDateNotInFuture(metrics);
+        validateMetricsDateForEntry(metrics);
         existing.setDate(metrics.getDate());
         existing.setProductionProductivityFtdActual(metrics.getProductionProductivityFtdActual());
         existing.setProductionProductivityFtdTarget(metrics.getProductionProductivityFtdTarget());
@@ -279,21 +338,74 @@ public class ProductionMetricsService {
         return dateTime.toLocalDate().atStartOfDay();
     }
 
-    private void validateDateNotInFuture(LocalDateTime dateTime) {
-        if (dateTime == null) {
+    private MetricsEntryPayload toMetricsEntryPayload(ProductionMetrics metrics) {
+        MetricsEntryPayload payload = new MetricsEntryPayload();
+        payload.setDate(metrics.getDate() != null ? metrics.getDate().toLocalDate() : null);
+        payload.setPeople(extractSectionValues(metrics, PEOPLE_FIELDS));
+        payload.setQuality(extractSectionValues(metrics, QUALITY_FIELDS));
+        payload.setService(extractSectionValues(metrics, SERVICE_FIELDS));
+        payload.setCost(extractSectionValues(metrics, COST_FIELDS));
+        return payload;
+    }
+
+    private Map<String, Double> extractSectionValues(ProductionMetrics metrics, List<String> fields) {
+        Map<String, Double> sectionValues = new LinkedHashMap<>();
+        BeanWrapperImpl wrapper = new BeanWrapperImpl(metrics);
+
+        for (String field : fields) {
+            Object value = wrapper.getPropertyValue(field);
+            sectionValues.put(field, value instanceof Number ? ((Number) value).doubleValue() : null);
+        }
+
+        return sectionValues;
+    }
+
+    private boolean applySectionValuesIfPresent(ProductionMetrics target, Map<String, Double> values, List<String> fields, String sectionName) {
+        if (values == null || values.isEmpty()) {
+            return false;
+        }
+
+        BeanWrapperImpl wrapper = new BeanWrapperImpl(target);
+        for (String field : fields) {
+            Double value = values.get(field);
+            if (value == null) {
+                continue;
+            }
+            if (value < 0) {
+                throw new IllegalArgumentException(field + " cannot be negative");
+            }
+            wrapper.setPropertyValue(field, value);
+        }
+
+        return true;
+    }
+
+    private void validateEntryDate(LocalDate date) {
+        if (date == null) {
             throw new IllegalArgumentException("Metrics date is required");
         }
 
-        if (dateTime.isAfter(LocalDateTime.now())) {
+        LocalDate today = LocalDate.now();
+        if (date.isEqual(today)) {
+            throw new IllegalArgumentException("Today's data entry is not allowed. Please select a previous date.");
+        }
+        if (date.isAfter(today)) {
             throw new IllegalArgumentException("Future dates are not allowed for production metrics");
         }
     }
 
-    private void validateMetricsDateNotInFuture(ProductionMetrics metrics) {
+    private void validateDateAllowedForEntry(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            throw new IllegalArgumentException("Metrics date is required");
+        }
+        validateEntryDate(dateTime.toLocalDate());
+    }
+
+    private void validateMetricsDateForEntry(ProductionMetrics metrics) {
         if (metrics == null) {
             throw new IllegalArgumentException("Metrics payload is required");
         }
-        validateDateNotInFuture(metrics.getDate());
+        validateDateAllowedForEntry(metrics.getDate());
     }
 
     public void deleteRecord(Long id) {

@@ -133,6 +133,14 @@
                                     <i class="fas fa-triangle-exclamation menu-icon"></i>
                                     <span class="menu-text">Abnormality Tracker Config</span>
                                 </div>
+                                <div class="config-item menu-item config-sub-child" data-config="hs-cross" data-type="">
+                                    <i class="fas fa-shield-halved menu-icon"></i>
+                                    <span class="menu-text">H&S Cross Daily Config</span>
+                                </div>
+                                <div class="config-item menu-item config-sub-child" data-config="lsr-tracking" data-type="">
+                                    <i class="fas fa-life-ring menu-icon"></i>
+                                    <span class="menu-text">LSR Tracking Config</span>
+                                </div>
                                 <div class="config-item menu-item config-sub-child" data-config="kpi-footer-buttons" data-type="">
                                     <i class="fas fa-link menu-icon"></i>
                                     <span class="menu-text">KPI Footer Buttons</span>
@@ -262,13 +270,17 @@
 
                             <div id="form-metrics-data" class="form-section">
                                 <h2>Production Metrics Data</h2>
-                                <p class="form-subtitle">Configure grouped production metrics by People, Quality, Service, and Cost.</p>
+                                <p class="form-subtitle">Configure grouped production metrics by People, Quality, Service, and Cost for a selected past date.</p>
                                 <form id="metricsDataForm" class="dynamic-form">
                                     <div class="metrics-date-row">
                                         <div class="form-group metrics-date-group">
                                             <label for="metricsDateInput">Metrics Date</label>
                                             <input type="date" id="metricsDateInput" name="metricsDate" required>
                                         </div>
+                                    </div>
+                                    <div class="metrics-meta-card">
+                                        <div id="metricsSelectedDateLabel" class="metrics-selected-date">Selected date: -</div>
+                                        <div class="metrics-dashboard-note">Data entered for selected date will reflect in KPI Dashboard as Yesterday's values.</div>
                                     </div>
 
                                     <div class="metrics-tabs" role="tablist" aria-label="Production Metrics Sections">
@@ -318,7 +330,7 @@
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
                                             <button type="button" class="btn btn-primary metrics-save-btn" data-section="people">
-                                                <i class="fas fa-save"></i> Save
+                                                <i class="fas fa-save"></i> Save People
                                             </button>
                                         </div>
                                     </div>
@@ -379,7 +391,7 @@
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
                                             <button type="button" class="btn btn-primary metrics-save-btn" data-section="quality">
-                                                <i class="fas fa-save"></i> Save
+                                                <i class="fas fa-save"></i> Save Quality
                                             </button>
                                         </div>
                                     </div>
@@ -388,6 +400,38 @@
                                         <div class="metrics-type-group">
                                             <h3>Service</h3>
                                             <div class="metrics-grid">
+                                                <div class="form-group">
+                                                    <label for="noOfBrewsFtdActual">No. of Brews & Volume - FTD Actual</label>
+                                                    <input type="number" id="noOfBrewsFtdActual" name="noOfBrewsFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="noOfBrewsFtdTarget">No. of Brews & Volume - FTD Target</label>
+                                                    <input type="number" id="noOfBrewsFtdTarget" name="noOfBrewsFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="noOfBrewsMtdActual">No. of Brews & Volume - MTD Actual</label>
+                                                    <input type="number" id="noOfBrewsMtdActual" name="noOfBrewsMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="noOfBrewsYtdActual">No. of Brews & Volume - YTD Actual</label>
+                                                    <input type="number" id="noOfBrewsYtdActual" name="noOfBrewsYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="dispatchFtdActual">Dispatch - FTD Actual</label>
+                                                    <input type="number" id="dispatchFtdActual" name="dispatchFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="dispatchFtdTarget">Dispatch - FTD Target</label>
+                                                    <input type="number" id="dispatchFtdTarget" name="dispatchFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="dispatchMtdActual">Dispatch - MTD Actual</label>
+                                                    <input type="number" id="dispatchMtdActual" name="dispatchMtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="dispatchYtdActual">Dispatch - YTD Actual</label>
+                                                    <input type="number" id="dispatchYtdActual" name="dispatchYtdActual" min="0" step="0.01">
+                                                </div>
                                                 <div class="form-group">
                                                     <label for="processConfirmationBpFtdActual">Process Confirmation B&P - FTD Actual</label>
                                                     <input type="number" id="processConfirmationBpFtdActual" name="processConfirmationBpFtdActual" min="0" step="0.01">
@@ -468,7 +512,7 @@
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
                                             <button type="button" class="btn btn-primary metrics-save-btn" data-section="service">
-                                                <i class="fas fa-save"></i> Save
+                                                <i class="fas fa-save"></i> Save Service
                                             </button>
                                         </div>
                                     </div>
@@ -529,7 +573,7 @@
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
                                             <button type="button" class="btn btn-primary metrics-save-btn" data-section="cost">
-                                                <i class="fas fa-save"></i> Save
+                                                <i class="fas fa-save"></i> Save Cost
                                             </button>
                                         </div>
                                     </div>
@@ -1239,24 +1283,99 @@
                             <!-- KPI Footer Buttons Configuration -->
                             <div id="form-kpi-footer-buttons" class="form-section">
                                 <h2>KPI Footer Buttons</h2>
-                                <p class="form-subtitle">Configure 2 buttons to display at the bottom of KPI Dashboard. URLs will open in a new tab.</p>
+                                <p class="form-subtitle">Configure 2 buttons for the KPI Dashboard. Each button requires a label and either a URL <strong>or</strong> an uploaded file.</p>
 
-                                <div class="form-grid">
-                                    <div class="form-group">
-                                        <label for="kpiButton1Name">Button 1 Label</label>
-                                        <input type="text" id="kpiButton1Name" placeholder="e.g., View Reports">
+                                <!-- Button 1 -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-circle-1"></i> Button 1</div>
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="kpiButton1Name">Label <span class="field-required">*</span></label>
+                                            <input type="text" id="kpiButton1Name" placeholder="e.g., Solvex">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Action Type</label>
+                                            <div class="type-toggle-group">
+                                                <label class="type-toggle-option">
+                                                    <input type="radio" name="btn1ActionType" id="btn1TypeUrl" value="link">
+                                                    <span class="type-toggle-label"><i class="fas fa-link"></i> URL</span>
+                                                </label>
+                                                <label class="type-toggle-option">
+                                                    <input type="radio" name="btn1ActionType" id="btn1TypeFile" value="file">
+                                                    <span class="type-toggle-label"><i class="fas fa-file-upload"></i> File Upload</span>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="kpiButton1Url">Button 1 URL</label>
-                                        <input type="url" id="kpiButton1Url" placeholder="e.g., https://example.com/reports">
+                                    <div class="form-group" id="btn1UrlGroup">
+                                        <label for="kpiButton1Url">URL <span class="field-required">*</span></label>
+                                        <input type="url" id="kpiButton1Url" placeholder="https://example.com">
                                     </div>
-                                    <div class="form-group">
-                                        <label for="kpiButton2Name">Button 2 Label</label>
-                                        <input type="text" id="kpiButton2Name" placeholder="e.g., More Info">
+                                    <div class="form-group" id="btn1FileGroup" style="display:none">
+                                        <label>File <span class="field-required">*</span></label>
+                                        <div class="file-upload-area" id="btn1FileArea">
+                                            <div class="file-upload-trigger" id="btn1UploadTrigger">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                                <span>Click to choose file</span>
+                                                <small>PDF, Word, Excel, PowerPoint, PNG, JPG (max 10MB)</small>
+                                            </div>
+                                            <input type="file" id="btn1FileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg" style="display:none">
+                                            <div class="current-file-display" id="btn1CurrentFileDisplay" style="display:none">
+                                                <i class="fas fa-file-alt"></i>
+                                                <span id="btn1CurrentFileName"></span>
+                                                <button type="button" class="file-remove-btn" id="btn1RemoveFile" title="Remove — switch to URL instead"><i class="fas fa-times"></i></button>
+                                            </div>
+                                            <div class="upload-status-row" id="btn1UploadStatus" style="display:none">
+                                                <i class="fas fa-spinner fa-spin"></i> <span id="btn1StatusText">Uploading...</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="kpiButton2Url">Button 2 URL</label>
-                                        <input type="url" id="kpiButton2Url" placeholder="e.g., https://example.com/info">
+                                </div>
+
+                                <!-- Button 2 -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-circle-2"></i> Button 2</div>
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label for="kpiButton2Name">Label <span class="field-required">*</span></label>
+                                            <input type="text" id="kpiButton2Name" placeholder="e.g., Carlsberg">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Action Type</label>
+                                            <div class="type-toggle-group">
+                                                <label class="type-toggle-option">
+                                                    <input type="radio" name="btn2ActionType" id="btn2TypeUrl" value="link">
+                                                    <span class="type-toggle-label"><i class="fas fa-link"></i> URL</span>
+                                                </label>
+                                                <label class="type-toggle-option">
+                                                    <input type="radio" name="btn2ActionType" id="btn2TypeFile" value="file">
+                                                    <span class="type-toggle-label"><i class="fas fa-file-upload"></i> File Upload</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" id="btn2UrlGroup">
+                                        <label for="kpiButton2Url">URL <span class="field-required">*</span></label>
+                                        <input type="url" id="kpiButton2Url" placeholder="https://example.com">
+                                    </div>
+                                    <div class="form-group" id="btn2FileGroup" style="display:none">
+                                        <label>File <span class="field-required">*</span></label>
+                                        <div class="file-upload-area" id="btn2FileArea">
+                                            <div class="file-upload-trigger" id="btn2UploadTrigger">
+                                                <i class="fas fa-cloud-upload-alt"></i>
+                                                <span>Click to choose file</span>
+                                                <small>PDF, Word, Excel, PowerPoint, PNG, JPG (max 10MB)</small>
+                                            </div>
+                                            <input type="file" id="btn2FileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg" style="display:none">
+                                            <div class="current-file-display" id="btn2CurrentFileDisplay" style="display:none">
+                                                <i class="fas fa-file-alt"></i>
+                                                <span id="btn2CurrentFileName"></span>
+                                                <button type="button" class="file-remove-btn" id="btn2RemoveFile" title="Remove — switch to URL instead"><i class="fas fa-times"></i></button>
+                                            </div>
+                                            <div class="upload-status-row" id="btn2UploadStatus" style="display:none">
+                                                <i class="fas fa-spinner fa-spin"></i> <span id="btn2StatusText">Uploading...</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 

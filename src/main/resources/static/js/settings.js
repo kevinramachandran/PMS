@@ -32,6 +32,8 @@ $(document).ready(function() {
             'kpiCustomerComplaintUnitsMhlFtdActual', 'kpiCustomerComplaintUnitsMhlFtdTarget', 'kpiCustomerComplaintUnitsMhlMtdActual', 'kpiCustomerComplaintUnitsMhlYtdActual'
         ],
         service: [
+            'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsYtdActual',
+            'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchYtdActual',
             'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpYtdActual',
             'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual',
             'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeYtdActual',
@@ -44,6 +46,7 @@ $(document).ready(function() {
             'kpiRgbRatioFtdActual', 'kpiRgbRatioFtdTarget', 'kpiRgbRatioMtdActual', 'kpiRgbRatioYtdActual'
         ]
     };
+    const metricSectionOrder = ['people', 'quality', 'service', 'cost'];
 
     $('input[type="date"]').removeAttr('max');
 
@@ -91,7 +94,13 @@ $(document).ready(function() {
             loadDailyData(type);
         } else if (config === 'metrics-data') {
             $('#form-metrics-data').addClass('active');
-            loadMetricsDataByDate($('#metricsDateInput').val());
+            const selectedMetricsDate = $('#metricsDateInput').val();
+            if (selectedMetricsDate) {
+                loadMetricsDataByDate(selectedMetricsDate);
+            } else {
+                resetMetricsForm();
+                showMessage('metricsDataMessage', 'Select a valid past date to load Production Metrics.', 'error');
+            }
         } else if (config === 'issue-board') {
             $('#form-issue-board').addClass('active');
             loadIssueBoardByDate($('#issueBoardConfigDate').val());
@@ -141,6 +150,14 @@ $(document).ready(function() {
         return today.getFullYear() + '-' +
                String(today.getMonth() + 1).padStart(2, '0') + '-' +
                String(today.getDate()).padStart(2, '0');
+    }
+
+    function getYesterdayDateString() {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday.getFullYear() + '-' +
+            String(yesterday.getMonth() + 1).padStart(2, '0') + '-' +
+            String(yesterday.getDate()).padStart(2, '0');
     }
 
     // ==================== PRIORITIES FORM ====================
@@ -512,9 +529,21 @@ $(document).ready(function() {
     $('#metricsDateInput').on('change', function() {
         const selectedDate = $(this).val();
         if (!selectedDate) {
+            updateMetricsSelectedDateLabel('');
             return;
         }
 
+        const validation = validateMetricsDate(selectedDate);
+        if (!validation.ok) {
+            resetMetricsForm();
+            showMessage('metricsDataMessage', validation.message, 'error');
+            showMetricsToast(validation.message, 'error');
+            $(this).val('');
+            updateMetricsSelectedDateLabel('');
+            return;
+        }
+
+        updateMetricsSelectedDateLabel(selectedDate);
         loadMetricsDataByDate(selectedDate);
     });
 
@@ -536,36 +565,29 @@ $(document).ready(function() {
         const $btn = $(this);
 
         if (!selectedDate) {
-            showMessage('metricsDataMessage', 'Please select a metrics date.', 'error');
-            showMetricsToast('Please select a metrics date.', 'error');
+            showMessage('metricsDataMessage', 'Please select a valid past metrics date.', 'error');
+            showMetricsToast('Please select a valid past metrics date.', 'error');
             return;
         }
 
-        const buildResult = buildSectionPayload(section);
+        const buildResult = buildMetricsPayload(selectedDate, section);
         if (!buildResult.ok) {
             showMessage('metricsDataMessage', buildResult.message, 'error');
             showMetricsToast(buildResult.message, 'error');
             return;
         }
 
-        const payload = buildResult.payload;
-        if (Object.keys(payload).length === 0) {
-            showMessage('metricsDataMessage', 'Enter at least one value in this tab before saving.', 'error');
-            showMetricsToast('No values to save in this tab.', 'error');
-            return;
-        }
-
         setMetricsSaveLoading($btn, true);
 
         $.ajax({
-            url: '/api/production-metrics/' + selectedDate,
-            type: 'PATCH',
+            url: '/api/metrics',
+            type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(payload),
+            data: JSON.stringify(buildResult.payload),
             success: function() {
-                const successMessage = section.charAt(0).toUpperCase() + section.slice(1) + ' metrics saved successfully!';
+                const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
+                const successMessage = sectionLabel + ' metrics saved successfully. Data entered for selected date will reflect in KPI Dashboard as Yesterday\'s values.';
                 showMessage('metricsDataMessage', successMessage, 'success');
-                showMetricsToast(successMessage, 'success');
                 updateKPIDashboard();
                 loadMetricsDataByDate(selectedDate);
             },
@@ -581,32 +603,40 @@ $(document).ready(function() {
     });
 
     function initializeMetricsDateField() {
-        const today = getTodayDateString();
         const dateInput = $('#metricsDateInput');
-        dateInput.removeAttr('max');
-        dateInput.val(today);
+        const yesterday = getYesterdayDateString();
+        dateInput.attr('max', yesterday);
+        if (!dateInput.val()) {
+            dateInput.val(yesterday);
+        }
+        updateMetricsSelectedDateLabel(dateInput.val());
     }
 
     function loadMetricsDataByDate(dateStr) {
-        if (!dateStr) {
+        const validation = validateMetricsDate(dateStr);
+        if (!validation.ok) {
             resetMetricsForm();
+            showMessage('metricsDataMessage', validation.message, 'error');
             return;
         }
 
+        resetMetricsForm();
+
         $.ajax({
-            url: '/api/production-metrics?date=' + dateStr,
+            url: '/api/metrics?date=' + dateStr,
             type: 'GET',
             success: function(data) {
                 if (!data || Object.keys(data).length === 0) {
-                    resetMetricsForm();
+                    showMessage('metricsDataMessage', 'No metrics record found for selected date. Enter values for all categories.', 'success');
                     return;
                 }
 
                 fillMetricsForm(data);
+                showMessage('metricsDataMessage', 'Metrics loaded for selected date.', 'success');
             },
             error: function(xhr) {
                 if (xhr.status === 404 || xhr.status === 204) {
-                    resetMetricsForm();
+                    showMessage('metricsDataMessage', 'No metrics record found for selected date. Enter values for all categories.', 'success');
                     return;
                 }
                 showMessage('metricsDataMessage', 'Unable to load metrics for the selected date.', 'error');
@@ -615,8 +645,11 @@ $(document).ready(function() {
     }
 
     function fillMetricsForm(data) {
-        metricFields.forEach(function(field) {
-            $('#' + field).val(data[field] ?? '');
+        metricSectionOrder.forEach(function(section) {
+            const sectionData = data[section] || {};
+            (metricSections[section] || []).forEach(function(field) {
+                $('#' + field).val(sectionData[field] ?? '');
+            });
         });
     }
 
@@ -626,16 +659,37 @@ $(document).ready(function() {
         });
     }
 
-    function buildSectionPayload(section) {
+    function buildMetricsPayload(selectedDate, section) {
+        const validation = validateMetricsDate(selectedDate);
+        if (!validation.ok) {
+            return {
+                ok: false,
+                message: validation.message
+            };
+        }
+
+        const payload = {
+            date: selectedDate
+        };
         const fields = metricSections[section] || [];
-        const payload = {};
+        const sectionLabel = section ? section.charAt(0).toUpperCase() + section.slice(1) : 'Selected';
+        payload[section] = {};
+
+        const optionalFields = new Set([
+            'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsYtdActual',
+            'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchYtdActual'
+        ]);
 
         for (const field of fields) {
-            const element = $('#' + field);
-            const rawValue = element.val();
-
+            const rawValue = $('#' + field).val();
             if (rawValue === null || rawValue === undefined || rawValue === '') {
-                continue;
+                if (optionalFields.has(field)) {
+                    continue;
+                }
+                return {
+                    ok: false,
+                    message: 'Complete all fields for: ' + sectionLabel + '.'
+                };
             }
 
             const parsed = Number(rawValue);
@@ -653,13 +707,47 @@ $(document).ready(function() {
                 };
             }
 
-            payload[field] = parsed;
+            payload[section][field] = parsed;
         }
 
         return {
             ok: true,
             payload: payload
         };
+    }
+
+    function validateMetricsDate(dateStr) {
+        if (!dateStr) {
+            return {
+                ok: false,
+                message: 'Please select a metrics date.'
+            };
+        }
+
+        const today = getTodayDateString();
+        if (dateStr === today) {
+            return {
+                ok: false,
+                message: 'Today\'s data entry is not allowed. Please select a previous date.'
+            };
+        }
+
+        if (dateStr > today) {
+            return {
+                ok: false,
+                message: 'Future dates are not allowed for production metrics.'
+            };
+        }
+
+        return {
+            ok: true,
+            message: ''
+        };
+    }
+
+    function updateMetricsSelectedDateLabel(dateStr) {
+        const text = dateStr ? 'Selected date: ' + dateStr : 'Selected date: -';
+        $('#metricsSelectedDateLabel').text(text);
     }
 
     function setMetricsSaveLoading($btn, isLoading) {
@@ -2462,6 +2550,59 @@ $(document).ready(function() {
     });
 
     // ==================== KPI FOOTER BUTTONS ====================
+
+    function toggleBtnType(num, type) {
+        if (type === 'file') {
+            $('#btn' + num + 'UrlGroup').hide();
+            $('#btn' + num + 'FileGroup').show();
+        } else {
+            $('#btn' + num + 'UrlGroup').show();
+            $('#btn' + num + 'FileGroup').hide();
+        }
+    }
+
+    function showCurrentFile(num, fileName) {
+        $('#btn' + num + 'CurrentFileName').text(fileName);
+        $('#btn' + num + 'CurrentFileDisplay').show();
+        $('#btn' + num + 'UploadTrigger').hide();
+    }
+
+    function clearCurrentFile(num) {
+        $('#btn' + num + 'CurrentFileName').text('');
+        $('#btn' + num + 'CurrentFileDisplay').hide();
+        $('#btn' + num + 'UploadTrigger').show();
+        $('#btn' + num + 'FileInput').val('');
+    }
+
+    function uploadButtonFile(num, file) {
+        var formData = new FormData();
+        formData.append('file', file);
+
+        $('#btn' + num + 'UploadStatus').show();
+        $('#btn' + num + 'StatusText').text('Uploading...');
+        $('#btn' + num + 'UploadTrigger').hide();
+        $('#btn' + num + 'CurrentFileDisplay').hide();
+
+        $.ajax({
+            url: '/api/dashboard-config/kpi-footer-buttons/upload/' + num,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(data) {
+                $('#btn' + num + 'UploadStatus').hide();
+                showCurrentFile(num, data.originalName);
+                showMessage('kpiButtonsMessage', 'File uploaded for Button ' + num + '. Click Save Buttons to confirm.', 'success');
+            },
+            error: function(xhr) {
+                $('#btn' + num + 'UploadStatus').hide();
+                $('#btn' + num + 'UploadTrigger').show();
+                var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Upload failed';
+                showMessage('kpiButtonsMessage', 'Upload error: ' + msg, 'error');
+            }
+        });
+    }
+
     function loadKpiFooterButtonsConfig() {
         $.ajax({
             url: '/api/dashboard-config/kpi-footer-buttons',
@@ -2471,6 +2612,23 @@ $(document).ready(function() {
                 $('#kpiButton1Url').val(data.button1Url || '');
                 $('#kpiButton2Name').val(data.button2Label || '');
                 $('#kpiButton2Url').val(data.button2Url || '');
+
+                var type1 = data.button1Type || 'link';
+                var type2 = data.button2Type || 'link';
+
+                $('input[name="btn1ActionType"][value="' + type1 + '"]').prop('checked', true);
+                $('input[name="btn2ActionType"][value="' + type2 + '"]').prop('checked', true);
+                toggleBtnType(1, type1);
+                toggleBtnType(2, type2);
+
+                clearCurrentFile(1);
+                clearCurrentFile(2);
+                if (type1 === 'file' && data.button1FileName) {
+                    showCurrentFile(1, data.button1FileName);
+                }
+                if (type2 === 'file' && data.button2FileName) {
+                    showCurrentFile(2, data.button2FileName);
+                }
             },
             error: function() {
                 showMessage('kpiButtonsMessage', 'Unable to load footer button configuration.', 'error');
@@ -2478,28 +2636,77 @@ $(document).ready(function() {
         });
     }
 
+    // Radio toggles
+    $('input[name="btn1ActionType"]').on('change', function() {
+        toggleBtnType(1, $(this).val());
+    });
+    $('input[name="btn2ActionType"]').on('change', function() {
+        toggleBtnType(2, $(this).val());
+    });
+
+    // File upload triggers
+    $('#btn1UploadTrigger').on('click', function() { $('#btn1FileInput').click(); });
+    $('#btn2UploadTrigger').on('click', function() { $('#btn2FileInput').click(); });
+
+    $('#btn1FileInput').on('change', function() {
+        if (this.files[0]) uploadButtonFile(1, this.files[0]);
+    });
+    $('#btn2FileInput').on('change', function() {
+        if (this.files[0]) uploadButtonFile(2, this.files[0]);
+    });
+
+    // Remove file - switch back to URL mode
+    $('#btn1RemoveFile').on('click', function() {
+        clearCurrentFile(1);
+        $('input[name="btn1ActionType"][value="link"]').prop('checked', true);
+        toggleBtnType(1, 'link');
+    });
+    $('#btn2RemoveFile').on('click', function() {
+        clearCurrentFile(2);
+        $('input[name="btn2ActionType"][value="link"]').prop('checked', true);
+        toggleBtnType(2, 'link');
+    });
+
     $('#cancelKpiButtonsBtn').on('click', function() {
         loadKpiFooterButtonsConfig();
         showMessage('kpiButtonsMessage', 'Changes discarded.', 'success');
     });
 
     $('#saveKpiButtonsBtn').on('click', function() {
+        var type1 = $('input[name="btn1ActionType"]:checked').val() || 'link';
+        var type2 = $('input[name="btn2ActionType"]:checked').val() || 'link';
+        var label1 = ($('#kpiButton1Name').val() || '').trim();
+        var label2 = ($('#kpiButton2Name').val() || '').trim();
+        var url1   = ($('#kpiButton1Url').val() || '').trim();
+        var url2   = ($('#kpiButton2Url').val() || '').trim();
+
+        if (!label1) {
+            showMessage('kpiButtonsMessage', 'Button 1 label is required.', 'error'); return;
+        }
+        if (type1 === 'link' && !url1) {
+            showMessage('kpiButtonsMessage', 'Button 1 URL is required when action type is URL.', 'error'); return;
+        }
+        if (type1 === 'file' && !$('#btn1CurrentFileName').text().trim()) {
+            showMessage('kpiButtonsMessage', 'Button 1 requires an uploaded file when action type is File.', 'error'); return;
+        }
+        if (!label2) {
+            showMessage('kpiButtonsMessage', 'Button 2 label is required.', 'error'); return;
+        }
+        if (type2 === 'link' && !url2) {
+            showMessage('kpiButtonsMessage', 'Button 2 URL is required when action type is URL.', 'error'); return;
+        }
+        if (type2 === 'file' && !$('#btn2CurrentFileName').text().trim()) {
+            showMessage('kpiButtonsMessage', 'Button 2 requires an uploaded file when action type is File.', 'error'); return;
+        }
+
         const payload = {
-            button1Label: ($('#kpiButton1Name').val() || '').trim(),
-            button1Url: ($('#kpiButton1Url').val() || '').trim(),
-            button2Label: ($('#kpiButton2Name').val() || '').trim(),
-            button2Url: ($('#kpiButton2Url').val() || '').trim()
+            button1Label: label1,
+            button1Url:   type1 === 'link' ? url1 : '',
+            button1Type:  type1,
+            button2Label: label2,
+            button2Url:   type2 === 'link' ? url2 : '',
+            button2Type:  type2
         };
-
-        if ((payload.button1Label && !payload.button1Url) || (!payload.button1Label && payload.button1Url)) {
-            showMessage('kpiButtonsMessage', 'Button 1 requires both Label and URL.', 'error');
-            return;
-        }
-
-        if ((payload.button2Label && !payload.button2Url) || (!payload.button2Label && payload.button2Url)) {
-            showMessage('kpiButtonsMessage', 'Button 2 requires both Label and URL.', 'error');
-            return;
-        }
 
         const $btn = $('#saveKpiButtonsBtn');
         $btn.prop('disabled', true);
@@ -2529,6 +2736,10 @@ $(document).ready(function() {
     // ==================== UTILITY FUNCTIONS ====================
     function showMessage(elementId, message, type) {
         const $msg = $('#' + elementId);
+        if (!message) {
+            $msg.removeClass('show success error').text('');
+            return;
+        }
         $msg.removeClass('success error').addClass(type);
         $msg.text(message);
         $msg.addClass('show');
