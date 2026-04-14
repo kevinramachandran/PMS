@@ -9,7 +9,7 @@ public class WebController {
 
     @GetMapping("/")
     public String index() {
-        return "index";
+        return "redirect:/kpi-dashboard";
     }
 
     @GetMapping("/home")
@@ -160,6 +160,11 @@ public class WebController {
     @GetMapping("/pms-configuration")
     public String pmsConfiguration() {
         return "pms-configuration";
+    }
+
+    @GetMapping("/email-configuration")
+    public String emailConfiguration() {
+        return "email-configuration";
     }
 
     private String settingsView(Model model, String activePage, String activeType, String activeTitle) {

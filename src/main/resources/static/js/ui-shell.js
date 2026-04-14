@@ -50,7 +50,7 @@
 
     function isConfigPage() {
         const path = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '');
-        return path === '/settings' || path === '/pms-configuration';
+        return path === '/settings' || path === '/pms-configuration' || path === '/email-configuration';
     }
 
     function normalizeCellText(cell) {
@@ -190,6 +190,7 @@
         const existingRole = existingRoleBadge ? existingRoleBadge.textContent.trim().toUpperCase().replace(/\s+/g, '_') : '';
         const canAccessPmsDataEntry = existingRole === 'ADMIN' || existingRole === 'L1_USER' || existingRole === 'USER';
         const canManageUsers = existingRole === 'ADMIN';
+        const canManageEmailConfiguration = existingRole === 'ADMIN' || existingRole === 'L1_USER' || existingRole === 'USER';
 
         if (!header.contains(headerRight)) {
             header.appendChild(headerRight);
@@ -228,6 +229,9 @@
             }
             if (canManageUsers) {
                 menuLinks.push('<a href="/pms-configuration">User Management</a>');
+            }
+            if (canManageEmailConfiguration) {
+                menuLinks.push('<a href="/email-configuration">Email Configuration</a>');
             }
             menuLinks.push('<a href="' + logoutHref + '">Logout</a>');
             profile.innerHTML = '' +

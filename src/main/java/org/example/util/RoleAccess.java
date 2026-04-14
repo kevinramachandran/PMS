@@ -40,6 +40,11 @@ public final class RoleAccess {
         return ADMIN.equals(normalized) || L1_USER.equals(normalized);
     }
 
+    public static boolean canAccessEmailConfiguration(String role) {
+        String normalized = normalize(role);
+        return ADMIN.equals(normalized) || L1_USER.equals(normalized);
+    }
+
     public static String displayName(String role) {
         return switch (normalize(role)) {
             case ADMIN -> "Admin";
