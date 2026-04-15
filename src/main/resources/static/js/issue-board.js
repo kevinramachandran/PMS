@@ -213,3 +213,32 @@ $(document).ready(function() {
     loadIssueBoardData();
     setInterval(loadIssueBoardData, 30000);
 });
+
+// ── PDF Export ──────────────────────────────────────────────────────────────
+function exportIssueBoardPdf() {
+    var btn = document.getElementById('issueBoardPdfBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
+
+    var tableData = PmsReport.readDomTable('issueBoardTable');
+    var lastDate  = document.getElementById('lastReviewDate') ? document.getElementById('lastReviewDate').textContent.trim() : '-';
+    var nextDate  = document.getElementById('nextReviewDate') ? document.getElementById('nextReviewDate').textContent.trim() : '-';
+    var filterLabel = 'Last Review: ' + lastDate + '   |   Next Review: ' + nextDate;
+
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+
+    PmsReport.generate({
+        title:       'Issue Board',
+        filterLabel: filterLabel,
+        orientation: 'landscape',
+        columns:     tableData.columns,
+        rows:        tableData.rows,
+        filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+    });
+
+    setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+    }, 2000);
+}

@@ -470,6 +470,34 @@ body {
     transform: translateY(-2px);
 }
 
+/* PDF export button in top header */
+.pdf-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    white-space: nowrap;
+}
+.pdf-export-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+}
+.pdf-export-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+.pdf-export-btn i {
+    font-size: 14px;
+}
+
 .notification-badge {
     position: absolute;
     top: 6px;
@@ -1800,6 +1828,17 @@ body.modern-shell .header-icon:hover,
 body.modern-shell .user-avatar:hover {
     background: #ecfdf3;
     border-color: #bbf7d0;
+    transform: translateY(-1px);
+}
+
+body.modern-shell .pdf-export-btn {
+    background: #003d24;
+    color: #ffffff;
+    border: 1px solid #003d24;
+}
+body.modern-shell .pdf-export-btn:hover:not(:disabled) {
+    background: #005a36;
+    border-color: #005a36;
     transform: translateY(-1px);
 }
 

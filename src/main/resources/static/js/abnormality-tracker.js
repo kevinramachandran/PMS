@@ -407,3 +407,54 @@ $(function () {
     applySavedSidebarState();
     loadPeriodsAndRender();
 });
+
+// ── PDF Export ──────────────────────────────────────────────────────────────
+function exportAbnormalityPdf() {
+    var btn = document.getElementById('atPdfBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
+
+    var tableData    = PmsReport.readDomTable('atSummaryTable');
+    var periodFilter = document.getElementById('atPeriodFilter');
+    var periodLabel  = periodFilter && periodFilter.options[periodFilter.selectedIndex]
+        ? periodFilter.options[periodFilter.selectedIndex].text.trim()
+        : '-';
+    var filterLabel = 'Period: ' + periodLabel;
+
+    var today = new Date();
+    var dd   = String(today.getDate()).padStart(2, '0');
+    var mm   = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+
+    // Capture chart canvases as PNG images to embed after the table
+    var tagChartDataUrl     = PmsReport.captureCanvas('tagCountChart');
+    var closureChartDataUrl = PmsReport.captureCanvas('closureChart');
+
+    var extraImages = [];
+    var pageW = 210; // A4 portrait width in mm
+    var chartW = 85;
+    var chartH = 50;
+    var gutter = 10;
+    var totalChartW = chartW * 2 + gutter;
+    var startX = (pageW - totalChartW) / 2;
+
+    if (tagChartDataUrl) {
+        extraImages.push({ dataUrl: tagChartDataUrl,     caption: 'No of Abnormality Tags',    w: chartW, h: chartH, x: startX });
+    }
+    if (closureChartDataUrl) {
+        extraImages.push({ dataUrl: closureChartDataUrl, caption: 'Abnormality Tag Closure %', w: chartW, h: chartH, x: startX + chartW + gutter });
+    }
+
+    PmsReport.generate({
+        title:       'Abnormality Tracker',
+        filterLabel: filterLabel,
+        orientation: 'portrait',
+        columns:     tableData.columns,
+        rows:        tableData.rows,
+        extraImages: extraImages,
+        filename:    'Abnormality-Tracker_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+    });
+
+    setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+    }, 2000);
+}

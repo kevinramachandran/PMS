@@ -261,3 +261,34 @@ $(document).ready(function() {
         loadFiltersAndSchedule($('#gembaMonthFilter').val() || '');
     }, 30000);
 });
+
+// ── PDF Export ──────────────────────────────────────────────────────────────
+function exportGembaPdf() {
+    var btn = document.getElementById('gembaPdfBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
+
+    var tableData   = PmsReport.readDomTable('gembaScheduleTable');
+    var monthFilter = document.getElementById('gembaMonthFilter');
+    var monthLabel  = monthFilter && monthFilter.options[monthFilter.selectedIndex]
+        ? monthFilter.options[monthFilter.selectedIndex].text.trim()
+        : '-';
+    var filterLabel = 'Month: ' + monthLabel;
+
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+
+    PmsReport.generate({
+        title:       'Gemba Walk Schedule',
+        filterLabel: filterLabel,
+        orientation: 'portrait',
+        columns:     tableData.columns,
+        rows:        tableData.rows,
+        filename:    'Gemba-Walk-Schedule_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+    });
+
+    setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+    }, 2000);
+}

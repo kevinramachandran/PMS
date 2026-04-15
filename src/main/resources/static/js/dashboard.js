@@ -1235,6 +1235,9 @@ function renderDailyPerformanceTable(metrics) {
     if (!Array.isArray(metrics) || metrics.length === 0) {
         updateDailyPerformanceAsOf(null, true);
         updateYesterdayDataDate(null);
+        updateDateLabel('todayTargetDate', null);
+        updateDateLabel('ftdYesterdayDate', null);
+        updateDateLabel('ftdTodayDate', null);
         tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 14px; color:#6b7280;">No Data Available</td></tr>';
         return;
     }
@@ -1266,6 +1269,9 @@ function renderDailyPerformanceTable(metrics) {
 
     updateDailyPerformanceAsOf(todayTargetRecord ? todayTargetRecord.targetDate || todayTargetRecord.date : null, true);
     updateYesterdayDataDate(yesterdayActualRecord ? yesterdayActualRecord.date : (todayTargetRecord ? todayTargetRecord.date : null));
+    updateDateLabel('todayTargetDate', todayTargetRecord ? (todayTargetRecord.targetDate || todayTargetRecord.date) : null);
+    updateDateLabel('ftdYesterdayDate', yesterdayTargetRecord ? yesterdayTargetRecord.date : null);
+    updateDateLabel('ftdTodayDate', todayTargetRecord ? todayTargetRecord.date : null);
 
     const rows = kpiTableConfig.map(function(kpi, index) {
         const todayTarget = readNumber(todayTargetRecord, kpi.targetField);
@@ -1397,6 +1403,24 @@ function updateYesterdayDataDate(dateValue) {
     const month = String(parsed.getMonth() + 1).padStart(2, '0');
     const year = parsed.getFullYear();
     dateLabel.textContent = '[' + day + '-' + month + '-' + year + ']';
+}
+
+function updateDateLabel(elementId, dateValue) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    if (!dateValue) {
+        el.textContent = '';
+        return;
+    }
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+        el.textContent = '';
+        return;
+    }
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    el.textContent = '[' + day + '-' + month + '-' + year + ']';
 }
 
 function readNumber(record, fieldName) {

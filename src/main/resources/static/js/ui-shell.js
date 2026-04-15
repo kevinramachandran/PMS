@@ -221,6 +221,10 @@
                 el.remove();
             });
 
+            const preservedHeaderActions = Array.from(
+                headerRight.querySelectorAll('.pdf-export-btn, [data-preserve-header-right="true"]')
+            );
+
             const profile = document.createElement('div');
             profile.className = 'pms-profile';
             const menuLinks = [];
@@ -244,6 +248,10 @@
                 menuLinks.join('') +
                 '</div>';
             headerRight.innerHTML = '';
+
+            preservedHeaderActions.forEach(function (actionEl) {
+                headerRight.appendChild(actionEl);
+            });
             
             // Add today's date display
             const dateDisplay = document.createElement('div');

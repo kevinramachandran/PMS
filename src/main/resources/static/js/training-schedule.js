@@ -260,3 +260,33 @@ $(document).ready(function() {
     loadFiltersAndData();
     setInterval(loadFiltersAndData, 30000);
 });
+
+// ── PDF Export ──────────────────────────────────────────────────────────────
+function exportTrainingPdf() {
+    var btn = document.getElementById('trainingPdfBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
+
+    var tableData   = PmsReport.readDomTable('trainingScheduleTable');
+    var monthText   = document.getElementById('tsMonth') ? document.getElementById('tsMonth').textContent.trim() : '-';
+    var kpiText     = document.getElementById('tsKpi')   ? document.getElementById('tsKpi').textContent.trim()   : 'Training Compliance';
+    var targetText  = document.getElementById('tsTarget') ? document.getElementById('tsTarget').textContent.trim() : '-';
+    var filterLabel = 'Month: ' + monthText + '   |   KPI: ' + kpiText + '   |   Target: ' + targetText;
+
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
+
+    PmsReport.generate({
+        title:       'Training Compliance Plan',
+        filterLabel: filterLabel,
+        orientation: 'landscape',
+        columns:     tableData.columns,
+        rows:        tableData.rows,
+        filename:    'Training-Schedule_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+    });
+
+    setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+    }, 2000);
+}

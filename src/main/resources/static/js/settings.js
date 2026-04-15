@@ -570,6 +570,7 @@ $(document).ready(function() {
     $('.metrics-save-btn').on('click', function() {
         const actualDate = $('#metricsDateInput').val();
         const targetDate = $('#metricsTargetDateInput').val();
+        const section = $(this).data('section') || 'people';
         const $btn = $(this);
 
         if (!actualDate || !targetDate) {
@@ -578,7 +579,7 @@ $(document).ready(function() {
             return;
         }
 
-        const buildResult = buildMetricsPayload(actualDate, targetDate);
+        const buildResult = buildMetricsSectionPayload(actualDate, targetDate, section);
         if (!buildResult.ok) {
             showMessage('metricsDataMessage', buildResult.message, 'error');
             showMetricsToast(buildResult.message, 'error');
@@ -593,8 +594,8 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify(buildResult.payload),
             success: function() {
-                const successMessage = 'Production Metrics Actual and Target data saved successfully.';
-                showMessage('metricsDataMessage', successMessage, 'success');
+                const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
+                showMessage('metricsDataMessage', sectionLabel + ' metrics saved successfully.', 'success');
                 updateKPIDashboard();
                 loadMetricsDataByDate(actualDate);
             },
@@ -673,6 +674,39 @@ $(document).ready(function() {
         metricFields.forEach(function(field) {
             $('#' + field).val('');
         });
+    }
+
+    function buildMetricsSectionPayload(actualDate, targetDate, section) {
+        const validation = validateMetricsDate(actualDate);
+        if (!validation.ok) {
+            return { ok: false, message: validation.message };
+        }
+
+        const groups = metricFieldGroups[section];
+        if (!groups) {
+            return { ok: false, message: 'Unknown section: ' + section };
+        }
+
+        const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
+        const actualSectionData = {};
+        const targetSectionData = {};
+
+        const actualBuild = buildMetricsSectionValues(groups.actual || [], actualSectionData, sectionLabel);
+        if (!actualBuild.ok) return actualBuild;
+
+        const targetBuild = buildMetricsSectionValues(groups.target || [], targetSectionData, sectionLabel);
+        if (!targetBuild.ok) return targetBuild;
+
+        const payload = {
+            actualDate: actualDate,
+            targetDate: targetDate,
+            actual: { date: actualDate, entryType: 'ACTUAL' },
+            target: { date: targetDate, entryType: 'TARGET' }
+        };
+        payload.actual[section] = actualSectionData;
+        payload.target[section] = targetSectionData;
+
+        return { ok: true, payload: payload };
     }
 
     function buildMetricsPayload(actualDate, targetDate) {

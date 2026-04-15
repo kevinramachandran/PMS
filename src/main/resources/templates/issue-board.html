@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="/css/dashboard.css">
     <link rel="stylesheet" href="/css/issue-board.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
 <body class="modern-shell dashboard-bg">
@@ -50,6 +52,9 @@
             <div class="header-right">
                 <div class="sync-status" id="issueBoardSyncStatus">Last synced: --:--:--</div>
                 <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
+                <button class="pdf-export-btn" id="issueBoardPdfBtn" title="Export PDF" onclick="exportIssueBoardPdf()">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
                 <div class="user-avatar"><i class="fas fa-user"></i></div>
             </div>
@@ -100,6 +105,7 @@
     </main>
 </div>
 
+<script src="/js/pdf-report.js"></script>
 <script src="/js/issue-board.js"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js"></script>
