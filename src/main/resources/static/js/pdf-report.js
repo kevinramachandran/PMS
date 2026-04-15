@@ -5,7 +5,7 @@
 (function (window) {
     'use strict';
 
-    var CARLSBERG_LOGO = '/images/carlsbergBackground.png';
+    var CARLSBERG_LOGO = '/images/carlsbergWhiteLogo.png'; //src\main\resources\static\images\carlsbergWhiteLogo.png
     var HEADER_COLOR   = [0, 61, 36];   // Carlsberg dark green
     var ALT_ROW_COLOR  = [240, 247, 240];
 
