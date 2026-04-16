@@ -2,21 +2,31 @@ package org.example.service;
 
 import org.example.entity.IssueBoardItem;
 import org.example.repository.IssueBoardItemRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class IssueBoardItemService {
 
-    private final IssueBoardItemRepository repository;
+    private static final Logger log = LoggerFactory.getLogger(IssueBoardItemService.class);
 
-    public IssueBoardItemService(IssueBoardItemRepository repository) {
+    private final IssueBoardItemRepository repository;
+    private final IssueBoardNotificationService notificationService;
+
+    public IssueBoardItemService(IssueBoardItemRepository repository,
+                                 IssueBoardNotificationService notificationService) {
         this.repository = repository;
+        this.notificationService = notificationService;
     }
 
     public List<IssueBoardItem> getByBoardDate(LocalDate boardDate) {
@@ -34,6 +44,7 @@ public class IssueBoardItemService {
 
     @Transactional
     public List<IssueBoardItem> replaceByBoardDate(LocalDate boardDate, List<IssueBoardItem> items) {
+        List<IssueBoardItem> existingItems = repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
         repository.deleteByBoardDate(boardDate);
 
         int row = 1;
@@ -46,6 +57,22 @@ public class IssueBoardItemService {
             row++;
         }
 
-        return repository.saveAll(items);
+        List<IssueBoardItem> savedItems = new ArrayList<>(repository.saveAll(items));
+        try {
+            notificationService.sendAssignmentNotifications(boardDate, mapByRowOrder(existingItems), mapByRowOrder(savedItems));
+        } catch (Exception ex) {
+            log.error("Failed to send assignment notifications for boardDate={} — save was still successful", boardDate, ex);
+        }
+        return savedItems;
+    }
+
+    private Map<Integer, IssueBoardItem> mapByRowOrder(List<IssueBoardItem> items) {
+        Map<Integer, IssueBoardItem> mapped = new LinkedHashMap<>();
+        for (IssueBoardItem item : items) {
+            if (item.getRowOrder() != null) {
+                mapped.put(item.getRowOrder(), item);
+            }
+        }
+        return mapped;
     }
 }

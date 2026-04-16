@@ -39,6 +39,8 @@ public class IssueBoardItem {
     @Column(length = 80)
     private String status;
 
+    private LocalDate completedDate;
+
     @Column(length = 500)
     private String remarks;
 
@@ -141,6 +143,14 @@ public class IssueBoardItem {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public LocalDate getCompletedDate() {
+        return completedDate;
+    }
+
+    public void setCompletedDate(LocalDate completedDate) {
+        this.completedDate = completedDate;
     }
 
     public String getRemarks() {

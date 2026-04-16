@@ -341,8 +341,10 @@
 }
 
 #form-issue-board.issue-board-enterprise .issue-config-table-wrap {
-    max-height: 420px;
+    max-height: 460px;
     overflow: auto;
+    max-width: 100%;
+    scrollbar-gutter: stable both-edges;
     border: 1px solid #dbe5df;
     border-radius: 10px;
     background: #ffffff;
@@ -470,9 +472,10 @@
 
 #issueBoardConfigTable {
     width: 100%;
-    min-width: 1460px;
+    min-width: 1800px;
     border-collapse: collapse;
     font-size: 13px;
+    table-layout: auto;
 }
 
 #issueBoardConfigTable thead th {
@@ -497,6 +500,58 @@
     vertical-align: middle;
 }
 
+#issueBoardConfigTable thead th:nth-child(1),
+#issueBoardConfigTable tbody td:nth-child(1) {
+    min-width: 200px;
+}
+
+#issueBoardConfigTable thead th:nth-child(2),
+#issueBoardConfigTable tbody td:nth-child(2) {
+    min-width: 160px;
+}
+
+#issueBoardConfigTable thead th:nth-child(3),
+#issueBoardConfigTable tbody td:nth-child(3),
+#issueBoardConfigTable thead th:nth-child(7),
+#issueBoardConfigTable tbody td:nth-child(7),
+#issueBoardConfigTable thead th:nth-child(10),
+#issueBoardConfigTable tbody td:nth-child(10) {
+    min-width: 118px;
+}
+
+#issueBoardConfigTable thead th:nth-child(4),
+#issueBoardConfigTable tbody td:nth-child(4) {
+    min-width: 180px;
+}
+
+#issueBoardConfigTable thead th:nth-child(5),
+#issueBoardConfigTable tbody td:nth-child(5) {
+    min-width: 190px;
+}
+
+#issueBoardConfigTable thead th:nth-child(6),
+#issueBoardConfigTable tbody td:nth-child(6) {
+    min-width: 190px;
+}
+
+#issueBoardConfigTable thead th:nth-child(8),
+#issueBoardConfigTable tbody td:nth-child(8),
+#issueBoardConfigTable thead th:nth-child(12),
+#issueBoardConfigTable tbody td:nth-child(12) {
+    min-width: 92px;
+}
+
+/* STATUS column needs enough room for progress bar + label + select */
+#issueBoardConfigTable thead th:nth-child(9),
+#issueBoardConfigTable tbody td:nth-child(9) {
+    min-width: 150px;
+}
+
+#issueBoardConfigTable thead th:nth-child(11),
+#issueBoardConfigTable tbody td:nth-child(11) {
+    min-width: 170px;
+}
+
 #issueBoardConfigTable tbody tr:nth-child(even) {
     background: #f8fbf9;
 }
@@ -510,12 +565,13 @@
 #issueBoardConfigTable input[type="number"],
 #issueBoardConfigTable select {
     width: 100%;
-    min-width: 110px;
+    min-width: 120px;
     min-height: 36px;
     padding: 7px 9px;
     border: 1px solid #ced7d1;
     border-radius: 8px;
     font-size: 13px;
+    box-sizing: border-box;
 }
 
 #issueBoardConfigTable .ib-due-days,
@@ -527,6 +583,15 @@
 
 #issueBoardConfigTable .ib-text-cell {
     text-align: left;
+}
+
+#issueBoardConfigTable .ib-problem,
+#issueBoardConfigTable .ib-root-cause,
+#issueBoardConfigTable .ib-actions,
+#issueBoardConfigTable .ib-responsible,
+#issueBoardConfigTable .ib-owner,
+#issueBoardConfigTable .ib-remarks {
+    min-width: 150px;
 }
 
 #issueBoardConfigTable .ib-due-days {
@@ -546,15 +611,21 @@
 }
 
 #issueBoardConfigTable .ib-status-wrap {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+}
+
+#issueBoardConfigTable .ib-progress-row {
+    display: flex;
     align-items: center;
-    min-width: 110px;
+    gap: 6px;
 }
 
 #issueBoardConfigTable .ib-progress {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: 8px;
     border-radius: 999px;
     background: #e5e7eb;
@@ -572,7 +643,9 @@
     font-size: 11px;
     font-weight: 700;
     color: #4b5563;
+    min-width: 30px;
     text-align: right;
+    white-space: nowrap;
 }
 
 #issueBoardConfigTable .ib-progress-bar.low {
@@ -1752,7 +1825,6 @@ table select {
 }
 
 .daily-data-table,
-.issue-config-table-wrap,
 .hs-cross-table-wrap,
 .lsr-table-wrap {
     width: 100%;
@@ -1760,8 +1832,15 @@ table select {
     overflow-x: hidden;
 }
 
+/* Issue board table wrapper needs its own overflow so the scrollbar works */
+.issue-config-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
 .daily-data-table table,
-.issue-config-table-wrap table,
 .hs-cross-table-wrap table,
 .lsr-table-wrap table {
     width: 100%;
@@ -1769,10 +1848,13 @@ table select {
     border-collapse: collapse;
 }
 
+/* Issue board table must NOT use fixed layout — columns have explicit min-widths */
+#issueBoardConfigTable {
+    table-layout: auto;
+}
+
 .daily-data-table th,
 .daily-data-table td,
-.issue-config-table-wrap th,
-.issue-config-table-wrap td,
 .hs-cross-table-wrap th,
 .hs-cross-table-wrap td,
 .lsr-table-wrap th,
@@ -1785,7 +1867,6 @@ table select {
     font-size: 12px;
 }
 
-#issueBoardConfigTable,
 #gembaConfigTable,
 #leadershipGembaConfigTable,
 #trainingScheduleConfigTable {

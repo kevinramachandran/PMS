@@ -4,6 +4,8 @@ $(document).ready(function() {
     let currentForm = 'priorities';
     let currentType = '';
     const requestedConfig = (new URLSearchParams(window.location.search).get('config') || '').trim().toLowerCase();
+    let issueBoardAssignableUsers = [];
+    let issueBoardAssignableLookup = new Map();
 
     const metricSections = {
         people: [
@@ -56,6 +58,7 @@ $(document).ready(function() {
     initializeMetricsDateField();
     initializeMetricsFieldGrouping();
     initializeIssueBoardConfigDateField();
+    loadIssueBoardResponsibleUsers();
     initializeGembaScheduleDateField();
     initializeAtConfigDateField();
     initializeLgtConfigDateField();
@@ -985,6 +988,87 @@ $(document).ready(function() {
         });
     }
 
+    function loadIssueBoardResponsibleUsers() {
+        $.ajax({
+            url: '/api/issue-board/assignable-users',
+            type: 'GET',
+            success: function(response) {
+                const users = Array.isArray(response && response.users) ? response.users : [];
+                issueBoardAssignableUsers = users;
+                issueBoardAssignableLookup = new Map();
+
+                users.forEach(function(user) {
+                    const username = (user.username || '').trim();
+                    const email = (user.email || '').trim();
+                    if (username) {
+                        issueBoardAssignableLookup.set(username.toLowerCase(), user);
+                    }
+                    if (email) {
+                        issueBoardAssignableLookup.set(email.toLowerCase(), user);
+                    }
+                });
+
+                renderIssueBoardResponsibleUsers();
+                $('#issueBoardConfigTableBody .ib-responsible').each(function() {
+                    normalizeIssueBoardResponsibleField($(this));
+                });
+                setIssueBoardSaveState();
+            },
+            error: function() {
+                issueBoardAssignableUsers = [];
+                issueBoardAssignableLookup = new Map();
+                renderIssueBoardResponsibleUsers();
+            }
+        });
+    }
+
+    function renderIssueBoardResponsibleUsers() {
+        const $list = $('#issueBoardResponsibleUsersList');
+        if ($list.length === 0) {
+            return;
+        }
+
+        $list.empty();
+        issueBoardAssignableUsers.forEach(function(user) {
+            const username = (user.username || '').trim();
+            const email = (user.email || '').trim();
+            if (!username) {
+                return;
+            }
+
+            $('<option>')
+                .attr('value', username)
+                .attr('label', email ? username + ' (' + email + ')' : username)
+                .appendTo($list);
+        });
+    }
+
+    function findIssueBoardResponsibleUser(value) {
+        const normalized = (value || '').trim().toLowerCase();
+        if (!normalized) {
+            return null;
+        }
+        return issueBoardAssignableLookup.get(normalized) || null;
+    }
+
+    function normalizeIssueBoardResponsibleField($field) {
+        const match = findIssueBoardResponsibleUser($field.val());
+        if (match && match.username) {
+            $field.val(match.username);
+        }
+        return match;
+    }
+
+    function isIssueBoardResponsibleValidValue(value) {
+        if (!value || !value.trim()) {
+            return false;
+        }
+        if (issueBoardAssignableUsers.length === 0) {
+            return true;
+        }
+        return !!findIssueBoardResponsibleUser(value);
+    }
+
     function showIssueBoardPopup(message) {
         const $popup = $('#issueBoardPopup');
         if ($popup.length === 0 || !message) {
@@ -1059,6 +1143,13 @@ $(document).ready(function() {
             }
         });
 
+        const $responsible = $row.find('.ib-responsible');
+        normalizeIssueBoardResponsibleField($responsible);
+        if (!isIssueBoardResponsibleValidValue($responsible.val())) {
+            $responsible.addClass('ib-invalid');
+            rowValid = false;
+        }
+
         const status = $row.find('.ib-status').val();
         const $completed = $row.find('.ib-completed-date');
         if (status === '100%' && !$completed.val()) {
@@ -1092,7 +1183,11 @@ $(document).ready(function() {
                     valid = false;
                 }
             } else {
-                const requiredOk = $row.find('.ib-problem').val().trim() && $row.find('.ib-actions').val().trim() && $row.find('.ib-responsible').val().trim();
+                const responsibleValue = $row.find('.ib-responsible').val().trim();
+                const requiredOk = $row.find('.ib-problem').val().trim()
+                    && $row.find('.ib-actions').val().trim()
+                    && responsibleValue
+                    && isIssueBoardResponsibleValidValue(responsibleValue);
                 const status = $row.find('.ib-status').val();
                 const completedOk = status !== '100%' || !!$row.find('.ib-completed-date').val();
                 if (!(requiredOk && completedOk)) {
@@ -1189,6 +1284,16 @@ $(document).ready(function() {
             updateRowDueDays($row);
         });
 
+        $('#issueBoardConfigTableBody .ib-responsible').off('change.responsible blur.responsible').on('change.responsible blur.responsible', function() {
+            const $field = $(this);
+            normalizeIssueBoardResponsibleField($field);
+            clearIssueFieldError($field);
+            if ($field.val().trim() && !isIssueBoardResponsibleValidValue($field.val())) {
+                $field.addClass('ib-invalid');
+            }
+            setIssueBoardSaveState();
+        });
+
         $('#issueBoardConfigTableBody .ib-issue-date, #issueBoardConfigTableBody .ib-completed-date').off('change').on('change', function() {
             updateCompletedDateRequirement($(this).closest('tr'));
             clearIssueFieldError($(this));
@@ -1274,13 +1379,15 @@ $(document).ready(function() {
             '<td><input type="date" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '" placeholder="Issue date"></td>' +
             '<td class="ib-text-cell"><input type="text" class="ib-root-cause" value="' + escapeAttributeValue(safeItem.rootCause || '') + '" placeholder="Root cause"></td>' +
             '<td class="ib-text-cell"><input type="text" class="ib-actions" value="' + escapeAttributeValue(safeItem.actions || '') + '" placeholder="Action plan"></td>' +
-            '<td class="ib-text-cell"><input type="text" class="ib-responsible" value="' + escapeAttributeValue(safeItem.responsible || '') + '" placeholder="Responsible"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-responsible" list="issueBoardResponsibleUsersList" autocomplete="off" value="' + escapeAttributeValue(safeItem.responsible || '') + '" placeholder="Select responsible user"></td>' +
             '<td><input type="date" class="ib-target-date" value="' + escapeAttributeValue(safeItem.targetDate || '') + '" placeholder="Target date"></td>' +
             '<td><input type="number" class="ib-due-days" value="" step="1" readonly placeholder="0"></td>' +
             '<td class="ib-status-cell">' +
             '<div class="ib-status-wrap">' +
+            '<div class="ib-progress-row">' +
             '<div class="ib-progress" aria-hidden="true"><div class="ib-progress-bar"></div></div>' +
-            '<div class="ib-progress-label">0%</div>' +
+            '<span class="ib-progress-label">0%</span>' +
+            '</div>' +
             '<select class="ib-status" aria-label="Issue progress status">' +
             '<option value="0%" ' + (status === '0%' ? 'selected' : '') + '>0%</option>' +
             '<option value="25%" ' + (status === '25%' ? 'selected' : '') + '>25%</option>' +
@@ -1393,7 +1500,9 @@ $(document).ready(function() {
         rows.each(function(index) {
             const problem = $(this).find('.ib-problem').val().trim();
             const actions = $(this).find('.ib-actions').val().trim();
-            const responsible = $(this).find('.ib-responsible').val().trim();
+            const $responsibleField = $(this).find('.ib-responsible');
+            normalizeIssueBoardResponsibleField($responsibleField);
+            const responsible = $responsibleField.val().trim();
             const dueParsed = calculateDueDaysFromTarget($(this).find('.ib-target-date').val());
             const statusValue = $(this).find('.ib-status').val();
             const completedDate = $(this).find('.ib-completed-date').val() || null;
@@ -1405,6 +1514,13 @@ $(document).ready(function() {
                         $(this).addClass('ib-invalid');
                     }
                 });
+                return false;
+            }
+
+            if (!isIssueBoardResponsibleValidValue(responsible)) {
+                invalid = true;
+                $responsibleField.addClass('ib-invalid');
+                showIssueBoardPopup('Responsible must be selected from User Management suggestions.');
                 return false;
             }
 
@@ -1431,6 +1547,7 @@ $(document).ready(function() {
                 targetDate: $(this).find('.ib-target-date').val() || null,
                 dueDays: dueParsed === '' ? null : dueParsed,
                 status: statusValue,
+                completedDate: completedDate,
                 remarks: $(this).find('.ib-remarks').val().trim(),
                 lastReviewDate: lastReviewDate,
                 nextReviewDate: nextReviewDate,
@@ -1439,7 +1556,7 @@ $(document).ready(function() {
         });
 
         if (invalid) {
-            showIssueBoardPopup('Problem, Actions, and Responsible are required for each row.');
+            showIssueBoardPopup('Problem, Actions, and a valid Responsible user are required for each row.');
             setIssueBoardSaveState();
             return;
         }

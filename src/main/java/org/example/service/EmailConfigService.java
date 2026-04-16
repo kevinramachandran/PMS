@@ -2,19 +2,28 @@ package org.example.service;
 
 import jakarta.mail.AuthenticationFailedException;
 import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.example.entity.EmailConfig;
 import org.example.model.EmailConfigPayload;
 import org.example.model.EmailConfigResponse;
 import org.example.model.EmailTestResponse;
 import org.example.repository.EmailConfigRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +36,8 @@ public class EmailConfigService {
     private static final String PASSWORD_MASK = "********";
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+    private static final Logger log = LoggerFactory.getLogger(EmailConfigService.class);
+    private static final String BRAND_LOGO_CLASSPATH = "static/images/carlsbergWhiteLogo.png";
 
     private final EmailConfigRepository repository;
     private final SensitiveConfigCryptoService cryptoService;
@@ -44,7 +55,7 @@ public class EmailConfigService {
 
     public EmailConfigResponse getConfiguration() {
         EmailConfigResponse response = new EmailConfigResponse();
-        Optional<EmailConfig> existing = repository.findById(SINGLETON_ID);
+        Optional<EmailConfig> existing = repository.findById(Objects.requireNonNull(SINGLETON_ID));
         if (existing.isEmpty()) {
             response.setPort(587);
             response.setEncryption("TLS");
@@ -72,7 +83,7 @@ public class EmailConfigService {
             throw new IllegalArgumentException(validation.message());
         }
 
-        EmailConfig target = repository.findById(SINGLETON_ID).orElseGet(() -> {
+        EmailConfig target = repository.findById(Objects.requireNonNull(SINGLETON_ID)).orElseGet(() -> {
             EmailConfig config = new EmailConfig();
             config.setId(SINGLETON_ID);
             return config;
@@ -105,28 +116,104 @@ public class EmailConfigService {
             return new EmailTestResponse("ERROR", "Please wait a few seconds before testing again");
         }
 
-        String password = resolvePassword(payload.getPassword(), repository.findById(SINGLETON_ID).orElse(null));
+        String password = resolvePassword(payload.getPassword(), repository.findById(Objects.requireNonNull(SINGLETON_ID)).orElse(null));
         if (password == null || password.isBlank()) {
             return new EmailTestResponse("ERROR", "Password is required");
         }
 
         JavaMailSenderImpl mailSender = buildMailSender(payload, password);
+        String host = trim(payload.getHost());
         try {
             mailSender.testConnection();
             return new EmailTestResponse("SUCCESS", "Connection successful");
         } catch (MailAuthenticationException ex) {
-            return new EmailTestResponse("ERROR", "Authentication failed");
+            return new EmailTestResponse("ERROR", buildAuthFailedMessage(host));
         } catch (MailSendException ex) {
-            return new EmailTestResponse("ERROR", resolveConnectionMessage(ex));
+            return new EmailTestResponse("ERROR", resolveConnectionMessage(ex, host));
         } catch (MessagingException ex) {
-            return new EmailTestResponse("ERROR", resolveConnectionMessage(ex));
+            return new EmailTestResponse("ERROR", resolveConnectionMessage(ex, host));
         }
     }
 
     public boolean hasStoredPassword() {
-        return repository.findById(SINGLETON_ID)
+        return repository.findById(Objects.requireNonNull(SINGLETON_ID))
                 .map(config -> config.getEncryptedPassword() != null && !config.getEncryptedPassword().isBlank())
                 .orElse(false);
+    }
+
+    public boolean sendEmail(List<String> recipients, String subject, String body) {
+        return sendEmail(recipients, subject, body, false, false);
+    }
+
+    public boolean sendEmail(List<String> recipients,
+                             String subject,
+                             String body,
+                             boolean isHtml,
+                             boolean includeBrandLogo) {
+        if (recipients == null || recipients.isEmpty()) {
+            return false;
+        }
+
+        Optional<EmailConfig> maybeConfig = repository.findById(Objects.requireNonNull(SINGLETON_ID));
+        if (maybeConfig.isEmpty()) {
+            log.warn("Skipping email send because no email configuration is stored");
+            return false;
+        }
+
+        EmailConfig config = maybeConfig.get();
+        if (!config.isEnabled()) {
+            log.warn("Skipping email send because email configuration is disabled — enable it on the Email Configuration page");
+            return false;
+        }
+
+        String password = resolvePassword(PASSWORD_MASK, config);
+        if (password == null || password.isBlank()) {
+            log.warn("Skipping email send because no SMTP password is configured");
+            return false;
+        }
+
+        JavaMailSenderImpl mailSender = buildMailSender(config, password);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, includeBrandLogo, StandardCharsets.UTF_8.name());
+            helper.setTo(recipients.toArray(new String[0]));
+            helper.setSubject(Objects.requireNonNull(subject));
+            helper.setText(Objects.requireNonNull(body), isHtml);
+
+            if (includeBrandLogo) {
+                addInlineBrandLogo(helper);
+            }
+
+            if (!isBlank(config.getFromName())) {
+                helper.setFrom(Objects.requireNonNull(config.getFromEmail()), Objects.requireNonNull(config.getFromName()).trim());
+            } else {
+                helper.setFrom(Objects.requireNonNull(config.getFromEmail()));
+            }
+
+            if (!isBlank(config.getReplyTo())) {
+                helper.setReplyTo(Objects.requireNonNull(config.getReplyTo()).trim());
+            }
+
+            mailSender.send(message);
+            return true;
+        } catch (Exception ex) {
+            log.error("Failed to send email to {}", recipients, ex);
+            return false;
+        }
+    }
+
+    private void addInlineBrandLogo(MimeMessageHelper helper) {
+        try {
+            Resource logo = new ClassPathResource(BRAND_LOGO_CLASSPATH);
+            if (!logo.exists() || !logo.isReadable()) {
+                log.warn("Brand logo not found on classpath at {}", BRAND_LOGO_CLASSPATH);
+                return;
+            }
+            helper.addInline("brandLogo", logo, "image/png");
+        } catch (Exception ex) {
+            log.warn("Unable to attach inline brand logo from {}", BRAND_LOGO_CLASSPATH, ex);
+        }
     }
 
     private ValidationResult validatePayload(EmailConfigPayload payload, boolean includeSenderFields) {
@@ -217,10 +304,45 @@ public class EmailConfigService {
         if ("SSL".equals(encryption)) {
             properties.put("mail.smtp.ssl.enable", "true");
             properties.put("mail.smtp.starttls.enable", "false");
+            properties.put("mail.smtp.ssl.trust", trim(payload.getHost()));
         } else if ("TLS".equals(encryption)) {
             properties.put("mail.smtp.ssl.enable", "false");
             properties.put("mail.smtp.starttls.enable", "true");
             properties.put("mail.smtp.starttls.required", "true");
+            properties.put("mail.smtp.ssl.trust", trim(payload.getHost()));
+        } else {
+            properties.put("mail.smtp.ssl.enable", "false");
+            properties.put("mail.smtp.starttls.enable", "false");
+        }
+
+        return mailSender;
+    }
+
+    private JavaMailSenderImpl buildMailSender(EmailConfig config, String password) {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(trim(config.getHost()));
+        mailSender.setPort(config.getPort());
+        mailSender.setUsername(trim(config.getUsername()));
+        mailSender.setPassword(password);
+
+        String encryption = normalizeEncryption(config.getEncryption());
+        Properties properties = mailSender.getJavaMailProperties();
+        properties.put("mail.transport.protocol", "smtp");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.connectiontimeout", "5000");
+        properties.put("mail.smtp.timeout", "5000");
+        properties.put("mail.smtp.writetimeout", "5000");
+        properties.put("mail.debug", "false");
+
+        if ("SSL".equals(encryption)) {
+            properties.put("mail.smtp.ssl.enable", "true");
+            properties.put("mail.smtp.starttls.enable", "false");
+            properties.put("mail.smtp.ssl.trust", trim(config.getHost()));
+        } else if ("TLS".equals(encryption)) {
+            properties.put("mail.smtp.ssl.enable", "false");
+            properties.put("mail.smtp.starttls.enable", "true");
+            properties.put("mail.smtp.starttls.required", "true");
+            properties.put("mail.smtp.ssl.trust", trim(config.getHost()));
         } else {
             properties.put("mail.smtp.ssl.enable", "false");
             properties.put("mail.smtp.starttls.enable", "false");
@@ -237,27 +359,43 @@ public class EmailConfigService {
     }
 
     private String resolveConnectionMessage(Exception ex) {
+        return resolveConnectionMessage(ex, null);
+    }
+
+    private String resolveConnectionMessage(Exception ex, String host) {
         Throwable current = ex;
         while (current != null) {
             if (current instanceof AuthenticationFailedException) {
-                return "Authentication failed";
+                return buildAuthFailedMessage(host);
             }
             if (current instanceof ConnectException || current instanceof SocketTimeoutException) {
-                return "Invalid host/port";
+                return "Unable to connect — check the SMTP host and port";
             }
             current = current.getCause();
         }
         String message = ex.getMessage();
         if (message != null) {
             String normalized = message.toLowerCase();
-            if (normalized.contains("auth")) {
-                return "Authentication failed";
+            if (normalized.contains("auth") || normalized.contains("username and password") || normalized.contains("535")) {
+                return buildAuthFailedMessage(host);
             }
             if (normalized.contains("connect") || normalized.contains("timeout") || normalized.contains("host")) {
-                return "Invalid host/port";
+                return "Unable to connect — check the SMTP host and port";
             }
         }
         return "Unable to connect to the SMTP server";
+    }
+
+    private String buildAuthFailedMessage(String host) {
+        if (!isBlank(host) && host.trim().toLowerCase().contains("gmail")) {
+            return "Authentication failed. Gmail requires an App Password — go to myaccount.google.com/apppasswords, " +
+                   "generate a 16-character App Password, and use that instead of your regular Google password.";
+        }
+        if (!isBlank(host) && host.trim().toLowerCase().contains("outlook")) {
+            return "Authentication failed. Outlook/Office 365 may require an App Password or Modern Auth. " +
+                   "Check that SMTP AUTH is enabled for your account in the admin portal.";
+        }
+        return "Authentication failed — check the username and password.";
     }
 
     private String normalizeEncryption(String value) {
