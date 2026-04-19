@@ -24,13 +24,13 @@ This project uses Spring Boot's `bootJar` task to create a runnable fat JAR with
 Default artifact:
 
 ```text
-build/libs/brewery-pms-be-1.0.0.jar
+build/libs/brewery-pms-be-2.0.0.jar
 ```
 
 Windows note for this repository:
 
 ```text
-%LOCALAPPDATA%/Brewery-PMS-BE/gradle-build/libs/brewery-pms-be-1.0.0.jar
+%LOCALAPPDATA%/Brewery-PMS-BE/gradle-build/libs/brewery-pms-be-2.0.0.jar
 ```
 
 The Windows build path is redirected outside the workspace to avoid OneDrive file-lock issues during Gradle builds.
@@ -70,7 +70,7 @@ $env:SPRING_PROFILES_ACTIVE="prod"
 $env:DB_URL="jdbc:mysql://db-host:3306/brewery_pms"
 $env:DB_USERNAME="brewery_user"
 $env:DB_PASSWORD="replace-me"
-java -jar $env:LOCALAPPDATA/Brewery-PMS-BE/gradle-build/libs/brewery-pms-be-1.0.0.jar
+java -jar $env:LOCALAPPDATA/Brewery-PMS-BE/gradle-build/libs/brewery-pms-be-2.0.0.jar
 ```
 
 Linux server:
@@ -80,13 +80,13 @@ export SPRING_PROFILES_ACTIVE=prod
 export DB_URL=jdbc:mysql://db-host:3306/brewery_pms
 export DB_USERNAME=brewery_user
 export DB_PASSWORD=replace-me
-java -jar build/libs/brewery-pms-be-1.0.0.jar
+java -jar build/libs/brewery-pms-be-2.0.0.jar
 ```
 
 Use an external config directory when needed:
 
 ```bash
-java -jar build/libs/brewery-pms-be-1.0.0.jar --spring.config.additional-location=file:/etc/brewery-pms/
+java -jar build/libs/brewery-pms-be-2.0.0.jar --spring.config.additional-location=file:/etc/brewery-pms/
 ```
 
 ## Profiles

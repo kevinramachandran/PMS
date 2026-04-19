@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.example"
-version = providers.gradleProperty("appVersion").orElse("1.0.0").get()
+version = providers.gradleProperty("appVersion").orElse("2.0.0").get()
 
 val appJarName = providers.gradleProperty("appJarName").orElse("brewery-pms-be")
 
