@@ -48,7 +48,7 @@ public class ProductionMetricsService {
         "noOfBrewsFtdActual", "noOfBrewsFtdTarget", "noOfBrewsMtdActual", "noOfBrewsMtdTarget", "noOfBrewsYtdActual", "noOfBrewsYtdTarget",
         "dispatchFtdActual", "dispatchFtdTarget", "dispatchMtdActual", "dispatchMtdTarget", "dispatchYtdActual", "dispatchYtdTarget",
         "processConfirmationBpFtdActual", "processConfirmationBpFtdTarget", "processConfirmationBpMtdActual", "processConfirmationBpMtdTarget", "processConfirmationBpYtdActual", "processConfirmationBpYtdTarget",
-        "processConfirmationPackMtdActual", "processConfirmationPackMtdTarget", "processConfirmationPackYtdActual", "processConfirmationPackYtdTarget",
+        "processConfirmationPackFtdActual", "processConfirmationPackFtdTarget", "processConfirmationPackMtdActual", "processConfirmationPackMtdTarget", "processConfirmationPackYtdActual", "processConfirmationPackYtdTarget",
         "kpiOeeFtdActual", "kpiOeeFtdTarget", "kpiOeeMtdActual", "kpiOeeMtdTarget", "kpiOeeYtdActual", "kpiOeeYtdTarget",
         "kpiBeerLossFtdActual", "kpiBeerLossFtdTarget", "kpiBeerLossMtdActual", "kpiBeerLossMtdTarget", "kpiBeerLossYtdActual", "kpiBeerLossYtdTarget",
         "kpiWurHlHlFtdActual", "kpiWurHlHlFtdTarget", "kpiWurHlHlMtdActual", "kpiWurHlHlMtdTarget", "kpiWurHlHlYtdActual", "kpiWurHlHlYtdTarget"
@@ -58,6 +58,16 @@ public class ProductionMetricsService {
         "kpiEnergyKwhHlFtdActual", "kpiEnergyKwhHlFtdTarget", "kpiEnergyKwhHlMtdActual", "kpiEnergyKwhHlMtdTarget", "kpiEnergyKwhHlYtdActual", "kpiEnergyKwhHlYtdTarget",
         "kpiRgbRatioFtdActual", "kpiRgbRatioFtdTarget", "kpiRgbRatioMtdActual", "kpiRgbRatioMtdTarget", "kpiRgbRatioYtdActual", "kpiRgbRatioYtdTarget"
     );
+    private static final List<String> ALL_METRIC_FIELDS = buildAllMetricFields();
+
+    private static List<String> buildAllMetricFields() {
+        List<String> all = new ArrayList<>();
+        all.addAll(PEOPLE_FIELDS);
+        all.addAll(QUALITY_FIELDS);
+        all.addAll(SERVICE_FIELDS);
+        all.addAll(COST_FIELDS);
+        return all;
+    }
 
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
@@ -593,111 +603,60 @@ public class ProductionMetricsService {
         repository.deleteAll();
     }
 
-    // CSV Export
-    public ByteArrayInputStream exportToCSV() throws IOException {
-        List<ProductionMetrics> records = repository.findAll();
-
+    // CSV Template Export (single-file format with all 4 sections)
+    public ByteArrayInputStream exportTemplateCSV() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        CSVPrinter csvPrinter = new CSVPrinter(
+        List<String> headers = new ArrayList<>();
+        headers.add("actualDate");
+        headers.addAll(ALL_METRIC_FIELDS);
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(
                 new PrintWriter(out),
-                CSVFormat.DEFAULT.withHeader(
-                        "date",
-                        "production_productivity_ftd_actual",
-                        "production_productivity_ftd_target",
-                        "logistics_productivity_ftd_actual",
-                        "logistics_productivity_ftd_target",
-                        "kpi_sensory_score_ftd_actual",
-                        "kpi_sensory_score_ftd_target",
-                        "kpi_sensory_score_mtd_actual",
-                        "kpi_sensory_score_mtd_target",
-                        "kpi__consumer_complaint_units_/_mhl_ftd_actual",
-                        "kpi__consumer_complaint__units_/_mhl_ftd_target",
-                        "kpi__customer_complaint__units_/_mhl_ftd_actual",
-                        "kpi__customer_complaint__units_/_mhl_ftd_target",
-                        "process_confirmation_b&p_ftd_actual",
-                        "process_confirmation_b&p_ftd_target",
-                        "process_confirmation_pack_mtd_actual",
-                        "process_confirmation_pack_mtd_target",
-                        "kpi__oee__ftd_actual",
-                        "kpi__oee__ftd_target",
-                        "kpi__oee__mtd_actual",
-                        "kpi__oee__mtd_target",
-                        "kpi__beer_loss__ftd_actual",
-                        "kpi__beer_loss__ftd_target",
-                        "kpi__beer_loss__mtd_actual",
-                        "kpi__beer_loss__mtd_target",
-                        "kpi__wur_hl/hl_ftd_actual",
-                        "kpi__wur_hl/hl_ftd_target",
-                        "kpi__wur_hl/hl_mtd_actual",
-                        "kpi__wur_hl/hl_mtd_target",
-                        "kpi__electricity_kwh/hl_ftd_actual",
-                        "kpi__electricity_kwh/hl_ftd_target",
-                        "kpi__electricity_kwh/hl_mtd_actual",
-                        "kpi__electricity_kwh/hl_mtd_target",
-                        "kpi__energy_kwh/hl_ftd_actual",
-                        "kpi__energy_kwh/hl_ftd_target",
-                        "kpi__energy_kwh/hl_mtd_actual",
-                        "kpi__energy_kwh/hl_mtd_target",
-                        "kpi__rgb_ratio__ftd_actual",
-                        "kpi__rgb_ratio__ftd_target",
-                        "kpi__rgb_ratio__mtd_actual",
-                        "kpi__rgb_ratio__mtd_target"
-                )
-        );
-
-        for (ProductionMetrics record : records) {
-            csvPrinter.printRecord(
-                    record.getDate() != null ? record.getDate().format(DATE_TIME_FORMATTER) : "",
-                    record.getProductionProductivityFtdActual(),
-                    record.getProductionProductivityFtdTarget(),
-                    record.getLogisticsProductivityFtdActual(),
-                    record.getLogisticsProductivityFtdTarget(),
-                    record.getKpiSensoryScoreFtdActual(),
-                    record.getKpiSensoryScoreFtdTarget(),
-                    record.getKpiSensoryScoreMtdActual(),
-                    record.getKpiSensoryScoreMtdTarget(),
-                    record.getKpiConsumerComplaintUnitsMhlFtdActual(),
-                    record.getKpiConsumerComplaintUnitsMhlFtdTarget(),
-                    record.getKpiCustomerComplaintUnitsMhlFtdActual(),
-                    record.getKpiCustomerComplaintUnitsMhlFtdTarget(),
-                    record.getProcessConfirmationBpFtdActual(),
-                    record.getProcessConfirmationBpFtdTarget(),
-                    record.getProcessConfirmationPackMtdActual(),
-                    record.getProcessConfirmationPackMtdTarget(),
-                    record.getKpiOeeFtdActual(),
-                    record.getKpiOeeFtdTarget(),
-                    record.getKpiOeeMtdActual(),
-                    record.getKpiOeeMtdTarget(),
-                    record.getKpiBeerLossFtdActual(),
-                    record.getKpiBeerLossFtdTarget(),
-                    record.getKpiBeerLossMtdActual(),
-                    record.getKpiBeerLossMtdTarget(),
-                    record.getKpiWurHlHlFtdActual(),
-                    record.getKpiWurHlHlFtdTarget(),
-                    record.getKpiWurHlHlMtdActual(),
-                    record.getKpiWurHlHlMtdTarget(),
-                    record.getKpiElectricityKwhHlFtdActual(),
-                    record.getKpiElectricityKwhHlFtdTarget(),
-                    record.getKpiElectricityKwhHlMtdActual(),
-                    record.getKpiElectricityKwhHlMtdTarget(),
-                    record.getKpiEnergyKwhHlFtdActual(),
-                    record.getKpiEnergyKwhHlFtdTarget(),
-                    record.getKpiEnergyKwhHlMtdActual(),
-                    record.getKpiEnergyKwhHlMtdTarget(),
-                    record.getKpiRgbRatioFtdActual(),
-                    record.getKpiRgbRatioFtdTarget(),
-                    record.getKpiRgbRatioMtdActual(),
-                    record.getKpiRgbRatioMtdTarget()
-            );
+                CSVFormat.DEFAULT.withHeader(headers.toArray(new String[0]))
+        )) {
+            List<String> sampleRow = new ArrayList<>();
+            sampleRow.add(LocalDate.now().minusDays(1).toString());
+            for (int i = 0; i < ALL_METRIC_FIELDS.size(); i++) {
+                sampleRow.add("");
+            }
+            csvPrinter.printRecord(sampleRow);
         }
-
-        csvPrinter.flush();
-        csvPrinter.close();
 
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    // CSV Import
+    // CSV Export (same unified format as template)
+    public ByteArrayInputStream exportToCSV() throws IOException {
+        List<ProductionMetrics> records = repository.findAll();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        List<String> headers = new ArrayList<>();
+        headers.add("actualDate");
+        headers.addAll(ALL_METRIC_FIELDS);
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(
+                new PrintWriter(out),
+                CSVFormat.DEFAULT.withHeader(headers.toArray(new String[0]))
+        )) {
+            for (ProductionMetrics record : records) {
+                if (record.getDate() == null || ENTRY_TYPE_TARGET.equalsIgnoreCase(record.getEntryType())) {
+                    continue;
+                }
+
+                BeanWrapperImpl wrapper = new BeanWrapperImpl(record);
+                List<Object> row = new ArrayList<>();
+                row.add(record.getDate().toLocalDate().toString());
+                for (String field : ALL_METRIC_FIELDS) {
+                    row.add(wrapper.getPropertyValue(field));
+                }
+                csvPrinter.printRecord(row);
+            }
+        }
+
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    // CSV Import (single-file format with all 4 sections)
     public void importFromCSV(MultipartFile file) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
@@ -712,58 +671,48 @@ public class ProductionMetricsService {
             for (CSVRecord csvRecord : csvParser) {
                 recordCount++;
                 try {
-                    ProductionMetrics metrics = new ProductionMetrics();
-
-                    metrics.setDate(parseDateTime(getColumnValue(csvRecord, "date", "Date")));
-
-                    // Skip if date is null
-                    if (metrics.getDate() == null) {
-                        errorMessages.append("Row ").append(recordCount).append(": Invalid or missing date\n");
+                    LocalDate actualDate = parseCsvActualDate(getColumnValue(csvRecord, "actualDate", "date", "Date"));
+                    if (actualDate == null) {
+                        errorMessages.append("Row ").append(recordCount).append(": actualDate is required\n");
                         continue;
                     }
 
-                    metrics.setProductionProductivityFtdActual(parseDouble(getColumnValue(csvRecord, "production_productivity_ftd_actual", "Production productivity_FTD Actual")));
-                    metrics.setProductionProductivityFtdTarget(parseDouble(getColumnValue(csvRecord, "production_productivity_ftd_target", "Production productivity_FTD Target")));
-                    metrics.setLogisticsProductivityFtdActual(parseDouble(getColumnValue(csvRecord, "logistics_productivity_ftd_actual", "Logistics productivity_FTD Actual")));
-                    metrics.setLogisticsProductivityFtdTarget(parseDouble(getColumnValue(csvRecord, "logistics_productivity_ftd_target", "Logistics productivity_FTD Target")));
-                    metrics.setKpiSensoryScoreFtdActual(parseDouble(getColumnValue(csvRecord, "kpi_sensory_score_ftd_actual", "KPI Sensory Score_FTD Actual")));
-                    metrics.setKpiSensoryScoreFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi_sensory_score_ftd_target", "KPI Sensory Score_FTD Target")));
-                    metrics.setKpiSensoryScoreMtdActual(parseDouble(getColumnValue(csvRecord, "kpi_sensory_score_mtd_actual", "KPI Sensory Score_MTD Actual")));
-                    metrics.setKpiSensoryScoreMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi_sensory_score_mtd_target", "KPI Sensory Score_MTD Target")));
-                    metrics.setKpiConsumerComplaintUnitsMhlFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__consumer_complaint_units_/_mhl_ftd_actual", "KPI - Consumer Complaint (Units / mHL)_FTD Actual")));
-                    metrics.setKpiConsumerComplaintUnitsMhlFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__consumer_complaint__units_/_mhl_ftd_target", "KPI - Consumer Complaint (Units / mHL)_FTD Target")));
-                    metrics.setKpiCustomerComplaintUnitsMhlFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__customer_complaint__units_/_mhl_ftd_actual", "KPI - Customer Complaint (Units / mHL)_FTD Actual")));
-                    metrics.setKpiCustomerComplaintUnitsMhlFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__customer_complaint__units_/_mhl_ftd_target", "KPI - Customer Complaint (Units / mHL)_FTD Target")));
-                    metrics.setProcessConfirmationBpFtdActual(parseDouble(getColumnValue(csvRecord, "process_confirmation_b&p_ftd_actual", "Process Confirmation B&P_FTD Actual")));
-                    metrics.setProcessConfirmationBpFtdTarget(parseDouble(getColumnValue(csvRecord, "process_confirmation_b&p_ftd_target", "Process Confirmation B&P_FTD Target")));
-                    metrics.setProcessConfirmationPackMtdActual(parseDouble(getColumnValue(csvRecord, "process_confirmation_pack_mtd_actual", "Process Confirmation Pack_MTD Actual")));
-                    metrics.setProcessConfirmationPackMtdTarget(parseDouble(getColumnValue(csvRecord, "process_confirmation_pack_mtd_target", "Process Confirmation Pack_MTD Target")));
-                    metrics.setKpiOeeFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__oee__ftd_actual", "KPI - OEE (%)_FTD Actual")));
-                    metrics.setKpiOeeFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__oee__ftd_target", "KPI - OEE (%)_FTD Target")));
-                    metrics.setKpiOeeMtdActual(parseDouble(getColumnValue(csvRecord, "kpi__oee__mtd_actual", "KPI - OEE (%)_MTD Actual")));
-                    metrics.setKpiOeeMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__oee__mtd_target", "KPI - OEE (%)_MTD Target")));
-                    metrics.setKpiBeerLossFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__beer_loss__ftd_actual", "KPI - Beer Loss (%)_FTD Actual")));
-                    metrics.setKpiBeerLossFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__beer_loss__ftd_target", "KPI - Beer Loss (%)_FTD Target")));
-                    metrics.setKpiBeerLossMtdActual(parseDouble(getColumnValue(csvRecord, "kpi__beer_loss__mtd_actual", "KPI - Beer Loss (%)_MTD Actual")));
-                    metrics.setKpiBeerLossMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__beer_loss__mtd_target", "KPI - Beer Loss (%)_MTD Target")));
-                    metrics.setKpiWurHlHlFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__wur_hl/hl_ftd_actual", "KPI - WUR (hl/hl)_FTD Actual")));
-                    metrics.setKpiWurHlHlFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__wur_hl/hl_ftd_target", "KPI - WUR (hl/hl)_FTD Target")));
-                    metrics.setKpiWurHlHlMtdActual(parseDouble(getColumnValue(csvRecord, "kpi__wur_hl/hl_mtd_actual", "KPI - WUR (hl/hl)_MTD Actual")));
-                    metrics.setKpiWurHlHlMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__wur_hl/hl_mtd_target", "KPI - WUR (hl/hl)_MTD Target")));
-                    metrics.setKpiElectricityKwhHlFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__electricity_kwh/hl_ftd_actual", "KPI - Electricity (kwh/hl)_FTD Actual")));
-                    metrics.setKpiElectricityKwhHlFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__electricity_kwh/hl_ftd_target", "KPI - Electricity (kwh/hl)_FTD Target")));
-                    metrics.setKpiElectricityKwhHlMtdActual(parseDouble(getColumnValue(csvRecord, "kpi__electricity_kwh/hl_mtd_actual", "KPI - Electricity (kwh/hl)_MTD Actual")));
-                    metrics.setKpiElectricityKwhHlMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__electricity_kwh/hl_mtd_target", "KPI - Electricity (kwh/hl)_MTD Target")));
-                    metrics.setKpiEnergyKwhHlFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__energy_kwh/hl_ftd_actual", "KPI - Energy (kwh/hl)_FTD Actual")));
-                    metrics.setKpiEnergyKwhHlFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__energy_kwh/hl_ftd_target", "KPI - Energy (kwh/hl)_FTD Target")));
-                    metrics.setKpiEnergyKwhHlMtdActual(parseDouble(getColumnValue(csvRecord, "kpi__energy_kwh/hl_mtd_actual", "KPI - Energy (kwh/hl)_MTD Actual")));
-                    metrics.setKpiEnergyKwhHlMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__energy_kwh/hl_mtd_target", "KPI - Energy (kwh/hl)_MTD Target")));
-                    metrics.setKpiRgbRatioFtdActual(parseDouble(getColumnValue(csvRecord, "kpi__rgb_ratio__ftd_actual", "KPI - RGB Ratio (%)_FTD Actual")));
-                    metrics.setKpiRgbRatioFtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__rgb_ratio__ftd_target", "KPI - RGB Ratio (%)_FTD Target")));
-                    metrics.setKpiRgbRatioMtdActual(parseDouble(getColumnValue(csvRecord, "kpi__rgb_ratio__mtd_actual", "KPI - RGB Ratio (%)_MTD Actual")));
-                    metrics.setKpiRgbRatioMtdTarget(parseDouble(getColumnValue(csvRecord, "kpi__rgb_ratio__mtd_target", "KPI - RGB Ratio (%)_MTD Target")));
+                    validateActualEntryDate(actualDate);
 
-                    upsertByDate(metrics);
+                    if (!hasAtLeastOneMetricValue(csvRecord)) {
+                        errorMessages.append("Row ").append(recordCount)
+                                .append(": At least one metric value is required when actualDate is provided\n");
+                        continue;
+                    }
+
+                    ProductionMetrics metrics = findPrimaryRecordByActualDate(actualDate).orElseGet(ProductionMetrics::new);
+                    metrics.setDate(actualDate.atStartOfDay());
+                    metrics.setTargetDate(actualDate.plusDays(1).atStartOfDay());
+                    metrics.setEntryType(null);
+
+                    BeanWrapperImpl wrapper = new BeanWrapperImpl(metrics);
+                    boolean hasAnyMetricValue = false;
+
+                    for (String field : ALL_METRIC_FIELDS) {
+                        String rawValue = getColumnValue(csvRecord, field, toSnakeCase(field));
+                        if (rawValue == null || rawValue.trim().isEmpty()) {
+                            continue;
+                        }
+
+                        Double parsedValue = parseDouble(rawValue);
+                        if (parsedValue == null) {
+                            throw new IllegalArgumentException("Invalid numeric value for " + field + ": " + rawValue);
+                        }
+
+                        if (parsedValue < 0) {
+                            throw new IllegalArgumentException(field + " cannot be negative");
+                        }
+
+                        wrapper.setPropertyValue(field, parsedValue);
+                        hasAnyMetricValue = true;
+                    }
+
+                    repository.save(metrics);
                     successCount++;
                 } catch (Exception e) {
                     String errorMsg = "Row " + recordCount + ": " + e.getMessage();
@@ -783,6 +732,10 @@ public class ProductionMetricsService {
             if (successCount == 0 && recordCount > 0) {
                 throw new IOException("Failed to import any records. " + errorMessages.toString());
             }
+
+            if (successCount > 0 && errorMessages.length() > 0) {
+                throw new IOException(resultMessage + ". Some rows failed:\n" + errorMessages);
+            }
         }
     }
 
@@ -800,12 +753,43 @@ public class ProductionMetricsService {
         return "";
     }
 
+    private boolean hasAtLeastOneMetricValue(CSVRecord csvRecord) {
+        for (String field : ALL_METRIC_FIELDS) {
+            String rawValue = getColumnValue(csvRecord, field, toSnakeCase(field));
+            if (rawValue != null && !rawValue.trim().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Double parseDouble(String value) {
         try {
             return value != null && !value.trim().isEmpty() ? Double.parseDouble(value.trim()) : null;
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private String toSnakeCase(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (Character.isUpperCase(ch) && i > 0) {
+                out.append('_');
+            }
+            out.append(Character.toLowerCase(ch));
+        }
+        return out.toString();
+    }
+
+    private LocalDate parseCsvActualDate(String value) {
+        LocalDateTime dt = parseDateTime(value);
+        return dt == null ? null : dt.toLocalDate();
     }
 
     private LocalDateTime parseDateTime(String value) {

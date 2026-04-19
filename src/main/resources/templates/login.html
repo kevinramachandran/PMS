@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -63,6 +63,22 @@
                 errorBox.classList.remove('show');
             }
 
+            const loginParams = new URLSearchParams(window.location.search);
+            const licenseBlockedCode = (loginParams.get('licenseBlocked') || '').trim();
+            if (licenseBlockedCode) {
+                if (licenseBlockedCode === 'LICENSE_EXPIRED') {
+                    showError('License has expired. Only internal static users can sign in.');
+                } else if (licenseBlockedCode === 'LICENSE_NOT_STARTED') {
+                    showError('License is not active yet. Only internal static users can sign in.');
+                } else if (licenseBlockedCode === 'LICENSE_USER_LIMIT_EXCEEDED') {
+                    showError('Licensed user limit exceeded. Contact internal administrator.');
+                } else if (licenseBlockedCode === 'LICENSE_NOT_CONFIGURED') {
+                    showError('License is not configured. Only internal static users can sign in.');
+                } else {
+                    showError('License has expired or is invalid. Only internal static users can sign in.');
+                }
+            }
+
             function doLogin() {
                 const username = usernameEl.value.trim();
                 const password = passwordEl.value;
@@ -86,7 +102,11 @@
                     if (data.status === 'success') {
                         window.location.href = '/kpi-dashboard';
                     } else {
-                        showError(data.message || 'Invalid credentials');
+                        if (data.code === 'LICENSE_EXPIRED') {
+                            showError('License has expired. Only internal static users can sign in.');
+                        } else {
+                            showError(data.message || 'Invalid credentials');
+                        }
                         loginBtn.disabled = false;
                         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
                     }
@@ -112,6 +132,7 @@
 <script src="/js/ui-shell.js"></script>
 </body>
 </html>
+
 
 
 

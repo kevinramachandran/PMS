@@ -13,7 +13,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -32,9 +32,33 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <a href="/settings" class="nav-item active" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <div class="nav-parent" th:if="${session.canViewSettings}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/pms/top-priorities" class="nav-item nav-child" data-tooltip="Top 3 Priorities"><i class="fas fa-list-ol"></i><span>Top 3 Priorities</span></a>
+                        <a href="/pms/weekly-priorities" class="nav-item nav-child" data-tooltip="Top 3 Weekly Priorities"><i class="fas fa-calendar-week"></i><span>Top 3 Weekly Priorities</span></a>
+                        <a href="/pms/daily-performance" class="nav-item nav-child" data-tooltip="Daily Performance"><i class="fas fa-gauge-high"></i><span>Daily Performance</span></a>
+                        <a href="/pms/people-daily" class="nav-item nav-child" data-tooltip="People - Daily"><i class="fas fa-people-group"></i><span>People - Daily</span></a>
+                        <a href="/pms/quality-daily" class="nav-item nav-child" data-tooltip="Quality - Daily"><i class="fas fa-circle-check"></i><span>Quality - Daily</span></a>
+                        <a href="/pms/service-daily" class="nav-item nav-child" data-tooltip="Service - Daily"><i class="fas fa-handshake-angle"></i><span>Service - Daily</span></a>
+                        <a href="/pms/cost-daily" class="nav-item nav-child" data-tooltip="Cost - Daily"><i class="fas fa-coins"></i><span>Cost - Daily</span></a>
+                    </div>
+                </div>
+                <a href="/settings?config=metrics-data" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Production Metrics Data"><i class="fas fa-chart-area"></i><span>Production Metrics Data</span></a>
+                <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board Configuration"><i class="fas fa-tasks"></i><span>Issue Board Configuration</span></a>
+                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-marked-alt"></i><span>Gemba Walk Configuration</span></a>
+                <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-exclamation-triangle"></i><span>Safety Gemba - Tracker Config</span></a>
+                <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule Config"><i class="fas fa-book"></i><span>Training Schedule Config</span></a>
+                <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda Config"><i class="fas fa-list-ul"></i><span>PMS Agenda Config</span></a>
+                <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-cogs"></i><span>PMS Process Confirmation Config</span></a>
+                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker Config"><i class="fas fa-bug"></i><span>Abnormality Tracker Config</span></a>
+                <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&S Cross Daily Config"><i class="fas fa-heartbeat"></i><span>H&S Cross Daily Config</span></a>
+                <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking Config"><i class="fas fa-graduation-cap"></i><span>LSR Tracking Config</span></a>
+                <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-square"></i><span>KPI Footer Buttons</span></a>
+                <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-palette"></i><span>KPI Target Cross Color</span></a>
                 <a href="/pms-configuration" class="nav-item" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
-                <a href="/email-configuration" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
+                <a href="/settings?config=license" class="nav-item" th:if="${session.role == 'ADMIN' or session.username == 'kevin' or session.username == 'siva'}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
+                <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
             </nav>
             <div class="sidebar-footer">
                 <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -45,7 +69,7 @@
             <header class="top-header">
                 <div class="header-left">
                     <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                    <h1>PMS Data Entry</h1>
+                    <h1 th:text="${activeTitle != null and !#strings.isEmpty(activeTitle) ? activeTitle : 'PMS Data Entry'}">PMS Data Entry</h1>
                 </div>
                 <div class="header-right">
                     <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
@@ -68,93 +92,13 @@
             </header>
 
             <div class="content-area">
+                <!-- Settings Container -->
                 <div class="settings-container">
-                    <!-- Left Panel: Config List -->
-                    <aside class="settings-sidebar">
-                        <div class="config-list">
-                            <div class="config-group">
-                                <div class="config-group-title">PMS Data Entry</div>
-                                <div class="config-item menu-item active" data-config="priorities" data-type="">
-                                    <i class="fas fa-star menu-icon"></i>
-                                    <span class="menu-text">Top 3 Priorities</span>
-                                </div>
-                                <div class="config-item menu-item" data-config="weekly-priorities" data-type="">
-                                    <i class="fas fa-calendar-alt menu-icon"></i>
-                                    <span class="menu-text">Top 3 Weekly Priorities</span>
-                                </div>
-                                <div class="config-item menu-item" data-config="daily-performance" data-type="">
-                                    <i class="fas fa-chart-line menu-icon"></i>
-                                    <span class="menu-text">Daily Performance</span>
-                                </div>
-                                <div class="config-item menu-item" data-config="daily-section" data-type="PEOPLE">
-                                    <i class="fas fa-users menu-icon"></i>
-                                    <span class="menu-text">People - Daily</span>
-                                </div>
-                                <div class="config-item menu-item" data-config="daily-section" data-type="QUALITY">
-                                    <i class="fas fa-check-circle menu-icon"></i>
-                                    <span class="menu-text">Quality - Daily</span>
-                                </div>
-                                <div class="config-item menu-item" data-config="daily-section" data-type="SERVICE">
-                                    <i class="fas fa-wrench menu-icon"></i>
-                                    <span class="menu-text">Service - Daily</span>
-                                </div>
-                                <div class="config-item menu-item" data-config="daily-section" data-type="COST">
-                                    <i class="fas fa-money-bill-wave menu-icon"></i>
-                                    <span class="menu-text">Cost - Daily</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="metrics-data" data-type="">
-                                    <i class="fas fa-chart-area menu-icon"></i>
-                                    <span class="menu-text">Production Metrics Data</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="issue-board" data-type="">
-                                    <i class="fas fa-table-list menu-icon"></i>
-                                    <span class="menu-text">Issue Board Configuration</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="gemba-schedule" data-type="">
-                                    <i class="fas fa-clipboard-list menu-icon"></i>
-                                    <span class="menu-text">Gemba Walk Configuration</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="leadership-gemba-tracker" data-type="">
-                                    <i class="fas fa-route menu-icon"></i>
-                                    <span class="menu-text">Safety Gemba - Tracker Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="training-schedule" data-type="">
-                                    <i class="fas fa-calendar-days menu-icon"></i>
-                                    <span class="menu-text">Training Schedule Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="meeting-agenda" data-type="">
-                                    <i class="fas fa-clipboard-check menu-icon"></i>
-                                    <span class="menu-text">PMS Agenda Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="process-confirmation" data-type="">
-                                    <i class="fas fa-list-check menu-icon"></i>
-                                    <span class="menu-text">PMS Process Confirmation Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="abnormality-tracker" data-type="">
-                                    <i class="fas fa-triangle-exclamation menu-icon"></i>
-                                    <span class="menu-text">Abnormality Tracker Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="hs-cross" data-type="">
-                                    <i class="fas fa-shield-halved menu-icon"></i>
-                                    <span class="menu-text">H&S Cross Daily Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="lsr-tracking" data-type="">
-                                    <i class="fas fa-life-ring menu-icon"></i>
-                                    <span class="menu-text">LSR Tracking Config</span>
-                                </div>
-                                <div class="config-item menu-item config-sub-child" data-config="kpi-footer-buttons" data-type="">
-                                    <i class="fas fa-link menu-icon"></i>
-                                    <span class="menu-text">KPI Footer Buttons</span>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
-
-                    <!-- Right Panel: Dynamic Form -->
-                    <main class="settings-main">
+                    <!-- Right Panel: Dynamic Forms - Full Width -->
+                    <main class="settings-main full-width">
                         <div class="form-card">
                             <!-- TOP 3 Priorities Form -->
-                            <div id="form-priorities" class="form-section active">
+                            <div id="form-priorities" class="form-section">
                                 <h2>TOP 3 Priorities (CBN-3YP)</h2>
                                 <p class="form-subtitle">Update the top 3 priorities reviewed every Monday</p>
                                 <form id="prioritiesForm" class="dynamic-form">
@@ -286,6 +230,16 @@
                                     <div class="metrics-meta-card">
                                         <div id="metricsSelectedDateLabel" class="metrics-selected-date">Actual date: - | Target date: -</div>
                                         <div class="metrics-dashboard-note">Today&apos;s Target reads Target data for the current date, Yesterday&apos;s Actual reads Actual data for the previous date, and FTD Yesterday reads the previous day&apos;s Target.</div>
+                                    </div>
+
+                                    <div class="form-actions" style="margin-bottom:12px; justify-content:flex-start; gap:10px;">
+                                        <button type="button" class="btn btn-secondary" id="downloadMetricsCsvTemplateBtn">
+                                            <i class="fas fa-file-download"></i> Download CSV Template
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="uploadMetricsCsvBtn">
+                                            <i class="fas fa-file-upload"></i> Upload CSV (All 4 Types)
+                                        </button>
+                                        <input type="file" id="metricsCsvFileInput" accept=".csv,text/csv" style="display:none;">
                                     </div>
 
                                     <div class="metrics-tabs" role="tablist" aria-label="Production Metrics Sections">
@@ -454,6 +408,14 @@
                                                     <input type="number" id="processConfirmationBpYtdActual" name="processConfirmationBpYtdActual" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
+                                                    <label for="processConfirmationPackFtdActual">Process Confirmation Pack - FTD Actual</label>
+                                                    <input type="number" id="processConfirmationPackFtdActual" name="processConfirmationPackFtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationPackFtdTarget">Process Confirmation Pack - FTD Target</label>
+                                                    <input type="number" id="processConfirmationPackFtdTarget" name="processConfirmationPackFtdTarget" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
                                                     <label for="processConfirmationPackMtdActual">Process Confirmation Pack - MTD Actual</label>
                                                     <input type="number" id="processConfirmationPackMtdActual" name="processConfirmationPackMtdActual" min="0" step="0.01">
                                                 </div>
@@ -464,6 +426,10 @@
                                                 <div class="form-group">
                                                     <label for="processConfirmationPackYtdActual">Process Confirmation Pack - YTD Actual</label>
                                                     <input type="number" id="processConfirmationPackYtdActual" name="processConfirmationPackYtdActual" min="0" step="0.01">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="processConfirmationPackYtdTarget">Process Confirmation Pack - YTD Target</label>
+                                                    <input type="number" id="processConfirmationPackYtdTarget" name="processConfirmationPackYtdTarget" min="0" step="0.01">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="kpiOeeFtdActual">OEE - FTD Actual</label>
@@ -1329,7 +1295,7 @@
                                             <div class="current-file-display" id="btn1CurrentFileDisplay" style="display:none">
                                                 <i class="fas fa-file-alt"></i>
                                                 <span id="btn1CurrentFileName"></span>
-                                                <button type="button" class="file-remove-btn" id="btn1RemoveFile" title="Remove — switch to URL instead"><i class="fas fa-times"></i></button>
+                                                <button type="button" class="file-remove-btn" id="btn1RemoveFile" title="Remove â€” switch to URL instead"><i class="fas fa-times"></i></button>
                                             </div>
                                             <div class="upload-status-row" id="btn1UploadStatus" style="display:none">
                                                 <i class="fas fa-spinner fa-spin"></i> <span id="btn1StatusText">Uploading...</span>
@@ -1376,7 +1342,7 @@
                                             <div class="current-file-display" id="btn2CurrentFileDisplay" style="display:none">
                                                 <i class="fas fa-file-alt"></i>
                                                 <span id="btn2CurrentFileName"></span>
-                                                <button type="button" class="file-remove-btn" id="btn2RemoveFile" title="Remove — switch to URL instead"><i class="fas fa-times"></i></button>
+                                                <button type="button" class="file-remove-btn" id="btn2RemoveFile" title="Remove â€” switch to URL instead"><i class="fas fa-times"></i></button>
                                             </div>
                                             <div class="upload-status-row" id="btn2UploadStatus" style="display:none">
                                                 <i class="fas fa-spinner fa-spin"></i> <span id="btn2StatusText">Uploading...</span>
@@ -1394,6 +1360,209 @@
                                     </button>
                                 </div>
                                 <div id="kpiButtonsMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- KPI Target Cross Color Form -->
+                            <div id="form-kpi-cross-color" class="form-section">
+                                <h2>KPI Target Cross Color</h2>
+                                <p class="form-subtitle">Choose the highlight color for each KPI chart when the FTD Target line crosses the MTD Target.</p>
+
+                                <!-- People Productivity -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-users"></i> People Productivity</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_peopleProductivityChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_peopleProductivityChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_peopleProductivityChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quality Sensory -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-flask"></i> Quality - Sensory</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualitySensoryChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualitySensoryChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualitySensoryChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quality Process Confirmation -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-list-check"></i> Quality - Process Confirmation</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualityProcessConfirmationChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualityProcessConfirmationChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualityProcessConfirmationChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quality Complaint -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-comment-dots"></i> Quality - Complaint</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualityComplaintChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualityComplaintChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_qualityComplaintChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Service OEE -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-gauge-high"></i> Service - OEE</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceOeeChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceOeeChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceOeeChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Service Beer Loss -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-beer-mug-empty"></i> Service - Beer Loss</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceBeerLossChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceBeerLossChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceBeerLossChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Service WUR -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-water"></i> Service - WUR</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceWurChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceWurChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_serviceWurChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cost Electricity -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-bolt"></i> Cost - Electricity</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costElectricityChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costElectricityChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costElectricityChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cost Energy -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-fire"></i> Cost - Energy</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costEnergyChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costEnergyChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costEnergyChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cost RGB Ratio -->
+                                <div class="footer-btn-card">
+                                    <div class="footer-btn-card-header"><i class="fas fa-recycle"></i> Cost - RGB Ratio</div>
+                                    <div class="form-group">
+                                        <label>Alert Color</label>
+                                        <div class="type-toggle-group">
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costRgbChart" value="#DC2626"><span class="type-toggle-label" style="color:#DC2626"><i class="fas fa-circle"></i> Red</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costRgbChart" value="#D97706"><span class="type-toggle-label" style="color:#D97706"><i class="fas fa-circle"></i> Yellow</span></label>
+                                            <label class="type-toggle-option"><input type="radio" name="kpiCross_costRgbChart" value="#16A34A"><span class="type-toggle-label" style="color:#16A34A"><i class="fas fa-circle"></i> Green</span></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" id="saveKpiCrossColor" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save &amp; Apply All
+                                    </button>
+                                </div>
+                                <div id="kpiCrossColorMessage" class="form-message"></div>
+                            </div>
+
+                            <div id="form-license" class="form-section">
+                                <h2>License Management</h2>
+                                <p class="form-subtitle">Paste an encrypted license token to activate it. Generate tokens via the dedicated API endpoint.</p>
+
+                                <!-- Current license info card -->
+                                <div class="metrics-meta-card" style="margin-bottom:16px;">
+                                    <div id="licenseStatusText" class="metrics-selected-date">Status: -</div>
+                                    <div id="licenseMetaText" class="metrics-dashboard-note">No license loaded.</div>
+                                </div>
+
+                                <!-- Token input & decode -->
+                                <form id="licenseForm" class="dynamic-form">
+                                    <div class="form-group">
+                                        <label for="licenseTokenInput">License Token <span class="field-required">*</span></label>
+                                        <textarea id="licenseTokenInput" name="licenseToken" rows="3"
+                                                  placeholder="Paste your encrypted license token here and click Decodeâ€¦" required></textarea>
+                                    </div>
+
+                                    <div class="form-actions" style="margin-bottom:16px;">
+                                        <button type="button" class="btn btn-secondary" id="decodeLicenseBtn">
+                                            <i class="fas fa-unlock-alt"></i> Decode Token
+                                        </button>
+                                    </div>
+
+                                    <!-- Decoded fields â€” shown after decode -->
+                                    <div id="licenseDecodedPanel" style="display:none;">
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label>Vendor Name</label>
+                                                <input type="text" id="decVendorName" readonly class="readonly-field">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>No. of Users</label>
+                                                <input type="text" id="decUserCount" readonly class="readonly-field">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Date From</label>
+                                                <input type="text" id="decDateFrom" readonly class="readonly-field">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Date To</label>
+                                                <input type="text" id="decDateTo" readonly class="readonly-field">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>License Text</label>
+                                            <textarea id="decLicenseText" rows="2" readonly class="readonly-field"></textarea>
+                                        </div>
+
+                                        <div class="form-actions">
+                                            <button type="submit" class="btn btn-primary" id="saveLicenseBtn">
+                                                <i class="fas fa-save"></i> Save License
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div id="licenseMessage" class="form-message"></div>
                             </div>
 
                         </div>
@@ -1430,7 +1599,4 @@
 <script src="/js/ui-shell.js"></script>
 </body>
 </html>
-<<<<<<< HEAD
-=======
 
->>>>>>> 56d49a09ac2c5d0153a87e68e77ee9f7645be3a0

@@ -7,6 +7,7 @@
     const emailEl = document.getElementById('newEmail');
     const passwordEl = document.getElementById('newPassword');
     const roleEl = document.getElementById('newRole');
+    const newPermissionsSectionEl = document.getElementById('newPermissionsSection');
     const messageEl = document.getElementById('addUserMessage');
     const tableMessageEl = document.getElementById('usersTableMessage');
 
@@ -14,6 +15,7 @@
     const editUserIdEl = document.getElementById('editUserId');
     const editEmailEl = document.getElementById('editEmail');
     const editRoleEl = document.getElementById('editRole');
+    const editPermissionsSectionEl = document.getElementById('editPermissionsSection');
     const editPasswordEl = document.getElementById('editPassword');
     const editMessageEl = document.getElementById('editUserMessage');
     const saveEditBtn = document.getElementById('saveEditBtn');
@@ -29,23 +31,18 @@
 
     function normalizeRole(role) {
         const value = String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
-        if (value === 'USER' || value === 'L1_USER') {
-            return 'L1_USER';
+        if (value === 'ADMIN') {
+            return 'ADMIN';
         }
-        if (value === 'L2_USER') {
-            return 'L2_USER';
-        }
-        return value === 'ADMIN' ? 'ADMIN' : 'L1_USER';
+        return 'USER';
     }
 
     function roleLabel(role) {
         switch (normalizeRole(role)) {
             case 'ADMIN':
                 return 'Admin';
-            case 'L2_USER':
-                return 'L2 User';
             default:
-                return 'L1 User';
+                return 'User';
         }
     }
 
@@ -62,22 +59,101 @@
     function userIcon(role) {
         const normalized = normalizeRole(role);
         if (normalized === 'ADMIN') return 'fa-user-shield';
-        if (normalized === 'L2_USER') return 'fa-chart-line';
         return 'fa-user';
     }
 
     function roleClass(role) {
         const normalized = normalizeRole(role);
         if (normalized === 'ADMIN') return 'admin';
-        if (normalized === 'L2_USER') return 'l2';
         return 'l1';
+    }
+
+    function readArray(value) {
+        if (Array.isArray(value)) {
+            return value.map(function (item) { return String(item || '').trim().toUpperCase(); }).filter(Boolean);
+        }
+        if (!value) {
+            return [];
+        }
+        return String(value)
+            .split(',')
+            .map(function (item) { return item.trim().toUpperCase(); })
+            .filter(Boolean);
+    }
+
+    function formatPermissionSummary(user) {
+        const view = new Set(readArray(user.viewPermissions));
+        const edit = new Set(readArray(user.editPermissions));
+        const parts = [];
+
+        if (view.has('SETTINGS') || edit.has('SETTINGS')) {
+            parts.push('PMS: ' + (edit.has('SETTINGS') ? 'Edit' : 'View'));
+        }
+
+        if (view.has('EMAIL_CONFIGURATION') || edit.has('EMAIL_CONFIGURATION')) {
+            parts.push('Email: ' + (edit.has('EMAIL_CONFIGURATION') ? 'Edit' : 'View'));
+        }
+
+        return parts.length ? parts.join(' | ') : '-';
+    }
+
+    function setPermissionInputs(scope, values, type) {
+        const normalized = new Set(readArray(values));
+        const inputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="' + type + '"]');
+        inputs.forEach(function (input) {
+            input.checked = normalized.has(String(input.dataset.page || '').toUpperCase());
+        });
+    }
+
+    function collectPermissions(scope) {
+        const viewInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="view"]');
+        const editInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="edit"]');
+        const viewPermissions = [];
+        const editPermissions = [];
+
+        viewInputs.forEach(function (input) {
+            if (input.checked) {
+                viewPermissions.push(String(input.dataset.page || '').toUpperCase());
+            }
+        });
+
+        editInputs.forEach(function (input) {
+            if (input.checked) {
+                const page = String(input.dataset.page || '').toUpperCase();
+                editPermissions.push(page);
+
+                const relatedView = document.querySelector('input[data-scope="' + scope + '"][data-type="view"][data-page="' + page + '"]');
+                if (relatedView && !relatedView.checked) {
+                    relatedView.checked = true;
+                    if (!viewPermissions.includes(page)) {
+                        viewPermissions.push(page);
+                    }
+                }
+            }
+        });
+
+        return {
+            viewPermissions: Array.from(new Set(viewPermissions)),
+            editPermissions: Array.from(new Set(editPermissions))
+        };
+    }
+
+    function resetPermissions(scope) {
+        setPermissionInputs(scope, [], 'view');
+        setPermissionInputs(scope, [], 'edit');
+    }
+
+    function togglePermissionSection(roleElement, sectionElement) {
+        if (!roleElement || !sectionElement) return;
+        const isAdmin = normalizeRole(roleElement.value) === 'ADMIN';
+        sectionElement.style.display = isAdmin ? 'none' : 'block';
     }
 
     function renderUsers(users) {
         if (!tableBody) return;
 
         if (!Array.isArray(users) || users.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:14px;">No users found.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:14px;">No users found.</td></tr>';
             return;
         }
 
@@ -87,9 +163,10 @@
                 '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i>' + escapeHtml(u.username) + '</td>' +
                 '<td>' + escapeHtml(u.email || '-') + '</td>' +
                 '<td><span class="pms-role-badge ' + roleClass(u.role) + '">' + escapeHtml(u.roleLabel || roleLabel(u.role)) + '</span></td>' +
+                '<td>' + escapeHtml(formatPermissionSummary(u)) + '</td>' +
                 '<td><span class="pms-status-badge active">' + escapeHtml(u.status || 'Active') + '</span></td>' +
                 '<td class="pms-user-actions">' +
-                '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-email="' + escapeHtml(u.email || '') + '" data-role="' + escapeHtml(u.role) + '"><i class="fas fa-pen"></i> Edit</button>' +
+                '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-email="' + escapeHtml(u.email || '') + '" data-role="' + escapeHtml(u.role) + '" data-view-permissions="' + escapeHtml(readArray(u.viewPermissions).join(',')) + '" data-edit-permissions="' + escapeHtml(readArray(u.editPermissions).join(',')) + '"><i class="fas fa-pen"></i> Edit</button>' +
                 '<button type="button" class="pms-action-btn delete" data-id="' + u.id + '"><i class="fas fa-trash"></i> Delete</button>' +
                 '</td>' +
                 '</tr>';
@@ -114,13 +191,13 @@
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (data.status !== 'success') {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#b91c1c;padding:14px;">Failed to load users.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:14px;">Failed to load users.</td></tr>';
                     return;
                 }
                 renderUsers(data.users);
             })
             .catch(function () {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#b91c1c;padding:14px;">Error loading users.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:14px;">Error loading users.</td></tr>';
             });
     }
 
@@ -128,7 +205,10 @@
         const username = (usernameEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
-        const role = normalizeRole(roleEl.value || 'L1_USER');
+        const role = normalizeRole(roleEl.value || 'USER');
+        const permissions = role === 'ADMIN'
+            ? { viewPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'], editPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'] }
+            : collectPermissions('new');
 
         if (!username || !email || !password) {
             showMessage(messageEl, 'Please fill username, email, and password.', 'warning');
@@ -141,7 +221,14 @@
         fetch('/api/users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: username, email: email, password: password, role: role })
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password,
+                role: role,
+                viewPermissions: permissions.viewPermissions,
+                editPermissions: permissions.editPermissions
+            })
         })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -149,7 +236,9 @@
                     showMessage(messageEl, 'User added successfully.', 'success');
                     showMessage(tableMessageEl, 'User created successfully.', 'success');
                     form.reset();
-                    roleEl.value = 'L1_USER';
+                    roleEl.value = 'USER';
+                    resetPermissions('new');
+                    togglePermissionSection(roleEl, newPermissionsSectionEl);
                     loadUsers();
                 } else {
                     showMessage(messageEl, data.message || 'Failed to add user.', 'error');
@@ -164,11 +253,14 @@
             });
     }
 
-    function openEditModal(id, email, role) {
+    function openEditModal(id, email, role, viewPermissions, editPermissions) {
         if (!modalEl) return;
         editUserIdEl.value = id;
         editEmailEl.value = email || '';
-        editRoleEl.value = normalizeRole(role || 'L1_USER');
+        editRoleEl.value = normalizeRole(role || 'USER');
+        setPermissionInputs('edit', viewPermissions, 'view');
+        setPermissionInputs('edit', editPermissions, 'edit');
+        togglePermissionSection(editRoleEl, editPermissionsSectionEl);
         editPasswordEl.value = '';
         editMessageEl.className = 'form-message';
         editMessageEl.textContent = '';
@@ -197,8 +289,11 @@
     function saveEdit() {
         const id = editUserIdEl.value;
         const email = (editEmailEl.value || '').trim();
-        const role = normalizeRole(editRoleEl.value || 'L1_USER');
+        const role = normalizeRole(editRoleEl.value || 'USER');
         const password = editPasswordEl.value || '';
+        const permissions = role === 'ADMIN'
+            ? { viewPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'], editPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'] }
+            : collectPermissions('edit');
 
         if (!id || !email) {
             showMessage(editMessageEl, 'Email is required.', 'warning');
@@ -211,7 +306,13 @@
         fetch('/api/users/' + encodeURIComponent(id), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, role: role, password: password })
+            body: JSON.stringify({
+                email: email,
+                role: role,
+                password: password,
+                viewPermissions: permissions.viewPermissions,
+                editPermissions: permissions.editPermissions
+            })
         })
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -267,7 +368,13 @@
 
         editButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                openEditModal(btn.dataset.id, btn.dataset.email, btn.dataset.role);
+                openEditModal(
+                    btn.dataset.id,
+                    btn.dataset.email,
+                    btn.dataset.role,
+                    btn.dataset.viewPermissions,
+                    btn.dataset.editPermissions
+                );
             });
         });
 
@@ -284,6 +391,48 @@
 
     if (saveEditBtn) {
         saveEditBtn.addEventListener('click', saveEdit);
+    }
+
+    function bindPermissionRules(scope) {
+        const editInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="edit"]');
+        const viewInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="view"]');
+
+        editInputs.forEach(function (input) {
+            input.addEventListener('change', function () {
+                const page = String(input.dataset.page || '').toUpperCase();
+                if (!page || !input.checked) return;
+                const relatedView = document.querySelector('input[data-scope="' + scope + '"][data-type="view"][data-page="' + page + '"]');
+                if (relatedView) {
+                    relatedView.checked = true;
+                }
+            });
+        });
+
+        viewInputs.forEach(function (input) {
+            input.addEventListener('change', function () {
+                const page = String(input.dataset.page || '').toUpperCase();
+                if (!page || input.checked) return;
+                const relatedEdit = document.querySelector('input[data-scope="' + scope + '"][data-type="edit"][data-page="' + page + '"]');
+                if (relatedEdit) {
+                    relatedEdit.checked = false;
+                }
+            });
+        });
+    }
+
+    bindPermissionRules('new');
+    bindPermissionRules('edit');
+
+    if (roleEl) {
+        roleEl.addEventListener('change', function () {
+            togglePermissionSection(roleEl, newPermissionsSectionEl);
+        });
+    }
+
+    if (editRoleEl) {
+        editRoleEl.addEventListener('change', function () {
+            togglePermissionSection(editRoleEl, editPermissionsSectionEl);
+        });
     }
 
     if (closeEditModalBtn) {
@@ -334,6 +483,8 @@
             if (e.key === 'Enter') addUser();
         });
     });
+
+    togglePermissionSection(roleEl, newPermissionsSectionEl);
 
     loadUsers();
 })();

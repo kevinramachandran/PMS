@@ -142,6 +142,12 @@ public class ProductionMetrics {
     private Double processConfirmationBpYtdTarget;
 
     // Process Confirmation Pack
+    @Column(name = "process_confirmation_pack_ftd_actual")
+    private Double processConfirmationPackFtdActual;
+
+    @Column(name = "process_confirmation_pack_ftd_target")
+    private Double processConfirmationPackFtdTarget;
+
     @Column(name = "process_confirmation_pack_mtd_actual")
     private Double processConfirmationPackMtdActual;
 

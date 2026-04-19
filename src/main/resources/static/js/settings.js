@@ -3,7 +3,22 @@
 $(document).ready(function() {
     let currentForm = 'priorities';
     let currentType = '';
-    const requestedConfig = (new URLSearchParams(window.location.search).get('config') || '').trim().toLowerCase();
+    const pageState = document.body ? document.body.dataset : {};
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedConfig = (urlParams.get('config') || '').toLowerCase().trim();
+    const serverActivePage = (pageState.activePage || '').toLowerCase().trim();
+    const serverActiveType = (pageState.activeType || '').toUpperCase().trim();
+    const serverActiveTitle = (pageState.activeTitle || '').trim();
+    
+    console.log('=== SETTINGS PAGE INITIALIZATION ===');
+    console.log('URL:', window.location.href);
+    console.log('URL Search:', window.location.search);
+    console.log('Config Parameter:', urlParams.get('config'));
+    console.log('Requested Config (processed):', requestedConfig);
+    console.log('Server Active Page:', serverActivePage);
+    console.log('Server Active Type:', serverActiveType);
+    console.log('Server Active Title:', serverActiveTitle);
+    
     let issueBoardAssignableUsers = [];
     let issueBoardAssignableLookup = new Map();
 
@@ -21,7 +36,7 @@ $(document).ready(function() {
             'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsMtdTarget', 'noOfBrewsYtdActual', 'noOfBrewsYtdTarget',
             'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchMtdTarget', 'dispatchYtdActual', 'dispatchYtdTarget',
             'processConfirmationBpFtdActual', 'processConfirmationBpFtdTarget', 'processConfirmationBpMtdActual', 'processConfirmationBpMtdTarget', 'processConfirmationBpYtdActual', 'processConfirmationBpYtdTarget',
-            'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual', 'processConfirmationPackYtdTarget',
+            'processConfirmationPackFtdActual', 'processConfirmationPackFtdTarget', 'processConfirmationPackMtdActual', 'processConfirmationPackMtdTarget', 'processConfirmationPackYtdActual', 'processConfirmationPackYtdTarget',
             'kpiOeeFtdActual', 'kpiOeeFtdTarget', 'kpiOeeMtdActual', 'kpiOeeMtdTarget', 'kpiOeeYtdActual', 'kpiOeeYtdTarget',
             'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget', 'kpiBeerLossMtdActual', 'kpiBeerLossMtdTarget', 'kpiBeerLossYtdActual', 'kpiBeerLossYtdTarget',
             'kpiWurHlHlFtdActual', 'kpiWurHlHlFtdTarget', 'kpiWurHlHlMtdActual', 'kpiWurHlHlMtdTarget', 'kpiWurHlHlYtdActual', 'kpiWurHlHlYtdTarget'
@@ -67,19 +82,19 @@ $(document).ready(function() {
     initializeProcessConfirmationDateField();
     initializeProcessConfirmationStatusEditors();
 
-    // ==================== CONFIG ITEM CLICK HANDLERS ====================
-    $('.config-item').on('click', function(e) {
-        e.preventDefault();
-        const config = $(this).data('config');
-        const type = $(this).data('type');
-
-        $('.config-item').removeClass('active');
-        $(this).addClass('active');
-        showForm(config, type);
-    });
+    // ==================== DIRECT NAV CONFIGS ====================
+    const directNavConfigs = ['issue-board', 'gemba-schedule', 'abnormality-tracker', 'leadership-gemba-tracker', 
+                             'training-schedule', 'meeting-agenda', 'process-confirmation', 'hs-cross', 
+                             'lsr-tracking', 'kpi-footer-buttons', 'license', 'metrics-data', 'kpi-cross-color'];
+    const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
+    
+    console.log('Direct Nav Configs:', directNavConfigs);
+    console.log('Is requested config in direct nav?', directNavConfigs.includes(requestedConfig), '(' + requestedConfig + ')');
 
     // ==================== FORM SWITCHING ====================
     function showForm(config, type) {
+        console.log('>>> showForm() called with config:', config, ', type:', type);
+        
         $('.form-section').removeClass('active');
         $('.form-message').removeClass('show');
 
@@ -87,6 +102,7 @@ $(document).ready(function() {
         currentType = type;
 
         if (config === 'priorities') {
+            console.log('   -> Setting priorities form ACTIVE');
             $('#form-priorities').addClass('active');
             loadPrioritiesData();
         } else if (config === 'weekly-priorities') {
@@ -100,6 +116,7 @@ $(document).ready(function() {
             $('#dailySectionTitle').text(getSectionTitle(type) + ' - Daily');
             loadDailyData(type);
         } else if (config === 'metrics-data') {
+            console.log('   -> Setting metrics-data form ACTIVE');
             $('#form-metrics-data').addClass('active');
             const selectedMetricsDate = $('#metricsDateInput').val();
             if (selectedMetricsDate) {
@@ -109,9 +126,11 @@ $(document).ready(function() {
                 showMessage('metricsDataMessage', 'Select a valid past date to load Production Metrics.', 'error');
             }
         } else if (config === 'issue-board') {
+            console.log('   -> Setting issue-board form ACTIVE');
             $('#form-issue-board').addClass('active');
             loadIssueBoardByDate($('#issueBoardConfigDate').val());
         } else if (config === 'gemba-schedule') {
+            console.log('   -> Setting gemba-schedule form ACTIVE');
             $('#form-gemba-schedule').addClass('active');
             loadGembaScheduleByDate($('#gembaScheduleDate').val());
         } else if (config === 'abnormality-tracker') {
@@ -138,7 +157,21 @@ $(document).ready(function() {
         } else if (config === 'kpi-footer-buttons') {
             $('#form-kpi-footer-buttons').addClass('active');
             loadKpiFooterButtonsConfig();
+        } else if (config === 'kpi-cross-color') {
+            $('#form-kpi-cross-color').addClass('active');
+            loadKpiCrossColorConfig();
+        } else if (config === 'license') {
+            $('#form-license').addClass('active');
+            loadLicenseConfig();
+        } else {
+            console.warn('Unknown config:', config);
         }
+        
+        // Debug: log which form is active
+        setTimeout(function() {
+            const activeForm = $('.form-section.active');
+            console.log('Active form element:', activeForm.attr('id'), 'visible:', activeForm.is(':visible'));
+        }, 100);
     }
 
     // ==================== GET SECTION TITLE ====================
@@ -568,6 +601,64 @@ $(document).ready(function() {
 
     $('#metricsDataForm').on('submit', function(e) {
         e.preventDefault();
+    });
+
+    $('#downloadMetricsCsvTemplateBtn').on('click', function() {
+        window.location.href = '/api/production-metrics/template/csv';
+    });
+
+    $('#uploadMetricsCsvBtn').on('click', function() {
+        $('#metricsCsvFileInput').click();
+    });
+
+    $('#metricsCsvFileInput').on('change', function() {
+        const file = this.files && this.files[0] ? this.files[0] : null;
+        if (!file) {
+            return;
+        }
+
+        const fileName = (file.name || '').toLowerCase();
+        if (!fileName.endsWith('.csv')) {
+            showMessage('metricsDataMessage', 'Please select a valid CSV file.', 'error');
+            showMetricsToast('Please select a valid CSV file.', 'error');
+            $(this).val('');
+            return;
+        }
+
+        const $uploadBtn = $('#uploadMetricsCsvBtn');
+        const originalHtml = $uploadBtn.html();
+        $uploadBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        $.ajax({
+            url: '/api/production-metrics/import/csv',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(responseText) {
+                const msg = responseText || 'CSV imported successfully.';
+                showMessage('metricsDataMessage', msg, 'success');
+                showMetricsToast('CSV import completed.', 'success');
+
+                const selectedDate = $('#metricsDateInput').val();
+                if (selectedDate) {
+                    loadMetricsDataByDate(selectedDate);
+                }
+                updateKPIDashboard();
+            },
+            error: function(xhr) {
+                const msg = xhr.responseText || 'Failed to import CSV file.';
+                showMessage('metricsDataMessage', msg, 'error');
+                showMetricsToast(msg, 'error');
+            },
+            complete: function() {
+                $uploadBtn.prop('disabled', false).html(originalHtml);
+                $('#metricsCsvFileInput').val('');
+            }
+        });
     });
 
     $('.metrics-save-btn').on('click', function() {
@@ -2902,6 +2993,168 @@ $(document).ready(function() {
         });
     }
 
+    // ==================== KPI CROSS COLOR ====================
+    const KPI_CROSS_CHARTS = [
+        'peopleProductivityChart',
+        'qualitySensoryChart',
+        'qualityProcessConfirmationChart',
+        'qualityComplaintChart',
+        'serviceOeeChart',
+        'serviceBeerLossChart',
+        'serviceWurChart',
+        'costElectricityChart',
+        'costEnergyChart',
+        'costRgbChart'
+    ];
+
+    function loadKpiCrossColorConfig() {
+        KPI_CROSS_CHARTS.forEach(function(chartId) {
+            const saved = localStorage.getItem('kpiCrossAlertColor_' + chartId) || '#DC2626';
+            $('input[name="kpiCross_' + chartId + '"]').each(function() {
+                $(this).prop('checked', $(this).val() === saved);
+            });
+        });
+    }
+
+    $('#saveKpiCrossColor').on('click', function() {
+        KPI_CROSS_CHARTS.forEach(function(chartId) {
+            const selected = $('input[name="kpiCross_' + chartId + '"]:checked').val();
+            if (selected) {
+                localStorage.setItem('kpiCrossAlertColor_' + chartId, selected);
+            }
+        });
+        $('#kpiCrossColorMessage').removeClass('error').addClass('success').text('Colors saved! Changes will reflect on next chart load.').show();
+        setTimeout(function() { $('#kpiCrossColorMessage').fadeOut(); }, 3000);
+    });
+
+    // ==================== LICENSE CONFIG ====================
+    function loadLicenseConfig() {
+        $.ajax({
+            url: '/api/license/current',
+            type: 'GET',
+            success: function(response) {
+                if (!response || response.status !== 'success') {
+                    showMessage('licenseMessage', 'Unable to load license.', 'error');
+                    return;
+                }
+
+                const license = response.license;
+                if (!license) {
+                    $('#licenseStatusText').text('Status: NOT CONFIGURED');
+                    $('#licenseMetaText').text('No active license. Paste a license token below to activate.');
+                    return;
+                }
+
+                const managedCount = Number(license.managedUsersCount || 0);
+                const userCount    = Number(license.userCount || 0);
+                $('#licenseStatusText').text('Status: ' + (license.status || '-'));
+                $('#licenseMetaText').text(
+                    'Vendor: ' + (license.vendorName || '-') +
+                    ' | Users: ' + managedCount + '/' + userCount +
+                    ' | Valid: ' + (license.dateFrom || '-') + ' → ' + (license.dateTo || '-')
+                );
+
+                // Pre-fill token field with current saved token for easy update reference
+                if (license.licenseToken) {
+                    $('#licenseTokenInput').val(license.licenseToken);
+                    populateDecodedPanel(license);
+                    $('#licenseDecodedPanel').show();
+                }
+
+                if (license.status === 'EXPIRED') {
+                    showMessage('licenseMessage', 'License is expired. Normal users cannot sign in until renewed.', 'error');
+                } else if (license.status === 'ACTIVE') {
+                    showMessage('licenseMessage', 'License is active.', 'success');
+                }
+            },
+            error: function(xhr) {
+                const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Unable to load license configuration.';
+                showMessage('licenseMessage', msg, 'error');
+            }
+        });
+    }
+
+    function populateDecodedPanel(fields) {
+        $('#decVendorName').val(fields.vendorName || '');
+        $('#decUserCount').val(fields.userCount || '');
+        $('#decDateFrom').val(fields.dateFrom || '');
+        $('#decDateTo').val(fields.dateTo || '');
+        $('#decLicenseText').val(fields.licenseText || '');
+    }
+
+    // Decode button — calls /api/license/decode to show embedded fields
+    $('#decodeLicenseBtn').on('click', function() {
+        const token = ($('#licenseTokenInput').val() || '').trim();
+        if (!token) {
+            showMessage('licenseMessage', 'Please paste a license token first.', 'error');
+            return;
+        }
+
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Decoding...');
+
+        $.ajax({
+            url: '/api/license/decode',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ licenseToken: token }),
+            success: function(response) {
+                if (!response || response.status !== 'success') {
+                    showMessage('licenseMessage', (response && response.message) ? response.message : 'Invalid token.', 'error');
+                    $('#licenseDecodedPanel').hide();
+                    return;
+                }
+                populateDecodedPanel(response.fields || {});
+                $('#licenseDecodedPanel').show();
+                showMessage('licenseMessage', 'Token decoded successfully. Review the fields below and click Save License.', 'success');
+            },
+            error: function(xhr) {
+                const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Invalid or tampered token.';
+                showMessage('licenseMessage', msg, 'error');
+                $('#licenseDecodedPanel').hide();
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fas fa-unlock-alt"></i> Decode Token');
+            }
+        });
+    });
+
+    // Save button — sends token to /api/license/save
+    $('#licenseForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const token = ($('#licenseTokenInput').val() || '').trim();
+        if (!token) {
+            showMessage('licenseMessage', 'License token is required.', 'error');
+            return;
+        }
+
+        const $btn = $('#saveLicenseBtn');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+        $.ajax({
+            url: '/api/license/save',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ licenseToken: token }),
+            success: function(response) {
+                if (!response || response.status !== 'success') {
+                    showMessage('licenseMessage', (response && response.message) ? response.message : 'License save failed.', 'error');
+                    return;
+                }
+                showMessage('licenseMessage', 'License saved and activated successfully.', 'success');
+                loadLicenseConfig();
+            },
+            error: function(xhr) {
+                const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error saving license.';
+                showMessage('licenseMessage', msg, 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Save License');
+            }
+        });
+    });
+
     function loadKpiFooterButtonsConfig() {
         $.ajax({
             url: '/api/dashboard-config/kpi-footer-buttons',
@@ -3062,168 +3315,23 @@ $(document).ready(function() {
         console.log('Settings updated. KPI Dashboard will refresh if open.');
     }
 
-    // ==================== NAVIGATION TOGGLE ====================
-    $('.nav-parent-toggle').on('click', function(e) {
-        e.preventDefault();
-        $(this).addClass('expanded');
-        $(this).next('.nav-children').addClass('show').show();
-    });
-
-    $('.nav-parent-toggle').addClass('expanded');
-    $('.nav-children').addClass('show').show();
-
-    const $activeChild = $('.nav-child.active');
-    if ($activeChild.length) {
-        const $parent = $activeChild.closest('.nav-parent');
-        $parent.find('.nav-parent-toggle').addClass('expanded');
-        $parent.find('.nav-children').addClass('show').show();
-    }
-
     function initializeSettingsView() {
-        if (requestedConfig === 'issue-board') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const issueConfigItem = $('.config-item[data-config="issue-board"]').first();
-            if (issueConfigItem.length) {
-                issueConfigItem.addClass('active');
-            }
-            showForm('issue-board', '');
+        const initialConfig = serverActivePage || requestedConfig;
+        const initialType = serverActiveType || '';
 
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="issue-board-config"]').addClass('active');
+        console.log('====== INITIAL SETTINGS VIEW ======');
+        console.log('Initial config:', initialConfig);
+        console.log('Initial type:', initialType);
+        console.log('URL:', window.location.href);
+
+        if (supportedConfigs.includes(initialConfig)) {
+            showForm(initialConfig, initialType);
             return;
         }
 
-        if (requestedConfig === 'gemba-schedule') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const gembaConfigItem = $('.config-item[data-config="gemba-schedule"]').first();
-            if (gembaConfigItem.length) {
-                gembaConfigItem.addClass('active');
-            }
-            showForm('gemba-schedule', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="gemba-schedule-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'abnormality-tracker') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const atConfigItem = $('.config-item[data-config="abnormality-tracker"]').first();
-            if (atConfigItem.length) {
-                atConfigItem.addClass('active');
-            }
-            showForm('abnormality-tracker', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="abnormality-tracker-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'leadership-gemba-tracker') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const lgtConfigItem = $('.config-item[data-config="leadership-gemba-tracker"]').first();
-            if (lgtConfigItem.length) {
-                lgtConfigItem.addClass('active');
-            }
-            showForm('leadership-gemba-tracker', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="leadership-gemba-tracker-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'training-schedule') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const trainingConfigItem = $('.config-item[data-config="training-schedule"]').first();
-            if (trainingConfigItem.length) {
-                trainingConfigItem.addClass('active');
-            }
-            showForm('training-schedule', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="training-schedule-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'meeting-agenda') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const meetingAgendaConfigItem = $('.config-item[data-config="meeting-agenda"]').first();
-            if (meetingAgendaConfigItem.length) {
-                meetingAgendaConfigItem.addClass('active');
-            }
-            showForm('meeting-agenda', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="meeting-agenda-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'process-confirmation') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const processConfirmationConfigItem = $('.config-item[data-config="process-confirmation"]').first();
-            if (processConfirmationConfigItem.length) {
-                processConfirmationConfigItem.addClass('active');
-            }
-            showForm('process-confirmation', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="process-confirmation-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'hs-cross') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const hsCrossConfigItem = $('.config-item[data-config="hs-cross"]').first();
-            if (hsCrossConfigItem.length) {
-                hsCrossConfigItem.addClass('active');
-            }
-            showForm('hs-cross', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="hs-cross-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'lsr-tracking') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const lsrConfigItem = $('.config-item[data-config="lsr-tracking"]').first();
-            if (lsrConfigItem.length) {
-                lsrConfigItem.addClass('active');
-            }
-            showForm('lsr-tracking', '');
-
-            $('.nav-child').removeClass('active');
-            $('.nav-child[data-nav="lsr-tracking-config"]').addClass('active');
-            return;
-        }
-
-        if (requestedConfig === 'kpi-footer-buttons') {
-            $('.settings-container').addClass('issue-board-full-page');
-            $('.config-item').removeClass('active');
-            const kpiFooterButtonsConfigItem = $('.config-item[data-config="kpi-footer-buttons"]').first();
-            if (kpiFooterButtonsConfigItem.length) {
-                kpiFooterButtonsConfigItem.addClass('active');
-            }
-            showForm('kpi-footer-buttons', '');
-
-            $('.nav-child').removeClass('active');
-            return;
-        }
-
-        $('.settings-container').removeClass('issue-board-full-page');
-        loadPrioritiesData();
-        $('.nav-child').removeClass('active');
+        console.log('Unknown initial config. Falling back to priorities.');
+        showForm('priorities', '');
     }
 
-    // Initialize
     initializeSettingsView();
-});
+    });

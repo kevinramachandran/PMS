@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -31,9 +31,33 @@
                 <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                <a href="/settings" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span></a>
+                <div class="nav-parent" th:if="${session.canViewSettings}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/pms/top-priorities" class="nav-item nav-child" data-tooltip="Top 3 Priorities"><i class="fas fa-list-ol"></i><span>Top 3 Priorities</span></a>
+                        <a href="/pms/weekly-priorities" class="nav-item nav-child" data-tooltip="Top 3 Weekly Priorities"><i class="fas fa-calendar-week"></i><span>Top 3 Weekly Priorities</span></a>
+                        <a href="/pms/daily-performance" class="nav-item nav-child" data-tooltip="Daily Performance"><i class="fas fa-gauge-high"></i><span>Daily Performance</span></a>
+                        <a href="/pms/people-daily" class="nav-item nav-child" data-tooltip="People - Daily"><i class="fas fa-people-group"></i><span>People - Daily</span></a>
+                        <a href="/pms/quality-daily" class="nav-item nav-child" data-tooltip="Quality - Daily"><i class="fas fa-circle-check"></i><span>Quality - Daily</span></a>
+                        <a href="/pms/service-daily" class="nav-item nav-child" data-tooltip="Service - Daily"><i class="fas fa-handshake-angle"></i><span>Service - Daily</span></a>
+                        <a href="/pms/cost-daily" class="nav-item nav-child" data-tooltip="Cost - Daily"><i class="fas fa-coins"></i><span>Cost - Daily</span></a>
+                    </div>
+                </div>
+                <a href="/settings?config=metrics-data" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Production Metrics Data"><i class="fas fa-chart-area"></i><span>Production Metrics Data</span></a>
+                <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board Configuration"><i class="fas fa-sliders"></i><span>Issue Board Configuration</span></a>
+                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-sliders"></i><span>Gemba Walk Configuration</span></a>
+                <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-sliders"></i><span>Safety Gemba - Tracker Config</span></a>
+                <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule Config"><i class="fas fa-sliders"></i><span>Training Schedule Config</span></a>
+                <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda Config"><i class="fas fa-sliders"></i><span>PMS Agenda Config</span></a>
+                <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-sliders"></i><span>PMS Process Confirmation Config</span></a>
+                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker Config"><i class="fas fa-sliders"></i><span>Abnormality Tracker Config</span></a>
+                <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&S Cross Daily Config"><i class="fas fa-sliders"></i><span>H&S Cross Daily Config</span></a>
+                <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking Config"><i class="fas fa-sliders"></i><span>LSR Tracking Config</span></a>
+                <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-sliders"></i><span>KPI Footer Buttons</span></a>
+                <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
                 <a href="/pms-configuration" class="nav-item active" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
-                <a href="/email-configuration" class="nav-item" th:if="${session.role == 'ADMIN' or session.role == 'L1_USER' or session.role == 'USER'}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
+                <a href="/settings?config=license" class="nav-item" th:if="${session.role == 'ADMIN' or session.username == 'kevin' or session.username == 'siva'}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
+                <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
             </nav>
             <div class="sidebar-footer">
                 <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -81,13 +105,14 @@
                                             <th>Username</th>
                                             <th>Email</th>
                                             <th>Role</th>
+                                            <th>Config Access</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="adminUsersTableBody">
                                         <tr>
-                                            <td colspan="5" style="text-align:center;color:#64748b;padding:14px;">Loading users...</td>
+                                            <td colspan="6" style="text-align:center;color:#64748b;padding:14px;">Loading users...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -118,10 +143,25 @@
                                         <div class="form-group">
                                             <label class="form-label">Role</label>
                                             <select id="newRole" class="form-select">
-                                                <option value="L1_USER">L1 User</option>
-                                                <option value="L2_USER">L2 User</option>
                                                 <option value="ADMIN">Admin</option>
+                                                <option value="USER" selected>User</option>
                                             </select>
+                                        </div>
+                                        <div class="form-group" id="newPermissionsSection">
+                                            <label class="form-label">Configuration Page Permissions</label>
+                                            <div class="permission-matrix">
+                                                <div class="permission-row">
+                                                    <span class="permission-page">PMS Data Entry</span>
+                                                    <label><input type="checkbox" data-scope="new" data-page="SETTINGS" data-type="view"> View</label>
+                                                    <label><input type="checkbox" data-scope="new" data-page="SETTINGS" data-type="edit"> Edit</label>
+                                                </div>
+                                                <div class="permission-row">
+                                                    <span class="permission-page">Email Configuration</span>
+                                                    <label><input type="checkbox" data-scope="new" data-page="EMAIL_CONFIGURATION" data-type="view"> View</label>
+                                                    <label><input type="checkbox" data-scope="new" data-page="EMAIL_CONFIGURATION" data-type="edit"> Edit</label>
+                                                </div>
+                                            </div>
+                                            <small style="color:#64748b;display:block;margin-top:6px;">Dashboard pages remain view-only and are not managed here.</small>
                                         </div>
                                     </div>
                                     <div class="form-actions" style="margin-top:16px;">
@@ -156,10 +196,24 @@
                     <div class="form-group">
                         <label class="form-label">Role</label>
                         <select id="editRole" class="form-select">
-                            <option value="L1_USER">L1 User</option>
-                            <option value="L2_USER">L2 User</option>
                             <option value="ADMIN">Admin</option>
+                            <option value="USER">User</option>
                         </select>
+                    </div>
+                    <div class="form-group" id="editPermissionsSection">
+                        <label class="form-label">Configuration Page Permissions</label>
+                        <div class="permission-matrix">
+                            <div class="permission-row">
+                                <span class="permission-page">PMS Data Entry</span>
+                                <label><input type="checkbox" data-scope="edit" data-page="SETTINGS" data-type="view"> View</label>
+                                <label><input type="checkbox" data-scope="edit" data-page="SETTINGS" data-type="edit"> Edit</label>
+                            </div>
+                            <div class="permission-row">
+                                <span class="permission-page">Email Configuration</span>
+                                <label><input type="checkbox" data-scope="edit" data-page="EMAIL_CONFIGURATION" data-type="view"> View</label>
+                                <label><input type="checkbox" data-scope="edit" data-page="EMAIL_CONFIGURATION" data-type="edit"> Edit</label>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Password (optional)</label>
@@ -205,5 +259,6 @@
 <script src="/js/ui-shell.js"></script>
 </body>
 </html>
+
 
 

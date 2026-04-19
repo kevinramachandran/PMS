@@ -4,15 +4,18 @@ import jakarta.servlet.http.HttpSession;
 import org.example.entity.AppUser;
 import org.example.model.UserInfo;
 import org.example.service.AuthService;
+import org.example.service.LicenseService;
 import org.example.util.RoleAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -20,6 +23,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private LicenseService licenseService;
 
     /** Show the login page, or redirect if already logged in. */
     @GetMapping("/pms-login")
@@ -43,11 +49,30 @@ public class AuthController {
 
         Optional<UserInfo> user = authService.authenticate(username, password);
         if (user.isPresent()) {
+            boolean internalStaticUser = authService.isInternalStaticUser(user.get().getUsername());
+            LicenseService.LicenseGateResult gate = licenseService.evaluateForLogin(internalStaticUser);
+            if (!gate.allowed()) {
+                return Map.of("status", "error", "message", gate.message(), "code", gate.code());
+            }
+
             String normalizedRole = RoleAccess.normalize(user.get().getRole());
+                Set<String> viewPermissions = user.get().getViewPermissions();
+                Set<String> editPermissions = user.get().getEditPermissions();
+                boolean canViewSettings = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_SETTINGS);
+                boolean canEditSettings = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_SETTINGS);
+                boolean canViewEmailConfiguration = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+                boolean canEditEmailConfiguration = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+
             session.setAttribute("username", user.get().getUsername());
             session.setAttribute("role", normalizedRole);
             session.setAttribute("roleLabel", RoleAccess.displayName(normalizedRole));
             session.setAttribute("email",    user.get().getEmail());
+                session.setAttribute("viewPermissions", viewPermissions);
+                session.setAttribute("editPermissions", editPermissions);
+                session.setAttribute("canViewSettings", canViewSettings);
+                session.setAttribute("canEditSettings", canEditSettings);
+                session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
+                session.setAttribute("canEditEmailConfiguration", canEditEmailConfiguration);
             return Map.of(
                     "status",   "success",
                     "role", normalizedRole,
@@ -83,18 +108,20 @@ public class AuthController {
 
     @PostMapping("/api/users")
     @ResponseBody
-    public Map<String, String> addUser(@RequestBody Map<String, String> payload,
+    public Map<String, String> addUser(@RequestBody Map<String, Object> payload,
                                        HttpSession session) {
         if (!isAdmin(session)) {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
-        String username = payload.get("username");
-        String email = payload.get("email");
-        String password = payload.get("password");
-        String newRole = payload.get("role");
+        String username = asString(payload.get("username"));
+        String email = asString(payload.get("email"));
+        String password = asString(payload.get("password"));
+        String newRole = asString(payload.get("role"));
+        Set<String> viewPermissions = toPermissionSet(payload.get("viewPermissions"));
+        Set<String> editPermissions = toPermissionSet(payload.get("editPermissions"));
 
-        Optional<String> validation = authService.addUser(username, email, password, newRole);
+        Optional<String> validation = authService.addUser(username, email, password, newRole, viewPermissions, editPermissions);
         if (validation.isPresent()) {
             return Map.of("status", "error", "message", validation.get());
         }
@@ -105,17 +132,19 @@ public class AuthController {
     @PutMapping("/api/users/{id}")
     @ResponseBody
     public Map<String, String> updateUser(@PathVariable Long id,
-                                          @RequestBody Map<String, String> payload,
+                                          @RequestBody Map<String, Object> payload,
                                           HttpSession session) {
         if (!isAdmin(session)) {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
-        String email = payload.get("email");
-        String password = payload.get("password");
-        String role = payload.get("role");
+        String email = asString(payload.get("email"));
+        String password = asString(payload.get("password"));
+        String role = asString(payload.get("role"));
+        Set<String> viewPermissions = toPermissionSet(payload.get("viewPermissions"));
+        Set<String> editPermissions = toPermissionSet(payload.get("editPermissions"));
 
-        Optional<String> updateError = authService.updateUser(id, email, password, role);
+        Optional<String> updateError = authService.updateUser(id, email, password, role, viewPermissions, editPermissions);
         if (updateError.isPresent()) {
             return Map.of("status", "error", "message", updateError.get());
         }
@@ -145,13 +174,56 @@ public class AuthController {
     }
 
     private Map<String, Object> toUserResponse(AppUser user) {
+        String normalizedRole = RoleAccess.normalize(user.getRole());
+        Set<String> viewPermissions = toPermissionSet(user.getPageViewPermissions());
+        Set<String> editPermissions = toPermissionSet(user.getPageEditPermissions());
+        if (RoleAccess.isAdmin(normalizedRole)) {
+            viewPermissions = RoleAccess.CONFIG_PAGES;
+            editPermissions = RoleAccess.CONFIG_PAGES;
+        }
+
         Map<String, Object> row = new HashMap<>();
         row.put("id", user.getId());
         row.put("username", user.getUsername());
         row.put("email", user.getEmail());
-        row.put("role", RoleAccess.normalize(user.getRole()));
+        row.put("role", normalizedRole);
         row.put("roleLabel", RoleAccess.displayName(user.getRole()));
+        row.put("viewPermissions", viewPermissions);
+        row.put("editPermissions", editPermissions);
         row.put("status", "Active");
         return row;
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Set<String> toPermissionSet(Object raw) {
+        if (raw == null) {
+            return Set.of();
+        }
+
+        Set<String> values = new HashSet<>();
+        if (raw instanceof String stringValue) {
+            for (String item : stringValue.split(",")) {
+                if (item != null && !item.isBlank()) {
+                    values.add(item.trim());
+                }
+            }
+            return RoleAccess.sanitizePages(values);
+        }
+
+        if (raw instanceof List<?> listValue) {
+            for (Object item : listValue) {
+                if (item != null) {
+                    String value = String.valueOf(item).trim();
+                    if (!value.isBlank()) {
+                        values.add(value);
+                    }
+                }
+            }
+        }
+
+        return RoleAccess.sanitizePages(values);
     }
 }

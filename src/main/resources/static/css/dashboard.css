@@ -628,7 +628,7 @@ body {
 
 .badge-closed {
     background-color: var(--accent-green);
-    color: var(--primary-green);
+    color: #ffffff;
 }
 
 /* Horizontal Dashboard */
@@ -3004,6 +3004,84 @@ body {
     font-weight: 600;
 }
 
+.export-dropdown-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.chart-modal-export {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chart-modal-export:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.export-caret {
+    font-size: 11px;
+    margin-left: 2px;
+}
+
+.export-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 9999;
+    min-width: 170px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.export-dropdown-menu.is-open {
+    display: block;
+}
+
+.export-dropdown-menu li {
+    margin: 0;
+    padding: 0;
+}
+
+.export-menu-item {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 9px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.export-menu-item:hover {
+    background: #f1f5f9;
+    color: #003d24;
+}
+
+.export-menu-item i {
+    width: 16px;
+    text-align: center;
+    color: #0b6b2e;
+}
+
 .chart-modal-title {
     font-size: 15px;
     font-weight: 700;
@@ -3018,6 +3096,35 @@ body {
 .chart-modal-body canvas {
     width: 100% !important;
     height: 100% !important;
+}
+
+.kpi-table-export-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 8px;
+}
+
+.kpi-table-export-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 7px 12px;
+    background: #0b6b2e;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kpi-table-export-btn:hover {
+    background: #0f7f3a;
+}
+
+.kpi-table-export-menu {
+    left: auto;
+    right: 0;
 }
 
 .dashboard-toast {

@@ -1,5 +1,85 @@
 /* Settings Page Styles */
 
+
+/* Config Menu */
+.config-menu {
+    padding: 16px;
+}
+
+.config-section {
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.config-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    padding: 12px 0 8px 0;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.config-section-title i {
+    color: var(--primary-green);
+}
+
+/* Config Menu Items */
+.config-menu-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.config-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    min-height: 40px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+}
+
+.config-menu-item:hover {
+    background: #f0fdf4;
+    border-color: #d1fae5;
+    color: #047857;
+}
+
+.config-menu-item.active {
+    background: #d1fae5;
+    border-color: #10b981;
+    color: #047857;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.config-menu-item i {
+    font-size: 16px;
+    width: 20px;
+    min-width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hidden Class */
+.hidden {
+    display: none !important;
+}
+
 .settings-container {
     display: flex;
     gap: 20px;
@@ -7,29 +87,14 @@
     align-items: stretch;
 }
 
-.settings-container.issue-board-full-page .settings-sidebar {
-    display: none;
-}
-
-.settings-container.issue-board-full-page .settings-main {
+.settings-main.full-width {
     width: 100%;
-    max-height: none;
+    max-width: 100%;
 }
 
-.settings-container.issue-board-full-page .form-card {
-    padding: 28px;
-}
-
-/* Left Panel - Settings Sidebar */
+/* Left Panel - Settings Sidebar (Hidden) */
 .settings-sidebar {
-    min-width: 260px;
-    max-width: 260px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
-    border: 1px solid #e5e7eb;
-    overflow-y: auto;
-    align-self: stretch;
+    display: none;
 }
 
 .config-list {

@@ -37,7 +37,7 @@ $(document).ready(function() {
 
         const $matchedTop = $('.nav-item').not('.nav-child, .nav-parent-toggle').filter(function() {
             const href = $(this).attr('href');
-            return href && href === currentPath;
+            return href && (href === currentUrl || href === currentPath);
         }).first();
 
         if ($matchedTop.length) {
@@ -95,7 +95,11 @@ $(document).ready(function() {
     });
 
     bindDashboardModalEvents();
-    initializeOverviewCards();
+    initializeModalExportControls();
+    initializeKpiTableExport();
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.export-dropdown-wrap')) { closeExportDropdowns(); }
+    });
     initializeKpiTvFit();
     initializeDailyTopRowSync();
 
@@ -401,6 +405,430 @@ function bindDashboardModalEvents() {
     window.__dashboardModalBound = true;
 }
 
+function slugifyFileName(input) {
+    if (!input) {
+        return 'kpi-dashboard-export';
+    }
+    return String(input)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'kpi-dashboard-export';
+}
+
+function downloadDataUrl(dataUrl, filename) {
+    const anchor = document.createElement('a');
+    anchor.href = dataUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+}
+
+function downloadTextFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8;' });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(objectUrl);
+}
+
+function tableToCsv(tableEl) {
+    if (!tableEl) {
+        return '';
+    }
+
+    const rows = [];
+    const trList = tableEl.querySelectorAll('tr');
+    trList.forEach(function(tr) {
+        const cells = tr.querySelectorAll('th, td');
+        const values = [];
+        cells.forEach(function(cell) {
+            const raw = (cell.textContent || '').replace(/\s+/g, ' ').trim();
+            const escaped = '"' + raw.replace(/"/g, '""') + '"';
+            values.push(escaped);
+        });
+        if (values.length > 0) {
+            rows.push(values.join(','));
+        }
+    });
+
+    return rows.join('\n');
+}
+
+function exportModalAsPng() {
+    closeExportDropdowns();
+    const modal = document.getElementById('chartModal');
+    if (!modal || !modal.classList.contains('is-open')) {
+        showToast('Open a popup before exporting.', 'modal-export-not-open');
+        return;
+    }
+    const expandedCanvas = document.getElementById('expandedChart');
+    if (!expandedCanvas || expandedCanvas.style.display === 'none') {
+        showToast('PNG export is only available for chart popups.', 'modal-export-png-unavail');
+        return;
+    }
+    const title = getSafeModalTitle();
+    const dataUrl = expandedCanvas.toDataURL('image/png');
+    downloadDataUrl(dataUrl, slugifyFileName(title) + '.png');
+    showToast('Chart exported as PNG.', 'modal-export-chart');
+}
+
+function exportModalAsCsv() {
+    closeExportDropdowns();
+    const modal = document.getElementById('chartModal');
+    if (!modal || !modal.classList.contains('is-open')) {
+        showToast('Open a popup before exporting.', 'modal-export-not-open');
+        return;
+    }
+    const customContent = document.getElementById('expandedCustomContent');
+    const expandedCanvas = document.getElementById('expandedChart');
+    const title = getSafeModalTitle();
+    const safeBaseName = slugifyFileName(title);
+
+    // Canvas chart: extract labels + datasets as CSV
+    if (expandedCanvas && expandedCanvas.style.display !== 'none') {
+        const chartKey = expandedCanvas.dataset.chartId;
+        const instance = chartKey && window.chartInstances && window.chartInstances[chartKey];
+        if (instance && instance.data) {
+            const data = instance.data;
+            const labels = (data.labels || []).map(String);
+            const header = ['Label'].concat((data.datasets || []).map(function(ds) { return ds.label || ''; }));
+            const rows = labels.map(function(lbl, i) {
+                const vals = (data.datasets || []).map(function(ds) {
+                    const v = ds.data[i];
+                    return v === undefined ? '' : String(v);
+                });
+                return [lbl].concat(vals);
+            });
+            const csv = [header].concat(rows).map(function(r) {
+                return r.map(function(c) { return '"' + c.replace(/"/g, '""') + '"'; }).join(',');
+            }).join('\n');
+            downloadTextFile(csv, safeBaseName + '.csv', 'text/csv;charset=utf-8;');
+            showToast('Chart data exported as CSV.', 'modal-export-chart-csv');
+            return;
+        }
+        showToast('No chart data available for CSV export.', 'modal-export-chart-csv-empty');
+        return;
+    }
+
+    if (customContent && customContent.style.display !== 'none') {
+        const table = customContent.querySelector('table');
+        if (table) {
+            const csv = tableToCsv(table);
+            if (!csv) {
+                showToast('No table data available to export.', 'modal-export-empty-table');
+                return;
+            }
+            downloadTextFile(csv, safeBaseName + '.csv', 'text/csv;charset=utf-8;');
+            showToast('Table exported as CSV.', 'modal-export-table');
+            return;
+        }
+    }
+    showToast('No data available for CSV export in this popup.', 'modal-export-csv-unavail');
+}
+
+function getSafeModalTitle() {
+    const el = document.getElementById('expandedChartTitle');
+    if (!el) { return 'KPI Export'; }
+    const text = (el.textContent || '').trim();
+    return (text && text.toLowerCase() !== 'null') ? text : 'KPI Export';
+}
+
+function getJsPdfCtor() {
+    if (window.jspdf && window.jspdf.jsPDF) {
+        return window.jspdf.jsPDF;
+    }
+    if (window.jsPDF) {
+        return window.jsPDF;
+    }
+    return null;
+}
+
+function createPdfDoc(title) {
+    const JsPdfCtor = getJsPdfCtor();
+    if (!JsPdfCtor) {
+        return null;
+    }
+
+    const doc = new JsPdfCtor({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    doc.setFontSize(14);
+    doc.text(String(title || 'KPI Export'), 10, 12);
+    return doc;
+}
+
+function saveCanvasPdf(canvasEl, title, fileNameBase) {
+    if (!canvasEl) {
+        return false;
+    }
+
+    const doc = createPdfDoc(title);
+    if (!doc) {
+        return false;
+    }
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const contentX = 10;
+    const contentY = 18;
+    const contentW = pageWidth - (contentX * 2);
+    const contentH = pageHeight - contentY - 10;
+
+    const imgData = canvasEl.toDataURL('image/png');
+    const sourceW = canvasEl.width || 1;
+    const sourceH = canvasEl.height || 1;
+    const aspect = sourceW / sourceH;
+
+    let drawW = contentW;
+    let drawH = drawW / aspect;
+    if (drawH > contentH) {
+        drawH = contentH;
+        drawW = drawH * aspect;
+    }
+
+    const offsetX = contentX + ((contentW - drawW) / 2);
+    doc.addImage(imgData, 'PNG', offsetX, contentY, drawW, drawH, undefined, 'FAST');
+    doc.save(slugifyFileName(fileNameBase || title || 'kpi-export') + '.pdf');
+    return true;
+}
+
+function saveTablePdf(tableEl, title, fileNameBase) {
+    if (!tableEl) {
+        return false;
+    }
+
+    const doc = createPdfDoc(title);
+    if (!doc) {
+        return false;
+    }
+
+    if (typeof doc.autoTable === 'function') {
+        doc.autoTable({
+            html: tableEl,
+            startY: 18,
+            theme: 'grid',
+            styles: { fontSize: 8, cellPadding: 1.6 },
+            headStyles: { fillColor: [0, 61, 36], textColor: [255, 255, 255] },
+            margin: { left: 8, right: 8 }
+        });
+    } else {
+        const rows = [];
+        tableEl.querySelectorAll('tr').forEach(function(tr) {
+            const cols = [];
+            tr.querySelectorAll('th, td').forEach(function(cell) {
+                cols.push((cell.textContent || '').replace(/\s+/g, ' ').trim());
+            });
+            if (cols.length > 0) {
+                rows.push(cols.join(' | '));
+            }
+        });
+        doc.setFontSize(9);
+        doc.text(rows.join('\n'), 10, 20);
+    }
+
+    doc.save(slugifyFileName(fileNameBase || title || 'kpi-export') + '.pdf');
+    return true;
+}
+
+function exportModalAsPdf() {
+    closeExportDropdowns();
+    const modal = document.getElementById('chartModal');
+    if (!modal || !modal.classList.contains('is-open')) {
+        showToast('Open a popup before exporting.', 'modal-export-not-open');
+        return;
+    }
+    const title = getSafeModalTitle();
+    const expandedCanvas = document.getElementById('expandedChart');
+    const customContent = document.getElementById('expandedCustomContent');
+
+    if (!getJsPdfCtor()) {
+        showToast('PDF library is not loaded. Refresh and try again.', 'modal-export-pdf-lib-missing');
+        return;
+    }
+
+    if (expandedCanvas && expandedCanvas.style.display !== 'none') {
+        if (!saveCanvasPdf(expandedCanvas, title, title)) {
+            showToast('Unable to export chart PDF.', 'modal-export-pdf-chart-failed');
+            return;
+        }
+        showToast('Chart exported as PDF.', 'modal-export-pdf-chart');
+        return;
+    }
+
+    if (customContent && customContent.style.display !== 'none') {
+        const contentTable = customContent.querySelector('table');
+        if (contentTable) {
+            if (!saveTablePdf(contentTable, title, title)) {
+                showToast('Unable to export table PDF.', 'modal-export-pdf-table-failed');
+                return;
+            }
+            showToast('Table exported as PDF.', 'modal-export-pdf-table');
+            return;
+        }
+    }
+
+    showToast('Nothing to export in this popup.', 'modal-export-pdf-empty');
+}
+
+function closeExportDropdowns() {
+    document.querySelectorAll('.export-dropdown-menu.is-open').forEach(function(m) {
+        m.classList.remove('is-open');
+    });
+}
+
+function initializeModalExportControls() {
+    const modalHeader = document.querySelector('#chartModal .chart-modal-header');
+    if (!modalHeader || modalHeader.querySelector('#chartModalExportWrap')) {
+        return;
+    }
+
+    const wrap = document.createElement('div');
+    wrap.id = 'chartModalExportWrap';
+    wrap.className = 'export-dropdown-wrap';
+    wrap.innerHTML =
+        '<button type="button" class="chart-modal-export export-dropdown-toggle" aria-haspopup="true" aria-expanded="false">'
+        + '<i class="fas fa-file-export"></i> Export <i class="fas fa-caret-down export-caret"></i>'
+        + '</button>'
+        + '<ul class="export-dropdown-menu" role="menu">'
+        + '<li><button type="button" class="export-menu-item" data-action="png"><i class="fas fa-image"></i> PNG (image)</button></li>'
+        + '<li><button type="button" class="export-menu-item" data-action="csv"><i class="fas fa-file-csv"></i> CSV (data)</button></li>'
+        + '<li><button type="button" class="export-menu-item" data-action="pdf"><i class="fas fa-file-pdf"></i> PDF</button></li>'
+        + '</ul>';
+
+    wrap.querySelector('.export-dropdown-toggle').addEventListener('click', function(e) {
+        e.stopPropagation();
+        const menu = wrap.querySelector('.export-dropdown-menu');
+        const isOpen = menu.classList.contains('is-open');
+        closeExportDropdowns();
+        if (!isOpen) {
+            menu.classList.add('is-open');
+            this.setAttribute('aria-expanded', 'true');
+        } else {
+            this.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    wrap.querySelectorAll('.export-menu-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const action = this.dataset.action;
+            wrap.querySelector('.export-dropdown-toggle').setAttribute('aria-expanded', 'false');
+            if (action === 'png') { exportModalAsPng(); }
+            else if (action === 'csv') { exportModalAsCsv(); }
+            else if (action === 'pdf') { exportModalAsPdf(); }
+        });
+    });
+
+    const backBtn = modalHeader.querySelector('.chart-modal-back');
+    if (backBtn && backBtn.parentNode) {
+        backBtn.parentNode.insertBefore(wrap, backBtn.nextSibling);
+    } else {
+        modalHeader.appendChild(wrap);
+    }
+}
+
+function exportMainKpiTable() {
+    const table = document.querySelector('.main-kpi-table');
+    if (!table) {
+        showToast('KPI table not found.', 'main-table-missing');
+        return;
+    }
+
+    const csv = tableToCsv(table);
+    if (!csv) {
+        showToast('No KPI table data to export.', 'main-table-empty');
+        return;
+    }
+
+    const now = new Date();
+    const stamp = now.getFullYear()
+        + '-' + String(now.getMonth() + 1).padStart(2, '0')
+        + '-' + String(now.getDate()).padStart(2, '0');
+    downloadTextFile(csv, 'kpi-table-' + stamp + '.csv', 'text/csv;charset=utf-8;');
+    showToast('KPI table exported as CSV.', 'main-table-exported');
+}
+
+function pdfMainKpiTable() {
+    const table = document.querySelector('.main-kpi-table');
+    if (!table) {
+        showToast('KPI table not found.', 'main-table-missing-pdf');
+        return;
+    }
+
+    if (!getJsPdfCtor()) {
+        showToast('PDF library is not loaded. Refresh and try again.', 'kpi-table-pdf-lib-missing');
+        return;
+    }
+
+    const now = new Date();
+    const stamp = now.getFullYear()
+        + '-' + String(now.getMonth() + 1).padStart(2, '0')
+        + '-' + String(now.getDate()).padStart(2, '0');
+
+    if (!saveTablePdf(table, 'KPI Table', 'kpi-table-' + stamp)) {
+        showToast('Unable to export KPI table PDF.', 'kpi-table-pdf-failed');
+        return;
+    }
+
+    showToast('KPI table exported as PDF.', 'kpi-table-pdf');
+}
+
+function initializeKpiTableExport() {
+    const table = document.querySelector('.main-kpi-table');
+    if (!table) {
+        return;
+    }
+
+    const container = table.closest('.table-container');
+    if (!container || container.parentNode.querySelector('#kpiTableExportWrap')) {
+        return;
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'kpi-table-export-actions';
+
+    const wrap = document.createElement('div');
+    wrap.id = 'kpiTableExportWrap';
+    wrap.className = 'export-dropdown-wrap';
+    wrap.innerHTML =
+        '<button type="button" class="kpi-table-export-btn export-dropdown-toggle" aria-haspopup="true" aria-expanded="false">'
+        + '<i class="fas fa-file-export"></i> Export Table <i class="fas fa-caret-down export-caret"></i>'
+        + '</button>'
+        + '<ul class="export-dropdown-menu kpi-table-export-menu" role="menu">'
+        + '<li><button type="button" class="export-menu-item" data-action="csv"><i class="fas fa-file-csv"></i> CSV (data)</button></li>'
+        + '<li><button type="button" class="export-menu-item" data-action="pdf"><i class="fas fa-file-pdf"></i> PDF</button></li>'
+        + '</ul>';
+
+    wrap.querySelector('.export-dropdown-toggle').addEventListener('click', function(e) {
+        e.stopPropagation();
+        const menu = wrap.querySelector('.export-dropdown-menu');
+        const isOpen = menu.classList.contains('is-open');
+        closeExportDropdowns();
+        if (!isOpen) {
+            menu.classList.add('is-open');
+            this.setAttribute('aria-expanded', 'true');
+        } else {
+            this.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    wrap.querySelectorAll('.export-menu-item').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            closeExportDropdowns();
+            if (this.dataset.action === 'csv') {
+                exportMainKpiTable();
+            } else if (this.dataset.action === 'pdf') {
+                pdfMainKpiTable();
+            }
+        });
+    });
+
+    actions.appendChild(wrap);
+    container.parentNode.insertBefore(actions, container);
+}
+
 window.openChart = function(chartId) {
     if (!chartId || !window.chartInstances || !window.chartInstances[chartId]) {
         showToast('No data available for selected period', 'chart-not-ready');
@@ -448,6 +876,7 @@ window.openChart = function(chartId) {
 
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    expandedCanvas.dataset.chartId = chartId;
 
     expandedChartInstance = new Chart(expandedCanvas.getContext('2d'), {
         type: chartType,
@@ -475,12 +904,21 @@ function monthShortName(monthNumber) {
 function applyOverviewMonthYear(monthElId, yearElId, year, month) {
     const monthEl = document.getElementById(monthElId);
     const yearEl = document.getElementById(yearElId);
+    const fullYear = Number(year);
+    const monthName = monthShortName(month);
+
     if (monthEl) {
-        monthEl.textContent = monthShortName(month);
+        monthEl.textContent = monthName;
     }
     if (yearEl) {
-        const yy = Number(year);
-        yearEl.textContent = Number.isFinite(yy) ? String(yy).slice(-2) : '--';
+        yearEl.textContent = Number.isFinite(fullYear) ? String(fullYear).slice(-2) : '--';
+    }
+
+    const syncText = 'Synced period: ' + monthName + ' ' + (Number.isFinite(fullYear) ? fullYear : '----');
+    if (monthElId === 'hsOverviewMonth') {
+        setElementText('hsOverviewSyncText', syncText);
+    } else if (monthElId === 'lsrOverviewMonth') {
+        setElementText('lsrOverviewSyncText', syncText);
     }
 }
 
@@ -1016,8 +1454,16 @@ function renderAllCharts(metrics) {
             { label: 'Logistics Actual', key: 'logisticsProductivityFtdActual' }
         ],
         targetSeries: [
-            { label: 'Production Target', key: 'productionProductivityFtdTarget' },
-            { label: 'Logistics Target', key: 'logisticsProductivityFtdTarget' }
+            {
+                labelPrefix: 'Production',
+                ftdKey: 'productionProductivityFtdTarget',
+                mtdKey: 'productionProductivityMtdTarget'
+            },
+            {
+                labelPrefix: 'Logistics',
+                ftdKey: 'logisticsProductivityFtdTarget',
+                mtdKey: 'logisticsProductivityMtdTarget'
+            }
         ]
     });
 
@@ -1027,7 +1473,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiSensoryScoreFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiSensoryScoreFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiSensoryScoreFtdTarget',
+                mtdKey: 'kpiSensoryScoreMtdTarget'
+            }
         ]
     });
 
@@ -1035,11 +1485,19 @@ function renderAllCharts(metrics) {
     renderKpiMixedChart('qualityProcessConfirmationChart', labels, metrics, {
         actualSeries: [
             { label: 'B&P Actual', key: 'processConfirmationBpFtdActual' },
-            { label: 'Pack Actual', key: 'processConfirmationPackMtdActual' }
+            { label: 'Pack Actual', key: 'processConfirmationPackFtdActual' }
         ],
         targetSeries: [
-            { label: 'B&P Target', key: 'processConfirmationBpFtdTarget' },
-            { label: 'Pack Target', key: 'processConfirmationPackMtdTarget' }
+            {
+                labelPrefix: 'B&P',
+                ftdKey: 'processConfirmationBpFtdTarget',
+                mtdKey: 'processConfirmationBpMtdTarget'
+            },
+            {
+                labelPrefix: 'Pack',
+                ftdKey: 'processConfirmationPackFtdTarget',
+                mtdKey: 'processConfirmationPackMtdTarget'
+            }
         ]
     });
 
@@ -1050,8 +1508,16 @@ function renderAllCharts(metrics) {
             { label: 'Customer Actual', key: 'kpiCustomerComplaintUnitsMhlFtdActual' }
         ],
         targetSeries: [
-            { label: 'Consumer Target', key: 'kpiConsumerComplaintUnitsMhlFtdTarget' },
-            { label: 'Customer Target', key: 'kpiCustomerComplaintUnitsMhlFtdTarget' }
+            {
+                labelPrefix: 'Consumer',
+                ftdKey: 'kpiConsumerComplaintUnitsMhlFtdTarget',
+                mtdKey: 'kpiConsumerComplaintUnitsMhlMtdTarget'
+            },
+            {
+                labelPrefix: 'Customer',
+                ftdKey: 'kpiCustomerComplaintUnitsMhlFtdTarget',
+                mtdKey: 'kpiCustomerComplaintUnitsMhlMtdTarget'
+            }
         ]
     });
 
@@ -1061,7 +1527,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiOeeFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiOeeFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiOeeFtdTarget',
+                mtdKey: 'kpiOeeMtdTarget'
+            }
         ]
     });
 
@@ -1071,7 +1541,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiBeerLossFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiBeerLossFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiBeerLossFtdTarget',
+                mtdKey: 'kpiBeerLossMtdTarget'
+            }
         ]
     });
 
@@ -1081,7 +1555,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiWurHlHlFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiWurHlHlFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiWurHlHlFtdTarget',
+                mtdKey: 'kpiWurHlHlMtdTarget'
+            }
         ]
     });
 
@@ -1091,7 +1569,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiElectricityKwhHlFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiElectricityKwhHlFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiElectricityKwhHlFtdTarget',
+                mtdKey: 'kpiElectricityKwhHlMtdTarget'
+            }
         ]
     });
 
@@ -1101,7 +1583,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiEnergyKwhHlFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiEnergyKwhHlFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiEnergyKwhHlFtdTarget',
+                mtdKey: 'kpiEnergyKwhHlMtdTarget'
+            }
         ]
     });
 
@@ -1111,7 +1597,11 @@ function renderAllCharts(metrics) {
             { label: 'Actual', key: 'kpiRgbRatioFtdActual' }
         ],
         targetSeries: [
-            { label: 'Target', key: 'kpiRgbRatioFtdTarget' }
+            {
+                labelPrefix: '',
+                ftdKey: 'kpiRgbRatioFtdTarget',
+                mtdKey: 'kpiRgbRatioMtdTarget'
+            }
         ]
     });
 }
@@ -1178,7 +1668,21 @@ function renderKpiMixedChart(canvasId, labels, metrics, seriesConfig) {
     });
 
     targetSeries.forEach(function(series, index) {
-        datasets.push(buildKpiDataset(series.label, metrics, series.key, 'target', index, palette));
+        const ftdData = readMetricSeries(metrics, series.ftdKey);
+        const mtdData = readMetricSeries(metrics, series.mtdKey);
+        const prefix = (series.labelPrefix || '').trim();
+        const ftdLabel = prefix ? (prefix + ' FTD Target') : 'FTD Target';
+        const mtdLabel = prefix ? (prefix + ' MTD Target') : 'MTD Target';
+
+        const ftdDataset = buildKpiTargetDataset(ftdLabel, ftdData, palette.lines[index % palette.lines.length], mtdData, canvasId);
+        if (ftdDataset) {
+            datasets.push(ftdDataset);
+        }
+
+        const mtdDataset = buildKpiTargetDataset(mtdLabel, mtdData, palette.lines[(index + 1) % palette.lines.length], null, canvasId);
+        if (mtdDataset) {
+            datasets.push(mtdDataset);
+        }
     });
 
     renderChart(canvasId, {
@@ -1189,30 +1693,11 @@ function renderKpiMixedChart(canvasId, labels, metrics, seriesConfig) {
 }
 
 function buildKpiDataset(label, metrics, key, seriesType, index, palette) {
-    const data = metrics.map(m => {
-        const value = m[key];
-        return value === null || value === undefined ? null : Number(value);
-    });
+    const data = readMetricSeries(metrics, key);
 
     const hasAnyValue = data.some(v => v !== null);
     if (!hasAnyValue) {
         return null;
-    }
-
-    if (seriesType === 'target') {
-        const lineColor = palette.lines[index % palette.lines.length];
-        return {
-            label,
-            type: 'line',
-            data,
-            borderColor: lineColor,
-            backgroundColor: 'transparent',
-            tension: 0.4,
-            borderWidth: 2,
-            pointRadius: 3,
-            pointHoverRadius: 4,
-            fill: false
-        };
     }
 
     const barColor = palette.bars[index % palette.bars.length];
@@ -1225,6 +1710,80 @@ function buildKpiDataset(label, metrics, key, seriesType, index, palette) {
         maxBarThickness: 20,
         categoryPercentage: 0.62,
         barPercentage: 0.86
+    };
+}
+
+function readMetricSeries(metrics, key) {
+    if (!key) {
+        return [];
+    }
+
+    return (metrics || []).map(function(metric) {
+        const value = metric ? metric[key] : null;
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : null;
+    });
+}
+
+function findCrossingIndex(primaryData, compareData) {
+    if (!Array.isArray(primaryData) || !Array.isArray(compareData)) {
+        return -1;
+    }
+
+    const length = Math.min(primaryData.length, compareData.length);
+    for (let i = 0; i < length; i++) {
+        const primary = primaryData[i];
+        const compare = compareData[i];
+        if (primary === null || compare === null) {
+            continue;
+        }
+        if (primary > compare) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+function buildKpiTargetDataset(label, data, baseColor, compareWithFtdData, canvasId) {
+    if (!Array.isArray(data) || data.length === 0 || !data.some(v => v !== null)) {
+        return null;
+    }
+
+    const alertColor = (canvasId && localStorage.getItem('kpiCrossAlertColor_' + canvasId)) || '#DC2626';
+    const crossingIndex = findCrossingIndex(data, compareWithFtdData);
+    const colorByPoint = data.map(function(_, index) {
+        if (crossingIndex !== -1 && index >= crossingIndex) {
+            return alertColor;
+        }
+        return baseColor;
+    });
+
+    return {
+        label: label,
+        type: 'line',
+        data: data,
+        borderColor: colorByPoint,
+        pointBackgroundColor: colorByPoint,
+        pointBorderColor: colorByPoint,
+        backgroundColor: 'transparent',
+        tension: 0.35,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 4,
+        fill: false,
+        spanGaps: true,
+        segment: {
+            borderColor: function(ctx) {
+                if (crossingIndex !== -1 && ctx.p0DataIndex >= crossingIndex) {
+                    return alertColor;
+                }
+                return baseColor;
+            }
+        }
     };
 }
 

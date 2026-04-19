@@ -22,6 +22,12 @@ public class AppUser {
     @Column(nullable = false, length = 20)
     private String role;
 
+    @Column(name = "page_view_permissions", length = 500)
+    private String pageViewPermissions;
+
+    @Column(name = "page_edit_permissions", length = 500)
+    private String pageEditPermissions;
+
     public Long getId() {
         return id;
     }
@@ -60,5 +66,21 @@ public class AppUser {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPageViewPermissions() {
+        return pageViewPermissions;
+    }
+
+    public void setPageViewPermissions(String pageViewPermissions) {
+        this.pageViewPermissions = pageViewPermissions;
+    }
+
+    public String getPageEditPermissions() {
+        return pageEditPermissions;
+    }
+
+    public void setPageEditPermissions(String pageEditPermissions) {
+        this.pageEditPermissions = pageEditPermissions;
     }
 }

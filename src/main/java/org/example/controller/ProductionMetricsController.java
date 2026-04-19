@@ -221,6 +221,21 @@ public class ProductionMetricsController {
         }
     }
 
+    @GetMapping("/template/csv")
+    public ResponseEntity<Resource> downloadCsvTemplate() {
+        try {
+            ByteArrayInputStream data = service.exportTemplateCSV();
+            InputStreamResource resource = new InputStreamResource(data);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=production_metrics_template.csv")
+                    .contentType(MediaType.parseMediaType("text/csv"))
+                    .body(resource);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @PostMapping("/import/csv")
     public ResponseEntity<String> importFromCSV(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {

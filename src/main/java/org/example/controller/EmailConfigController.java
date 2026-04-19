@@ -28,7 +28,7 @@ public class EmailConfigController {
 
     @GetMapping
     public ResponseEntity<?> getConfiguration(HttpSession session) {
-        if (!hasAccess(session)) {
+        if (!hasViewAccess(session)) {
             return forbidden();
         }
 
@@ -38,7 +38,7 @@ public class EmailConfigController {
 
     @PostMapping
     public ResponseEntity<?> saveConfiguration(@RequestBody EmailConfigPayload payload, HttpSession session) {
-        if (!hasAccess(session)) {
+        if (!hasEditAccess(session)) {
             return forbidden();
         }
 
@@ -52,7 +52,7 @@ public class EmailConfigController {
 
     @PostMapping("/test")
     public ResponseEntity<EmailTestResponse> testConfiguration(@RequestBody EmailConfigPayload payload, HttpSession session) {
-        if (!hasAccess(session)) {
+        if (!hasEditAccess(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new EmailTestResponse("ERROR", "Forbidden"));
         }
@@ -66,9 +66,22 @@ public class EmailConfigController {
         return ResponseEntity.status(status).body(response);
     }
 
-    private boolean hasAccess(HttpSession session) {
+    private boolean hasViewAccess(HttpSession session) {
         String role = session == null ? null : (String) session.getAttribute("role");
-        return RoleAccess.canAccessEmailConfiguration(role);
+        Object rawViewPermissions = session == null ? null : session.getAttribute("viewPermissions");
+        java.util.Set<String> viewPermissions = rawViewPermissions instanceof java.util.Set<?> setValue
+                ? setValue.stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet())
+                : java.util.Set.of();
+        return RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+    }
+
+    private boolean hasEditAccess(HttpSession session) {
+        String role = session == null ? null : (String) session.getAttribute("role");
+        Object rawEditPermissions = session == null ? null : session.getAttribute("editPermissions");
+        java.util.Set<String> editPermissions = rawEditPermissions instanceof java.util.Set<?> setValue
+                ? setValue.stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet())
+                : java.util.Set.of();
+        return RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
     }
 
     private ResponseEntity<Map<String, String>> forbidden() {

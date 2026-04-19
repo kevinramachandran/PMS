@@ -58,8 +58,28 @@ public class WebController {
     }
 
     @GetMapping("/settings")
-    public String settings() {
-        return "redirect:/pms/top-priorities";
+    public String settings(@RequestParam(value = "config", required = false) String config, Model model) {
+        if (config == null || config.isBlank()) {
+            return "redirect:/pms/top-priorities";
+        }
+
+        String normalizedConfig = config.trim().toLowerCase();
+        return switch (normalizedConfig) {
+            case "metrics-data" -> settingsView(model, "metrics-data", "", "Production Metrics Data");
+            case "issue-board" -> settingsView(model, "issue-board", "", "Issue Board Configuration");
+            case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk Configuration");
+            case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker Config");
+            case "training-schedule" -> settingsView(model, "training-schedule", "", "Training Schedule Config");
+            case "meeting-agenda" -> settingsView(model, "meeting-agenda", "", "PMS Agenda Config");
+            case "process-confirmation" -> settingsView(model, "process-confirmation", "", "PMS Process Confirmation Config");
+            case "abnormality-tracker" -> settingsView(model, "abnormality-tracker", "", "Abnormality Tracker Config");
+            case "hs-cross" -> settingsView(model, "hs-cross", "", "H&S Cross Daily Config");
+            case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking Config");
+            case "kpi-footer-buttons" -> settingsView(model, "kpi-footer-buttons", "", "KPI Footer Buttons");
+            case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
+            case "license" -> settingsView(model, "license", "", "License Management");
+            default -> "redirect:/pms/top-priorities";
+        };
     }
 
     @GetMapping("/pms/top-priorities")
