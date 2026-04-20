@@ -12,7 +12,7 @@
     /**
      * Load an image src as a PNG data URL via Canvas.
      * @param {string} src
-     * @param {function} callback  receives dataUrl (string) or null on failure
+     * @param {function} callback  receives {dataUrl, width, height} or null on failure
      */
     function loadImageAsDataUrl(src, callback) {
         var img = new Image();
@@ -23,7 +23,11 @@
                 canvas.width  = img.naturalWidth;
                 canvas.height = img.naturalHeight;
                 canvas.getContext('2d').drawImage(img, 0, 0);
-                callback(canvas.toDataURL('image/png'));
+                callback({
+                    dataUrl: canvas.toDataURL('image/png'),
+                    width: img.naturalWidth,
+                    height: img.naturalHeight
+                });
             } catch (e) {
                 callback(null);
             }
@@ -32,27 +36,47 @@
         img.src = src;
     }
 
+    function fitImageInBox(width, height, maxWidth, maxHeight) {
+        if (!width || !height) {
+            return { width: maxWidth, height: maxHeight };
+        }
+
+        var scale = Math.min(maxWidth / width, maxHeight / height);
+        return {
+            width: width * scale,
+            height: height * scale
+        };
+    }
+
     /**
      * Draw the Carlsberg branded report header.
      * Returns the Y position after the header (ready for the table).
      */
-    function drawHeader(doc, logoDataUrl, title, filterLabel) {
+    function drawHeader(doc, logoAsset, title, filterLabel) {
         var pageW = doc.internal.pageSize.getWidth();
+        var leftMargin = 10;
+        var rightMargin = 10;
+        var logoBounds = { maxWidth: 38, maxHeight: 15 };
         var y = 10;
+        var logoSize = logoAsset && logoAsset.dataUrl
+            ? fitImageInBox(logoAsset.width, logoAsset.height, logoBounds.maxWidth, logoBounds.maxHeight)
+            : null;
+        var headerContentHeight = Math.max(logoSize ? logoSize.height : 0, 12);
 
         // Logo (top-left)
-        if (logoDataUrl) {
-            doc.addImage(logoDataUrl, 'PNG', 10, y, 38, 15);
+        if (logoSize) {
+            var logoY = y + ((headerContentHeight - logoSize.height) / 2);
+            doc.addImage(logoAsset.dataUrl, 'PNG', leftMargin, logoY, logoSize.width, logoSize.height);
         }
 
         // Report title (centre)
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
         doc.setTextColor(0, 61, 36);
-        doc.text(title, pageW / 2, y + 9, { align: 'center' });
+        doc.text(title, pageW / 2, y + (headerContentHeight / 2) + 1.5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
 
-        y += 20;
+        y += headerContentHeight + 5;
 
         // Filter / period sub-line
         if (filterLabel) {
@@ -69,7 +93,7 @@
         doc.setTextColor(140, 140, 140);
         doc.text(
             'Generated: ' + new Date().toLocaleString('en-GB'),
-            pageW - 10, y, { align: 'right' }
+            pageW - rightMargin, y, { align: 'right' }
         );
         doc.setTextColor(0, 0, 0);
         y += 6;
@@ -77,7 +101,7 @@
         // Thin separator line
         doc.setDrawColor(0, 61, 36);
         doc.setLineWidth(0.5);
-        doc.line(10, y, pageW - 10, y);
+        doc.line(leftMargin, y, pageW - rightMargin, y);
         y += 4;
 
         return y;
@@ -97,11 +121,11 @@
      * }
      */
     function generateTableReport(config) {
-        loadImageAsDataUrl(CARLSBERG_LOGO, function (logoDataUrl) {
+        loadImageAsDataUrl(CARLSBERG_LOGO, function (logoAsset) {
             var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
             var doc = new jsPDF({ orientation: config.orientation || 'landscape', unit: 'mm', format: 'a4' });
 
-            var startY = drawHeader(doc, logoDataUrl, config.title, config.filterLabel || null);
+            var startY = drawHeader(doc, logoAsset, config.title, config.filterLabel || null);
 
             doc.autoTable({
                 startY: startY,

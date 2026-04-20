@@ -1,0 +1,20 @@
+<service>
+  <id>brewery-pms</id>
+  <name>Brewery PMS</name>
+  <description>Brewery PMS Spring Boot application</description>
+
+  <executable>powershell.exe</executable>
+  <arguments>-NoProfile -ExecutionPolicy Bypass -File "%BASE%\start-service.ps1"</arguments>
+  <workingdirectory>%BASE%\..</workingdirectory>
+
+  <stoptimeout>15 sec</stoptimeout>
+  <onfailure action="restart" delay="10 sec" />
+  <onfailure action="restart" delay="20 sec" />
+  <onfailure action="restart" delay="40 sec" />
+
+  <log mode="roll-by-size-time">
+    <pattern>yyyyMMdd</pattern>
+    <sizeThreshold>10485760</sizeThreshold>
+    <keepFiles>14</keepFiles>
+  </log>
+</service>

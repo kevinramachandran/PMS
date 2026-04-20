@@ -73,93 +73,158 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (RoleAccess.isAdmin(role)) {
+            applyPermissionAttributes(request, true, true, protectedPageKeyForRequest(request));
             return true;
         }
 
         Set<String> viewPermissions = extractPermissions(session, "viewPermissions");
         Set<String> editPermissions = extractPermissions(session, "editPermissions");
-        String method = request.getMethod();
+        String protectedPageKey = resolveProtectedPageKey(request);
+        boolean canViewCurrentPage = protectedPageKey == null || protectedPageKey.isBlank()
+                || RoleAccess.canViewPage(role, viewPermissions, protectedPageKey);
+        boolean canEditCurrentPage = protectedPageKey == null || protectedPageKey.isBlank()
+                || RoleAccess.canEditPage(role, editPermissions, protectedPageKey);
+        applyPermissionAttributes(request, canViewCurrentPage, canEditCurrentPage, protectedPageKey);
 
-        if (path.startsWith("/pms-configuration")) {
-            response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
-            return false;
+        if (protectedPageKey == null || protectedPageKey.isBlank()) {
+            return true;
         }
 
-        if (isEmailConfigurationPath(path)) {
-            boolean allowed = isReadMethod(method)
-                    ? RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION)
-                    : RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
-            if (!allowed) {
-                if (path.startsWith("/api/")) {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
-                }
-                return false;
-            }
+        if (RoleAccess.PAGE_LICENSE_MANAGEMENT.equals(protectedPageKey) && internalStaticUser) {
+            return true;
         }
 
-        if (isSettingsPath(path)) {
-            boolean allowed = isReadMethod(method)
-                    ? RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_SETTINGS)
-                    : RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_SETTINGS);
-            if (!allowed) {
-                if (path.startsWith("/api/")) {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
-                }
-                return false;
-            }
-        }
+        boolean requiresEditPermission = requiresEditPermission(request, protectedPageKey);
+        boolean allowed = requiresEditPermission
+                ? RoleAccess.canEditPage(role, editPermissions, protectedPageKey)
+                : RoleAccess.canViewPage(role, viewPermissions, protectedPageKey);
 
-        if (path.startsWith("/api/users")) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
-            return false;
-        }
-
-        if (path.startsWith("/api/license") && !RoleAccess.isAdmin(role) && !internalStaticUser) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
+        if (!allowed) {
+            denyAccess(request, response);
             return false;
         }
 
         return true;
     }
 
+    private String protectedPageKeyForRequest(HttpServletRequest request) {
+        String protectedPageKey = resolveProtectedPageKey(request);
+        return protectedPageKey == null ? "" : protectedPageKey;
+    }
+
+    private void applyPermissionAttributes(HttpServletRequest request,
+                                           boolean canViewCurrentPage,
+                                           boolean canEditCurrentPage,
+                                           String protectedPageKey) {
+        request.setAttribute("canViewCurrentPage", canViewCurrentPage);
+        request.setAttribute("canEditCurrentPage", canEditCurrentPage);
+        request.setAttribute("currentPageKey", protectedPageKey == null ? "" : protectedPageKey);
+    }
+
     private boolean isReadMethod(String method) {
         return "GET".equalsIgnoreCase(method);
     }
 
-    private boolean isEmailConfigurationPath(String path) {
-        return path.startsWith("/email-configuration") || path.startsWith("/api/email-config");
+    private boolean requiresEditPermission(HttpServletRequest request, String pageKey) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        if (RoleAccess.PAGE_LICENSE_MANAGEMENT.equals(pageKey) && path.startsWith("/api/license/decode")) {
+            return false;
+        }
+
+        if (RoleAccess.PAGE_USER_MANAGEMENT.equals(pageKey) && path.startsWith("/api/users") && "GET".equalsIgnoreCase(method)) {
+            return false;
+        }
+
+        return !isReadMethod(method);
     }
 
-    private boolean isSettingsPath(String path) {
-        return path.startsWith("/settings")
-                || path.startsWith("/add-metrics")
-                || path.startsWith("/add-daily-data")
-                || path.startsWith("/pms/")
-                || path.startsWith("/config/")
-                || path.startsWith("/api/priorities")
-                || path.startsWith("/api/daily-performance")
-                || path.startsWith("/api/daily-data")
-                || path.startsWith("/api/metrics")
-                || path.startsWith("/api/issue-board")
-                || path.startsWith("/api/gemba-schedule")
-                || path.startsWith("/api/abnormality-tracker")
-                || path.startsWith("/api/lgt-")
-                || path.startsWith("/api/training-schedule")
-                || path.startsWith("/api/meeting-agenda")
-                || path.startsWith("/api/process-confirmation")
-                || path.startsWith("/api/dashboard-config");
+    private String resolveProtectedPageKey(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        if (path.startsWith("/pms-configuration") || path.startsWith("/api/users")) {
+            return RoleAccess.PAGE_USER_MANAGEMENT;
+        }
+
+        if (path.startsWith("/email-configuration") || path.startsWith("/api/email-config")) {
+            return RoleAccess.PAGE_EMAIL_CONFIGURATION;
+        }
+
+        if (path.startsWith("/api/license")) {
+            if (path.equals("/api/license/generate")) {
+                return "";
+            }
+            return RoleAccess.PAGE_LICENSE_MANAGEMENT;
+        }
+
+        if (path.startsWith("/settings")) {
+            return RoleAccess.pageKeyForSettingsConfig(request.getParameter("config"));
+        }
+
+        if (path.startsWith("/pms/") || path.startsWith("/add-daily-data")
+                || path.startsWith("/api/priorities") || path.startsWith("/api/daily-performance")
+                || path.startsWith("/api/daily-data")) {
+            return RoleAccess.PAGE_PMS_DATA_ENTRY;
+        }
+
+        if (path.startsWith("/add-metrics") || path.startsWith("/api/metrics")) {
+            return RoleAccess.PAGE_PRODUCTION_METRICS_DATA;
+        }
+
+        if (path.startsWith("/config/issue-board") || path.startsWith("/api/issue-board")) {
+            return RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/gemba-walk") || path.startsWith("/api/gemba-schedule")) {
+            return RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/safety-gemba") || path.startsWith("/api/leadership-gemba-tracker") || path.startsWith("/api/lgt-")) {
+            return RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/training") || path.startsWith("/api/training-schedule")) {
+            return RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/pms-agenda") || path.startsWith("/api/meeting-agenda")) {
+            return RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/process-confirmation") || path.startsWith("/api/process-confirmation")) {
+            return RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/abnormality") || path.startsWith("/api/abnormality-tracker")) {
+            return RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/hs-daily") || path.startsWith("/api/hs-daily")) {
+            return RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION;
+        }
+
+        if (path.startsWith("/config/lsr") || path.startsWith("/api/lsr-daily")) {
+            return RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION;
+        }
+
+        if (path.startsWith("/api/dashboard-config/kpi-footer-buttons")) {
+            return RoleAccess.PAGE_KPI_FOOTER_BUTTONS;
+        }
+
+        return "";
+    }
+
+    private void denyAccess(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/")) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
+            return;
+        }
+
+        response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
     }
 
     private Set<String> extractPermissions(HttpSession session, String attributeName) {

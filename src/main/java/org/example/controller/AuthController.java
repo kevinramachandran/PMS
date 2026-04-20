@@ -56,23 +56,31 @@ public class AuthController {
             }
 
             String normalizedRole = RoleAccess.normalize(user.get().getRole());
-                Set<String> viewPermissions = user.get().getViewPermissions();
-                Set<String> editPermissions = user.get().getEditPermissions();
-                boolean canViewSettings = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_SETTINGS);
-                boolean canEditSettings = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_SETTINGS);
-                boolean canViewEmailConfiguration = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
-                boolean canEditEmailConfiguration = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+            Set<String> viewPermissions = user.get().getViewPermissions();
+            Set<String> editPermissions = user.get().getEditPermissions();
+            boolean canViewSettings = RoleAccess.canViewAnyConfigurationPage(normalizedRole, viewPermissions);
+            boolean canEditSettings = RoleAccess.canEditAnyConfigurationPage(normalizedRole, editPermissions);
+            boolean canViewEmailConfiguration = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+            boolean canEditEmailConfiguration = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+            boolean canViewUserManagement = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+            boolean canEditUserManagement = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+            boolean canViewLicenseManagement = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
+            boolean canEditLicenseManagement = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
 
             session.setAttribute("username", user.get().getUsername());
             session.setAttribute("role", normalizedRole);
             session.setAttribute("roleLabel", RoleAccess.displayName(normalizedRole));
             session.setAttribute("email",    user.get().getEmail());
-                session.setAttribute("viewPermissions", viewPermissions);
-                session.setAttribute("editPermissions", editPermissions);
-                session.setAttribute("canViewSettings", canViewSettings);
-                session.setAttribute("canEditSettings", canEditSettings);
-                session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
-                session.setAttribute("canEditEmailConfiguration", canEditEmailConfiguration);
+            session.setAttribute("viewPermissions", viewPermissions);
+            session.setAttribute("editPermissions", editPermissions);
+            session.setAttribute("canViewSettings", canViewSettings);
+            session.setAttribute("canEditSettings", canEditSettings);
+            session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
+            session.setAttribute("canEditEmailConfiguration", canEditEmailConfiguration);
+            session.setAttribute("canViewUserManagement", canViewUserManagement);
+            session.setAttribute("canEditUserManagement", canEditUserManagement);
+            session.setAttribute("canViewLicenseManagement", canViewLicenseManagement);
+            session.setAttribute("canEditLicenseManagement", canEditLicenseManagement);
             return Map.of(
                     "status",   "success",
                     "role", normalizedRole,
@@ -94,7 +102,7 @@ public class AuthController {
     @GetMapping("/api/users")
     @ResponseBody
     public Map<String, Object> listUsers(HttpSession session) {
-        if (!isAdmin(session)) {
+        if (!canViewPage(session, RoleAccess.PAGE_USER_MANAGEMENT)) {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
@@ -110,7 +118,7 @@ public class AuthController {
     @ResponseBody
     public Map<String, String> addUser(@RequestBody Map<String, Object> payload,
                                        HttpSession session) {
-        if (!isAdmin(session)) {
+        if (!canEditPage(session, RoleAccess.PAGE_USER_MANAGEMENT)) {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
@@ -134,7 +142,7 @@ public class AuthController {
     public Map<String, String> updateUser(@PathVariable Long id,
                                           @RequestBody Map<String, Object> payload,
                                           HttpSession session) {
-        if (!isAdmin(session)) {
+        if (!canEditPage(session, RoleAccess.PAGE_USER_MANAGEMENT)) {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
@@ -156,7 +164,7 @@ public class AuthController {
     @ResponseBody
     public Map<String, String> deleteUser(@PathVariable Long id,
                                           HttpSession session) {
-        if (!isAdmin(session)) {
+        if (!canEditPage(session, RoleAccess.PAGE_USER_MANAGEMENT)) {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
@@ -171,6 +179,22 @@ public class AuthController {
     private boolean isAdmin(HttpSession session) {
         String role = (String) session.getAttribute("role");
         return RoleAccess.isAdmin(role);
+    }
+
+    private boolean canViewPage(HttpSession session, String pageKey) {
+        if (session == null) {
+            return false;
+        }
+        String role = (String) session.getAttribute("role");
+        return RoleAccess.canViewPage(role, toPermissionSet(session.getAttribute("viewPermissions")), pageKey);
+    }
+
+    private boolean canEditPage(HttpSession session, String pageKey) {
+        if (session == null) {
+            return false;
+        }
+        String role = (String) session.getAttribute("role");
+        return RoleAccess.canEditPage(role, toPermissionSet(session.getAttribute("editPermissions")), pageKey);
     }
 
     private Map<String, Object> toUserResponse(AppUser user) {
@@ -213,8 +237,8 @@ public class AuthController {
             return RoleAccess.sanitizePages(values);
         }
 
-        if (raw instanceof List<?> listValue) {
-            for (Object item : listValue) {
+        if (raw instanceof java.util.Collection<?> collectionValue) {
+            for (Object item : collectionValue) {
                 if (item != null) {
                     String value = String.valueOf(item).trim();
                     if (!value.isBlank()) {

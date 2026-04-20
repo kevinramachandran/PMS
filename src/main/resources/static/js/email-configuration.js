@@ -1,6 +1,7 @@
 (function () {
     const PASSWORD_MASK = '********';
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const canEditCurrentPage = String(document.body && document.body.dataset ? document.body.dataset.canEditCurrentPage : '').toLowerCase() === 'true';
 
     const fields = {
         host: document.getElementById('smtpHost'),
@@ -33,6 +34,50 @@
 
     let hasStoredPassword = false;
     let usingMaskedPassword = false;
+
+    function ensureReadonlyBanner() {
+        const container = document.querySelector('.email-config-page');
+        if (!container || canEditCurrentPage || container.querySelector('.permission-readonly-banner')) {
+            return;
+        }
+
+        const banner = document.createElement('div');
+        banner.className = 'permission-readonly-banner';
+        banner.innerHTML = '<i class="fas fa-lock"></i><div><strong>View only access</strong><span>You can review the current email configuration, but editing and connection testing are disabled for this account.</span></div>';
+        container.insertBefore(banner, container.firstChild);
+    }
+
+    function applyReadonlyMode() {
+        const container = document.querySelector('.email-config-page');
+        if (!container || canEditCurrentPage) {
+            return;
+        }
+
+        container.classList.add('permission-readonly-mode');
+        ensureReadonlyBanner();
+
+        Object.keys(fields).forEach(function (key) {
+            const field = fields[key];
+            if (!field) {
+                return;
+            }
+            field.disabled = true;
+            field.setAttribute('title', 'Edit access required');
+        });
+
+        if (togglePasswordBtn) {
+            togglePasswordBtn.disabled = true;
+            togglePasswordBtn.setAttribute('title', 'Edit access required');
+        }
+        if (testBtn) {
+            testBtn.disabled = true;
+            testBtn.setAttribute('title', 'Edit access required');
+        }
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.setAttribute('title', 'Edit access required');
+        }
+    }
 
     function showMessage(message, type) {
         if (!messageEl) return;
@@ -188,7 +233,7 @@
             button.innerHTML = loadingText;
             return;
         }
-        button.disabled = false;
+        button.disabled = !canEditCurrentPage;
         button.innerHTML = defaultHtml || button.dataset.originalHtml || button.innerHTML;
     }
 
@@ -217,6 +262,7 @@
         fields.password.value = hasStoredPassword ? PASSWORD_MASK : '';
         refreshPasswordState();
         updateTestButtonState();
+        applyReadonlyMode();
     }
 
     function loadConfiguration() {
@@ -238,6 +284,11 @@
     }
 
     function saveConfiguration() {
+        if (!canEditCurrentPage) {
+            applyReadonlyMode();
+            return;
+        }
+
         const result = validatePayload(true, true);
         if (!result.valid) {
             showMessage('Please correct the highlighted fields.', 'error');
@@ -277,6 +328,11 @@
     }
 
     function testConnection() {
+        if (!canEditCurrentPage) {
+            applyReadonlyMode();
+            return;
+        }
+
         const result = validatePayload(false, true);
         if (!result.valid) {
             showMessage('Please complete the required SMTP fields before testing.', 'error');
@@ -308,6 +364,11 @@
     }
 
     function updateTestButtonState() {
+        if (!canEditCurrentPage) {
+            testBtn.disabled = true;
+            return;
+        }
+
         const result = validatePayload(false, false);
         testBtn.disabled = !result.valid;
     }
@@ -323,6 +384,10 @@
 
     if (togglePasswordBtn) {
         togglePasswordBtn.addEventListener('click', function () {
+            if (!canEditCurrentPage) {
+                applyReadonlyMode();
+                return;
+            }
             const nextType = fields.password.type === 'password' ? 'text' : 'password';
             fields.password.type = nextType;
             togglePasswordBtn.innerHTML = nextType === 'password'
@@ -354,5 +419,6 @@
         testBtn.addEventListener('click', testConnection);
     }
 
+    applyReadonlyMode();
     loadConfiguration();
 })();

@@ -258,6 +258,61 @@
     gap: 16px;
 }
 
+.permission-readonly-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid rgba(180, 83, 9, 0.24);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(255, 251, 235, 0.92));
+    color: #92400e;
+}
+
+.permission-readonly-banner i {
+    margin-top: 2px;
+    color: #b45309;
+}
+
+.permission-readonly-banner strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 14px;
+}
+
+.permission-readonly-banner span {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.form-section.permission-readonly-mode input:disabled,
+.form-section.permission-readonly-mode textarea:disabled,
+.form-section.permission-readonly-mode select:disabled,
+.email-config-page.permission-readonly-mode input:disabled,
+.email-config-page.permission-readonly-mode textarea:disabled,
+.email-config-page.permission-readonly-mode select:disabled,
+.email-config-page.permission-readonly-mode input[readonly],
+.email-config-page.permission-readonly-mode textarea[readonly] {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: not-allowed;
+    border-color: #d7dde5;
+}
+
+.form-section.permission-readonly-mode button:disabled,
+.email-config-page.permission-readonly-mode button:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.form-section.permission-readonly-mode .file-upload-trigger.permission-readonly-trigger,
+.email-config-page.permission-readonly-mode .file-upload-trigger.permission-readonly-trigger {
+    pointer-events: none;
+    opacity: 0.62;
+}
+
 .metrics-entry-group {
     border: 1px solid var(--border-color);
     border-radius: 10px;

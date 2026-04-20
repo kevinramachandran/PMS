@@ -4,6 +4,7 @@ $(document).ready(function() {
     let currentForm = 'priorities';
     let currentType = '';
     const pageState = document.body ? document.body.dataset : {};
+    const canEditCurrentPage = String(pageState.canEditCurrentPage || '').toLowerCase().trim() === 'true';
     const urlParams = new URLSearchParams(window.location.search);
     const requestedConfig = (urlParams.get('config') || '').toLowerCase().trim();
     const serverActivePage = (pageState.activePage || '').toLowerCase().trim();
@@ -87,6 +88,84 @@ $(document).ready(function() {
                              'training-schedule', 'meeting-agenda', 'process-confirmation', 'hs-cross', 
                              'lsr-tracking', 'kpi-footer-buttons', 'license', 'metrics-data', 'kpi-cross-color'];
     const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
+    const readOnlyActionSelectors = [
+        '.form-actions button',
+        '#addRowBtn',
+        '.issue-delete',
+        '.issue-add-row-btn',
+        '.file-upload-trigger',
+        '#saveKpiCrossColor'
+    ].join(', ');
+
+    function currentPageTitle() {
+        return serverActiveTitle || 'this page';
+    }
+
+    function getActiveFormSection() {
+        return $('.form-section.active').first();
+    }
+
+    function ensureReadonlyBanner($section) {
+        if (!$section || !$section.length || canEditCurrentPage || $section.children('.permission-readonly-banner').length) {
+            return;
+        }
+
+        const title = currentPageTitle();
+        const bannerHtml = '<div class="permission-readonly-banner"><i class="fas fa-lock"></i><div><strong>View only access</strong><span>You can review ' + title + ', but editing controls are locked for this account.</span></div></div>';
+        $section.prepend(bannerHtml);
+    }
+
+    function applyReadonlyStateToActiveSection() {
+        if (canEditCurrentPage) {
+            return;
+        }
+
+        const $section = getActiveFormSection();
+        if (!$section.length) {
+            return;
+        }
+
+        $section.addClass('permission-readonly-mode');
+        ensureReadonlyBanner($section);
+
+        $section.find('input:not([type="hidden"]), textarea, select').each(function() {
+            $(this)
+                .prop('disabled', true)
+                .attr('title', 'Edit access required');
+        });
+
+        $section.find(readOnlyActionSelectors).each(function() {
+            const $element = $(this);
+            if ($element.is('button, input, select, textarea')) {
+                $element.prop('disabled', true);
+            } else {
+                $element.addClass('permission-readonly-trigger').attr('aria-disabled', 'true');
+            }
+            $element.attr('title', 'Edit access required');
+        });
+    }
+
+    function installReadonlyObserver() {
+        if (canEditCurrentPage) {
+            return;
+        }
+
+        const settingsMain = document.querySelector('.settings-main');
+        if (!settingsMain) {
+            return;
+        }
+
+        const observer = new MutationObserver(function() {
+            applyReadonlyStateToActiveSection();
+        });
+
+        observer.observe(settingsMain, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'disabled', 'style']
+        });
+    }
     
     console.log('Direct Nav Configs:', directNavConfigs);
     console.log('Is requested config in direct nav?', directNavConfigs.includes(requestedConfig), '(' + requestedConfig + ')');
@@ -172,6 +251,10 @@ $(document).ready(function() {
             const activeForm = $('.form-section.active');
             console.log('Active form element:', activeForm.attr('id'), 'visible:', activeForm.is(':visible'));
         }, 100);
+
+        setTimeout(function() {
+            applyReadonlyStateToActiveSection();
+        }, 0);
     }
 
     // ==================== GET SECTION TITLE ====================
@@ -3333,5 +3416,6 @@ $(document).ready(function() {
         showForm('priorities', '');
     }
 
+    installReadonlyObserver();
     initializeSettingsView();
     });

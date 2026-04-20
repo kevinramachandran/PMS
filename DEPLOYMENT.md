@@ -6,6 +6,7 @@
 .github/workflows/ci.yml
 deployment/linux/install-service.sh
 deployment/systemd/brewery-pms.service
+WINDOWS_SERVICE_RELEASE_CHECKLIST.md
 docker-compose.yml
 src/main/resources/
   application.yml
@@ -174,6 +175,111 @@ sudo systemctl restart brewery-pms
 sudo systemctl status brewery-pms
 journalctl -u brewery-pms -f
 ```
+
+## Windows Service With WinSW
+
+This is the recommended path for a Windows Server deployment because the application stays in the background and restarts automatically if it exits.
+
+Build the deployment bundle on a build machine:
+
+```powershell
+.\gradlew.bat clean bundleWindowsService
+```
+
+For a release-ready handoff, generate the bundle and a versioned ZIP in one command:
+
+```powershell
+.\gradlew.bat packageWindowsService
+```
+
+ZIP artifact output:
+
+```text
+dist/releases/brewery-pms-be-windows-service-2.0.0.zip
+```
+
+This creates:
+
+```text
+dist/windows-service/
+  app/app.jar
+  config/brewery-pms.env.example
+  service/brewery-pms.xml
+  service/install-service.ps1
+  service/remove-service.ps1
+  service/start-service.ps1
+```
+
+If you use the ZIP artifact, extract it on the server first and then run the installer from the extracted `service` folder.
+
+Team release handoff checklist:
+
+```text
+WINDOWS_SERVICE_RELEASE_CHECKLIST.md
+```
+
+Copy the `dist/windows-service` folder to the Windows server, open an elevated PowerShell session, then run:
+
+```powershell
+Set-Location .\dist\windows-service\service
+.\install-service.ps1 -InstallRoot C:\Brewery-PMS
+```
+
+Optional: start the service immediately after install:
+
+```powershell
+.\install-service.ps1 -InstallRoot C:\Brewery-PMS -StartAfterInstall
+```
+
+Server layout after installation:
+
+```text
+C:\Brewery-PMS\
+  app\app.jar
+  config\brewery-pms.env
+  logs\
+  service\brewery-pms.exe
+  service\brewery-pms.xml
+  service\start-service.ps1
+  uploads\footer-buttons\
+```
+
+Update the environment file before starting in production:
+
+```text
+C:\Brewery-PMS\config\brewery-pms.env
+```
+
+At minimum, set these values:
+
+- `SPRING_PROFILES_ACTIVE=prod`
+- `DB_URL=...`
+- `DB_USERNAME=...`
+- `DB_PASSWORD=...`
+- `APP_EMAIL_CONFIG_SECRET=...`
+
+Manage the service:
+
+```powershell
+Set-Location C:\Brewery-PMS\service
+.\brewery-pms.exe start
+.\brewery-pms.exe stop
+.\brewery-pms.exe restart
+.\brewery-pms.exe status
+```
+
+Remove the service registration without deleting application files:
+
+```powershell
+Set-Location .\dist\windows-service\service
+.\remove-service.ps1 -InstallRoot C:\Brewery-PMS
+```
+
+Windows prerequisites:
+
+- Java 21 installed and available through `JAVA_HOME` or `PATH`
+- Network access from the server to the MySQL host
+- An elevated PowerShell session for service installation
 
 ## Docker
 

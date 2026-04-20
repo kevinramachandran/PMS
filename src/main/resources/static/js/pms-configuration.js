@@ -8,6 +8,7 @@
     const passwordEl = document.getElementById('newPassword');
     const roleEl = document.getElementById('newRole');
     const newPermissionsSectionEl = document.getElementById('newPermissionsSection');
+    const newPermissionsMatrixEl = document.getElementById('newPermissionsMatrix');
     const messageEl = document.getElementById('addUserMessage');
     const tableMessageEl = document.getElementById('usersTableMessage');
 
@@ -16,6 +17,7 @@
     const editEmailEl = document.getElementById('editEmail');
     const editRoleEl = document.getElementById('editRole');
     const editPermissionsSectionEl = document.getElementById('editPermissionsSection');
+    const editPermissionsMatrixEl = document.getElementById('editPermissionsMatrix');
     const editPasswordEl = document.getElementById('editPassword');
     const editMessageEl = document.getElementById('editUserMessage');
     const saveEditBtn = document.getElementById('saveEditBtn');
@@ -28,6 +30,64 @@
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
     let pendingDeleteUserId = null;
+    const canEditUserManagement = String(document.body.getAttribute('data-can-edit-user-management') || '').toLowerCase() === 'true';
+
+    const PERMISSION_GROUPS = [
+        {
+            key: 'workspace',
+            label: 'PMS4 Deck V0 Data',
+            description: 'Operational data-entry pages and their child pages.',
+            items: [
+                {
+                    key: 'PMS_DATA_ENTRY',
+                    label: 'PMS4 Deck V0 Data',
+                    description: 'All child pages under Top Priorities, weekly priorities, daily performance, and daily sections.'
+                },
+                {
+                    key: 'PRODUCTION_METRICS_DATA',
+                    label: 'Production Metrics Data',
+                    description: 'Metrics entry, imports, and updates for production metrics.'
+                }
+            ]
+        },
+        {
+            key: 'configuration',
+            label: 'Configuration Pages',
+            description: 'Setup screens that control daily boards, trackers, and KPI modules.',
+            items: [
+                { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board Configuration', description: 'Issue board templates and assignment setup.' },
+                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Configuration', description: 'Schedules and settings for gemba walk planning.' },
+                { key: 'LEADERSHIP_GEMBA_TRACKER_CONFIGURATION', label: 'Safety Gemba Tracker Config', description: 'Leadership safety gemba tracker configuration.' },
+                { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Schedule Config', description: 'Training schedule periods and configuration data.' },
+                { key: 'MEETING_AGENDA_CONFIGURATION', label: 'PMS Agenda Config', description: 'Meeting agenda configuration and period updates.' },
+                { key: 'PROCESS_CONFIRMATION_CONFIGURATION', label: 'Process Confirmation Config', description: 'Process confirmation templates and period updates.' },
+                { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality Tracker Config', description: 'Abnormality tracker lists and save actions.' },
+                { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily Config', description: 'Health and safety daily cross settings.' },
+                { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking Config', description: 'LSR daily tracking settings and updates.' },
+                { key: 'KPI_FOOTER_BUTTONS', label: 'KPI Footer Buttons', description: 'Footer button labels, URLs, and uploads.' },
+                { key: 'KPI_TARGET_CROSS_COLOR', label: 'KPI Target Cross Color', description: 'Color rules used for KPI cross alert states.' },
+                { key: 'EMAIL_CONFIGURATION', label: 'Email Configuration', description: 'SMTP settings and outbound mail test configuration.' }
+            ]
+        },
+        {
+            key: 'administration',
+            label: 'Administration',
+            description: 'Administrative screens for user and license access.',
+            items: [
+                { key: 'USER_MANAGEMENT', label: 'User Management', description: 'User list, role updates, and permission assignment.' },
+                { key: 'LICENSE_MANAGEMENT', label: 'License Management', description: 'License review, decode, and activation controls.' }
+            ]
+        }
+    ];
+
+    const PERMISSION_LABELS = PERMISSION_GROUPS
+        .flatMap(function (group) { return group.items; })
+        .reduce(function (accumulator, item) {
+            accumulator[item.key] = item.label;
+            return accumulator;
+        }, {});
+
+    const ALL_PERMISSION_KEYS = Object.keys(PERMISSION_LABELS);
 
     function normalizeRole(role) {
         const value = String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
@@ -81,20 +141,71 @@
             .filter(Boolean);
     }
 
+    function permissionLabel(permissionKey) {
+        return PERMISSION_LABELS[permissionKey] || permissionKey;
+    }
+
+    function escapeAttribute(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function buildPermissionTooltip(title, items) {
+        if (!items.length) {
+            return title + '\nNo pages assigned';
+        }
+
+        return title + '\n' + items.map(function (item) {
+            return '- ' + item;
+        }).join('\n');
+    }
+
     function formatPermissionSummary(user) {
         const view = new Set(readArray(user.viewPermissions));
         const edit = new Set(readArray(user.editPermissions));
-        const parts = [];
+        const viewLabels = Array.from(view)
+            .filter(function (permissionKey) { return PERMISSION_LABELS[permissionKey]; })
+            .map(permissionLabel)
+            .sort();
 
-        if (view.has('SETTINGS') || edit.has('SETTINGS')) {
-            parts.push('PMS: ' + (edit.has('SETTINGS') ? 'Edit' : 'View'));
+        const editLabels = Array.from(edit)
+            .filter(function (permissionKey) { return PERMISSION_LABELS[permissionKey]; })
+            .map(permissionLabel)
+            .sort();
+
+        const touchedLabels = Array.from(new Set(viewLabels.concat(editLabels)));
+
+        if (!touchedLabels.length) {
+            return '<span class="permission-empty-state">No page access assigned</span>';
         }
 
-        if (view.has('EMAIL_CONFIGURATION') || edit.has('EMAIL_CONFIGURATION')) {
-            parts.push('Email: ' + (edit.has('EMAIL_CONFIGURATION') ? 'Edit' : 'View'));
-        }
+        const allTooltip = buildPermissionTooltip('Assigned pages', touchedLabels);
+        const viewTooltip = buildPermissionTooltip('View access', viewLabels);
+        const editTooltip = buildPermissionTooltip('Edit access', editLabels);
 
-        return parts.length ? parts.join(' | ') : '-';
+        return '' +
+            '<div class="permission-summary">' +
+                '<div class="permission-summary-icons">' +
+                    '<span class="permission-icon-badge all" title="' + escapeAttribute(allTooltip) + '" aria-label="' + escapeAttribute(allTooltip) + '">' +
+                        '<i class="fas fa-shield-alt"></i>' +
+                        '<span class="permission-icon-count">' + touchedLabels.length + '</span>' +
+                    '</span>' +
+                    '<span class="permission-icon-badge view" title="' + escapeAttribute(viewTooltip) + '" aria-label="' + escapeAttribute(viewTooltip) + '">' +
+                        '<i class="fas fa-eye"></i>' +
+                        '<span class="permission-icon-count">' + view.size + '</span>' +
+                    '</span>' +
+                    '<span class="permission-icon-badge edit" title="' + escapeAttribute(editTooltip) + '" aria-label="' + escapeAttribute(editTooltip) + '">' +
+                        '<i class="fas fa-pen"></i>' +
+                        '<span class="permission-icon-count">' + edit.size + '</span>' +
+                    '</span>' +
+                '</div>' +
+                '<div class="permission-summary-caption" title="' + escapeAttribute(allTooltip) + '">' +
+                    escapeHtml(touchedLabels.slice(0, 2).join(', ')) + (touchedLabels.length > 2 ? ' +' + (touchedLabels.length - 2) + ' more' : '') +
+                '</div>' +
+            '</div>';
     }
 
     function setPermissionInputs(scope, values, type) {
@@ -143,6 +254,81 @@
         setPermissionInputs(scope, [], 'edit');
     }
 
+    function renderPermissionMatrix(scope, container) {
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = PERMISSION_GROUPS.map(function (group) {
+            const cards = group.items.map(function (item) {
+                return '' +
+                    '<div class="permission-card">' +
+                        '<div class="permission-card-copy">' +
+                            '<span class="permission-card-title">' + escapeHtml(item.label) + '</span>' +
+                            '<span class="permission-card-description">' + escapeHtml(item.description) + '</span>' +
+                        '</div>' +
+                        '<div class="permission-card-toggles">' +
+                            '<label class="permission-switch view">' +
+                                '<input type="checkbox" data-scope="' + scope + '" data-group="' + group.key + '" data-page="' + item.key + '" data-type="view">' +
+                                '<span>View</span>' +
+                            '</label>' +
+                            '<label class="permission-switch edit">' +
+                                '<input type="checkbox" data-scope="' + scope + '" data-group="' + group.key + '" data-page="' + item.key + '" data-type="edit">' +
+                                '<span>Edit</span>' +
+                            '</label>' +
+                        '</div>' +
+                    '</div>';
+            }).join('');
+
+            return '' +
+                '<section class="permission-group-card">' +
+                    '<div class="permission-group-header">' +
+                        '<div>' +
+                            '<span class="permission-group-kicker">' + escapeHtml(group.label) + '</span>' +
+                            '<p>' + escapeHtml(group.description) + '</p>' +
+                        '</div>' +
+                        '<div class="permission-group-actions">' +
+                            '<button type="button" class="permission-bulk-btn" data-scope="' + scope + '" data-group="' + group.key + '" data-bulk="view">View all</button>' +
+                            '<button type="button" class="permission-bulk-btn" data-scope="' + scope + '" data-group="' + group.key + '" data-bulk="edit">Edit all</button>' +
+                            '<button type="button" class="permission-bulk-btn clear" data-scope="' + scope + '" data-group="' + group.key + '" data-bulk="clear">Clear</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="permission-card-grid">' + cards + '</div>' +
+                '</section>';
+        }).join('');
+    }
+
+    function applyGroupSelection(scope, groupKey, mode) {
+        const groupInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-group="' + groupKey + '"]');
+        if (!groupInputs.length) {
+            return;
+        }
+
+        groupInputs.forEach(function (input) {
+            if (mode === 'clear') {
+                input.checked = false;
+                return;
+            }
+
+            if (mode === 'view' && input.dataset.type === 'view') {
+                input.checked = true;
+            }
+
+            if (mode === 'edit') {
+                input.checked = true;
+            }
+        });
+
+        syncPermissionDependencies(scope);
+    }
+
+    function buildDefaultAdminPermissions() {
+        return {
+            viewPermissions: ALL_PERMISSION_KEYS.slice(),
+            editPermissions: ALL_PERMISSION_KEYS.slice()
+        };
+    }
+
     function togglePermissionSection(roleElement, sectionElement) {
         if (!roleElement || !sectionElement) return;
         const isAdmin = normalizeRole(roleElement.value) === 'ADMIN';
@@ -163,12 +349,14 @@
                 '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i>' + escapeHtml(u.username) + '</td>' +
                 '<td>' + escapeHtml(u.email || '-') + '</td>' +
                 '<td><span class="pms-role-badge ' + roleClass(u.role) + '">' + escapeHtml(u.roleLabel || roleLabel(u.role)) + '</span></td>' +
-                '<td>' + escapeHtml(formatPermissionSummary(u)) + '</td>' +
+                                '<td>' + formatPermissionSummary(u) + '</td>' +
                 '<td><span class="pms-status-badge active">' + escapeHtml(u.status || 'Active') + '</span></td>' +
-                '<td class="pms-user-actions">' +
-                '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-email="' + escapeHtml(u.email || '') + '" data-role="' + escapeHtml(u.role) + '" data-view-permissions="' + escapeHtml(readArray(u.viewPermissions).join(',')) + '" data-edit-permissions="' + escapeHtml(readArray(u.editPermissions).join(',')) + '"><i class="fas fa-pen"></i> Edit</button>' +
-                '<button type="button" class="pms-action-btn delete" data-id="' + u.id + '"><i class="fas fa-trash"></i> Delete</button>' +
-                '</td>' +
+                                '<td class="pms-user-actions">' +
+                                (canEditUserManagement
+                                        ? '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-email="' + escapeHtml(u.email || '') + '" data-role="' + escapeHtml(u.role) + '" data-view-permissions="' + escapeHtml(readArray(u.viewPermissions).join(',')) + '" data-edit-permissions="' + escapeHtml(readArray(u.editPermissions).join(',')) + '"><i class="fas fa-pen"></i> Edit</button>' +
+                                            '<button type="button" class="pms-action-btn delete" data-id="' + u.id + '"><i class="fas fa-trash"></i> Delete</button>'
+                                        : '<span class="permission-view-only"><i class="fas fa-eye"></i> View only</span>') +
+                                '</td>' +
                 '</tr>';
         }).join('');
 
@@ -207,7 +395,7 @@
         const password = passwordEl.value || '';
         const role = normalizeRole(roleEl.value || 'USER');
         const permissions = role === 'ADMIN'
-            ? { viewPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'], editPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'] }
+            ? buildDefaultAdminPermissions()
             : collectPermissions('new');
 
         if (!username || !email || !password) {
@@ -255,6 +443,7 @@
 
     function openEditModal(id, email, role, viewPermissions, editPermissions) {
         if (!modalEl) return;
+        if (!canEditUserManagement) return;
         editUserIdEl.value = id;
         editEmailEl.value = email || '';
         editRoleEl.value = normalizeRole(role || 'USER');
@@ -292,7 +481,7 @@
         const role = normalizeRole(editRoleEl.value || 'USER');
         const password = editPasswordEl.value || '';
         const permissions = role === 'ADMIN'
-            ? { viewPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'], editPermissions: ['SETTINGS', 'EMAIL_CONFIGURATION'] }
+            ? buildDefaultAdminPermissions()
             : collectPermissions('edit');
 
         if (!id || !email) {
@@ -420,8 +609,47 @@
         });
     }
 
+    function syncPermissionDependencies(scope) {
+        const editInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="edit"]');
+        editInputs.forEach(function (input) {
+            const page = String(input.dataset.page || '').toUpperCase();
+            const relatedView = document.querySelector('input[data-scope="' + scope + '"][data-type="view"][data-page="' + page + '"]');
+            if (!relatedView) {
+                return;
+            }
+
+            if (input.checked) {
+                relatedView.checked = true;
+            }
+
+            if (!relatedView.checked) {
+                input.checked = false;
+            }
+        });
+    }
+
+    function bindPermissionBulkActions(container, scope) {
+        if (!container) {
+            return;
+        }
+
+        container.addEventListener('click', function (event) {
+            const button = event.target.closest('.permission-bulk-btn');
+            if (!button || button.dataset.scope !== scope) {
+                return;
+            }
+
+            applyGroupSelection(scope, button.dataset.group, button.dataset.bulk);
+        });
+    }
+
+    renderPermissionMatrix('new', newPermissionsMatrixEl);
+    renderPermissionMatrix('edit', editPermissionsMatrixEl);
+
     bindPermissionRules('new');
     bindPermissionRules('edit');
+    bindPermissionBulkActions(newPermissionsMatrixEl, 'new');
+    bindPermissionBulkActions(editPermissionsMatrixEl, 'edit');
 
     if (roleEl) {
         roleEl.addEventListener('change', function () {

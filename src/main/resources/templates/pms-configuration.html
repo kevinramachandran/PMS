@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-can-edit-user-management=${session.canEditUserManagement}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -55,8 +55,8 @@
                 <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking Config"><i class="fas fa-sliders"></i><span>LSR Tracking Config</span></a>
                 <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-sliders"></i><span>KPI Footer Buttons</span></a>
                 <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
-                <a href="/pms-configuration" class="nav-item active" th:if="${session.role == 'ADMIN'}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
-                <a href="/settings?config=license" class="nav-item" th:if="${session.role == 'ADMIN' or session.username == 'kevin' or session.username == 'siva'}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
+                <a href="/pms-configuration" class="nav-item active" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
                 <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -92,11 +92,24 @@
             <div class="content-area">
                 <div class="pms-config-page">
 
+                    <section class="um-intro-strip">
+                        <div>
+                            <span class="um-intro-kicker">Access Control</span>
+                            <h2>Assign page-level access with clearer View and Edit rules</h2>
+                            <p>View opens the page and lets users inspect data. Edit enables save, update, upload, and delete actions, and always includes View automatically.</p>
+                        </div>
+                        <div class="um-intro-chips">
+                            <span class="um-intro-chip view"><i class="fas fa-eye"></i> View for read access</span>
+                            <span class="um-intro-chip edit"><i class="fas fa-pen"></i> Edit for change access</span>
+                        </div>
+                    </section>
+
                     <div class="um-layout">
                         <!-- LEFT: PMS Users Table -->
                         <div class="um-left pms-config-card">
                             <div class="pms-config-card-header">
                                 <h2><i class="fas fa-users"></i> PMS Users</h2>
+                                <p>Manage account roles and page-level access by operational area.</p>
                             </div>
                             <div class="pms-config-card-body">
                                 <table class="pms-users-table">
@@ -105,7 +118,7 @@
                                             <th>Username</th>
                                             <th>Email</th>
                                             <th>Role</th>
-                                            <th>Config Access</th>
+                                            <th>Permissions</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -121,9 +134,10 @@
                         </div>
 
                         <!-- RIGHT: Add New User Form -->
-                        <div class="um-right pms-config-card">
+                        <div class="um-right pms-config-card" th:if="${session.canEditUserManagement}">
                             <div class="pms-config-card-header">
                                 <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+                                <p>Create a user and assign the exact pages they can open or edit.</p>
                             </div>
                             <div class="pms-config-card-body">
                                 <form class="pms-add-user-form" id="addUserForm" onsubmit="return false;">
@@ -149,19 +163,20 @@
                                         </div>
                                         <div class="form-group" id="newPermissionsSection">
                                             <label class="form-label">Configuration Page Permissions</label>
-                                            <div class="permission-matrix">
-                                                <div class="permission-row">
-                                                    <span class="permission-page">PMS Data Entry</span>
-                                                    <label><input type="checkbox" data-scope="new" data-page="SETTINGS" data-type="view"> View</label>
-                                                    <label><input type="checkbox" data-scope="new" data-page="SETTINGS" data-type="edit"> Edit</label>
+                                            <div class="permissions-builder">
+                                                <div class="permissions-builder-header">
+                                                    <div>
+                                                        <span class="permissions-builder-kicker">Permission Matrix</span>
+                                                        <strong>Choose access by page group</strong>
+                                                    </div>
+                                                    <div class="permissions-builder-legend">
+                                                        <span class="legend-pill view"><i class="fas fa-eye"></i> View</span>
+                                                        <span class="legend-pill edit"><i class="fas fa-pen"></i> Edit</span>
+                                                    </div>
                                                 </div>
-                                                <div class="permission-row">
-                                                    <span class="permission-page">Email Configuration</span>
-                                                    <label><input type="checkbox" data-scope="new" data-page="EMAIL_CONFIGURATION" data-type="view"> View</label>
-                                                    <label><input type="checkbox" data-scope="new" data-page="EMAIL_CONFIGURATION" data-type="edit"> Edit</label>
-                                                </div>
+                                                <div class="permission-groups" id="newPermissionsMatrix"></div>
+                                                <small class="permissions-builder-note">Group actions help you grant access faster. Edit always keeps View enabled for the same page.</small>
                                             </div>
-                                            <small style="color:#64748b;display:block;margin-top:6px;">Dashboard pages remain view-only and are not managed here.</small>
                                         </div>
                                     </div>
                                     <div class="form-actions" style="margin-top:16px;">
@@ -171,6 +186,22 @@
                                     </div>
                                     <div id="addUserMessage" class="form-message" style="margin-top:12px;"></div>
                                 </form>
+                            </div>
+                        </div>
+
+                        <div class="um-right pms-config-card" th:if="${session.canEditUserManagement == false}">
+                            <div class="pms-config-card-header">
+                                <h2><i class="fas fa-eye"></i> Read-Only Access</h2>
+                                <p>You can review users and permissions, but account changes require Edit access for User Management.</p>
+                            </div>
+                            <div class="pms-config-card-body">
+                                <div class="um-readonly-note">
+                                    <i class="fas fa-lock"></i>
+                                    <div>
+                                        <strong>Viewer mode is active.</strong>
+                                        <span>Ask an administrator or a user with User Management edit rights to add accounts or change permissions.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -202,17 +233,18 @@
                     </div>
                     <div class="form-group" id="editPermissionsSection">
                         <label class="form-label">Configuration Page Permissions</label>
-                        <div class="permission-matrix">
-                            <div class="permission-row">
-                                <span class="permission-page">PMS Data Entry</span>
-                                <label><input type="checkbox" data-scope="edit" data-page="SETTINGS" data-type="view"> View</label>
-                                <label><input type="checkbox" data-scope="edit" data-page="SETTINGS" data-type="edit"> Edit</label>
+                        <div class="permissions-builder compact">
+                            <div class="permissions-builder-header">
+                                <div>
+                                    <span class="permissions-builder-kicker">Permission Matrix</span>
+                                    <strong>Update access by page group</strong>
+                                </div>
+                                <div class="permissions-builder-legend">
+                                    <span class="legend-pill view"><i class="fas fa-eye"></i> View</span>
+                                    <span class="legend-pill edit"><i class="fas fa-pen"></i> Edit</span>
+                                </div>
                             </div>
-                            <div class="permission-row">
-                                <span class="permission-page">Email Configuration</span>
-                                <label><input type="checkbox" data-scope="edit" data-page="EMAIL_CONFIGURATION" data-type="view"> View</label>
-                                <label><input type="checkbox" data-scope="edit" data-page="EMAIL_CONFIGURATION" data-type="edit"> Edit</label>
-                            </div>
+                            <div class="permission-groups" id="editPermissionsMatrix"></div>
                         </div>
                     </div>
                     <div class="form-group">

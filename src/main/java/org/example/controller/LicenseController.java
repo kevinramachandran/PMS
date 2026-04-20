@@ -29,7 +29,7 @@ public class LicenseController {
      */
     @GetMapping("/current")
     public Map<String, Object> getCurrentLicense(HttpSession session) {
-        if (!isAdminOrInternal(session)) {
+        if (!canViewLicense(session)) {
             return error("Forbidden");
         }
 
@@ -71,7 +71,7 @@ public class LicenseController {
      */
     @PostMapping("/decode")
     public Map<String, Object> decodeToken(@RequestBody Map<String, String> body, HttpSession session) {
-        if (!isAdminOrInternal(session)) {
+        if (!canViewLicense(session)) {
             return error("Forbidden");
         }
 
@@ -100,7 +100,7 @@ public class LicenseController {
      */
     @PostMapping("/save")
     public Map<String, Object> saveLicense(@RequestBody Map<String, String> body, HttpSession session) {
-        if (!isAdminOrInternal(session)) {
+        if (!canEditLicense(session)) {
             return error("Forbidden");
         }
 
@@ -122,11 +122,36 @@ public class LicenseController {
         return response;
     }
 
-    private boolean isAdminOrInternal(HttpSession session) {
+    private boolean canViewLicense(HttpSession session) {
         if (session == null) return false;
-        String role     = (String) session.getAttribute("role");
+        String role = (String) session.getAttribute("role");
         String username = (String) session.getAttribute("username");
-        return RoleAccess.isAdmin(role) || authService.isInternalStaticUser(username);
+        if (RoleAccess.isAdmin(role) || authService.isInternalStaticUser(username)) {
+            return true;
+        }
+        return RoleAccess.canViewPage(role, extractPermissions(session, "viewPermissions"), RoleAccess.PAGE_LICENSE_MANAGEMENT);
+    }
+
+    private boolean canEditLicense(HttpSession session) {
+        if (session == null) return false;
+        String role = (String) session.getAttribute("role");
+        String username = (String) session.getAttribute("username");
+        if (RoleAccess.isAdmin(role) || authService.isInternalStaticUser(username)) {
+            return true;
+        }
+        return RoleAccess.canEditPage(role, extractPermissions(session, "editPermissions"), RoleAccess.PAGE_LICENSE_MANAGEMENT);
+    }
+
+    private java.util.Set<String> extractPermissions(HttpSession session, String attributeName) {
+        Object raw = session.getAttribute(attributeName);
+        if (raw instanceof java.util.Set<?> setValue) {
+            java.util.Set<String> values = setValue.stream()
+                    .filter(value -> value != null)
+                    .map(String::valueOf)
+                    .collect(java.util.stream.Collectors.toSet());
+            return RoleAccess.sanitizePages(values);
+        }
+        return java.util.Set.of();
     }
 
     private Map<String, Object> error(String message) {

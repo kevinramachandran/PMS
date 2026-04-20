@@ -51,12 +51,45 @@ tasks.named<Jar>("jar") {
 }
 
 val distDir = rootProject.layout.projectDirectory.dir("dist")
+val windowsServiceDir = rootProject.layout.projectDirectory.dir("dist/windows-service")
+val windowsReleaseDir = rootProject.layout.projectDirectory.dir("dist/releases")
 
 tasks.register<Copy>("copyJar") {
     description = "Copies the executable JAR into the project dist/ folder."
     dependsOn("bootJar")
     from(tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar").map { it.archiveFile })
     into(distDir)
+}
+
+tasks.register<Copy>("bundleWindowsService") {
+    description = "Builds a Windows service deployment bundle with the application JAR and WinSW assets."
+    dependsOn("bootJar")
+    from(tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar").map { it.archiveFile }) {
+        into("app")
+        rename { "app.jar" }
+    }
+    from("deployment/windows") {
+        include("*.ps1", "*.xml")
+        into("service")
+    }
+    from("deployment/windows/brewery-pms.env.example") {
+        into("config")
+    }
+    into(windowsServiceDir)
+}
+
+tasks.register<Zip>("zipWindowsService") {
+    description = "Creates a versioned ZIP archive for the Windows service deployment bundle."
+    dependsOn("bundleWindowsService", "copyJar")
+    from(windowsServiceDir)
+    archiveBaseName.set(appJarName.map { "$it-windows-service" })
+    archiveVersion.set(project.version.toString())
+    destinationDirectory.set(windowsReleaseDir)
+}
+
+tasks.register("packageWindowsService") {
+    description = "Runs a clean build and produces the versioned Windows service ZIP artifact."
+    dependsOn("clean", "build", "zipWindowsService")
 }
 
 tasks.named("bootJar") {

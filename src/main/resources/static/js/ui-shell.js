@@ -188,8 +188,8 @@
         })();
         const existingRoleBadge = header.querySelector('.header-role-badge');
         const existingRole = existingRoleBadge ? existingRoleBadge.textContent.trim().toUpperCase().replace(/\s+/g, '_') : '';
-        const canAccessPmsDataEntry = Boolean(document.querySelector('.sidebar-nav a[href="/settings"]'));
-        const canManageUsers = existingRole === 'ADMIN';
+        const canAccessPmsDataEntry = Boolean(document.querySelector('.sidebar-nav .nav-parent')) || Boolean(document.querySelector('.sidebar-nav a[href^="/settings?config="]'));
+        const canManageUsers = Boolean(document.querySelector('.sidebar-nav a[href="/pms-configuration"]'));
         const canManageEmailConfiguration = Boolean(document.querySelector('.sidebar-nav a[href="/email-configuration"]'));
 
         if (!header.contains(headerRight)) {

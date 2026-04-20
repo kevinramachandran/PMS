@@ -1,4 +1,4 @@
-name: Build Spring Boot Jar
+name: Build Spring Boot Artifacts
 
 on:
   push:
@@ -32,14 +32,21 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Build executable jar
-        run: ./gradlew clean build --no-daemon
+      - name: Build application and Windows service package
+        run: ./gradlew packageWindowsService --no-daemon
 
       - name: Upload bootJar artifact
         uses: actions/upload-artifact@v4
         with:
           name: brewery-pms-jar
           path: build/libs/*.jar
+          if-no-files-found: error
+
+      - name: Upload Windows service package
+        uses: actions/upload-artifact@v4
+        with:
+          name: brewery-pms-windows-service
+          path: dist/releases/*-windows-service-*.zip
           if-no-files-found: error
 
   deploy:
