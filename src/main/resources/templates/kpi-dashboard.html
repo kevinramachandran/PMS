@@ -200,6 +200,7 @@
                         </div>
 
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Productivity (Production + Logistics)</span><span class="expand-icon" title="Expand" onclick="openChart('peopleProductivityChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="peopleProductivityChart"></canvas></div></div>
+                        <div class="custom-chart-stack" id="peopleCustomCharts"></div>
 
                         <!-- LSR Overview Card -->
                         <div class="chart-box enterprise-overview-card lsr-overview-card kpi-card" role="button" tabindex="0" aria-label="LSR Overview" onclick="openLsrOverview()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openLsrOverview();}">
@@ -294,6 +295,7 @@
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Sensory</span><span class="expand-icon" title="Expand" onclick="openChart('qualitySensoryChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="qualitySensoryChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Process Confirmation - B&amp;P and Pack</span><span class="expand-icon" title="Expand" onclick="openChart('qualityProcessConfirmationChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="qualityProcessConfirmationChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">Complaint - Customer & Consumer</span><span class="expand-icon" title="Expand" onclick="openChart('qualityComplaintChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="qualityComplaintChart"></canvas></div></div>
+                        <div class="custom-chart-stack" id="qualityCustomCharts"></div>
                     </div>
 
                     <!-- Column 4: Service Daily -->
@@ -312,6 +314,7 @@
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - OEE</span><span class="expand-icon" title="Expand" onclick="openChart('serviceOeeChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="serviceOeeChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Beer Loss</span><span class="expand-icon" title="Expand" onclick="openChart('serviceBeerLossChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="serviceBeerLossChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - WUR (HL/HL)</span><span class="expand-icon" title="Expand" onclick="openChart('serviceWurChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="serviceWurChart"></canvas></div></div>
+                        <div class="custom-chart-stack" id="serviceCustomCharts"></div>
                     </div>
 
                     <!-- Column 5: Cost Daily -->
@@ -330,6 +333,7 @@
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Electricity</span><span class="expand-icon" title="Expand" onclick="openChart('costElectricityChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="costElectricityChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - Energy</span><span class="expand-icon" title="Expand" onclick="openChart('costEnergyChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="costEnergyChart"></canvas></div></div>
                         <div class="chart-box"><div class="chart-title"><span class="chart-title-text">KPI - RGB Ratio</span><span class="expand-icon" title="Expand" onclick="openChart('costRgbChart')"><i class="fas fa-expand-alt"></i></span></div><div class="chart-container"><canvas id="costRgbChart"></canvas></div></div>
+                        <div class="custom-chart-stack" id="costCustomCharts"></div>
                     </div>
                     </div><!-- end dashboard-right -->
                 </div><!-- end dashboard-main -->

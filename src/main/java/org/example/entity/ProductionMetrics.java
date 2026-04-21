@@ -4,8 +4,11 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.model.CustomMetricValueSnapshot;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "production_metrics")
@@ -317,6 +320,9 @@ public class ProductionMetrics {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Transient
+    private List<CustomMetricValueSnapshot> customMetrics = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

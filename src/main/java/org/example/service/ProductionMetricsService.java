@@ -5,9 +5,15 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.example.entity.ProductionMetricCustomDefinition;
+import org.example.entity.ProductionMetricCustomValue;
 import org.example.entity.ProductionMetrics;
+import org.example.model.CustomMetricDefinitionPayload;
+import org.example.model.CustomMetricValueSnapshot;
 import org.example.model.MetricsEntryBundlePayload;
 import org.example.model.MetricsEntryPayload;
+import org.example.repository.ProductionMetricCustomDefinitionRepository;
+import org.example.repository.ProductionMetricCustomValueRepository;
 import org.example.repository.ProductionMetricsRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.beans.BeanWrapperImpl;
@@ -22,19 +28,31 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ProductionMetricsService {
 
     private final ProductionMetricsRepository repository;
+    private final ProductionMetricCustomDefinitionRepository customDefinitionRepository;
+    private final ProductionMetricCustomValueRepository customValueRepository;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String ENTRY_TYPE_ACTUAL = "ACTUAL";
     private static final String ENTRY_TYPE_TARGET = "TARGET";
+    private static final Set<String> SUPPORTED_SECTIONS = Set.of("PEOPLE", "QUALITY", "SERVICE", "COST");
+    private static final Pattern CUSTOM_FIELD_PATTERN = Pattern.compile("^customMetric(\\d+)(FtdActual|FtdTarget|MtdActual|MtdTarget|YtdActual|YtdTarget)$");
     private static final List<String> PEOPLE_FIELDS = List.of(
         "productionProductivityFtdActual", "productionProductivityFtdTarget", "productionProductivityMtdActual", "productionProductivityMtdTarget", "productionProductivityYtdActual", "productionProductivityYtdTarget",
         "logisticsProductivityFtdActual", "logisticsProductivityFtdTarget", "logisticsProductivityMtdActual", "logisticsProductivityMtdTarget", "logisticsProductivityYtdActual", "logisticsProductivityYtdTarget"
@@ -106,7 +124,9 @@ public class ProductionMetricsService {
 
     // CRUD Operations
     public List<ProductionMetrics> getAllRecords() {
-        return repository.findAll();
+        List<ProductionMetrics> records = repository.findAll();
+        attachCustomMetricSnapshots(records);
+        return records;
     }
 
     public Optional<ProductionMetrics> getRecordById(Long id) {
@@ -114,19 +134,21 @@ public class ProductionMetricsService {
     }
 
     public Optional<ProductionMetrics> getRecordByDate(LocalDateTime date) {
-        return repository.findByDate(date);
+        return repository.findByDate(date).map(this::withCustomMetricSnapshots);
     }
 
     public Optional<ProductionMetrics> getRecordByDate(LocalDate date) {
-        return findNormalizedRecordByActualDate(date);
+        return findNormalizedRecordByActualDate(date).map(this::withCustomMetricSnapshots);
     }
 
     public Optional<ProductionMetrics> getRecordByDay(LocalDate date) {
-        return findNormalizedRecordByActualDate(date);
+        return findNormalizedRecordByActualDate(date).map(this::withCustomMetricSnapshots);
     }
 
     public List<ProductionMetrics> getRecordsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        return repository.findByDateBetween(startDate, endDate);
+        List<ProductionMetrics> records = repository.findByDateBetween(startDate, endDate);
+        attachCustomMetricSnapshots(records);
+        return records;
     }
 
     public List<ProductionMetrics> getCurrentMonthData() {
@@ -134,12 +156,50 @@ public class ProductionMetricsService {
         LocalDate firstDay = today.withDayOfMonth(1);
         LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
 
-        return buildNormalizedRecordsBetween(firstDay, lastDay);
+        List<ProductionMetrics> records = buildNormalizedRecordsBetween(firstDay, lastDay);
+        attachCustomMetricSnapshots(records);
+        return records;
     }
 
     public List<ProductionMetrics> getRecordsByMonth(int month, int year) {
         YearMonth yearMonth = YearMonth.of(year, month);
-        return buildNormalizedRecordsBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth());
+        List<ProductionMetrics> records = buildNormalizedRecordsBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth());
+        attachCustomMetricSnapshots(records);
+        return records;
+    }
+
+    public List<CustomMetricDefinitionPayload> getCustomMetricDefinitions() {
+        return customDefinitionRepository.findByActiveTrueOrderBySectionAscDisplayOrderAscIdAsc()
+                .stream()
+                .map(this::toCustomMetricDefinitionPayload)
+                .toList();
+    }
+
+    @Transactional
+    public CustomMetricDefinitionPayload createCustomMetricDefinition(CustomMetricDefinitionPayload payload) {
+        if (payload == null) {
+            throw new IllegalArgumentException("Custom metric definition is required");
+        }
+
+        String section = normalizeSection(payload.getSection());
+        String label = normalizeLabel(payload.getLabel());
+        String unit = normalizeUnit(payload.getUnit());
+        Integer decimals = normalizeDecimals(payload.getDecimals());
+        Integer displayOrder = payload.getDisplayOrder();
+        if (displayOrder == null || displayOrder < 0) {
+            displayOrder = (int) customDefinitionRepository.countBySectionAndActiveTrue(section);
+        }
+
+        ProductionMetricCustomDefinition definition = new ProductionMetricCustomDefinition();
+        definition.setSection(section);
+        definition.setLabel(label);
+        definition.setUnit(unit);
+        definition.setDecimals(decimals);
+        definition.setDisplayOrder(displayOrder);
+        definition.setActive(Boolean.TRUE);
+        definition.setMetricKey(createUniqueMetricKey(payload.getMetricKey(), label));
+
+        return toCustomMetricDefinitionPayload(customDefinitionRepository.save(definition));
     }
 
     public Optional<MetricsEntryPayload> getMetricsEntry(LocalDate date) {
@@ -199,6 +259,8 @@ public class ProductionMetricsService {
 
         MetricsEntryPayload actualPayload = payload.getActual() != null ? payload.getActual() : new MetricsEntryPayload();
         MetricsEntryPayload targetPayload = payload.getTarget() != null ? payload.getTarget() : new MetricsEntryPayload();
+        Map<Long, ProductionMetricCustomDefinition> definitionCache = new HashMap<>();
+        Map<Long, ProductionMetricCustomValue> customValuesToSave = new LinkedHashMap<>();
 
         boolean updated = false;
         updated |= applySectionValuesIfPresent(metrics, actualPayload.getPeople(), PEOPLE_FIELDS, "People");
@@ -209,6 +271,14 @@ public class ProductionMetricsService {
         updated |= applySectionValuesIfPresent(metrics, targetPayload.getQuality(), QUALITY_FIELDS, "Quality");
         updated |= applySectionValuesIfPresent(metrics, targetPayload.getService(), SERVICE_FIELDS, "Service");
         updated |= applySectionValuesIfPresent(metrics, targetPayload.getCost(), COST_FIELDS, "Cost");
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getPeople(), "PEOPLE", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getQuality(), "QUALITY", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getService(), "SERVICE", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getCost(), "COST", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getPeople(), "PEOPLE", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getQuality(), "QUALITY", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getService(), "SERVICE", customValuesToSave, definitionCache);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getCost(), "COST", customValuesToSave, definitionCache);
 
         if (!updated) {
             throw new IllegalArgumentException("At least one metrics category is required");
@@ -216,6 +286,7 @@ public class ProductionMetricsService {
 
         deleteLegacyTargetRecord(targetDate);
         ProductionMetrics saved = repository.save(metrics);
+        saveCustomMetricValues(saved, customValuesToSave);
         return toMetricsEntryBundlePayload(saved);
     }
 
@@ -364,6 +435,7 @@ public class ProductionMetricsService {
         payload.setQuality(extractSectionValues(metrics, QUALITY_FIELDS));
         payload.setService(extractSectionValues(metrics, SERVICE_FIELDS));
         payload.setCost(extractSectionValues(metrics, COST_FIELDS));
+        appendCustomSectionValues(payload, metrics);
         return payload;
     }
 
@@ -383,7 +455,35 @@ public class ProductionMetricsService {
         targetPayload.setQuality(extractSectionValues(metrics, QUALITY_FIELDS));
         targetPayload.setService(extractSectionValues(metrics, SERVICE_FIELDS));
         targetPayload.setCost(extractSectionValues(metrics, COST_FIELDS));
+        appendCustomSectionValues(actualPayload, targetPayload, metrics);
         return new MetricsEntryBundlePayload(actualDate, targetDate, actualPayload, targetPayload);
+    }
+
+    private void appendCustomSectionValues(MetricsEntryPayload payload, ProductionMetrics metrics) {
+        appendCustomSectionValues(payload, emptyEntryPayload(payload.getDate(), ENTRY_TYPE_TARGET), metrics);
+    }
+
+    private void appendCustomSectionValues(MetricsEntryPayload actualPayload, MetricsEntryPayload targetPayload, ProductionMetrics metrics) {
+        List<CustomMetricValueSnapshot> snapshots = resolveCustomMetricSnapshots(metrics);
+        if (snapshots.isEmpty()) {
+            return;
+        }
+
+        for (CustomMetricValueSnapshot snapshot : snapshots) {
+            Map<String, Double> actualSection = resolveSectionMap(actualPayload, snapshot.getSection());
+            Map<String, Double> targetSection = resolveSectionMap(targetPayload, snapshot.getSection());
+            if (actualSection == null || targetSection == null) {
+                continue;
+            }
+
+            Long definitionId = snapshot.getDefinitionId();
+            actualSection.put(buildCustomFieldName(definitionId, "FtdActual"), snapshot.getFtdActual());
+            actualSection.put(buildCustomFieldName(definitionId, "MtdActual"), snapshot.getMtdActual());
+            actualSection.put(buildCustomFieldName(definitionId, "YtdActual"), snapshot.getYtdActual());
+            targetSection.put(buildCustomFieldName(definitionId, "FtdTarget"), snapshot.getFtdTarget());
+            targetSection.put(buildCustomFieldName(definitionId, "MtdTarget"), snapshot.getMtdTarget());
+            targetSection.put(buildCustomFieldName(definitionId, "YtdTarget"), snapshot.getYtdTarget());
+        }
     }
 
     private Map<String, Double> extractSectionValues(ProductionMetrics metrics, List<String> fields) {
@@ -416,6 +516,47 @@ public class ProductionMetricsService {
         }
 
         return true;
+    }
+
+    private boolean applyCustomSectionValuesIfPresent(
+            ProductionMetrics metrics,
+            Map<String, Double> values,
+            String expectedSection,
+            Map<Long, ProductionMetricCustomValue> customValuesToSave,
+            Map<Long, ProductionMetricCustomDefinition> definitionCache
+    ) {
+        if (values == null || values.isEmpty()) {
+            return false;
+        }
+
+        boolean updated = false;
+        for (Map.Entry<String, Double> entry : values.entrySet()) {
+            CustomFieldDescriptor descriptor = parseCustomField(entry.getKey());
+            if (descriptor == null || entry.getValue() == null) {
+                continue;
+            }
+            if (entry.getValue() < 0) {
+                throw new IllegalArgumentException(entry.getKey() + " cannot be negative");
+            }
+
+            ProductionMetricCustomDefinition definition = definitionCache.computeIfAbsent(
+                    descriptor.definitionId(),
+                    this::getRequiredCustomDefinition
+            );
+            if (!expectedSection.equalsIgnoreCase(definition.getSection())) {
+                throw new IllegalArgumentException("Custom metric does not belong to " + expectedSection + " section");
+            }
+
+            ProductionMetricCustomValue customValue = customValuesToSave.computeIfAbsent(
+                    descriptor.definitionId(),
+                    id -> findExistingOrCreateCustomValue(metrics, definition)
+            );
+            customValue.setDefinition(definition);
+            applyCustomFieldValue(customValue, descriptor.valueKey(), entry.getValue());
+            updated = true;
+        }
+
+        return updated;
     }
 
     private MetricsEntryPayload emptyEntryPayload(LocalDate date, String entryType) {
@@ -564,6 +705,7 @@ public class ProductionMetricsService {
             }
             targetWrapper.setPropertyValue(field, sourceWrapper.getPropertyValue(field));
         }
+        copy.setCustomMetrics(new ArrayList<>());
         return copy;
     }
 
@@ -601,6 +743,219 @@ public class ProductionMetricsService {
 
     public void deleteAllRecords() {
         repository.deleteAll();
+    }
+
+    private ProductionMetrics withCustomMetricSnapshots(ProductionMetrics metrics) {
+        if (metrics == null) {
+            return null;
+        }
+        attachCustomMetricSnapshots(List.of(metrics));
+        return metrics;
+    }
+
+    private void attachCustomMetricSnapshots(Collection<ProductionMetrics> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            return;
+        }
+
+        List<ProductionMetrics> validRecords = metrics.stream()
+                .filter(record -> record != null && record.getId() != null)
+                .toList();
+        if (validRecords.isEmpty()) {
+            metrics.forEach(record -> {
+                if (record != null) {
+                    record.setCustomMetrics(new ArrayList<>());
+                }
+            });
+            return;
+        }
+
+        List<Long> recordIds = validRecords.stream().map(ProductionMetrics::getId).toList();
+        Map<Long, List<CustomMetricValueSnapshot>> snapshotsByMetricId = customValueRepository.findByProductionMetricsIdIn(recordIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                value -> value.getProductionMetrics().getId(),
+                        LinkedHashMap::new,
+                Collectors.mapping(this::toCustomMetricValueSnapshot, Collectors.toList())
+                ));
+
+        for (ProductionMetrics record : validRecords) {
+            List<CustomMetricValueSnapshot> snapshots = snapshotsByMetricId.getOrDefault(record.getId(), List.of())
+                    .stream()
+                .sorted(Comparator
+                    .comparingInt((CustomMetricValueSnapshot snapshot) -> snapshot.getDisplayOrder() != null ? snapshot.getDisplayOrder() : Integer.MAX_VALUE)
+                    .thenComparingLong(snapshot -> snapshot.getDefinitionId() != null ? snapshot.getDefinitionId() : Long.MAX_VALUE))
+                    .toList();
+            record.setCustomMetrics(new ArrayList<>(snapshots));
+        }
+    }
+
+    private List<CustomMetricValueSnapshot> resolveCustomMetricSnapshots(ProductionMetrics metrics) {
+        if (metrics == null || metrics.getId() == null) {
+            return List.of();
+        }
+        List<ProductionMetricCustomValue> values = customValueRepository.findByProductionMetricsId(metrics.getId());
+        return values.stream()
+                .map(this::toCustomMetricValueSnapshot)
+            .sorted(Comparator
+                .comparingInt((CustomMetricValueSnapshot snapshot) -> snapshot.getDisplayOrder() != null ? snapshot.getDisplayOrder() : Integer.MAX_VALUE)
+                .thenComparingLong(snapshot -> snapshot.getDefinitionId() != null ? snapshot.getDefinitionId() : Long.MAX_VALUE))
+                .toList();
+    }
+
+    private CustomMetricValueSnapshot toCustomMetricValueSnapshot(ProductionMetricCustomValue value) {
+        ProductionMetricCustomDefinition definition = value.getDefinition();
+        return new CustomMetricValueSnapshot(
+                definition != null ? definition.getId() : null,
+                definition != null ? definition.getMetricKey() : null,
+                definition != null ? definition.getSection() : null,
+                definition != null ? definition.getLabel() : null,
+                definition != null ? definition.getUnit() : null,
+                definition != null ? definition.getDecimals() : null,
+                definition != null ? definition.getDisplayOrder() : null,
+                value.getFtdActual(),
+                value.getFtdTarget(),
+                value.getMtdActual(),
+                value.getMtdTarget(),
+                value.getYtdActual(),
+                value.getYtdTarget()
+        );
+    }
+
+    private void saveCustomMetricValues(ProductionMetrics savedMetrics, Map<Long, ProductionMetricCustomValue> customValuesToSave) {
+        if (savedMetrics == null || savedMetrics.getId() == null || customValuesToSave == null || customValuesToSave.isEmpty()) {
+            return;
+        }
+
+        for (ProductionMetricCustomValue value : customValuesToSave.values()) {
+            value.setProductionMetrics(savedMetrics);
+        }
+        customValueRepository.saveAll(customValuesToSave.values());
+    }
+
+    private ProductionMetricCustomValue findExistingOrCreateCustomValue(ProductionMetrics metrics, ProductionMetricCustomDefinition definition) {
+        if (metrics != null && metrics.getId() != null) {
+            Optional<ProductionMetricCustomValue> existing = customValueRepository.findByProductionMetricsIdAndDefinitionId(metrics.getId(), definition.getId());
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
+
+        ProductionMetricCustomValue value = new ProductionMetricCustomValue();
+        value.setProductionMetrics(metrics);
+        value.setDefinition(definition);
+        return value;
+    }
+
+    private void applyCustomFieldValue(ProductionMetricCustomValue customValue, String valueKey, Double value) {
+        switch (valueKey) {
+            case "FtdActual" -> customValue.setFtdActual(value);
+            case "FtdTarget" -> customValue.setFtdTarget(value);
+            case "MtdActual" -> customValue.setMtdActual(value);
+            case "MtdTarget" -> customValue.setMtdTarget(value);
+            case "YtdActual" -> customValue.setYtdActual(value);
+            case "YtdTarget" -> customValue.setYtdTarget(value);
+            default -> throw new IllegalArgumentException("Unsupported custom field key: " + valueKey);
+        }
+    }
+
+    private Map<String, Double> resolveSectionMap(MetricsEntryPayload payload, String section) {
+        if (payload == null || section == null) {
+            return null;
+        }
+
+        return switch (section.toUpperCase(Locale.ENGLISH)) {
+            case "PEOPLE" -> payload.getPeople();
+            case "QUALITY" -> payload.getQuality();
+            case "SERVICE" -> payload.getService();
+            case "COST" -> payload.getCost();
+            default -> null;
+        };
+    }
+
+    private String buildCustomFieldName(Long definitionId, String valueKey) {
+        return "customMetric" + definitionId + valueKey;
+    }
+
+    private CustomFieldDescriptor parseCustomField(String fieldName) {
+        if (fieldName == null || fieldName.isBlank()) {
+            return null;
+        }
+
+        Matcher matcher = CUSTOM_FIELD_PATTERN.matcher(fieldName);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        return new CustomFieldDescriptor(Long.parseLong(matcher.group(1)), matcher.group(2));
+    }
+
+    private ProductionMetricCustomDefinition getRequiredCustomDefinition(Long definitionId) {
+        return customDefinitionRepository.findById(definitionId)
+                .filter(definition -> Boolean.TRUE.equals(definition.getActive()))
+                .orElseThrow(() -> new IllegalArgumentException("Custom metric definition not found: " + definitionId));
+    }
+
+    private CustomMetricDefinitionPayload toCustomMetricDefinitionPayload(ProductionMetricCustomDefinition definition) {
+        return new CustomMetricDefinitionPayload(
+                definition.getId(),
+                definition.getMetricKey(),
+                definition.getSection(),
+                definition.getLabel(),
+                definition.getUnit(),
+                definition.getDecimals(),
+                definition.getDisplayOrder()
+        );
+    }
+
+    private String normalizeSection(String section) {
+        String normalized = section == null ? "" : section.trim().toUpperCase(Locale.ENGLISH);
+        if (!SUPPORTED_SECTIONS.contains(normalized)) {
+            throw new IllegalArgumentException("Section must be one of People, Quality, Service, or Cost");
+        }
+        return normalized;
+    }
+
+    private String normalizeLabel(String label) {
+        String normalized = label == null ? "" : label.trim();
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException("Custom metric label is required");
+        }
+        return normalized;
+    }
+
+    private String normalizeUnit(String unit) {
+        return unit == null ? "-" : unit.trim().isEmpty() ? "-" : unit.trim();
+    }
+
+    private Integer normalizeDecimals(Integer decimals) {
+        int resolved = decimals == null ? 2 : decimals;
+        if (resolved < 0 || resolved > 4) {
+            throw new IllegalArgumentException("Decimal places must be between 0 and 4");
+        }
+        return resolved;
+    }
+
+    private String createUniqueMetricKey(String requestedKey, String label) {
+        String baseKey = slugifyMetricKey(requestedKey == null || requestedKey.isBlank() ? label : requestedKey);
+        String candidate = baseKey;
+        int suffix = 2;
+
+        while (customDefinitionRepository.existsByMetricKeyIgnoreCase(candidate)) {
+            candidate = baseKey + "-" + suffix;
+            suffix++;
+        }
+        return candidate;
+    }
+
+    private String slugifyMetricKey(String input) {
+        String normalized = input == null ? "custom-metric" : input.trim().toLowerCase(Locale.ENGLISH);
+        normalized = normalized.replaceAll("[^a-z0-9]+", "-");
+        normalized = normalized.replaceAll("^-+|-+$", "");
+        return normalized.isBlank() ? "custom-metric" : normalized;
+    }
+
+    private record CustomFieldDescriptor(Long definitionId, String valueKey) {
     }
 
     // CSV Template Export (single-file format with all 4 sections)

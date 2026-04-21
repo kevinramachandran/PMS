@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.model.CustomMetricDefinitionPayload;
 import org.example.model.MetricsEntryBundlePayload;
 import org.example.model.MetricsEntryPayload;
 import org.example.service.ProductionMetricsService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @CrossOrigin
@@ -31,6 +33,20 @@ public class MetricsEntryController {
             return productionMetricsService.getMetricsEntryBundle(date)
                     .<ResponseEntity<?>>map(ResponseEntity::ok)
                     .orElseGet(() -> ResponseEntity.noContent().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/custom-definitions")
+    public ResponseEntity<List<CustomMetricDefinitionPayload>> getCustomMetricDefinitions() {
+        return ResponseEntity.ok(productionMetricsService.getCustomMetricDefinitions());
+    }
+
+    @PostMapping("/custom-definitions")
+    public ResponseEntity<?> createCustomMetricDefinition(@RequestBody CustomMetricDefinitionPayload payload) {
+        try {
+            return ResponseEntity.ok(productionMetricsService.createCustomMetricDefinition(payload));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -231,6 +231,18 @@ Optional: start the service immediately after install:
 .\install-service.ps1 -InstallRoot C:\Brewery-PMS -StartAfterInstall
 ```
 
+Optional: start the service, wait for the app to respond, then open the URL in the default browser:
+
+```powershell
+.\install-service.ps1 -InstallRoot C:\Brewery-PMS -StartAfterInstall -OpenBrowserAfterStart -ApplicationUrl http://localhost:8080
+```
+
+You can also increase the wait time if the server starts slowly:
+
+```powershell
+.\install-service.ps1 -InstallRoot C:\Brewery-PMS -StartAfterInstall -OpenBrowserAfterStart -ApplicationUrl http://localhost:8080 -StartupTimeoutSeconds 180
+```
+
 Server layout after installation:
 
 ```text

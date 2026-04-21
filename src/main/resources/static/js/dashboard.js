@@ -109,10 +109,20 @@ $(document).ready(function() {
         }
     });
 
-    initializeKpiMonthFilter();
+    loadCustomMetricDefinitions().always(function() {
+        initializeKpiMonthFilter();
+    });
     setInterval(function() {
         loadProductionCharts(selectedKpiMonth, selectedKpiYear);
     }, 300000);
+
+    window.addEventListener('storage', function(event) {
+        if (event.key === 'kpi-dashboard-update') {
+            loadCustomMetricDefinitions().always(function() {
+                loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+            });
+        }
+    });
 });
 
 let kpiTvFitFrame = 0;
@@ -1223,7 +1233,17 @@ function loadKpiDashboardMeta() {
         });
 }
 
-const kpiTableConfig = [
+const customChartContainerIds = {
+    PEOPLE: 'peopleCustomCharts',
+    QUALITY: 'qualityCustomCharts',
+    SERVICE: 'serviceCustomCharts',
+    COST: 'costCustomCharts'
+};
+
+let customKpiDefinitions = [];
+let customMetricDefinitionsRequest = null;
+
+const fixedKpiTableConfig = [
     {
         name: 'OEE',
         unit: '%',
@@ -1333,6 +1353,122 @@ const kpiTableConfig = [
         higherIsBetter: true
     }
 ];
+
+function normalizeDashboardSection(section) {
+    return String(section || '').trim().toUpperCase();
+}
+
+function sortDashboardCustomDefinitions(definitions) {
+    return (definitions || []).slice().sort(function(a, b) {
+        const sectionCompare = normalizeDashboardSection(a.section).localeCompare(normalizeDashboardSection(b.section));
+        if (sectionCompare !== 0) {
+            return sectionCompare;
+        }
+
+        const orderA = Number.isFinite(Number(a.displayOrder)) ? Number(a.displayOrder) : 0;
+        const orderB = Number.isFinite(Number(b.displayOrder)) ? Number(b.displayOrder) : 0;
+        if (orderA !== orderB) {
+            return orderA - orderB;
+        }
+
+        return Number(a.id || 0) - Number(b.id || 0);
+    });
+}
+
+function buildCustomMetricFieldRef(definitionId, valueKey) {
+    return 'custom:' + definitionId + ':' + valueKey;
+}
+
+function getCustomChartCanvasId(definitionId) {
+    return 'customMetricChart' + definitionId;
+}
+
+function buildCustomKpiTableConfig() {
+    return customKpiDefinitions.map(function(definition) {
+        const decimals = Number.isFinite(Number(definition.decimals)) ? Number(definition.decimals) : 2;
+        return {
+            name: definition.label || 'Custom Metric',
+            unit: definition.unit || '-',
+            actualField: buildCustomMetricFieldRef(definition.id, 'ftdActual'),
+            targetField: buildCustomMetricFieldRef(definition.id, 'ftdTarget'),
+            mtdField: buildCustomMetricFieldRef(definition.id, 'mtdActual'),
+            targetMtdField: buildCustomMetricFieldRef(definition.id, 'mtdTarget'),
+            ytdField: buildCustomMetricFieldRef(definition.id, 'ytdActual'),
+            targetYtdField: buildCustomMetricFieldRef(definition.id, 'ytdTarget'),
+            decimals: decimals,
+            higherIsBetter: true
+        };
+    });
+}
+
+function getCombinedKpiTableConfig() {
+    return fixedKpiTableConfig.concat(buildCustomKpiTableConfig());
+}
+
+function getCustomChartPalette(section) {
+    switch (normalizeDashboardSection(section)) {
+        case 'PEOPLE':
+            return { bars: ['#1B5E20', '#43A047', '#2E7D32'], lines: ['#0a2e0a', '#66BB6A', '#1B5E20'] };
+        case 'QUALITY':
+            return { bars: ['#2E7D32', '#66BB6A', '#1B5E20'], lines: ['#1B5E20', '#43A047', '#2E7D32'] };
+        case 'SERVICE':
+            return { bars: ['#00695C', '#26A69A', '#004D40'], lines: ['#003D30', '#2E7D32', '#00695C'] };
+        case 'COST':
+            return { bars: ['#558B2F', '#AED581', '#33691E'], lines: ['#1B5E20', '#43A047', '#33691E'] };
+        default:
+            return { bars: ['#16A34A', '#22C55E', '#15803D'], lines: ['#064E1F', '#F59E0B', '#1F2937'] };
+    }
+}
+
+function renderCustomChartContainers() {
+    Object.keys(customChartContainerIds).forEach(function(sectionKey) {
+        const container = document.getElementById(customChartContainerIds[sectionKey]);
+        if (!container) {
+            return;
+        }
+
+        const chartsMarkup = customKpiDefinitions
+            .filter(function(definition) {
+                return normalizeDashboardSection(definition.section) === sectionKey;
+            })
+            .map(function(definition) {
+                const canvasId = getCustomChartCanvasId(definition.id);
+                const title = escapeHtmlText(definition.label || 'Custom Metric');
+                return '' +
+                    '<div class="chart-box custom-kpi-chart-box" data-definition-id="' + definition.id + '">' +
+                        '<div class="chart-title">' +
+                            '<span class="chart-title-text">' + title + '</span>' +
+                            '<span class="expand-icon" title="Expand" onclick="openChart(\'' + canvasId + '\')"><i class="fas fa-expand-alt"></i></span>' +
+                        '</div>' +
+                        '<div class="chart-container"><canvas id="' + canvasId + '"></canvas></div>' +
+                    '</div>';
+            })
+            .join('');
+
+        container.innerHTML = chartsMarkup;
+    });
+}
+
+function loadCustomMetricDefinitions() {
+    if (customMetricDefinitionsRequest) {
+        return customMetricDefinitionsRequest;
+    }
+
+    customMetricDefinitionsRequest = $.ajax({
+        url: '/api/metrics/custom-definitions',
+        type: 'GET'
+    }).done(function(data) {
+        customKpiDefinitions = sortDashboardCustomDefinitions(Array.isArray(data) ? data : []);
+        renderCustomChartContainers();
+    }).fail(function() {
+        customKpiDefinitions = [];
+        renderCustomChartContainers();
+    }).always(function() {
+        customMetricDefinitionsRequest = null;
+    });
+
+    return customMetricDefinitionsRequest;
+}
 
 function loadProductionCharts(month, year) {
     const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
@@ -1604,6 +1740,25 @@ function renderAllCharts(metrics) {
             }
         ]
     });
+
+    renderCustomMetricCharts(labels, metrics);
+}
+
+function renderCustomMetricCharts(labels, metrics) {
+    customKpiDefinitions.forEach(function(definition) {
+        renderKpiMixedChart(getCustomChartCanvasId(definition.id), labels, metrics, {
+            actualSeries: [
+                { label: 'Actual', key: buildCustomMetricFieldRef(definition.id, 'ftdActual') }
+            ],
+            targetSeries: [
+                {
+                    labelPrefix: '',
+                    ftdKey: buildCustomMetricFieldRef(definition.id, 'ftdTarget'),
+                    mtdKey: buildCustomMetricFieldRef(definition.id, 'mtdTarget')
+                }
+            ]
+        });
+    });
 }
 
 const kpiChartPalettes = {
@@ -1650,6 +1805,14 @@ const kpiChartPalettes = {
 };
 
 function getKpiPalette(canvasId) {
+    if (String(canvasId || '').indexOf('customMetricChart') === 0) {
+        const definitionId = Number(String(canvasId).replace('customMetricChart', ''));
+        const definition = customKpiDefinitions.find(function(item) {
+            return Number(item.id) === definitionId;
+        });
+        return getCustomChartPalette(definition && definition.section);
+    }
+
     return kpiChartPalettes[canvasId] || {
         bars: ['#16A34A', '#22C55E', '#15803D'],
         lines: ['#064E1F', '#F59E0B', '#1F2937']
@@ -1719,13 +1882,45 @@ function readMetricSeries(metrics, key) {
     }
 
     return (metrics || []).map(function(metric) {
-        const value = metric ? metric[key] : null;
-        if (value === null || value === undefined || value === '') {
+        return readMetricValue(metric, key);
+    });
+}
+
+function readMetricValue(record, fieldName) {
+    if (!record || !fieldName) {
+        return null;
+    }
+
+    if (String(fieldName).indexOf('custom:') === 0) {
+        const parts = String(fieldName).split(':');
+        if (parts.length !== 3) {
             return null;
         }
-        const numeric = Number(value);
-        return Number.isFinite(numeric) ? numeric : null;
-    });
+
+        const definitionId = Number(parts[1]);
+        const valueKey = parts[2];
+        const customMetrics = Array.isArray(record.customMetrics) ? record.customMetrics : [];
+        const match = customMetrics.find(function(item) {
+            return Number(item.definitionId) === definitionId;
+        });
+        if (!match) {
+            return null;
+        }
+
+        const customValue = match[valueKey];
+        if (customValue === null || customValue === undefined || customValue === '') {
+            return null;
+        }
+        const parsedCustomValue = Number(customValue);
+        return Number.isFinite(parsedCustomValue) ? parsedCustomValue : null;
+    }
+
+    const value = record[fieldName];
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
 }
 
 function findCrossingIndex(primaryData, compareData) {
@@ -1832,7 +2027,7 @@ function renderDailyPerformanceTable(metrics) {
     updateDateLabel('ftdYesterdayDate', yesterdayTargetRecord ? yesterdayTargetRecord.date : null);
     updateDateLabel('ftdTodayDate', todayTargetRecord ? todayTargetRecord.date : null);
 
-    const rows = kpiTableConfig.map(function(kpi, index) {
+    const rows = getCombinedKpiTableConfig().map(function(kpi, index) {
         const todayTarget = readNumber(todayTargetRecord, kpi.targetField);
         const yesterdayTarget = readNumber(yesterdayTargetRecord, kpi.targetField);
         const yesterdayActual = readNumber(yesterdayActualRecord, kpi.actualField);
@@ -1983,11 +2178,7 @@ function updateDateLabel(elementId, dateValue) {
 }
 
 function readNumber(record, fieldName) {
-    if (!record || !fieldName) return null;
-    const value = record[fieldName];
-    if (value === null || value === undefined || value === '') return null;
-    const numeric = Number(value);
-    return Number.isFinite(numeric) ? numeric : null;
+    return readMetricValue(record, fieldName);
 }
 
 function setSummaryCell(cell, value, decimals, className) {
@@ -2108,7 +2299,9 @@ function renderNoDataForAllCharts(message) {
         'costElectricityChart',
         'costEnergyChart',
         'costRgbChart'
-    ];
+    ].concat(customKpiDefinitions.map(function(definition) {
+        return getCustomChartCanvasId(definition.id);
+    }));
 
     ids.forEach(id => {
         renderNoData(id, message);

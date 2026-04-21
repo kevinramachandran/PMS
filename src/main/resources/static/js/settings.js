@@ -23,7 +23,7 @@ $(document).ready(function() {
     let issueBoardAssignableUsers = [];
     let issueBoardAssignableLookup = new Map();
 
-    const metricSections = {
+    const fixedMetricSections = {
         people: [
             'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityMtdTarget', 'productionProductivityYtdActual', 'productionProductivityYtdTarget',
             'logisticsProductivityFtdActual', 'logisticsProductivityFtdTarget', 'logisticsProductivityMtdActual', 'logisticsProductivityMtdTarget', 'logisticsProductivityYtdActual', 'logisticsProductivityYtdTarget'
@@ -49,25 +49,64 @@ $(document).ready(function() {
         ]
     };
     const metricSectionOrder = ['people', 'quality', 'service', 'cost'];
-    const metricFields = metricSectionOrder.flatMap(function(section) {
-        return metricSections[section] || [];
-    });
+    let customMetricDefinitions = [];
+    let metricSections = {};
+    let metricFields = [];
     const metricFieldGroups = {};
-    metricSectionOrder.forEach(function(section) {
-        const sectionFields = metricSections[section] || [];
-        metricFieldGroups[section] = {
-            actual: sectionFields.filter(function(field) {
-                return field.endsWith('Actual');
-            }),
-            target: sectionFields.filter(function(field) {
-                return field.endsWith('Target');
-            })
-        };
-    });
     const optionalMetricFields = new Set([
         'noOfBrewsFtdActual', 'noOfBrewsFtdTarget', 'noOfBrewsMtdActual', 'noOfBrewsYtdActual',
         'dispatchFtdActual', 'dispatchFtdTarget', 'dispatchMtdActual', 'dispatchYtdActual'
     ]);
+
+    function normalizeMetricSection(section) {
+        return String(section || '').trim().toLowerCase();
+    }
+
+    function buildCustomMetricFieldIds(definition) {
+        const definitionId = Number(definition && definition.id);
+        if (!Number.isFinite(definitionId)) {
+            return [];
+        }
+
+        return [
+            'customMetric' + definitionId + 'FtdActual',
+            'customMetric' + definitionId + 'FtdTarget',
+            'customMetric' + definitionId + 'MtdActual',
+            'customMetric' + definitionId + 'MtdTarget',
+            'customMetric' + definitionId + 'YtdActual',
+            'customMetric' + definitionId + 'YtdTarget'
+        ];
+    }
+
+    function rebuildMetricRegistry() {
+        metricFields = [];
+        Object.keys(metricFieldGroups).forEach(function(sectionKey) {
+            delete metricFieldGroups[sectionKey];
+        });
+
+        metricSectionOrder.forEach(function(section) {
+            const fixedFields = fixedMetricSections[section] || [];
+            const customFields = customMetricDefinitions
+                .filter(function(definition) {
+                    return normalizeMetricSection(definition.section) === section;
+                })
+                .flatMap(buildCustomMetricFieldIds);
+            const sectionFields = fixedFields.concat(customFields);
+
+            metricSections[section] = sectionFields;
+            metricFieldGroups[section] = {
+                actual: sectionFields.filter(function(field) {
+                    return field.endsWith('Actual');
+                }),
+                target: sectionFields.filter(function(field) {
+                    return field.endsWith('Target');
+                })
+            };
+            metricFields = metricFields.concat(sectionFields);
+        });
+    }
+
+    rebuildMetricRegistry();
 
     $('input[type="date"]').removeAttr('max');
 
@@ -94,7 +133,10 @@ $(document).ready(function() {
         '.issue-delete',
         '.issue-add-row-btn',
         '.file-upload-trigger',
-        '#saveKpiCrossColor'
+        '#saveKpiCrossColor',
+        '.metrics-add-custom-btn',
+        '.metrics-custom-save-btn',
+        '.metrics-custom-cancel-btn'
     ].join(', ');
 
     function currentPageTitle() {
@@ -1106,6 +1148,226 @@ $(document).ready(function() {
                 $newGroup.append('<input type="number" id="' + field + '" name="' + nameAttr + '" min="' + inputMin + '" step="' + inputStep + '">');
                 $actualGroup.after($newGroup);
             });
+        });
+    }
+
+    function getMetricSectionTitle(section) {
+        return section.charAt(0).toUpperCase() + section.slice(1);
+    }
+
+    function getCustomMetricStep(definition) {
+        const decimals = Number(definition && definition.decimals);
+        if (!Number.isFinite(decimals) || decimals <= 0) {
+            return '1';
+        }
+        return (1 / Math.pow(10, decimals)).toFixed(decimals);
+    }
+
+    function getCustomMetricFieldLabel(definition, suffix) {
+        const label = (definition && definition.label ? String(definition.label).trim() : 'Custom Metric');
+        const unit = definition && definition.unit ? String(definition.unit).trim() : '';
+        const suffixLabel = suffix
+            .replace('Ftd', 'FTD ')
+            .replace('Mtd', 'MTD ')
+            .replace('Ytd', 'YTD ')
+            .replace('Actual', 'Actual')
+            .replace('Target', 'Target');
+        return unit && unit !== '-'
+            ? label + ' (' + unit + ') - ' + suffixLabel
+            : label + ' - ' + suffixLabel;
+    }
+
+    function buildCustomMetricInputMarkup(definition, suffix) {
+        const definitionId = Number(definition && definition.id);
+        const fieldId = 'customMetric' + definitionId + suffix;
+        const step = getCustomMetricStep(definition);
+        return '' +
+            '<div class="form-group metrics-custom-field" data-definition-id="' + definitionId + '">' +
+                '<label for="' + fieldId + '">' + escapeHtml(getCustomMetricFieldLabel(definition, suffix)) + '</label>' +
+                '<input type="number" id="' + fieldId + '" name="' + fieldId + '" min="0" step="' + step + '">' +
+            '</div>';
+    }
+
+    function ensureCustomMetricToolbar(section) {
+        const $group = $('#metrics-panel-' + section + ' .metrics-type-group');
+        if ($group.length === 0) {
+            return;
+        }
+
+        if ($group.children('.metrics-custom-toolbar').length === 0) {
+            const toolbarHtml = '' +
+                '<div class="metrics-custom-toolbar" data-section="' + section + '">' +
+                    '<div class="metrics-custom-toolbar-copy">Add custom KPI rows for ' + escapeHtml(getMetricSectionTitle(section)) + ' and capture them with the same FTD, MTD, and YTD pattern.</div>' +
+                    '<button type="button" class="btn btn-secondary metrics-add-custom-btn" data-section="' + section + '"><i class="fas fa-plus"></i> Add Custom Metric</button>' +
+                '</div>';
+            $group.children('h3').first().after(toolbarHtml);
+        }
+
+        if ($group.children('.metrics-custom-manager').length === 0) {
+            const managerHtml = '' +
+                '<div class="metrics-custom-manager" data-section="' + section + '">' +
+                    '<div class="metrics-custom-form">' +
+                        '<div class="form-group">' +
+                            '<label>Label</label>' +
+                            '<input type="text" class="metrics-custom-label" maxlength="160" placeholder="e.g. Absenteeism">' +
+                        '</div>' +
+                        '<div class="form-group">' +
+                            '<label>Unit</label>' +
+                            '<input type="text" class="metrics-custom-unit" maxlength="64" placeholder="Optional">' +
+                        '</div>' +
+                        '<div class="form-group">' +
+                            '<label>Decimals</label>' +
+                            '<select class="metrics-custom-decimals">' +
+                                '<option value="0">0</option>' +
+                                '<option value="1">1</option>' +
+                                '<option value="2" selected>2</option>' +
+                                '<option value="3">3</option>' +
+                                '<option value="4">4</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div class="form-actions metrics-custom-actions">' +
+                            '<button type="button" class="btn btn-primary metrics-custom-save-btn" data-section="' + section + '"><i class="fas fa-save"></i> Save Custom Metric</button>' +
+                            '<button type="button" class="btn btn-secondary metrics-custom-cancel-btn" data-section="' + section + '">Cancel</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            $group.children('.metrics-custom-toolbar').after(managerHtml);
+        }
+    }
+
+    function renderCustomMetricEditors() {
+        metricSectionOrder.forEach(function(section) {
+            ensureCustomMetricToolbar(section);
+
+            const $panel = $('#metrics-panel-' + section);
+            const $actualGrid = $panel.find('.metrics-entry-grid-actual').first();
+            const $targetGrid = $panel.find('.metrics-entry-grid-target').first();
+            if ($actualGrid.length === 0 || $targetGrid.length === 0) {
+                return;
+            }
+
+            $actualGrid.find('.metrics-custom-field').remove();
+            $targetGrid.find('.metrics-custom-field').remove();
+
+            customMetricDefinitions
+                .filter(function(definition) {
+                    return normalizeMetricSection(definition.section) === section;
+                })
+                .forEach(function(definition) {
+                    $actualGrid.append(buildCustomMetricInputMarkup(definition, 'FtdActual'));
+                    $actualGrid.append(buildCustomMetricInputMarkup(definition, 'MtdActual'));
+                    $actualGrid.append(buildCustomMetricInputMarkup(definition, 'YtdActual'));
+                    $targetGrid.append(buildCustomMetricInputMarkup(definition, 'FtdTarget'));
+                    $targetGrid.append(buildCustomMetricInputMarkup(definition, 'MtdTarget'));
+                    $targetGrid.append(buildCustomMetricInputMarkup(definition, 'YtdTarget'));
+                });
+        });
+
+        bindCustomMetricDefinitionEvents();
+        applyReadonlyStateToActiveSection();
+    }
+
+    function resetCustomMetricManager(section) {
+        const $manager = $('.metrics-custom-manager[data-section="' + section + '"]');
+        $manager.removeClass('show');
+        $manager.find('.metrics-custom-label').val('');
+        $manager.find('.metrics-custom-unit').val('');
+        $manager.find('.metrics-custom-decimals').val('2');
+    }
+
+    function bindCustomMetricDefinitionEvents() {
+        $('.metrics-add-custom-btn').off('click').on('click', function() {
+            const section = $(this).data('section');
+            $('.metrics-custom-manager').removeClass('show');
+            const $manager = $('.metrics-custom-manager[data-section="' + section + '"]');
+            $manager.addClass('show');
+            $manager.find('.metrics-custom-label').trigger('focus');
+        });
+
+        $('.metrics-custom-cancel-btn').off('click').on('click', function() {
+            resetCustomMetricManager($(this).data('section'));
+        });
+
+        $('.metrics-custom-save-btn').off('click').on('click', function() {
+            const section = $(this).data('section');
+            const $manager = $('.metrics-custom-manager[data-section="' + section + '"]');
+            const label = ($manager.find('.metrics-custom-label').val() || '').trim();
+            const unit = ($manager.find('.metrics-custom-unit').val() || '').trim();
+            const decimals = Number($manager.find('.metrics-custom-decimals').val() || '2');
+            const $btn = $(this);
+
+            if (!label) {
+                showMessage('metricsDataMessage', 'Custom metric label is required.', 'error');
+                showMetricsToast('Custom metric label is required.', 'error');
+                return;
+            }
+
+            $btn.prop('disabled', true).data('original-html', $btn.html()).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+            $.ajax({
+                url: '/api/metrics/custom-definitions',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    section: section.toUpperCase(),
+                    label: label,
+                    unit: unit,
+                    decimals: decimals
+                }),
+                success: function() {
+                    const selectedDate = $('#metricsDateInput').val();
+                    loadCustomMetricDefinitions().done(function() {
+                        resetCustomMetricManager(section);
+                        $('.metrics-tab').removeClass('active');
+                        $('.metrics-tab[data-tab="' + section + '"]').addClass('active');
+                        $('.metrics-tab-panel').removeClass('active');
+                        $('#metrics-panel-' + section).addClass('active');
+                        if (selectedDate) {
+                            loadMetricsDataByDate(selectedDate);
+                        }
+                        showMessage('metricsDataMessage', 'Custom metric created successfully.', 'success');
+                        showMetricsToast('Custom metric created.', 'success');
+                    });
+                },
+                error: function(xhr) {
+                    const message = xhr.responseText || 'Unable to create custom metric.';
+                    showMessage('metricsDataMessage', message, 'error');
+                    showMetricsToast(message, 'error');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html($btn.data('original-html'));
+                }
+            });
+        });
+    }
+
+    function sortCustomMetricDefinitions(definitions) {
+        return (definitions || []).slice().sort(function(a, b) {
+            const sectionCompare = normalizeMetricSection(a.section).localeCompare(normalizeMetricSection(b.section));
+            if (sectionCompare !== 0) {
+                return sectionCompare;
+            }
+            const orderA = Number.isFinite(Number(a.displayOrder)) ? Number(a.displayOrder) : 0;
+            const orderB = Number.isFinite(Number(b.displayOrder)) ? Number(b.displayOrder) : 0;
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            return Number(a.id || 0) - Number(b.id || 0);
+        });
+    }
+
+    function loadCustomMetricDefinitions() {
+        return $.ajax({
+            url: '/api/metrics/custom-definitions',
+            type: 'GET'
+        }).done(function(data) {
+            customMetricDefinitions = sortCustomMetricDefinitions(Array.isArray(data) ? data : []);
+            rebuildMetricRegistry();
+            renderCustomMetricEditors();
+        }).fail(function() {
+            customMetricDefinitions = [];
+            rebuildMetricRegistry();
+            renderCustomMetricEditors();
         });
     }
 
@@ -3417,5 +3679,7 @@ $(document).ready(function() {
     }
 
     installReadonlyObserver();
-    initializeSettingsView();
+    loadCustomMetricDefinitions().always(function() {
+        initializeSettingsView();
+    });
     });

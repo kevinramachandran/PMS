@@ -904,6 +904,11 @@ body {
     max-height: 170px;
 }
 
+.custom-chart-stack {
+    display: grid;
+    gap: 20px;
+}
+
 /* Daily Status Table */
 .daily-status-table {
     width: 100%;
