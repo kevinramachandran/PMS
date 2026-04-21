@@ -48,7 +48,7 @@
             </div>
             <a href="/settings?config=metrics-data" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Production Metrics Data"><i class="fas fa-chart-area"></i><span>Production Metrics Data</span></a>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board Configuration"><i class="fas fa-sliders"></i><span>Issue Board Configuration</span></a>
-            <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-sliders"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-sliders"></i><span>Gemba Walk Schedule</span></a>
             <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-sliders"></i><span>Safety Gemba - Tracker Config</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule Config"><i class="fas fa-sliders"></i><span>Training Schedule Config</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda Config"><i class="fas fa-sliders"></i><span>PMS Agenda Config</span></a>
@@ -111,7 +111,7 @@
                         </thead>
                         <tbody id="gembaScheduleBody">
                         <tr>
-                            <td colspan="5" class="gemba-empty">No schedule configured. Open Gemba Walk Configuration.</td>
+                            <td colspan="5" class="gemba-empty">No schedule configured. Open Gemba Walk Schedule.</td>
                         </tr>
                         </tbody>
                     </table>

@@ -28,7 +28,7 @@ public class AppLicense {
     @Column(nullable = false, length = 500)
     private String licenseText;
 
-    @Column(nullable = false, unique = true, length = 120)
+    @Column(nullable = false, unique = true, length = 255)
     private String licenseToken;
 
     @Column(length = 120)
