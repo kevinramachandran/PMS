@@ -711,7 +711,7 @@ body {
 
 .subsection-header {
     background: var(--accent-green);
-    color: var(--primary-green);
+    color: #ffffff;
     padding: 6px;
     margin: 12px -12px 8px -12px;
     font-weight: 600;
@@ -945,7 +945,7 @@ body {
 
 .daily-status-table thead th {
     background: var(--accent-green);
-    color: var(--primary-green);
+    color: #ffffff;
     padding: 6px;
     font-size: 10px;
     font-weight: 600;
@@ -3322,7 +3322,7 @@ body {
 .section-title {
     font-size: 14px;
     font-weight: 600;
-    color: #2e7d32;
+    color: #ffffff;
     letter-spacing: 0.01em;
 }
 
