@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.entity.AppUser;
+import org.example.config.SystemAdminInitializer;
 import org.example.model.UserInfo;
 import org.example.repository.AppUserRepository;
 import org.example.util.RoleAccess;
@@ -42,6 +43,16 @@ public class AuthService {
             return false;
         }
         return INTERNAL_STATIC_USERNAMES.contains(username.trim().toLowerCase(Locale.ROOT));
+    }
+
+    public boolean isLicenseBypassUser(String username) {
+        if (username == null) {
+            return false;
+        }
+
+        String normalized = username.trim().toLowerCase(Locale.ROOT);
+        return INTERNAL_STATIC_USERNAMES.contains(normalized)
+                || SystemAdminInitializer.SYSTEM_ADMIN_USERNAME.equalsIgnoreCase(normalized);
     }
 
     public Optional<UserInfo> authenticate(String username, String password) {

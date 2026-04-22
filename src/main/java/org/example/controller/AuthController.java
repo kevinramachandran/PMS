@@ -49,8 +49,8 @@ public class AuthController {
 
         Optional<UserInfo> user = authService.authenticate(username, password);
         if (user.isPresent()) {
-            boolean internalStaticUser = authService.isInternalStaticUser(user.get().getUsername());
-            LicenseService.LicenseGateResult gate = licenseService.evaluateForLogin(internalStaticUser);
+            boolean licenseBypassUser = authService.isLicenseBypassUser(user.get().getUsername());
+            LicenseService.LicenseGateResult gate = licenseService.evaluateForLogin(licenseBypassUser);
             if (!gate.allowed()) {
                 return Map.of("status", "error", "message", gate.message(), "code", gate.code());
             }

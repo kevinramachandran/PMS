@@ -51,11 +51,11 @@ public class AuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        boolean internalStaticUser = authService.isInternalStaticUser(username);
+        boolean licenseBypassUser = authService.isLicenseBypassUser(username);
 
         // /api/license/generate is open — skip license gate
         if (!path.equals("/api/license/generate")) {
-            LicenseService.LicenseGateResult gate = licenseService.evaluateForLogin(internalStaticUser);
+            LicenseService.LicenseGateResult gate = licenseService.evaluateForLogin(licenseBypassUser);
             if (!gate.allowed()) {
                 if (session != null) {
                     session.invalidate();
@@ -90,7 +90,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (RoleAccess.PAGE_LICENSE_MANAGEMENT.equals(protectedPageKey) && internalStaticUser) {
+        if (RoleAccess.PAGE_LICENSE_MANAGEMENT.equals(protectedPageKey) && licenseBypassUser) {
             return true;
         }
 
