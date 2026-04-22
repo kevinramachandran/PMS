@@ -17,6 +17,9 @@ public class IssueBoardItem {
     @Column(length = 500)
     private String problem;
 
+    @Column(length = 120)
+    private String priority;
+
     @Column(length = 255)
     private String ownerName;
 
@@ -83,6 +86,14 @@ public class IssueBoardItem {
 
     public String getOwnerName() {
         return ownerName;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 
     public void setOwnerName(String ownerName) {

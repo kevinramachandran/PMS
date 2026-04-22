@@ -46,12 +46,12 @@
                 </div>
                 <a href="/settings?config=metrics-data" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Production Metrics Data"><i class="fas fa-chart-area"></i><span>Production Metrics Data</span></a>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board Configuration"><i class="fas fa-tasks"></i><span>Issue Board Configuration</span></a>
-                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-marked-alt"></i><span>Gemba Walk Configuration</span></a>
+                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-map-marked-alt"></i><span>Gemba Walk Schedule</span></a>
                 <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-exclamation-triangle"></i><span>Safety Gemba - Tracker Config</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule Config"><i class="fas fa-book"></i><span>Training Schedule Config</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda Config"><i class="fas fa-list-ul"></i><span>PMS Agenda Config</span></a>
                 <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-cogs"></i><span>PMS Process Confirmation Config</span></a>
-                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker Config"><i class="fas fa-bug"></i><span>Abnormality Tracker Config</span></a>
+                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker"><i class="fas fa-bug"></i><span>Abnormality Tracker</span></a>
                 <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&S Cross Daily Config"><i class="fas fa-heartbeat"></i><span>H&S Cross Daily Config</span></a>
                 <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking Config"><i class="fas fa-graduation-cap"></i><span>LSR Tracking Config</span></a>
                 <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-square"></i><span>KPI Footer Buttons</span></a>
@@ -564,6 +564,7 @@
                                             <thead>
                                             <tr>
                                                 <th>Problem</th>
+                                                <th>Priority</th>
                                                 <th>Name</th>
                                                 <th>Date</th>
                                                 <th>Root Cause</th>
@@ -601,10 +602,11 @@
                                 <div id="issueBoardToast" class="issue-board-toast" aria-live="polite"></div>
                             </div>
 
-                            <div id="form-gemba-schedule" class="form-section">                                <h2>Gemba Walk Configuration</h2>
+                            <div id="form-gemba-schedule" class="form-section issue-board-enterprise">
+                                <h2>Gemba Walk Configuration</h2>
                                 <p class="form-subtitle">Configure Leadership Safety Gemba Walk schedule for the dashboard.</p>
 
-                                <div class="config-form-section">
+                                <div class="config-form-section issue-board-form-card">
                                     <div class="section-subtitle">Form Section</div>
                                     <div class="issue-board-meta-grid form-grid">
                                         <div class="form-group">
@@ -639,14 +641,9 @@
                                         <div class="form-group"><label for="gsFormWeek4">Week #4</label><input type="text" id="gsFormWeek4"></div>
                                     </div>
 
-                                    <div class="form-actions compact-actions">
-                                        <button type="button" class="btn btn-secondary" id="addGembaRowBtn">
-                                            <i class="fas fa-plus"></i> Add Row
-                                        </button>
-                                    </div>
                                 </div>
 
-                                <div class="config-table-section">
+                                <div class="config-table-section issue-board-table-card">
                                     <div class="section-subtitle">Table Section</div>
                                     <div class="daily-data-table issue-config-table-wrap">
                                         <table id="gembaConfigTable">
@@ -663,6 +660,11 @@
                                             </thead>
                                             <tbody id="gembaConfigTableBody"></tbody>
                                         </table>
+                                    </div>
+                                    <div class="form-actions compact-actions" style="margin-top: 12px;">
+                                        <button type="button" class="btn btn-secondary" id="addGembaRowBtn">
+                                            <i class="fas fa-plus"></i> Add New Row
+                                        </button>
                                     </div>
                                 </div>
 
@@ -729,60 +731,68 @@
                                 <div id="lgtConfigMessage" class="form-message"></div>
                             </div>
 
-                            <div id="form-training-schedule" class="form-section">
+                            <div id="form-training-schedule" class="form-section issue-board-enterprise">
                                 <h2>Training Schedule Configuration</h2>
                                 <p class="form-subtitle">Configure monthly training schedule rows for dashboard view.</p>
 
-                                <div class="issue-board-meta-grid">
-                                    <div class="form-group">
-                                        <label for="trainingConfigDate">Configuration Date</label>
-                                        <input type="date" id="trainingConfigDate" name="trainingConfigDate">
+                                <div class="config-form-section issue-board-form-card">
+                                    <div class="section-subtitle">Form Section</div>
+                                    <div class="issue-board-meta-grid form-grid">
+                                        <div class="form-group">
+                                            <label for="trainingConfigDate">Configuration Date</label>
+                                            <input type="date" id="trainingConfigDate" name="trainingConfigDate">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="trainingPeriodLabelInput">Period Label (Auto from Date)</label>
+                                            <input type="text" id="trainingPeriodLabelInput" name="trainingPeriodLabelInput" readonly placeholder="e.g. Dec'24">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="trainingPeriodLabelInput">Period Label (Auto from Date)</label>
-                                        <input type="text" id="trainingPeriodLabelInput" name="trainingPeriodLabelInput" readonly placeholder="e.g. Dec'24">
+
+                                    <div class="issue-board-meta-grid form-grid">
+                                        <div class="form-group">
+                                            <label for="trainingKpiTitle">KPI Title</label>
+                                            <input type="text" id="trainingKpiTitle" placeholder="Training Compliance" value="Training Compliance">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="trainingTargetPercent">Target %</label>
+                                            <input type="number" id="trainingTargetPercent" min="0" max="100" step="1" value="100">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="trainingResponsible">Responsible</label>
+                                            <input type="text" id="trainingResponsible" placeholder="HR Mgr." value="HR Mgr.">
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="issue-board-meta-grid">
-                                    <div class="form-group">
-                                        <label for="trainingKpiTitle">KPI Title</label>
-                                        <input type="text" id="trainingKpiTitle" placeholder="Training Compliance" value="Training Compliance">
+                                <div class="config-table-section issue-board-table-card">
+                                    <div class="section-subtitle">Table Section</div>
+                                    <div class="daily-data-table issue-config-table-wrap">
+                                        <table id="trainingScheduleConfigTable">
+                                            <thead>
+                                            <tr>
+                                                <th>Name of Training</th>
+                                                <th>Target Audience</th>
+                                                <th>Trainer</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Duration (Hours)</th>
+                                                <th>Venue</th>
+                                                <th>FPR</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="trainingScheduleConfigTableBody"></tbody>
+                                        </table>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="trainingTargetPercent">Target %</label>
-                                        <input type="number" id="trainingTargetPercent" min="0" max="100" step="1" value="100">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="trainingResponsible">Responsible</label>
-                                        <input type="text" id="trainingResponsible" placeholder="HR Mgr." value="HR Mgr.">
+                                    <div class="form-actions compact-actions" style="margin-top: 12px;">
+                                        <button type="button" class="btn btn-secondary" id="addTrainingScheduleRowBtn">
+                                            <i class="fas fa-plus"></i> Add New Row
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div class="daily-data-table issue-config-table-wrap">
-                                    <table id="trainingScheduleConfigTable">
-                                        <thead>
-                                        <tr>
-                                            <th>Name of Training</th>
-                                            <th>Target Audience</th>
-                                            <th>Trainer</th>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Duration (Hours)</th>
-                                            <th>Venue</th>
-                                            <th>FPR</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="trainingScheduleConfigTableBody"></tbody>
-                                    </table>
-                                    <button type="button" class="btn btn-secondary" id="addTrainingScheduleRowBtn">
-                                        <i class="fas fa-plus"></i> Add New Row
-                                    </button>
-                                </div>
-
-                                <div class="form-actions">
+                                <div class="form-actions sticky-save-bar">
                                     <button id="saveTrainingScheduleBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Training Schedule
                                     </button>
@@ -1081,40 +1091,48 @@
                             </div>
 
                             <!-- Abnormality Tracker Config Form -->
-                            <div id="form-abnormality-tracker" class="form-section">
+                            <div id="form-abnormality-tracker" class="form-section issue-board-enterprise">
                                 <h2>Abnormality Tracker Configuration</h2>
                                 <p class="form-subtitle">Configure abnormality tag counts and closure rates by department for the dashboard charts.</p>
 
-                                <div class="issue-board-meta-grid">
-                                    <div class="form-group">
-                                        <label for="atConfigDate">Configuration Date</label>
-                                        <input type="date" id="atConfigDate" name="atConfigDate">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="atPeriodLabelInput">Period Label (Auto from Date)</label>
-                                        <input type="text" id="atPeriodLabelInput" name="atPeriodLabelInput" readonly placeholder="e.g. Apr'2026">
+                                <div class="config-form-section issue-board-form-card">
+                                    <div class="section-subtitle">Form Section</div>
+                                    <div class="issue-board-meta-grid form-grid">
+                                        <div class="form-group">
+                                            <label for="atConfigDate">Configuration Date</label>
+                                            <input type="date" id="atConfigDate" name="atConfigDate">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="atPeriodLabelInput">Period Label (Auto from Date)</label>
+                                            <input type="text" id="atPeriodLabelInput" name="atPeriodLabelInput" readonly placeholder="e.g. Apr'2026">
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="daily-data-table issue-config-table-wrap">
-                                    <table id="abnormalityConfigTable">
-                                        <thead>
-                                        <tr>
-                                            <th>Department</th>
-                                            <th>Yellow Tags</th>
-                                            <th>Red Tags</th>
-                                            <th>Closure %</th>
-                                            <th>Action</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="atConfigTableBody"></tbody>
-                                    </table>
-                                    <button type="button" class="btn btn-secondary" id="addAtRowBtn">
-                                        <i class="fas fa-plus"></i> Add Row
-                                    </button>
+                                <div class="config-table-section issue-board-table-card">
+                                    <div class="section-subtitle">Table Section</div>
+                                    <div class="daily-data-table issue-config-table-wrap">
+                                        <table id="abnormalityConfigTable">
+                                            <thead>
+                                            <tr>
+                                                <th>Department</th>
+                                                <th>Yellow Tags</th>
+                                                <th>Red Tags</th>
+                                                <th>Closure %</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="atConfigTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="form-actions compact-actions" style="margin-top: 12px;">
+                                        <button type="button" class="btn btn-secondary" id="addAtRowBtn">
+                                            <i class="fas fa-plus"></i> Add Row
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div class="form-actions">
+                                <div class="form-actions sticky-save-bar">
                                     <button id="saveAtConfigBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Abnormality Data
                                     </button>

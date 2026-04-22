@@ -157,7 +157,7 @@ $(document).ready(function() {
         tbody.empty();
 
         if (!rows || rows.length === 0) {
-            tbody.append('<tr><td colspan="11" class="empty-row">No issue board data configured. Open Issue Board Configuration.</td></tr>');
+            tbody.append('<tr><td colspan="12" class="empty-row">No issue board data configured. Open Issue Board Configuration.</td></tr>');
             $('#lastReviewDate').text('-');
             $('#nextReviewDate').text('-');
             return;
@@ -173,6 +173,7 @@ $(document).ready(function() {
                 '<tr>' +
                 '<td>' + (index + 1) + '</td>' +
                 '<td>' + safeText(row.problem) + '</td>' +
+                '<td>' + safeText(row.priority) + '</td>' +
                 '<td>' + safeText(row.ownerName) + '</td>' +
                 '<td>' + safeText(row.issueDate) + '</td>' +
                 '<td>' + safeText(row.rootCause) + '</td>' +

@@ -3913,13 +3913,39 @@ body.kpi-tv-layout .user-avatar {
 
 body.kpi-tv-layout .content-area {
     padding: 8px 10px 0 !important;
-    overflow: auto;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    min-height: 0;
 }
 
 body.kpi-tv-layout .dashboard-scroll {
-    overflow: auto !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
     max-width: 100%;
     max-height: 100%;
+    min-height: 0;
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(18, 111, 61, 0.65) rgba(15, 23, 42, 0.08);
+}
+
+body.kpi-tv-layout .dashboard-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.kpi-tv-layout .dashboard-scroll::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.08);
+    border-radius: 999px;
+}
+
+body.kpi-tv-layout .dashboard-scroll::-webkit-scrollbar-thumb {
+    background: rgba(18, 111, 61, 0.65);
+    border-radius: 999px;
+}
+
+body.kpi-tv-layout .dashboard-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(18, 111, 61, 0.82);
 }
 
 body.kpi-tv-layout .dashboard-container {
@@ -3929,28 +3955,28 @@ body.kpi-tv-layout .dashboard-container {
 
 body.kpi-tv-layout .dashboard-main-fit-shell {
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
 }
 
 body.kpi-tv-layout .dashboard-main-fit-stage {
-    transform: scale(0.92) !important;
+    transform: scale(0.76) !important;
     transform-origin: top left;
     will-change: transform;
-    width: 108.7% !important;
+    width: 131.58% !important;
 }
 
 body.kpi-tv-layout .dashboard-main {
     width: max-content;
-    min-width: 1800px;
-    gap: 10px !important;
+    min-width: 1600px;
+    gap: 8px !important;
     overflow: visible !important;
 }
 
 body.kpi-tv-layout .dashboard-left {
-    width: 900px;
-    min-width: 900px;
-    flex: 0 0 900px;
+    width: 820px;
+    min-width: 820px;
+    flex: 0 0 820px;
     margin: 0 !important;
 }
 
@@ -3964,18 +3990,18 @@ body.kpi-tv-layout .dashboard-right {
 }
 
 body.kpi-tv-layout .dashboard-column {
-    gap: 8px;
+    gap: 6px;
 }
 
 body.kpi-tv-layout .dashboard-right .dashboard-column {
-    width: 215px;
-    min-width: 215px;
-    flex: 0 0 215px;
+    width: 190px;
+    min-width: 190px;
+    flex: 0 0 190px;
 }
 
 body.kpi-tv-layout .dashboard-right .daily-top-box {
-    min-height: 112px;
-    margin-bottom: 8px;
+    min-height: 102px;
+    margin-bottom: 6px;
 }
 
 body.kpi-tv-layout .dashboard-right .daily-top-box .compact-table-container {
@@ -3995,7 +4021,7 @@ body.kpi-tv-layout .pms-deck-date {
 }
 
 body.kpi-tv-layout .full-kpi-section {
-    padding: 8px;
+    padding: 6px;
 }
 
 body.kpi-tv-layout .priorities-table td,
@@ -4006,22 +4032,22 @@ body.kpi-tv-layout .daily-status-table tbody td {
 }
 
 body.kpi-tv-layout .daily-perf-header {
-    font-size: 16px !important;
-    padding: 5px 8px;
-    margin-left: -8px;
-    margin-right: -8px;
+    font-size: 14px !important;
+    padding: 4px 6px;
+    margin-left: -6px;
+    margin-right: -6px;
 }
 
 body.kpi-tv-layout .daily-perf-asof {
-    font-size: 10px;
-    padding: 3px 6px;
-    margin-left: -8px;
-    margin-right: -8px;
+    font-size: 9px;
+    padding: 3px 5px;
+    margin-left: -6px;
+    margin-right: -6px;
 }
 
 body.kpi-tv-layout .daily-perf-table {
-    width: calc(100% + 16px);
-    margin: 0 -8px 8px -8px;
+    width: calc(100% + 12px);
+    margin: 0 -6px 6px -6px;
 }
 
 body.kpi-tv-layout .daily-perf-table th,
@@ -4039,32 +4065,32 @@ body.kpi-tv-layout .dashboard-container table th {
 }
 
 body.kpi-tv-layout .subsection-header {
-    margin: 8px -8px 6px -8px;
-    font-size: 10px;
+    margin: 6px -6px 5px -6px;
+    font-size: 9px;
 }
 
 body.kpi-tv-layout .chart-box {
-    height: 166px;
-    min-height: 166px;
+    height: 148px;
+    min-height: 148px;
     margin: 0 !important;
-    padding: 6px;
-    border-radius: 10px;
+    padding: 5px;
+    border-radius: 8px;
 }
 
 body.kpi-tv-layout .chart-title {
-    min-height: 28px;
-    margin: -6px -6px 6px;
-    padding: 6px 8px;
-    font-size: 10px;
+    min-height: 24px;
+    margin: -5px -5px 5px;
+    padding: 5px 6px;
+    font-size: 9px;
 }
 
 body.kpi-tv-layout .chart-title-text {
-    font-size: 10px;
+    font-size: 9px;
 }
 
 body.kpi-tv-layout .chart-container {
-    height: 116px;
-    min-height: 116px;
+    height: 104px;
+    min-height: 104px;
 }
 
 body.kpi-tv-layout .overview-title,
@@ -4096,45 +4122,46 @@ body.kpi-tv-layout .footer {
     }
 
     body.kpi-tv-layout .dashboard-scroll {
-        overflow: auto !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
         max-width: 100%;
         -webkit-overflow-scrolling: touch;
     }
 
     body.kpi-tv-layout .dashboard-container {
         width: max-content !important;
-        min-width: 1800px !important;
+        min-width: 1600px !important;
     }
 
     body.kpi-tv-layout .dashboard-main-fit-shell {
         width: max-content !important;
-        min-width: 1800px !important;
+        min-width: 1600px !important;
         overflow: visible;
         height: auto !important;
         -webkit-overflow-scrolling: touch;
     }
 
     body.kpi-tv-layout .dashboard-main-fit-stage {
-        transform: scale(0.92) !important;
+        transform: scale(0.76) !important;
         transform-origin: top left;
-        width: 108.7% !important;
+        width: 131.58% !important;
     }
 
     body.kpi-tv-layout .dashboard-main {
         width: max-content !important;
-        min-width: 1800px !important;
+        min-width: 1600px !important;
     }
 
     body.kpi-tv-layout .dashboard-left {
-        width: 900px !important;
-        min-width: 900px !important;
-        flex: 0 0 900px !important;
+        width: 820px !important;
+        min-width: 820px !important;
+        flex: 0 0 820px !important;
     }
 
     body.kpi-tv-layout .dashboard-right .dashboard-column {
-        width: 215px !important;
-        min-width: 215px !important;
-        flex: 0 0 215px !important;
+        width: 190px !important;
+        min-width: 190px !important;
+        flex: 0 0 190px !important;
     }
 
     body.kpi-tv-layout .footer {
@@ -4145,35 +4172,36 @@ body.kpi-tv-layout .footer {
 @media (min-width: 1025px) and (max-width: 1440px) {
     body.kpi-tv-layout .content-area {
         overflow-x: auto;
-        overflow-y: hidden;
+        overflow-y: auto;
     }
 
     body.kpi-tv-layout .dashboard-scroll {
-        overflow: auto !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
         max-width: 100%;
         -webkit-overflow-scrolling: touch;
     }
 
     body.kpi-tv-layout .dashboard-container {
         width: max-content !important;
-        min-width: 1800px !important;
+        min-width: 1600px !important;
     }
 
     body.kpi-tv-layout .dashboard-main-fit-shell {
         width: max-content !important;
-        min-width: 1800px !important;
+        min-width: 1600px !important;
         overflow: visible;
     }
 
     body.kpi-tv-layout .dashboard-main-fit-stage {
-        transform: scale(0.92) !important;
+        transform: scale(0.76) !important;
         transform-origin: top left;
-        width: 108.7% !important;
+        width: 131.58% !important;
     }
 
     body.kpi-tv-layout .dashboard-main {
         width: max-content !important;
-        min-width: 1800px !important;
+        min-width: 1600px !important;
     }
 }
 
@@ -4572,19 +4600,19 @@ body.kpi-tv-layout .footer {
 }
 
 body.kpi-tv-layout .enterprise-overview-card {
-    height: 166px;
-    min-height: 166px;
+    height: 148px;
+    min-height: 148px;
     margin: 0 !important;
 }
 
 body.kpi-tv-layout .enterprise-overview-card .overview-header {
-    min-height: 28px;
-    padding: 6px 8px;
+    min-height: 24px;
+    padding: 5px 6px;
 }
 
 body.kpi-tv-layout .enterprise-overview-card .overview-content {
-    padding: 6px 8px 8px;
-    gap: 6px;
+    padding: 5px 6px 6px;
+    gap: 4px;
 }
 
 /* Final alignment + mini-card enforcement */
@@ -4639,20 +4667,20 @@ body.kpi-tv-layout .enterprise-overview-card .overview-content {
 }
 
 body.kpi-tv-layout .dashboard-right::before {
-    height: var(--daily-row-box-height, 118px);
-    border-radius: 10px;
+    height: var(--daily-row-box-height, 104px);
+    border-radius: 8px;
 }
 
 body.kpi-tv-layout .dashboard-right .daily-top-box {
-    min-height: var(--daily-row-box-height, 118px);
+    min-height: var(--daily-row-box-height, 104px);
 }
 
 body.kpi-tv-layout .enterprise-overview-card.kpi-card {
-    padding: 6px !important;
+    padding: 5px !important;
 }
 
 body.kpi-tv-layout .enterprise-overview-card .overview-header {
-    margin: -6px -6px 6px -6px;
+    margin: -5px -5px 5px -5px;
 }
 
 /* Final visual polish: typography, contrast, alignment, and overlap control */
@@ -4764,12 +4792,12 @@ body.kpi-tv-layout .enterprise-overview-card .overview-header {
 }
 
 body.kpi-tv-layout .dashboard-right .chart-title {
-    min-height: 28px;
-    padding: 5px 7px;
+    min-height: 24px;
+    padding: 4px 6px;
 }
 
 body.kpi-tv-layout .dashboard-right .chart-title-text {
-    font-size: 9px;
+    font-size: 8px;
 }
 
 body.kpi-tv-layout .dashboard-right .daily-top-box .daily-status-table th,

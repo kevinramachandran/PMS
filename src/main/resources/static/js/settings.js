@@ -1838,7 +1838,7 @@ $(document).ready(function() {
         if (!items || items.length === 0) {
             $('#issueBoardLastReviewDate').val('');
             $('#issueBoardNextReviewDate').val('');
-            tbody.html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
+            tbody.html('<tr class="placeholder-row"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
             setIssueBoardSaveState();
             return;
         }
@@ -1864,6 +1864,7 @@ $(document).ready(function() {
         return '' +
             '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '">' +
             '<td class="ib-text-cell"><input type="text" class="ib-problem" value="' + escapeAttributeValue(safeItem.problem || '') + '" placeholder="Describe issue"></td>' +
+            '<td class="ib-text-cell"><input type="text" class="ib-priority" value="' + escapeAttributeValue(safeItem.priority || '') + '" placeholder="Priority"></td>' +
             '<td class="ib-text-cell"><input type="text" class="ib-owner" value="' + escapeAttributeValue(safeItem.ownerName || '') + '" placeholder="Owner name"></td>' +
             '<td><input type="date" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '" placeholder="Issue date"></td>' +
             '<td class="ib-text-cell"><input type="text" class="ib-root-cause" value="' + escapeAttributeValue(safeItem.rootCause || '') + '" placeholder="Root cause"></td>' +
@@ -1920,7 +1921,7 @@ $(document).ready(function() {
             }
             $(this).closest('tr').remove();
             if ($('#issueBoardConfigTableBody tr').length === 0) {
-                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
+                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Row".</td></tr>');
             }
             setIssueBoardSaveState();
         });
@@ -2028,6 +2029,7 @@ $(document).ready(function() {
             payload.push({
                 rowOrder: index + 1,
                 problem: problem,
+                priority: $(this).find('.ib-priority').val().trim(),
                 ownerName: $(this).find('.ib-owner').val().trim(),
                 issueDate: $(this).find('.ib-issue-date').val().trim(),
                 rootCause: $(this).find('.ib-root-cause').val().trim(),
