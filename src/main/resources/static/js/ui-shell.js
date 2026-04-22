@@ -227,17 +227,9 @@
 
             const profile = document.createElement('div');
             profile.className = 'pms-profile';
-            const menuLinks = [];
-            if (canAccessPmsDataEntry) {
-                menuLinks.push('<a href="/settings">PMS Data Entry</a>');
-            }
-            if (canManageUsers) {
-                menuLinks.push('<a href="/pms-configuration">User Management</a>');
-            }
-            if (canManageEmailConfiguration) {
-                menuLinks.push('<a href="/email-configuration">Email Configuration</a>');
-            }
-            menuLinks.push('<a href="' + logoutHref + '">Logout</a>');
+            const menuLinks = [
+                '<a href="' + logoutHref + '">Logout</a>'
+            ];
             profile.innerHTML = '' +
                 '<button type="button" class="pms-profile-btn">' +
                 '<i class="fas fa-user-circle"></i>' +

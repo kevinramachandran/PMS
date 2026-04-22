@@ -100,9 +100,11 @@ $BundleRoot = Resolve-BundleRoot -ProvidedPath $BundleRoot
 $bundleAppJar = Join-Path $BundleRoot "app\app.jar"
 $bundleXml = Join-Path $BundleRoot "service\brewery-pms.xml"
 $bundleStartScript = Join-Path $BundleRoot "service\start-service.ps1"
+$bundleLaunchScript = Join-Path $BundleRoot "service\launch-app.ps1"
+$bundleLaunchBatch = Join-Path $BundleRoot "service\launch-app.bat"
 $bundleEnvExample = Join-Path $BundleRoot "config\brewery-pms.env.example"
 
-foreach ($requiredPath in @($bundleAppJar, $bundleXml, $bundleStartScript, $bundleEnvExample)) {
+foreach ($requiredPath in @($bundleAppJar, $bundleXml, $bundleStartScript, $bundleLaunchScript, $bundleLaunchBatch, $bundleEnvExample)) {
     if (-not (Test-Path $requiredPath)) {
         throw "Required bundle artifact is missing: $requiredPath. Run .\gradlew.bat bundleWindowsService first."
     }
@@ -121,11 +123,15 @@ foreach ($dir in @($InstallRoot, $appDir, $configDir, $logsDir, $serviceDir, $up
 $serviceExe = Join-Path $serviceDir "$ServiceName.exe"
 $serviceXml = Join-Path $serviceDir "$ServiceName.xml"
 $serviceStartScript = Join-Path $serviceDir "start-service.ps1"
+$serviceLaunchScript = Join-Path $serviceDir "launch-app.ps1"
+$serviceLaunchBatch = Join-Path $serviceDir "launch-app.bat"
 $serviceEnv = Join-Path $configDir "brewery-pms.env"
 
 Invoke-WebRequest -Uri $WinSWDownloadUrl -OutFile $serviceExe
 Copy-Item -Path $bundleXml -Destination $serviceXml -Force
 Copy-Item -Path $bundleStartScript -Destination $serviceStartScript -Force
+Copy-Item -Path $bundleLaunchScript -Destination $serviceLaunchScript -Force
+Copy-Item -Path $bundleLaunchBatch -Destination $serviceLaunchBatch -Force
 Copy-Item -Path $bundleAppJar -Destination (Join-Path $appDir "app.jar") -Force
 Copy-IfMissing -Source $bundleEnvExample -Destination $serviceEnv
 

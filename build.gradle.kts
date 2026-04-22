@@ -69,7 +69,7 @@ tasks.register<Copy>("bundleWindowsService") {
         rename { "app.jar" }
     }
     from("deployment/windows") {
-        include("*.ps1", "*.xml")
+        include("*.ps1", "*.bat", "*.xml")
         into("service")
     }
     from("deployment/windows/brewery-pms.env.example") {
