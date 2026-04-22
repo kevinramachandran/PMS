@@ -240,6 +240,7 @@ $(document).ready(function() {
         } else if (config === 'metrics-data') {
             console.log('   -> Setting metrics-data form ACTIVE');
             $('#form-metrics-data').addClass('active');
+            mountMetricsDateControls($('.metrics-tab.active').first().data('tab') || metricSectionOrder[0]);
             const selectedMetricsDate = $('#metricsDateInput').val();
             if (selectedMetricsDate) {
                 loadMetricsDataByDate(selectedMetricsDate);
@@ -789,10 +790,13 @@ $(document).ready(function() {
     });
 
     $('.metrics-save-btn').on('click', function() {
-        const actualDate = $('#metricsDateInput').val();
-        const targetDate = $('#metricsTargetDateInput').val();
         const section = $(this).data('section') || 'people';
         const $btn = $(this);
+        mountMetricsDateControls(section);
+
+        const actualDate = $('#metricsDateInput').val();
+        const targetDate = calculateMetricsTargetDate(actualDate);
+        updateMetricsTargetDate(targetDate);
 
         if (!actualDate || !targetDate) {
             showMessage('metricsDataMessage', 'Please select a valid past metrics date.', 'error');
