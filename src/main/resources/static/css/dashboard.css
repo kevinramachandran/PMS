@@ -3934,8 +3934,10 @@ body.kpi-tv-layout .dashboard-main-fit-shell {
 }
 
 body.kpi-tv-layout .dashboard-main-fit-stage {
+    transform: scale(0.92) !important;
     transform-origin: top left;
     will-change: transform;
+    width: 108.7% !important;
 }
 
 body.kpi-tv-layout .dashboard-main {
@@ -4113,8 +4115,9 @@ body.kpi-tv-layout .footer {
     }
 
     body.kpi-tv-layout .dashboard-main-fit-stage {
-        transform: none !important;
-        width: max-content !important;
+        transform: scale(0.92) !important;
+        transform-origin: top left;
+        width: 108.7% !important;
     }
 
     body.kpi-tv-layout .dashboard-main {
@@ -4163,7 +4166,9 @@ body.kpi-tv-layout .footer {
     }
 
     body.kpi-tv-layout .dashboard-main-fit-stage {
-        width: max-content !important;
+        transform: scale(0.92) !important;
+        transform-origin: top left;
+        width: 108.7% !important;
     }
 
     body.kpi-tv-layout .dashboard-main {
@@ -4926,4 +4931,3 @@ body.kpi-tv-layout .hs-mini-cross {
 body.kpi-tv-layout .lsr-mini-col-grid {
     height: 22px;
 }
-

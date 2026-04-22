@@ -2016,13 +2016,12 @@ function renderDailyPerformanceTable(metrics) {
         }
     });
 
-    const lastRecord = metrics[metrics.length - 1] || null;
-    const todayTargetRecord = metricsByTargetDate.get(currentDateKey) || lastRecord;
-    const yesterdayTargetRecord = metricsByTargetDate.get(yesterdayDateKey) || lastRecord;
-    const yesterdayActualRecord = metricsByActualDate.get(yesterdayDateKey) || (metrics.length > 1 ? metrics[metrics.length - 2] : lastRecord);
+    const todayTargetRecord = metricsByTargetDate.get(currentDateKey) || null;
+    const yesterdayTargetRecord = metricsByTargetDate.get(yesterdayDateKey) || null;
+    const yesterdayActualRecord = metricsByActualDate.get(yesterdayDateKey) || null;
 
     updateDailyPerformanceAsOf(todayTargetRecord ? todayTargetRecord.targetDate || todayTargetRecord.date : null, true);
-    updateYesterdayDataDate(yesterdayActualRecord ? yesterdayActualRecord.date : (todayTargetRecord ? todayTargetRecord.date : null));
+    updateYesterdayDataDate(yesterdayActualRecord ? yesterdayActualRecord.date : null);
     updateDateLabel('todayTargetDate', todayTargetRecord ? (todayTargetRecord.targetDate || todayTargetRecord.date) : null);
     updateDateLabel('ftdYesterdayDate', yesterdayTargetRecord ? yesterdayTargetRecord.date : null);
     updateDateLabel('ftdTodayDate', todayTargetRecord ? todayTargetRecord.date : null);
