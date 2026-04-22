@@ -110,6 +110,7 @@ $(document).ready(function() {
 
     $('input[type="date"]').removeAttr('max');
 
+    ensureMetricsDateControls();
     initializeMetricsDateField();
     initializeMetricsFieldGrouping();
     initializeIssueBoardConfigDateField();
@@ -691,7 +692,7 @@ $(document).ready(function() {
     });
 
     // ==================== METRICS DATA FORM ====================
-    $('#metricsDateInput').on('change', function() {
+    $(document).on('change', '#metricsDateInput', function() {
         const selectedDate = $(this).val();
         if (!selectedDate) {
             updateMetricsTargetDate('');
@@ -722,6 +723,7 @@ $(document).ready(function() {
         $(this).addClass('active');
         $('.metrics-tab-panel').removeClass('active');
         $('#metrics-panel-' + tab).addClass('active');
+        mountMetricsDateControls(tab);
     });
 
     $('#metricsDataForm').on('submit', function(e) {
@@ -1098,10 +1100,12 @@ $(document).ready(function() {
 
             const $actualWrap = $('<div class="metrics-entry-group metrics-entry-group-actual"></div>');
             $actualWrap.append('<div class="metrics-entry-group-title">Actual</div>');
+            $actualWrap.append('<div class="metrics-date-slot metrics-date-slot-actual"></div>');
             $actualWrap.append('<div class="metrics-entry-grid metrics-entry-grid-actual"></div>');
 
             const $targetWrap = $('<div class="metrics-entry-group metrics-entry-group-target"></div>');
             $targetWrap.append('<div class="metrics-entry-group-title">Target</div>');
+            $targetWrap.append('<div class="metrics-date-slot metrics-date-slot-target"></div>');
             $targetWrap.append('<div class="metrics-entry-grid metrics-entry-grid-target"></div>');
 
             $groups.each(function() {
@@ -1118,6 +1122,51 @@ $(document).ready(function() {
             $container.append($actualWrap).append($targetWrap);
             $grid.replaceWith($container);
         });
+
+        mountMetricsDateControls($('.metrics-tab.active').first().data('tab') || metricSectionOrder[0]);
+    }
+
+    function ensureMetricsDateControls() {
+        if ($('#metricsDateInput').length === 0) {
+            const $actualDateRow = $('<div class="metrics-date-row"></div>');
+            const $actualGroup = $('<div class="form-group metrics-date-group"></div>');
+            $actualGroup.append('<label for="metricsDateInput">Actual Date</label>');
+            $actualGroup.append('<input type="date" id="metricsDateInput" name="metricsDateInput">');
+            $actualDateRow.append($actualGroup);
+            $('#metricsDataForm').append($actualDateRow);
+        }
+
+        if ($('#metricsTargetDateInput').length === 0) {
+            const $targetDateRow = $('<div class="metrics-date-row"></div>');
+            const $targetGroup = $('<div class="form-group metrics-date-group"></div>');
+            $targetGroup.append('<label for="metricsTargetDateInput">Target Date</label>');
+            $targetGroup.append('<input type="date" id="metricsTargetDateInput" name="metricsTargetDateInput" readonly>');
+            $targetDateRow.append($targetGroup);
+            $('#metricsDataForm').append($targetDateRow);
+        }
+    }
+
+    function mountMetricsDateControls(section) {
+        ensureMetricsDateControls();
+
+        const normalizedSection = normalizeMetricSection(section) || metricSectionOrder[0];
+        const $panel = $('#metrics-panel-' + normalizedSection);
+        if ($panel.length === 0) {
+            return;
+        }
+
+        const $actualSlot = $panel.find('.metrics-entry-group-actual .metrics-date-slot-actual').first();
+        const $targetSlot = $panel.find('.metrics-entry-group-target .metrics-date-slot-target').first();
+        const $actualRow = $('#metricsDateInput').closest('.metrics-date-row');
+        const $targetRow = $('#metricsTargetDateInput').closest('.metrics-date-row');
+
+        if ($actualSlot.length && $actualRow.length) {
+            $actualSlot.append($actualRow);
+        }
+
+        if ($targetSlot.length && $targetRow.length) {
+            $targetSlot.append($targetRow);
+        }
     }
 
     function ensureMetricsTargetInputs() {
