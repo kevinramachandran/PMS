@@ -1287,15 +1287,147 @@ $(document).ready(function() {
     }
 
     function buildCustomMetricInputMarkup(definition, suffix) {
-        const definitionId = Number(definition && definition.id);
-        const fieldId = 'customMetric' + definitionId + suffix;
-        const step = getCustomMetricStep(definition);
-        return '' +
-            '<div class="form-group metrics-custom-field" data-definition-id="' + definitionId + '">' +
-                '<label for="' + fieldId + '">' + escapeHtml(getCustomMetricFieldLabel(definition, suffix)) + '</label>' +
-                '<input type="number" id="' + fieldId + '" name="' + fieldId + '" min="0" step="' + step + '">' +
-            '</div>';
+
+        const definitionId = Number(definition.id);
+        const fieldId='customMetric'+definitionId+suffix;
+        const step=getCustomMetricStep(definition);
+
+        let actions='';
+
+        // show edit/delete only once per metric (FTD only)
+        if(suffix.indexOf('Ftd')===0){
+            actions=
+            '<span class="metric-actions">'+
+            '<button type="button" class="metric-edit-btn" data-id="'+definitionId+'" title="Edit Metric">'+
+            '<i class="fas fa-edit"></i>'+
+            '</button>'+
+            '<button type="button" class="metric-delete-btn" data-id="'+definitionId+'" title="Delete Metric">'+
+            '<i class="fas fa-trash-alt"></i>'+
+            '</button>'+
+            '</span>';
+        }
+
+        return ''
+        +'<div class="form-group metrics-custom-field" data-definition-id="'+definitionId+'">'
+        +'<label for="'+fieldId+'">'
+        +escapeHtml(getCustomMetricFieldLabel(definition,suffix))
+        +actions
+        +'</label>'
+        +'<input type="number" id="'+fieldId+'" name="'+fieldId+'" min="0" step="'+step+'">'
+        +'</div>';
     }
+
+    function bindCustomMetricActionEvents(){
+
+        /* ---------- INLINE EDIT ---------- */
+
+        $('.metric-edit-btn').off('click').on('click',function(){
+
+        const id=$(this).data('id');
+
+        const metric=
+        customMetricDefinitions.find(x=>x.id==id);
+
+        if(!metric) return;
+
+        const $label=$(this).closest('label');
+
+        if($label.find('.metric-inline-editor').length){
+        return;
+        }
+
+        // remove label text before buttons
+        $label.contents().filter(function(){
+        return this.nodeType===3;
+        }).first().remove();
+
+        const editor=
+        '<span class="metric-inline-editor">'+
+        '<input class="metric-inline-input" value="'+metric.label+'">'+
+        '<button type="button" class="metric-save-inline" title="Save">'+
+        '<i class="fas fa-check"></i>'+
+        '</button>'+
+        '<button type="button" class="metric-cancel-inline" title="Cancel">'+
+        '<i class="fas fa-times"></i>'+
+        '</button>'+
+        '</span>';
+
+        $label.prepend(editor);
+
+        $('.metric-inline-input').focus().select();
+
+        // cancel edit
+        $('.metric-cancel-inline').off().on('click',function(){
+        loadCustomMetricDefinitions();
+        });
+
+        // save edit
+        $('.metric-save-inline').off().on('click',function(){
+
+        const newLabel=
+        $('.metric-inline-input').val().trim();
+
+        if(!newLabel){
+        return;
+        }
+
+        $.ajax({
+        url:'/api/metrics/custom-definitions/'+id,
+        type:'PUT',
+        contentType:'application/json',
+        data:JSON.stringify({
+        label:newLabel,
+        unit:metric.unit,
+        decimals:metric.decimals,
+        section:metric.section
+        }),
+        success:function(){
+        showMetricsToast(
+        'Metric updated',
+        'success'
+        );
+        loadCustomMetricDefinitions();
+        }
+        });
+
+        });
+
+        });
+
+        /* ---------- DELETE ---------- */
+
+        $('.metric-delete-btn').off('click').on('click',function(){
+        const id=$(this).data('id');
+        window.openDeleteCustomMetricModal(id);
+        });
+
+}
+
+    var _pendingDeleteMetricId = null;
+
+    window.openDeleteCustomMetricModal = function(id) {
+        _pendingDeleteMetricId = id;
+        $('#deleteCustomMetricModal').css('display', 'flex');
+    };
+
+    window.closeDeleteCustomMetricModal = function() {
+        _pendingDeleteMetricId = null;
+        $('#deleteCustomMetricModal').hide();
+    };
+
+    window.executeDeleteCustomMetric = function() {
+        const id = _pendingDeleteMetricId;
+        if (!id) return;
+        window.closeDeleteCustomMetricModal();
+        $.ajax({
+            url: '/api/metrics/custom-definitions/' + id,
+            type: 'DELETE',
+            success: function() {
+                showMetricsToast('Metric deleted', 'success');
+                loadCustomMetricDefinitions();
+            }
+        });
+    };
 
     function ensureCustomMetricToolbar(section) {
         const $group = $('#metrics-panel-' + section + ' .metrics-type-group');
@@ -1405,7 +1537,9 @@ $(document).ready(function() {
     });
 
     bindCustomMetricDefinitionEvents();
+    bindCustomMetricActionEvents();   // add this line
     applyReadonlyStateToActiveSection();
+
 }
 
 

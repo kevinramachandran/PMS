@@ -766,6 +766,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1200;
 }
 
 .modal-content {
@@ -787,6 +788,75 @@
     grid-template-columns:repeat(3,1fr);
     gap:16px;
     margin-bottom:18px;
+}
+
+.metric-actions{
+display:inline-flex;
+gap:8px;
+margin-left:10px;
+vertical-align:middle;
+}
+
+.metric-actions{
+display:inline-flex;
+align-items:center;
+gap:8px;
+margin-left:10px;
+vertical-align:middle;
+}
+
+.metric-edit-btn,
+.metric-delete-btn,
+.metric-save-inline,
+.metric-cancel-inline{
+border:none;
+background:transparent;
+cursor:pointer;
+padding:6px 8px;
+border-radius:8px;
+font-size:14px;
+line-height:1;
+transition:all .2s ease;
+}
+
+
+/* Edit */
+.metric-edit-btn:hover{
+background:#eef7ef;
+transform:scale(1.05);
+}
+
+
+/* Delete */
+.metric-delete-btn:hover{
+background:#fff1f1;
+transform:scale(1.05);
+}
+
+
+/* Save */
+.metric-save-inline:hover{
+background:#eef7ef;
+}
+
+
+/* Cancel */
+.metric-cancel-inline:hover{
+background:#f5f5f5;
+}
+
+
+.metric-inline-editor{
+display:inline-flex;
+align-items:center;
+gap:6px;
+margin-right:8px;
+}
+
+
+.metric-inline-input{
+width:140px;
+padding:4px 8px;
 }
 
 .metrics-entry-grid-actual,
@@ -2374,4 +2444,54 @@ table select {
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* --- Delete Custom Metric Modal --- */
+.delete-metric-modal-content {
+    width: 440px;
+    max-width: 440px;
+}
+
+.delete-metric-modal-content h3 {
+    margin-top: 0;
+    color: #991b1b;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.delete-modal-icon {
+    color: #dc2626;
+    font-size: 15px;
+}
+
+.delete-metric-modal-msg {
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 12px 0 4px;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.btn-sm {
+    padding: 5px 14px;
+    font-size: 12px;
+    width: auto;
+    align-self: flex-start;
 }

@@ -1509,19 +1509,12 @@
                                 <form id="licenseForm" class="dynamic-form">
 
                                     <!-- Update Button -->
-                                    <button type="button" class="btn btn-primary" onclick="openLicenseModal()">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="openLicenseModal()">
                                         <i class="fas fa-key"></i> Update License
                                     </button>
 
                                     <!-- Hidden field for backend -->
                                     <input type="hidden" id="licenseTokenInput" name="licenseToken">
-
-                                    <!-- Save Button (same as before) -->
-                                    <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary" id="saveLicenseBtn">
-                                            <i class="fas fa-save"></i> Save License
-                                        </button>
-                                    </div>
 
                                 </form>
 
@@ -1537,6 +1530,18 @@
                                     <div class="modal-actions">
                                         <button class="btn btn-primary" onclick="saveLicenseFromModal()">Save</button>
                                         <button class="btn btn-secondary" onclick="closeLicenseModal()">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Delete Custom Metric Modal -->
+                            <div id="deleteCustomMetricModal" class="custom-modal" style="display:none;">
+                                <div class="modal-content delete-metric-modal-content">
+                                    <h3><i class="fas fa-trash-alt delete-modal-icon"></i> Delete Custom Metric</h3>
+                                    <p class="delete-metric-modal-msg">Deleting this metric will permanently remove all FTD, MTD, YTD and historical values.<br><br>Do you want to proceed?</p>
+                                    <div class="modal-actions">
+                                        <button class="btn btn-danger" onclick="executeDeleteCustomMetric()">Delete</button>
+                                        <button class="btn btn-secondary" onclick="closeDeleteCustomMetricModal()">Cancel</button>
                                     </div>
                                 </div>
                             </div>
