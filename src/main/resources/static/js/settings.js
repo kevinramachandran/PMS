@@ -1122,6 +1122,62 @@ $(document).ready(function() {
                 $actualWrap.find('.metrics-entry-grid-actual').append($field);
             });
 
+            // 🔥 GROUP INTO ROWS OF 3 (GLOBAL FIX)
+            function groupIntoRows($container){
+
+                const groups = {};
+
+                $container.children('.form-group').each(function(){
+
+                    const $field = $(this);
+                    const id = $field.find('input').attr('id') || '';
+
+                    let key='';
+
+                    // dynamic custom metrics
+                    let customMatch=id.match(/customMetric(\d+)/i);
+                    if(customMatch){
+                        key='customMetric'+customMatch[1];
+                    }
+
+                    // normal metrics
+                    else{
+                        key=id
+                            .replace(/Ftd(Target|Actual)$/i,'')
+                            .replace(/Mtd(Target|Actual)$/i,'')
+                            .replace(/Ytd(Target|Actual)$/i,'');
+                    }
+
+                    if(!groups[key]){
+                        groups[key]=[];
+                    }
+
+                    groups[key].push($field);
+
+                });
+
+
+                const $newContainer=$('<div class="metrics-rows"></div>');
+
+                Object.keys(groups).forEach(function(metric){
+
+                    const $row=$('<div class="metrics-row"></div>');
+
+                    groups[metric].forEach(function($field){
+                        $row.append($field);
+                    });
+
+                    $newContainer.append($row);
+
+                });
+
+                $container.empty().append($newContainer);
+            }
+
+            // Apply for both Actual & Target
+            groupIntoRows($actualWrap.find('.metrics-entry-grid-actual'));
+            groupIntoRows($targetWrap.find('.metrics-entry-grid-target'));
+
             const $container = $('<div class="metrics-entry-groups"></div>');
             $container.append($actualWrap).append($targetWrap);
             $grid.replaceWith($container);
@@ -1289,36 +1345,124 @@ $(document).ready(function() {
     }
 
     function renderCustomMetricEditors() {
-        metricSectionOrder.forEach(function(section) {
-            ensureCustomMetricToolbar(section);
 
-            const $panel = $('#metrics-panel-' + section);
-            const $actualGrid = $panel.find('.metrics-entry-grid-actual').first();
-            const $targetGrid = $panel.find('.metrics-entry-grid-target').first();
-            if ($actualGrid.length === 0 || $targetGrid.length === 0) {
-                return;
-            }
+    metricSectionOrder.forEach(function(section){
 
-            $actualGrid.find('.metrics-custom-field').remove();
-            $targetGrid.find('.metrics-custom-field').remove();
+        ensureCustomMetricToolbar(section);
 
-            customMetricDefinitions
-                .filter(function(definition) {
-                    return normalizeMetricSection(definition.section) === section;
-                })
-                .forEach(function(definition) {
-                    $actualGrid.append(buildCustomMetricInputMarkup(definition, 'FtdActual'));
-                    $actualGrid.append(buildCustomMetricInputMarkup(definition, 'MtdActual'));
-                    $actualGrid.append(buildCustomMetricInputMarkup(definition, 'YtdActual'));
-                    $targetGrid.append(buildCustomMetricInputMarkup(definition, 'FtdTarget'));
-                    $targetGrid.append(buildCustomMetricInputMarkup(definition, 'MtdTarget'));
-                    $targetGrid.append(buildCustomMetricInputMarkup(definition, 'YtdTarget'));
-                });
+        const $panel = $('#metrics-panel-'+section);
+
+        const $actualGrid =
+            $panel.find('.metrics-entry-grid-actual').first();
+
+        const $targetGrid =
+            $panel.find('.metrics-entry-grid-target').first();
+
+        if(!$actualGrid.length || !$targetGrid.length){
+            return;
+        }
+
+        // remove old custom fields
+        $actualGrid.find('.metrics-custom-field').remove();
+        $targetGrid.find('.metrics-custom-field').remove();
+
+
+        customMetricDefinitions
+        .filter(function(definition){
+            return normalizeMetricSection(definition.section)===section;
+        })
+        .forEach(function(definition){
+
+            // ACTUAL
+            $actualGrid.append(
+              buildCustomMetricInputMarkup(definition,'FtdActual')
+            );
+            $actualGrid.append(
+              buildCustomMetricInputMarkup(definition,'MtdActual')
+            );
+            $actualGrid.append(
+              buildCustomMetricInputMarkup(definition,'YtdActual')
+            );
+
+            // TARGET
+            $targetGrid.append(
+              buildCustomMetricInputMarkup(definition,'FtdTarget')
+            );
+            $targetGrid.append(
+              buildCustomMetricInputMarkup(definition,'MtdTarget')
+            );
+            $targetGrid.append(
+              buildCustomMetricInputMarkup(definition,'YtdTarget')
+            );
+
         });
 
-        bindCustomMetricDefinitionEvents();
-        applyReadonlyStateToActiveSection();
-    }
+
+        // ===== REGROUP EVERYTHING INTO 3 COLUMNS =====
+        regroupRows($actualGrid);
+        regroupRows($targetGrid);
+
+    });
+
+    bindCustomMetricDefinitionEvents();
+    applyReadonlyStateToActiveSection();
+}
+
+
+
+function regroupRows($container){
+
+    const $fields = $container.find('.form-group').detach();
+
+    const groups={};
+
+    $fields.each(function(){
+
+        const $field=$(this);
+
+        const id=
+          $field.find('input').attr('id') || '';
+
+        let key='';
+
+        // handles customMetric5...
+        const custom=id.match(/customMetric(\d+)/i);
+
+        if(custom){
+            key='customMetric'+custom[1];
+        }
+
+        else{
+            key=id
+              .replace(/Ftd(Target|Actual)$/i,'')
+              .replace(/Mtd(Target|Actual)$/i,'')
+              .replace(/Ytd(Target|Actual)$/i,'');
+        }
+
+        if(!groups[key]){
+            groups[key]=[];
+        }
+
+        groups[key].push($field);
+
+    });
+
+
+    $container.empty();
+
+    Object.keys(groups).forEach(function(k){
+
+        const $row=$('<div class="metrics-row"></div>');
+
+        groups[k].forEach(function($field){
+            $row.append($field);
+        });
+
+        $container.append($row);
+
+    });
+
+}
 
     function resetCustomMetricManager(section) {
         const $manager = $('.metrics-custom-manager[data-section="' + section + '"]');
@@ -3426,134 +3570,169 @@ $(document).ready(function() {
         $('#kpiCrossColorMessage').removeClass('error').addClass('success').text('Colors saved! Changes will reflect on next chart load.').show();
         setTimeout(function() { $('#kpiCrossColorMessage').fadeOut(); }, 3000);
     });
+ // ==================== LICENSE CONFIG ====================
+let realLicenseValue = "";
 
-    // ==================== LICENSE CONFIG ====================
-    function loadLicenseConfig() {
-        $.ajax({
-            url: '/api/license/current',
-            type: 'GET',
-            success: function(response) {
-                if (!response || response.status !== 'success') {
-                    showMessage('licenseMessage', 'Unable to load license.', 'error');
-                    return;
-                }
-
-                const license = response.license;
-                if (!license) {
-                    $('#licenseStatusText').text('Status: NOT CONFIGURED');
-                    $('#licenseMetaText').text('No active license. Paste a license token below to activate.');
-                    return;
-                }
-
-                const managedCount = Number(license.managedUsersCount || 0);
-                const userCount    = Number(license.userCount || 0);
-                $('#licenseStatusText').text('Status: ' + (license.status || '-'));
-                $('#licenseMetaText').text(
-                    'Vendor: ' + (license.vendorName || '-') +
-                    ' | Users: ' + managedCount + '/' + userCount +
-                    ' | Valid: ' + (license.dateFrom || '-') + ' → ' + (license.dateTo || '-')
-                );
-
-                // Pre-fill token field with current saved token for easy update reference
-                if (license.licenseToken) {
-                    $('#licenseTokenInput').val(license.licenseToken);
-                    populateDecodedPanel(license);
-                    $('#licenseDecodedPanel').show();
-                }
-
-                if (license.status === 'EXPIRED') {
-                    showMessage('licenseMessage', 'License is expired. Normal users cannot sign in until renewed.', 'error');
-                } else if (license.status === 'ACTIVE') {
-                    showMessage('licenseMessage', 'License is active.', 'success');
-                }
-            },
-            error: function(xhr) {
-                const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Unable to load license configuration.';
-                showMessage('licenseMessage', msg, 'error');
+function loadLicenseConfig() {
+    $.ajax({
+        url: '/api/license/current',
+        type: 'GET',
+        success: function(response) {
+            if (!response || response.status !== 'success') {
+                showMessage('licenseMessage', 'Unable to load license.', 'error');
+                return;
             }
-        });
+
+            const license = response.license;
+
+            if (!license) {
+                $('#licenseStatusText').text('Status: NOT CONFIGURED');
+                $('#licenseMetaText').text('No active license.');
+                return;
+            }
+
+            const managedCount = Number(license.managedUsersCount || 0);
+            const userCount    = Number(license.userCount || 0);
+
+            $('#licenseStatusText').text('Status: ' + (license.status || '-'));
+            $('#licenseMetaText').text(
+                'Vendor: ' + (license.vendorName || '-') +
+                ' | Users: ' + managedCount + '/' + userCount +
+                ' | Valid: ' + (license.dateFrom || '-') + ' → ' + (license.dateTo || '-')
+            );
+
+            // ✅ Secure: store internally only
+            if (license.licenseToken) {
+                realLicenseValue = license.licenseToken;
+                $('#licenseTokenInput').val(license.licenseToken);
+            }
+
+            if (license.status === 'EXPIRED') {
+                showMessage('licenseMessage', 'License is expired. Normal users cannot sign in until renewed.', 'error');
+            } else if (license.status === 'ACTIVE') {
+                showMessage('licenseMessage', 'License is active.', 'success');
+            }
+
+        },
+        error: function(xhr) {
+            const msg = (xhr.responseJSON && xhr.responseJSON.message)
+                ? xhr.responseJSON.message
+                : 'Unable to load license configuration.';
+
+            showMessage('licenseMessage', msg, 'error');
+        }
+    });
+}
+
+
+// ==================== LICENSE MODAL (NEW) ====================
+
+// 👉 MUST BE GLOBAL (important)
+window.openLicenseModal = function () {
+    const modal = document.getElementById("licenseModal");
+    if (!modal) {
+        console.error("licenseModal not found");
+        return;
     }
 
-    function populateDecodedPanel(fields) {
-        $('#decVendorName').val(fields.vendorName || '');
-        $('#decUserCount').val(fields.userCount || '');
-        $('#decDateFrom').val(fields.dateFrom || '');
-        $('#decDateTo').val(fields.dateTo || '');
-        $('#decLicenseText').val(fields.licenseText || '');
+    modal.style.display = "flex";
+
+    const input = document.getElementById("licenseMaskedInput");
+    if (!input) return;
+
+    input.value = "";
+
+    input.oninput = function (e) {
+        realLicenseValue = e.target.value;
+        e.target.value = "*".repeat(realLicenseValue.length);
+    };
+};
+
+window.closeLicenseModal = function () {
+    const modal = document.getElementById("licenseModal");
+    if (modal) modal.style.display = "none";
+};
+
+window.saveLicenseFromModal = function () {
+    const token = realLicenseValue;
+
+    if (!token) {
+        showMessage('licenseMessage', 'License token is required.', 'error');
+        return;
     }
 
-    // Decode button — calls /api/license/decode to show embedded fields
-    $('#decodeLicenseBtn').on('click', function() {
-        const token = ($('#licenseTokenInput').val() || '').trim();
-        if (!token) {
-            showMessage('licenseMessage', 'Please paste a license token first.', 'error');
-            return;
-        }
+    // set hidden field (optional)
+    $('#licenseTokenInput').val(token);
 
-        const $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Decoding...');
+    const $btn = $('#saveLicenseBtn');
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
 
-        $.ajax({
-            url: '/api/license/decode',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ licenseToken: token }),
-            success: function(response) {
-                if (!response || response.status !== 'success') {
-                    showMessage('licenseMessage', (response && response.message) ? response.message : 'Invalid token.', 'error');
-                    $('#licenseDecodedPanel').hide();
-                    return;
-                }
-                populateDecodedPanel(response.fields || {});
-                $('#licenseDecodedPanel').show();
-                showMessage('licenseMessage', 'Token decoded successfully. Review the fields below and click Save License.', 'success');
-            },
-            error: function(xhr) {
-                const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Invalid or tampered token.';
-                showMessage('licenseMessage', msg, 'error');
-                $('#licenseDecodedPanel').hide();
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html('<i class="fas fa-unlock-alt"></i> Decode Token');
+    $.ajax({
+        url: '/api/license/save',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ licenseToken: token }),
+
+        success: function(response) {
+            if (!response || response.status !== 'success') {
+                showMessage('licenseMessage', 'License save failed.', 'error');
+                return;
             }
-        });
+
+            showMessage('licenseMessage', 'License saved successfully.', 'success');
+
+            loadLicenseConfig(); // refresh UI
+        },
+
+        error: function() {
+            showMessage('licenseMessage', 'Error saving license.', 'error');
+        },
+
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Save License');
+        }
     });
 
-    // Save button — sends token to /api/license/save
-    $('#licenseForm').on('submit', function(e) {
-        e.preventDefault();
+    closeLicenseModal();
+};
 
-        const token = ($('#licenseTokenInput').val() || '').trim();
-        if (!token) {
-            showMessage('licenseMessage', 'License token is required.', 'error');
-            return;
-        }
 
-        const $btn = $('#saveLicenseBtn');
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+// ==================== SAVE LICENSE ====================
 
-        $.ajax({
-            url: '/api/license/save',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ licenseToken: token }),
-            success: function(response) {
-                if (!response || response.status !== 'success') {
-                    showMessage('licenseMessage', (response && response.message) ? response.message : 'License save failed.', 'error');
-                    return;
-                }
-                showMessage('licenseMessage', 'License saved and activated successfully.', 'success');
-                loadLicenseConfig();
-            },
-            error: function(xhr) {
-                const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error saving license.';
-                showMessage('licenseMessage', msg, 'error');
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Save License');
+$('#licenseForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const token = ($('#licenseTokenInput').val() || '').trim();
+    if (!token) {
+        showMessage('licenseMessage', 'License token is required.', 'error');
+        return;
+    }
+
+    const $btn = $('#saveLicenseBtn');
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: '/api/license/save',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ licenseToken: token }),
+        success: function(response) {
+            if (!response || response.status !== 'success') {
+                showMessage('licenseMessage', (response && response.message) ? response.message : 'License save failed.', 'error');
+                return;
             }
-        });
+            showMessage('licenseMessage', 'License saved and activated successfully.', 'success');
+            loadLicenseConfig();
+        },
+        error: function(xhr) {
+            const msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error saving license.';
+            showMessage('licenseMessage', msg, 'error');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fas fa-save"></i> Save License');
+        }
     });
+});
 
     function loadKpiFooterButtonsConfig() {
         $.ajax({

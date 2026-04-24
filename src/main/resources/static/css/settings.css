@@ -756,6 +756,44 @@
     min-width: 190px;
 }
 
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 400px;
+}
+
+.modal-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.metrics-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.metrics-entry-grid-actual,
+.metrics-entry-grid-target {
+    display: block; /* override old grid */
+}
+
 #issueBoardConfigTable thead th:nth-child(8),
 #issueBoardConfigTable tbody td:nth-child(8),
 #issueBoardConfigTable thead th:nth-child(12),

@@ -1499,62 +1499,46 @@
 
                             <div id="form-license" class="form-section">
                                 <h2>License Management</h2>
-                                <p class="form-subtitle">Paste an encrypted license token to activate it. Generate tokens via the dedicated API endpoint.</p>
 
-                                <!-- Current license info card -->
+                                <!-- Current license info -->
                                 <div class="metrics-meta-card" style="margin-bottom:16px;">
                                     <div id="licenseStatusText" class="metrics-selected-date">Status: -</div>
                                     <div id="licenseMetaText" class="metrics-dashboard-note">No license loaded.</div>
                                 </div>
 
-                                <!-- Token input & decode -->
                                 <form id="licenseForm" class="dynamic-form">
-                                    <div class="form-group">
-                                        <label for="licenseTokenInput">License Token <span class="field-required">*</span></label>
-                                        <textarea id="licenseTokenInput" name="licenseToken" rows="3"
-                                                  placeholder="Paste your encrypted license token here and click Decodeâ€¦" required></textarea>
-                                    </div>
 
-                                    <div class="form-actions" style="margin-bottom:16px;">
-                                        <button type="button" class="btn btn-secondary" id="decodeLicenseBtn">
-                                            <i class="fas fa-unlock-alt"></i> Decode Token
+                                    <!-- Update Button -->
+                                    <button type="button" class="btn btn-primary" onclick="openLicenseModal()">
+                                        <i class="fas fa-key"></i> Update License
+                                    </button>
+
+                                    <!-- Hidden field for backend -->
+                                    <input type="hidden" id="licenseTokenInput" name="licenseToken">
+
+                                    <!-- Save Button (same as before) -->
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" id="saveLicenseBtn">
+                                            <i class="fas fa-save"></i> Save License
                                         </button>
                                     </div>
 
-                                    <!-- Decoded fields â€” shown after decode -->
-                                    <div id="licenseDecodedPanel" style="display:none;">
-                                        <div class="form-grid">
-                                            <div class="form-group">
-                                                <label>Vendor Name</label>
-                                                <input type="text" id="decVendorName" readonly class="readonly-field">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>No. of Users</label>
-                                                <input type="text" id="decUserCount" readonly class="readonly-field">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Date From</label>
-                                                <input type="text" id="decDateFrom" readonly class="readonly-field">
-                                            </div>
-                                            <div class="form-group">
-                                                <label>Date To</label>
-                                                <input type="text" id="decDateTo" readonly class="readonly-field">
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>License Text</label>
-                                            <textarea id="decLicenseText" rows="2" readonly class="readonly-field"></textarea>
-                                        </div>
-
-                                        <div class="form-actions">
-                                            <button type="submit" class="btn btn-primary" id="saveLicenseBtn">
-                                                <i class="fas fa-save"></i> Save License
-                                            </button>
-                                        </div>
-                                    </div>
                                 </form>
 
                                 <div id="licenseMessage" class="form-message"></div>
+                            </div>
+                            <!-- License Modal -->
+                            <div id="licenseModal" class="custom-modal" style="display:none;">
+                                <div class="modal-content">
+                                    <h3>Enter License</h3>
+
+                                    <textarea id="licenseMaskedInput" rows="5" placeholder="Paste license here..."></textarea>
+
+                                    <div class="modal-actions">
+                                        <button class="btn btn-primary" onclick="saveLicenseFromModal()">Save</button>
+                                        <button class="btn btn-secondary" onclick="closeLicenseModal()">Cancel</button>
+                                    </div>
+                                </div>
                             </div>
 
                         </div>

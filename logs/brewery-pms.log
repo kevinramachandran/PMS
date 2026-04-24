@@ -37,3 +37,297 @@
 2026-04-24T08:25:28.731+05:30  INFO 7600 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
 2026-04-24T08:25:28.731+05:30  INFO 7600 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 2026-04-24T08:25:28.732+05:30  INFO 7600 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T08:27:03.895+05:30  INFO 7600 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T08:27:03.897+05:30  INFO 7600 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T08:27:03.902+05:30  INFO 7600 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2026-04-24T08:35:11.560+05:30  INFO 9052 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 9052 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T08:35:11.564+05:30  INFO 9052 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T08:35:12.987+05:30  INFO 9052 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T08:35:13.209+05:30  INFO 9052 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 209 ms. Found 19 JPA repository interfaces.
+2026-04-24T08:35:14.505+05:30  INFO 9052 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T08:35:14.521+05:30  INFO 9052 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T08:35:14.523+05:30  INFO 9052 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T08:35:14.630+05:30  INFO 9052 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T08:35:14.630+05:30  INFO 9052 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2982 ms
+2026-04-24T08:35:15.183+05:30  INFO 9052 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T08:35:15.291+05:30  INFO 9052 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T08:35:15.363+05:30  INFO 9052 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T08:35:15.804+05:30  INFO 9052 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T08:35:15.884+05:30  INFO 9052 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T08:35:16.323+05:30  INFO 9052 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@21e702b8
+2026-04-24T08:35:16.331+05:30  INFO 9052 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T08:35:16.419+05:30  WARN 9052 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T08:35:18.454+05:30  INFO 9052 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T08:35:18.619+05:30  INFO 9052 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T08:35:19.621+05:30  INFO 9052 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T08:35:23.299+05:30  INFO 9052 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T08:35:23.447+05:30  INFO 9052 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T08:35:23.468+05:30  INFO 9052 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 12.567 seconds (process running for 13.084)
+2026-04-24T08:35:23.553+05:30  INFO 9052 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T08:35:23.554+05:30  INFO 9052 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T08:35:23.554+05:30  INFO 9052 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T08:38:47.324+05:30  INFO 9052 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T08:38:47.325+05:30  INFO 9052 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T08:38:47.326+05:30  INFO 9052 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-04-24T08:49:38.528+05:30  INFO 17636 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 17636 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T08:49:38.531+05:30  INFO 17636 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T08:49:39.853+05:30  INFO 17636 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T08:49:39.977+05:30  INFO 17636 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 115 ms. Found 19 JPA repository interfaces.
+2026-04-24T08:49:41.361+05:30  INFO 17636 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T08:49:41.376+05:30  INFO 17636 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T08:49:41.376+05:30  INFO 17636 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T08:49:41.487+05:30  INFO 17636 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T08:49:41.487+05:30  INFO 17636 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2892 ms
+2026-04-24T08:49:42.139+05:30  INFO 17636 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T08:49:42.247+05:30  INFO 17636 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T08:49:42.317+05:30  INFO 17636 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T08:49:42.779+05:30  INFO 17636 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T08:49:42.829+05:30  INFO 17636 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T08:49:43.062+05:30  INFO 17636 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@11c999da
+2026-04-24T08:49:43.065+05:30  INFO 17636 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T08:49:43.139+05:30  WARN 17636 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T08:49:45.123+05:30  INFO 17636 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T08:49:45.277+05:30  INFO 17636 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T08:49:46.460+05:30  INFO 17636 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T08:49:49.821+05:30  INFO 17636 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T08:49:49.957+05:30  INFO 17636 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T08:49:49.975+05:30  INFO 17636 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 11.971 seconds (process running for 12.486)
+2026-04-24T08:49:50.070+05:30  INFO 17636 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T08:49:50.070+05:30  INFO 17636 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T08:49:50.071+05:30  INFO 17636 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T08:50:13.131+05:30  INFO 17636 --- [brewery-pms] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T08:50:13.132+05:30  INFO 17636 --- [brewery-pms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T08:50:13.138+05:30  INFO 17636 --- [brewery-pms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2026-04-24T08:52:44.256+05:30  INFO 19072 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 19072 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T08:52:44.259+05:30  INFO 19072 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T08:52:45.917+05:30  INFO 19072 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T08:52:46.135+05:30  INFO 19072 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 219 ms. Found 19 JPA repository interfaces.
+2026-04-24T08:52:47.501+05:30  INFO 19072 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T08:52:47.523+05:30  INFO 19072 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T08:52:47.524+05:30  INFO 19072 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T08:52:47.621+05:30  INFO 19072 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T08:52:47.622+05:30  INFO 19072 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3253 ms
+2026-04-24T08:52:48.158+05:30  INFO 19072 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T08:52:48.233+05:30  INFO 19072 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T08:52:48.306+05:30  INFO 19072 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T08:52:48.720+05:30  INFO 19072 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T08:52:48.767+05:30  INFO 19072 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T08:52:48.982+05:30  INFO 19072 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@11c999da
+2026-04-24T08:52:48.982+05:30  INFO 19072 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T08:52:49.052+05:30  WARN 19072 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T08:52:51.434+05:30  INFO 19072 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T08:52:51.600+05:30  INFO 19072 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T08:52:53.356+05:30  INFO 19072 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T08:52:57.648+05:30  INFO 19072 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T08:52:57.828+05:30  INFO 19072 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T08:52:57.857+05:30  INFO 19072 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 14.166 seconds (process running for 14.762)
+2026-04-24T08:52:57.961+05:30  INFO 19072 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T08:52:57.961+05:30  INFO 19072 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T08:52:57.964+05:30  INFO 19072 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-04-24T08:52:57.986+05:30  INFO 19072 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T08:52:57.986+05:30  INFO 19072 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T08:52:57.986+05:30  INFO 19072 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T09:06:28.195+05:30  INFO 5140 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 5140 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T09:06:28.198+05:30  INFO 5140 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T09:06:29.575+05:30  INFO 5140 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T09:06:29.702+05:30  INFO 5140 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 117 ms. Found 19 JPA repository interfaces.
+2026-04-24T09:06:30.823+05:30  INFO 5140 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T09:06:30.831+05:30  INFO 5140 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T09:06:30.831+05:30  INFO 5140 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T09:06:30.958+05:30  INFO 5140 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T09:06:30.958+05:30  INFO 5140 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2698 ms
+2026-04-24T09:06:31.463+05:30  INFO 5140 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T09:06:31.563+05:30  INFO 5140 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T09:06:31.629+05:30  INFO 5140 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T09:06:31.998+05:30  INFO 5140 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T09:06:32.028+05:30  INFO 5140 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T09:06:32.347+05:30  INFO 5140 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4ac7856f
+2026-04-24T09:06:32.352+05:30  INFO 5140 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T09:06:32.425+05:30  WARN 5140 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T09:06:34.747+05:30  INFO 5140 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T09:06:34.967+05:30  INFO 5140 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T09:06:36.097+05:30  INFO 5140 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T09:06:40.098+05:30  INFO 5140 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T09:06:40.248+05:30  INFO 5140 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T09:06:40.266+05:30  INFO 5140 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 12.583 seconds (process running for 13.339)
+2026-04-24T09:06:40.354+05:30  INFO 5140 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T09:06:40.354+05:30  INFO 5140 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T09:06:40.355+05:30  INFO 5140 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T09:07:11.339+05:30  INFO 5140 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T09:07:11.339+05:30  INFO 5140 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T09:07:11.341+05:30  INFO 5140 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-04-24T09:11:42.737+05:30  INFO 1780 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 1780 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T09:11:42.740+05:30  INFO 1780 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T09:11:44.251+05:30  INFO 1780 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T09:11:44.377+05:30  INFO 1780 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 118 ms. Found 19 JPA repository interfaces.
+2026-04-24T09:11:45.571+05:30  INFO 1780 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T09:11:45.573+05:30  INFO 1780 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T09:11:45.573+05:30  INFO 1780 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T09:11:45.680+05:30  INFO 1780 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T09:11:45.680+05:30  INFO 1780 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2829 ms
+2026-04-24T09:11:46.222+05:30  INFO 1780 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T09:11:46.301+05:30  INFO 1780 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T09:11:46.362+05:30  INFO 1780 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T09:11:46.733+05:30  INFO 1780 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T09:11:46.773+05:30  INFO 1780 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T09:11:47.003+05:30  INFO 1780 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@11c999da
+2026-04-24T09:11:47.011+05:30  INFO 1780 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T09:11:47.074+05:30  WARN 1780 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T09:11:49.050+05:30  INFO 1780 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T09:11:49.197+05:30  INFO 1780 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T09:11:50.420+05:30  INFO 1780 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T09:11:55.657+05:30  INFO 1780 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T09:11:55.799+05:30  INFO 1780 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T09:11:55.828+05:30  INFO 1780 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 13.68 seconds (process running for 14.328)
+2026-04-24T09:11:55.940+05:30  INFO 1780 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T09:11:55.940+05:30  INFO 1780 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T09:11:55.941+05:30  INFO 1780 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T09:12:12.892+05:30  INFO 1780 --- [brewery-pms] [http-nio-8080-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T09:12:12.892+05:30  INFO 1780 --- [brewery-pms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T09:12:12.897+05:30  INFO 1780 --- [brewery-pms] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2026-04-24T09:20:45.506+05:30  INFO 1108 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 1108 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T09:20:45.506+05:30  INFO 1108 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T09:20:46.895+05:30  INFO 1108 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T09:20:47.035+05:30  INFO 1108 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 129 ms. Found 19 JPA repository interfaces.
+2026-04-24T09:20:48.255+05:30  INFO 1108 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T09:20:48.269+05:30  INFO 1108 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T09:20:48.270+05:30  INFO 1108 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T09:20:48.392+05:30  INFO 1108 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T09:20:48.392+05:30  INFO 1108 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2803 ms
+2026-04-24T09:20:49.049+05:30  INFO 1108 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T09:20:49.165+05:30  INFO 1108 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T09:20:49.218+05:30  INFO 1108 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T09:20:49.595+05:30  INFO 1108 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T09:20:49.636+05:30  INFO 1108 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T09:20:49.867+05:30  INFO 1108 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@77d959f1
+2026-04-24T09:20:49.869+05:30  INFO 1108 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T09:20:49.931+05:30  WARN 1108 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T09:20:51.772+05:30  INFO 1108 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T09:20:51.918+05:30  INFO 1108 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T09:20:53.010+05:30  INFO 1108 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T09:20:56.998+05:30  INFO 1108 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T09:20:57.128+05:30  INFO 1108 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T09:20:57.147+05:30  INFO 1108 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 12.173 seconds (process running for 13.117)
+2026-04-24T09:20:57.233+05:30  INFO 1108 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T09:20:57.234+05:30  INFO 1108 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T09:20:57.235+05:30  INFO 1108 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T09:21:26.294+05:30  INFO 1108 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T09:21:26.295+05:30  INFO 1108 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T09:21:26.296+05:30  INFO 1108 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-04-24T09:22:22.547+05:30  INFO 1108 --- [brewery-pms] [http-nio-8080-exec-5] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 2685 ms
+2026-04-24T09:30:58.888+05:30  INFO 2540 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 2540 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T09:30:58.890+05:30  INFO 2540 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T09:31:00.472+05:30  INFO 2540 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T09:31:00.599+05:30  INFO 2540 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 127 ms. Found 19 JPA repository interfaces.
+2026-04-24T09:31:01.836+05:30  INFO 2540 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T09:31:01.854+05:30  INFO 2540 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T09:31:01.854+05:30  INFO 2540 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T09:31:02.038+05:30  INFO 2540 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T09:31:02.044+05:30  INFO 2540 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3095 ms
+2026-04-24T09:31:02.639+05:30  INFO 2540 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T09:31:02.723+05:30  INFO 2540 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T09:31:02.785+05:30  INFO 2540 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T09:31:03.136+05:30  INFO 2540 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T09:31:03.174+05:30  INFO 2540 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T09:31:03.415+05:30  INFO 2540 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4a2d66e
+2026-04-24T09:31:03.423+05:30  INFO 2540 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T09:31:03.490+05:30  WARN 2540 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T09:31:05.552+05:30  INFO 2540 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T09:31:05.703+05:30  INFO 2540 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T09:31:06.904+05:30  INFO 2540 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T09:31:11.387+05:30  INFO 2540 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T09:31:11.531+05:30  INFO 2540 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T09:31:11.539+05:30  INFO 2540 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 13.287 seconds (process running for 13.754)
+2026-04-24T09:31:11.633+05:30  INFO 2540 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T09:31:11.634+05:30  INFO 2540 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T09:31:11.635+05:30  INFO 2540 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T09:34:15.697+05:30  INFO 2540 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T09:34:15.698+05:30  INFO 2540 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T09:34:15.701+05:30  INFO 2540 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-04-24T10:20:11.589+05:30  INFO 4488 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 4488 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T10:20:11.592+05:30  INFO 4488 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T10:20:15.004+05:30  INFO 4488 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T10:20:15.369+05:30  INFO 4488 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 333 ms. Found 19 JPA repository interfaces.
+2026-04-24T10:20:18.565+05:30  INFO 4488 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T10:20:18.597+05:30  INFO 4488 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T10:20:18.606+05:30  INFO 4488 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T10:20:19.062+05:30  INFO 4488 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T10:20:19.065+05:30  INFO 4488 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 7355 ms
+2026-04-24T10:20:20.376+05:30  INFO 4488 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T10:20:20.645+05:30  INFO 4488 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T10:20:20.793+05:30  INFO 4488 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T10:20:22.103+05:30  INFO 4488 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T10:20:22.480+05:30  INFO 4488 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T10:20:23.392+05:30  INFO 4488 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4c79ca55
+2026-04-24T10:20:23.394+05:30  INFO 4488 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T10:20:23.610+05:30  WARN 4488 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T10:20:28.914+05:30  INFO 4488 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T10:20:29.461+05:30  INFO 4488 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T10:20:32.577+05:30  INFO 4488 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T10:20:42.741+05:30  INFO 4488 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T10:20:43.155+05:30  INFO 4488 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T10:20:43.200+05:30  INFO 4488 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 32.416 seconds (process running for 33.829)
+2026-04-24T10:20:43.508+05:30  INFO 4488 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T10:20:43.510+05:30  INFO 4488 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T10:20:43.510+05:30  INFO 4488 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T10:20:45.613+05:30  INFO 4488 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T10:20:45.616+05:30  INFO 4488 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T10:20:45.622+05:30  INFO 4488 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2026-04-24T10:33:45.782+05:30  INFO 3892 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 3892 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T10:33:45.786+05:30  INFO 3892 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T10:33:47.677+05:30  INFO 3892 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T10:33:48.004+05:30  INFO 3892 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 300 ms. Found 19 JPA repository interfaces.
+2026-04-24T10:33:50.491+05:30  INFO 3892 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T10:33:50.536+05:30  INFO 3892 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T10:33:50.536+05:30  INFO 3892 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T10:33:50.785+05:30  INFO 3892 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T10:33:50.788+05:30  INFO 3892 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4913 ms
+2026-04-24T10:33:52.229+05:30  INFO 3892 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T10:33:52.453+05:30  INFO 3892 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T10:33:52.574+05:30  INFO 3892 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T10:33:53.404+05:30  INFO 3892 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T10:33:53.498+05:30  INFO 3892 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T10:33:53.977+05:30  INFO 3892 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2904bc56
+2026-04-24T10:33:53.982+05:30  INFO 3892 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T10:33:54.139+05:30  WARN 3892 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T10:33:58.660+05:30  INFO 3892 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T10:33:58.904+05:30  INFO 3892 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T10:34:01.105+05:30  INFO 3892 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T10:34:10.912+05:30  INFO 3892 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T10:34:11.291+05:30  INFO 3892 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T10:34:11.355+05:30  INFO 3892 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 26.2 seconds (process running for 26.77)
+2026-04-24T10:34:11.776+05:30  INFO 3892 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T10:34:11.778+05:30  INFO 3892 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T10:34:11.779+05:30  INFO 3892 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T10:34:16.399+05:30  INFO 3892 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T10:34:16.401+05:30  INFO 3892 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T10:34:16.406+05:30  INFO 3892 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2026-04-24T10:43:01.966+05:30  INFO 15112 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Starting BreweryPmsApplication using Java 21.0.10 with PID 15112 (C:\Users\DELL\AppData\Local\Brewery-PMS-BE\gradle-build\classes\java\main started by DELL in C:\Users\DELL\OneDrive\Desktop\java\springBoot\Brewery-PMS-BE)
+2026-04-24T10:43:01.969+05:30  INFO 15112 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-04-24T10:43:03.557+05:30  INFO 15112 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-24T10:43:03.919+05:30  INFO 15112 --- [brewery-pms] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 331 ms. Found 19 JPA repository interfaces.
+2026-04-24T10:43:06.603+05:30  INFO 15112 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-04-24T10:43:06.642+05:30  INFO 15112 --- [brewery-pms] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-04-24T10:43:06.644+05:30  INFO 15112 --- [brewery-pms] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-04-24T10:43:06.987+05:30  INFO 15112 --- [brewery-pms] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-04-24T10:43:06.990+05:30  INFO 15112 --- [brewery-pms] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4951 ms
+2026-04-24T10:43:08.217+05:30  INFO 15112 --- [brewery-pms] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-24T10:43:08.415+05:30  INFO 15112 --- [brewery-pms] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-04-24T10:43:08.547+05:30  INFO 15112 --- [brewery-pms] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-04-24T10:43:09.370+05:30  INFO 15112 --- [brewery-pms] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-24T10:43:09.460+05:30  INFO 15112 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-04-24T10:43:10.067+05:30  INFO 15112 --- [brewery-pms] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@126af200
+2026-04-24T10:43:10.072+05:30  INFO 15112 --- [brewery-pms] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-04-24T10:43:10.297+05:30  WARN 15112 --- [brewery-pms] [main] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-24T10:43:15.077+05:30  INFO 15112 --- [brewery-pms] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-24T10:43:15.341+05:30  INFO 15112 --- [brewery-pms] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-24T10:43:17.573+05:30  INFO 15112 --- [brewery-pms] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-04-24T10:43:25.328+05:30  INFO 15112 --- [brewery-pms] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2026-04-24T10:43:25.618+05:30  INFO 15112 --- [brewery-pms] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path ''
+2026-04-24T10:43:25.666+05:30  INFO 15112 --- [brewery-pms] [main] org.example.BreweryPmsApplication        : Started BreweryPmsApplication in 24.476 seconds (process running for 25.096)
+2026-04-24T10:43:25.833+05:30  INFO 15112 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Active profile(s): default
+2026-04-24T10:43:25.833+05:30  INFO 15112 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Configured datasource URL: jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+2026-04-24T10:43:25.847+05:30  INFO 15112 --- [brewery-pms] [main] o.e.config.DatabaseStartupDiagnostics    : Database connectivity check passed.
+2026-04-24T10:44:07.147+05:30  INFO 15112 --- [brewery-pms] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-24T10:44:07.151+05:30  INFO 15112 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-04-24T10:44:07.151+05:30  INFO 15112 --- [brewery-pms] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
