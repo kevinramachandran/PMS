@@ -167,6 +167,11 @@ public class WebController {
         return settingsView(model, "lsr-tracking", "", "LSR Tracking Config");
     }
 
+    @GetMapping("/client-selection")
+    public String clientSelection() {
+        return "client-selection";
+    }
+
     @GetMapping("/add-metrics")
     public String addMetrics() {
         return "add-metrics";

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Selection - Carlsberg Brewery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/ui-shell.css">
+</head>
+<body class="modern-shell">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo">
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/kpi-dashboard" class="nav-item" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+            <a href="/issue-board" class="nav-item" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
+            <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+            <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-route"></i><span>Safety Gemba - Tracker</span></a>
+            <a href="/training-schedule" class="nav-item" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
+            <a href="/meeting-agenda" class="nav-item" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
+            <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
+            <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
+            <a href="/client-selection" class="nav-item active" data-tooltip="Client Selection"><i class="fas fa-external-link-alt"></i><span>Client Selection</span></a>
+            <div class="nav-parent" th:if="${session.canViewSettings}">
+                <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                <div class="nav-children">
+                    <a href="/pms/top-priorities" class="nav-item nav-child" data-tooltip="Top 3 Priorities"><i class="fas fa-list-ol"></i><span>Top 3 Priorities</span></a>
+                    <a href="/pms/weekly-priorities" class="nav-item nav-child" data-tooltip="Top 3 Weekly Priorities"><i class="fas fa-calendar-week"></i><span>Top 3 Weekly Priorities</span></a>
+                    <a href="/pms/daily-performance" class="nav-item nav-child" data-tooltip="Daily Performance"><i class="fas fa-gauge-high"></i><span>Daily Performance</span></a>
+                    <a href="/pms/people-daily" class="nav-item nav-child" data-tooltip="People - Daily"><i class="fas fa-people-group"></i><span>People - Daily</span></a>
+                    <a href="/pms/quality-daily" class="nav-item nav-child" data-tooltip="Quality - Daily"><i class="fas fa-circle-check"></i><span>Quality - Daily</span></a>
+                    <a href="/pms/service-daily" class="nav-item nav-child" data-tooltip="Service - Daily"><i class="fas fa-handshake-angle"></i><span>Service - Daily</span></a>
+                    <a href="/pms/cost-daily" class="nav-item nav-child" data-tooltip="Cost - Daily"><i class="fas fa-coins"></i><span>Cost - Daily</span></a>
+                </div>
+            </div>
+            <a href="/settings?config=metrics-data" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Production Metrics Data"><i class="fas fa-chart-area"></i><span>Production Metrics Data</span></a>
+            <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
+            <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-sliders"></i><span>Gemba Walk Schedule</span></a>
+            <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-sliders"></i><span>Safety Gemba - Tracker</span></a>
+            <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule"><i class="fas fa-sliders"></i><span>Training Schedule</span></a>
+            <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
+            <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation"><i class="fas fa-sliders"></i><span>PMS Process Confirmation</span></a>
+            <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker"><i class="fas fa-sliders"></i><span>Abnormality Tracker</span></a>
+            <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&amp;S Cross Daily"><i class="fas fa-sliders"></i><span>H&amp;S Cross Daily</span></a>
+            <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking"><i class="fas fa-sliders"></i><span>LSR Tracking</span></a>
+            <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-sliders"></i><span>KPI Footer Buttons</span></a>
+            <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
+            <a href="/pms-configuration" class="nav-item" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+            <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
+            <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email"><i class="fas fa-envelope"></i><span>Email</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-left">
+                <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+                <h1>Client Selection</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info-header">
+                    <i class="fa-solid profile-role-icon" th:classappend="${session.role == 'ADMIN'} ? ' fa-user-shield' : ' fa-user'"></i>
+                    <div class="profile-meta">
+                        <div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div>
+                        <div class="profile-subline">
+                            <span class="header-role-badge" th:text="${session.roleLabel != null ? session.roleLabel : session.role}">ROLE</span>
+                            <span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="/logout" class="logout-btn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:32px;text-align:center;">
+                <div>
+                    <h2 style="color:var(--primary-green);margin:0 0 8px;font-size:1.6em;font-weight:700;">Select Client Portal</h2>
+                    <p style="color:#6b7280;font-size:0.95em;margin:0;">Choose a client portal to open</p>
+                </div>
+                <div class="kpi-footer-buttons" id="clientButtonsContainer" style="gap:20px;">
+                    <a id="kpiFooterBtn1" href="#" target="_blank" class="kpi-footer-btn" style="padding:16px 40px;font-size:15px;display:none;"></a>
+                    <a id="kpiFooterBtn2" href="#" target="_blank" class="kpi-footer-btn" style="padding:16px 40px;font-size:15px;display:none;"></a>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-brand">
+                <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
+            </div>
+            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
+        </footer>
+    </main>
+</div>
+
+<script>
+    (function () {
+        /* Exact same logic as applyKpiFooterButtons in dashboard.js */
+        function applyKpiFooterButtons(config) {
+            var btn1 = document.getElementById('kpiFooterBtn1');
+            var btn2 = document.getElementById('kpiFooterBtn2');
+
+            if (!btn1 || !btn2 || !config) return;
+
+            var btn1Label = (config.kpiButton1Label || config.button1Label || btn1.textContent || 'Solvex').trim();
+            var btn1Type  = (config.kpiButton1Type  || config.button1Type  || 'link').trim();
+            var btn1Url   = btn1Type === 'file'
+                ? '/api/dashboard-config/kpi-footer-buttons/file/1'
+                : (config.kpiButton1Url || config.button1Url || '').trim();
+
+            var btn2Label = (config.kpiButton2Label || config.button2Label || btn2.textContent || 'Carlsbridge').trim();
+            var btn2Type  = (config.kpiButton2Type  || config.button2Type  || 'link').trim();
+            var btn2Url   = btn2Type === 'file'
+                ? '/api/dashboard-config/kpi-footer-buttons/file/2'
+                : (config.kpiButton2Url || config.button2Url || '').trim();
+
+            if (btn1Label && btn1Url) {
+                btn1.textContent = btn1Label;
+                btn1.href = btn1Url;
+                btn1.target = '_blank';
+                btn1.style.display = 'inline-flex';
+            } else {
+                btn1.style.display = 'none';
+            }
+
+            if (btn2Label && btn2Url) {
+                btn2.textContent = btn2Label;
+                btn2.href = btn2Url;
+                btn2.target = '_blank';
+                btn2.style.display = 'inline-flex';
+            } else {
+                btn2.style.display = 'none';
+            }
+        }
+
+        fetch('/api/dashboard-config/kpi')
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .then(function (config) { applyKpiFooterButtons(config); })
+            .catch(function () { applyKpiFooterButtons({}); });
+    })();
+</script>
+<img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
+<script src="/js/ui-shell.js"></script>
+</body>
+</html>
