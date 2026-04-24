@@ -47,20 +47,20 @@
                 </div>
             </div>
             <a href="/settings?config=metrics-data" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Production Metrics Data"><i class="fas fa-chart-area"></i><span>Production Metrics Data</span></a>
-            <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board Configuration"><i class="fas fa-sliders"></i><span>Issue Board Configuration</span></a>
+            <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-sliders"></i><span>Gemba Walk Schedule</span></a>
-            <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker Config"><i class="fas fa-sliders"></i><span>Safety Gemba - Tracker Config</span></a>
-            <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule Config"><i class="fas fa-sliders"></i><span>Training Schedule Config</span></a>
-            <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda Config"><i class="fas fa-sliders"></i><span>PMS Agenda Config</span></a>
-            <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation Config"><i class="fas fa-sliders"></i><span>PMS Process Confirmation Config</span></a>
+            <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-sliders"></i><span>Safety Gemba - Tracker</span></a>
+            <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule"><i class="fas fa-sliders"></i><span>Training Schedule</span></a>
+            <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
+            <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation"><i class="fas fa-sliders"></i><span>PMS Process Confirmation</span></a>
             <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker"><i class="fas fa-sliders"></i><span>Abnormality Tracker</span></a>
-            <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&S Cross Daily Config"><i class="fas fa-sliders"></i><span>H&S Cross Daily Config</span></a>
-            <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking Config"><i class="fas fa-sliders"></i><span>LSR Tracking Config</span></a>
+            <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&S Cross Daily"><i class="fas fa-sliders"></i><span>H&S Cross Daily</span></a>
+            <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking"><i class="fas fa-sliders"></i><span>LSR Tracking</span></a>
             <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-sliders"></i><span>KPI Footer Buttons</span></a>
             <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
             <a href="/pms-configuration" class="nav-item" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
             <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
-            <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Configuration"><i class="fas fa-envelope"></i><span>Email Configuration</span></a>
+            <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email"><i class="fas fa-envelope"></i><span>Email</span></a>
         </nav>
         <div class="sidebar-footer">
             <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -97,9 +97,6 @@
                     <div class="ts-meta-card"><strong>Responsible:</strong> <span id="tsResponsible">HR Mgr.</span></div>
                     <div class="ts-meta-card"><strong>Month:</strong> <span id="tsMonth">-</span></div>
                 </div>
-
-                <div class="ts-title-row">Training Plan for the Month</div>
-
                 <div class="ts-table-wrap">
                     <table class="ts-table" id="trainingScheduleTable">
                         <thead>
@@ -118,7 +115,7 @@
                         </thead>
                         <tbody id="trainingScheduleBody">
                         <tr>
-                            <td colspan="10" class="ts-empty">No training schedule configured. Open Training Schedule Config.</td>
+                            <td colspan="10" class="ts-empty">No training schedule configured. Open Training Schedule.</td>
                         </tr>
                         </tbody>
                     </table>

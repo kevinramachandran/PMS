@@ -202,6 +202,33 @@ public class ProductionMetricsService {
         return toCustomMetricDefinitionPayload(customDefinitionRepository.save(definition));
     }
 
+    @Transactional
+    public CustomMetricDefinitionPayload updateCustomMetricDefinition(Long id, CustomMetricDefinitionPayload payload) {
+        ProductionMetricCustomDefinition definition = customDefinitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Custom metric definition not found: " + id));
+        if (!Boolean.TRUE.equals(definition.getActive())) {
+            throw new IllegalArgumentException("Custom metric definition not found: " + id);
+        }
+        if (payload.getLabel() != null) {
+            definition.setLabel(normalizeLabel(payload.getLabel()));
+        }
+        if (payload.getUnit() != null) {
+            definition.setUnit(normalizeUnit(payload.getUnit()));
+        }
+        if (payload.getDecimals() != null) {
+            definition.setDecimals(normalizeDecimals(payload.getDecimals()));
+        }
+        return toCustomMetricDefinitionPayload(customDefinitionRepository.save(definition));
+    }
+
+    @Transactional
+    public void deleteCustomMetricDefinition(Long id) {
+        ProductionMetricCustomDefinition definition = customDefinitionRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Custom metric definition not found: " + id));
+        definition.setActive(Boolean.FALSE);
+        customDefinitionRepository.save(definition);
+    }
+
     public Optional<MetricsEntryPayload> getMetricsEntry(LocalDate date) {
         validateActualEntryDate(date);
         return findNormalizedRecordByActualDate(date).map(this::toMetricsEntryPayload);
