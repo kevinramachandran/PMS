@@ -3684,12 +3684,43 @@ function regroupRows($container){
         'costRgbChart'
     ];
 
+    function buildCrossColorCardHtml(chartId, headerLabel, savedColor) {
+        function radio(hex, label) {
+            const checked = savedColor === hex ? ' checked' : '';
+            return '<label class="type-toggle-option"><input type="radio" name="kpiCross_' + chartId + '" value="' + hex + '"' + checked + '>'
+                + '<span class="type-toggle-label" style="color:' + hex + '"><i class="fas fa-circle"></i> ' + label + '</span></label>';
+        }
+        return '<div class="footer-btn-card">'
+            + '<div class="footer-btn-card-header"><i class="fas fa-chart-bar"></i> ' + escapeHtml(headerLabel) + '</div>'
+            + '<div class="form-group"><label>Alert Color</label>'
+            + '<div class="type-toggle-group">'
+            + radio('#DC2626', 'Red') + radio('#D97706', 'Yellow') + radio('#16A34A', 'Green')
+            + '</div></div></div>';
+    }
+
     function loadKpiCrossColorConfig() {
         KPI_CROSS_CHARTS.forEach(function(chartId) {
             const saved = localStorage.getItem('kpiCrossAlertColor_' + chartId) || '#DC2626';
             $('input[name="kpiCross_' + chartId + '"]').each(function() {
                 $(this).prop('checked', $(this).val() === saved);
             });
+        });
+
+        $.ajax({
+            url: '/api/metrics/custom-definitions',
+            type: 'GET',
+            success: function(data) {
+                const defs = Array.isArray(data) ? data.filter(function(d) { return d.active; }) : [];
+                const $container = $('#kpiCrossColorCustomContainer');
+                $container.empty();
+                defs.forEach(function(def) {
+                    const chartId = 'customMetricChart' + def.id;
+                    const saved = localStorage.getItem('kpiCrossAlertColor_' + chartId) || '#DC2626';
+                    const sec = def.section ? (def.section.charAt(0).toUpperCase() + def.section.slice(1).toLowerCase()) : '';
+                    const header = sec ? sec + ' - ' + def.label : def.label;
+                    $container.append(buildCrossColorCardHtml(chartId, header, saved));
+                });
+            }
         });
     }
 
@@ -3698,6 +3729,12 @@ function regroupRows($container){
             const selected = $('input[name="kpiCross_' + chartId + '"]:checked').val();
             if (selected) {
                 localStorage.setItem('kpiCrossAlertColor_' + chartId, selected);
+            }
+        });
+        $('#kpiCrossColorCustomContainer input[type="radio"]:checked').each(function() {
+            const chartId = $(this).attr('name').replace('kpiCross_', '');
+            if (chartId) {
+                localStorage.setItem('kpiCrossAlertColor_' + chartId, $(this).val());
             }
         });
         $('#kpiCrossColorMessage').removeClass('error').addClass('success').text('Colors saved! Changes will reflect on next chart load.').show();
