@@ -2481,41 +2481,32 @@ function regroupRows($container){
             '<td><input type="text" class="gs-week2" value="' + escapeAttributeValue(safeItem.week2 || '') + '" placeholder="Week #2"></td>' +
             '<td><input type="text" class="gs-week3" value="' + escapeAttributeValue(safeItem.week3 || '') + '" placeholder="Week #3"></td>' +
             '<td><input type="text" class="gs-week4" value="' + escapeAttributeValue(safeItem.week4 || '') + '" placeholder="Week #4"></td>' +
-            '<td><button type="button" class="btn btn-secondary gemba-edit">Edit</button> <button type="button" class="btn-delete gemba-delete">Delete</button></td>' +
+            '<td class="ib-action-cell"><button type="button" class="issue-delete gemba-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></td>' +
             '</tr>';
     }
 
     $('#addGembaRowBtn').on('click', function() {
-        const formData = getGembaFormRowData();
-        if (!formData.associateName) {
-            showMessage('gembaScheduleMessage', 'Associate name is required before adding a row.', 'error');
-            return;
-        }
-
         $('#gembaConfigTableBody .placeholder-row').remove();
-        $('#gembaConfigTableBody').append(createGembaConfigRow(formData));
+        $('#gembaConfigTableBody').append(createGembaConfigRow({}));
         bindGembaDeleteButtons();
-        resetGembaFormInputs();
     });
 
     function bindGembaDeleteButtons() {
         $('.gemba-delete').off('click').on('click', function() {
+            const confirmed = window.confirm('Delete this row? This change will be lost if you do not save.');
+            if (!confirmed) return;
             $(this).closest('tr').remove();
             if ($('#gembaConfigTableBody tr').length === 0) {
                 $('#gembaConfigTableBody').html('<tr class="placeholder-row"><td colspan="7" style="text-align:center; padding: 18px; color:#9ca3af;">No schedule for selected date. Click "Add New Row".</td></tr>');
             }
         });
-
-        $('.gemba-edit').off('click').on('click', function() {
-            const $row = $(this).closest('tr');
-            populateGembaFormFromRow($row);
-            $row.remove();
-            if ($('#gembaConfigTableBody tr').length === 0) {
-                $('#gembaConfigTableBody').html('<tr class="placeholder-row"><td colspan="7" style="text-align:center; padding: 18px; color:#9ca3af;">No schedule for selected date. Click "Add New Row".</td></tr>');
-            }
-            showMessage('gembaScheduleMessage', 'Row loaded into form for editing. Update and click Add Row.', 'info');
-        });
     }
+
+    $('#cancelGembaScheduleBtn').on('click', function() {
+        const saveDate = $('#gembaScheduleDate').val() || getTodayDateString();
+        loadGembaScheduleByDate(saveDate);
+        showMessage('gembaScheduleMessage', 'Changes discarded.', 'success');
+    });
 
     $('#saveGembaScheduleBtn').on('click', function() {
         const saveDate = $('#gembaScheduleDate').val();
@@ -2984,12 +2975,14 @@ function regroupRows($container){
             '<option value="Daily Bad" ' + ((safe.status || '') === 'Daily Bad' ? 'selected' : '') + '>Daily Bad</option>' +
             '</select>' +
             '</td>' +
-            '<td><button type="button" class="btn-delete ts-delete">Delete</button></td>' +
+            '<td class="ib-action-cell"><button type="button" class="issue-delete ts-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></td>' +
             '</tr>';
     }
 
     function bindTrainingScheduleDeleteButtons() {
         $('.ts-delete').off('click').on('click', function() {
+            const confirmed = window.confirm('Delete this row? This change will be lost if you do not save.');
+            if (!confirmed) return;
             $(this).closest('tr').remove();
             if ($('#trainingScheduleConfigTableBody tr').length === 0) {
                 $('#trainingScheduleConfigTableBody').html('<tr class="placeholder-row"><td colspan="10" style="text-align:center;padding:18px;color:#9ca3af;">No training rows for selected date. Click "Add New Row".</td></tr>');
@@ -3046,6 +3039,12 @@ function regroupRows($container){
         $('#trainingScheduleConfigTableBody .placeholder-row').remove();
         $('#trainingScheduleConfigTableBody').append(createTrainingScheduleRow());
         bindTrainingScheduleDeleteButtons();
+    });
+
+    $('#cancelTrainingScheduleBtn').on('click', function() {
+        const saveDate = $('#trainingConfigDate').val() || getTodayDateString();
+        loadTrainingScheduleByDate(saveDate);
+        showMessage('trainingScheduleMessage', 'Changes discarded.', 'success');
     });
 
     $('#saveTrainingScheduleBtn').on('click', function() {

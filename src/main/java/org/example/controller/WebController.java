@@ -66,15 +66,15 @@ public class WebController {
         String normalizedConfig = config.trim().toLowerCase();
         return switch (normalizedConfig) {
             case "metrics-data" -> settingsView(model, "metrics-data", "", "Production Metrics Data");
-            case "issue-board" -> settingsView(model, "issue-board", "", "Issue Board Configuration");
-            case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk Configuration");
-            case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker Config");
-            case "training-schedule" -> settingsView(model, "training-schedule", "", "Training Schedule Config");
-            case "meeting-agenda" -> settingsView(model, "meeting-agenda", "", "PMS Agenda Config");
-            case "process-confirmation" -> settingsView(model, "process-confirmation", "", "PMS Process Confirmation Config");
-            case "abnormality-tracker" -> settingsView(model, "abnormality-tracker", "", "Abnormality Tracker Config");
-            case "hs-cross" -> settingsView(model, "hs-cross", "", "H&S Cross Daily Config");
-            case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking Config");
+            case "issue-board" -> settingsView(model, "issue-board", "", "Issue Board");
+            case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk");
+            case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker");
+            case "training-schedule" -> settingsView(model, "training-schedule", "", "Training Schedule");
+            case "meeting-agenda" -> settingsView(model, "meeting-agenda", "", "PMS Agenda");
+            case "process-confirmation" -> settingsView(model, "process-confirmation", "", "PMS Process Confirmation");
+            case "abnormality-tracker" -> settingsView(model, "abnormality-tracker", "", "Abnormality Tracker");
+            case "hs-cross" -> settingsView(model, "hs-cross", "", "H&S Cross Daily");
+            case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking");
             case "kpi-footer-buttons" -> settingsView(model, "kpi-footer-buttons", "", "KPI Footer Buttons");
             case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
             case "license" -> settingsView(model, "license", "", "License Management");
@@ -124,17 +124,17 @@ public class WebController {
 
     @GetMapping("/config/issue-board")
     public String issueBoardConfig(Model model) {
-        return settingsView(model, "issue-board", "", "Issue Board Configuration");
+        return settingsView(model, "issue-board", "", "Issue Board");
     }
 
     @GetMapping("/config/gemba-walk")
     public String gembaWalkPage(Model model) {
-        return settingsView(model, "gemba-schedule", "", "Gemba Walk Configuration");
+        return settingsView(model, "gemba-schedule", "", "Gemba Walk");
     }
 
     @GetMapping("/config/safety-gemba")
     public String safetyGembaConfig(Model model) {
-        return settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba Tracker Config");
+        return settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba Tracker");
     }
 
     @GetMapping("/config/training")
