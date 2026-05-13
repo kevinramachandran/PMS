@@ -34,6 +34,7 @@ dependencies {
     implementation("org.apache.commons:commons-csv:1.10.0")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
     runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("com.h2database:h2")
     compileOnly("org.projectlombok:lombok:1.18.32")
     annotationProcessor("org.projectlombok:lombok:1.18.32")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

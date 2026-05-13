@@ -99,8 +99,8 @@ public class DashboardConfigController {
         return payload;
     }
 
-    @GetMapping("/kpi-footer-buttons")
-    public Map<String, String> getKpiFooterButtonsConfig() {
+    @GetMapping("/info-portal")
+    public Map<String, String> getInfoPortalConfig() {
         KpiFooterButtonsConfig config = kpiFooterButtonsConfigService.getOrCreateDefaults();
         Map<String, String> payload = new LinkedHashMap<>();
         payload.put("button1Label", config.getButton1Label());
@@ -114,8 +114,8 @@ public class DashboardConfigController {
         return payload;
     }
 
-    @PostMapping("/kpi-footer-buttons")
-    public Map<String, String> saveKpiFooterButtonsConfig(@RequestBody Map<String, String> request) {
+    @PostMapping("/info-portal")
+    public Map<String, String> saveInfoPortalConfig(@RequestBody Map<String, String> request) {
         KpiFooterButtonsConfig incoming = new KpiFooterButtonsConfig();
         incoming.setButton1Label(request.getOrDefault("button1Label", ""));
         incoming.setButton1Url(request.getOrDefault("button1Url", ""));
@@ -137,8 +137,8 @@ public class DashboardConfigController {
         return payload;
     }
 
-    @PostMapping(value = "/kpi-footer-buttons/upload/{buttonNum}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Map<String, String>> uploadButtonFile(
+    @PostMapping(value = "/info-portal/upload/{buttonNum}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> uploadInfoPortalFile(
             @PathVariable int buttonNum,
             @RequestParam("file") MultipartFile file) {
 
@@ -193,8 +193,8 @@ public class DashboardConfigController {
         }
     }
 
-    @GetMapping("/kpi-footer-buttons/file/{buttonNum}")
-    public ResponseEntity<byte[]> serveButtonFile(@PathVariable int buttonNum) {
+    @GetMapping("/info-portal/file/{buttonNum}")
+    public ResponseEntity<byte[]> serveInfoPortalFile(@PathVariable int buttonNum) {
         if (buttonNum != 1 && buttonNum != 2) {
             return ResponseEntity.notFound().build();
         }

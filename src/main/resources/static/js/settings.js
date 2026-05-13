@@ -126,7 +126,7 @@ $(document).ready(function() {
     // ==================== DIRECT NAV CONFIGS ====================
     const directNavConfigs = ['issue-board', 'gemba-schedule', 'abnormality-tracker', 'leadership-gemba-tracker', 
                              'training-schedule', 'meeting-agenda', 'process-confirmation', 'hs-cross', 
-                             'lsr-tracking', 'kpi-footer-buttons', 'license', 'metrics-data', 'kpi-cross-color'];
+                             'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color'];
     const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
     const readOnlyActionSelectors = [
         '.form-actions button',
@@ -277,9 +277,9 @@ $(document).ready(function() {
         } else if (config === 'lsr-tracking') {
             $('#form-lsr-tracking').addClass('active');
             window.dispatchEvent(new Event('lsr-tracking-open'));
-        } else if (config === 'kpi-footer-buttons') {
-            $('#form-kpi-footer-buttons').addClass('active');
-            loadKpiFooterButtonsConfig();
+        } else if (config === 'info-portal') {
+            $('#form-info-portal').addClass('active');
+            loadInfoPortalConfig();
         } else if (config === 'kpi-cross-color') {
             $('#form-kpi-cross-color').addClass('active');
             loadKpiCrossColorConfig();
@@ -865,7 +865,7 @@ $(document).ready(function() {
             type: 'GET',
             success: function(data) {
                 if (!data || Object.keys(data).length === 0) {
-                    showMessage('metricsDataMessage', 'No metrics record found for selected date. Enter values for all categories.', 'success');
+                    showMessage('metricsDataMessage', 'No metrics record found for selected date. You can enter values for any category.', 'success');
                     return;
                 }
 
@@ -874,7 +874,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 if (xhr.status === 404 || xhr.status === 204) {
-                    showMessage('metricsDataMessage', 'No metrics record found for selected date. Enter values for all categories.', 'success');
+                    showMessage('metricsDataMessage', 'No metrics record found for selected date. You can enter values for any category.', 'success');
                     return;
                 }
                 showMessage('metricsDataMessage', 'Unable to load metrics for the selected date.', 'error');
@@ -922,6 +922,10 @@ $(document).ready(function() {
         const targetBuild = buildMetricsSectionValues(groups.target || [], targetSectionData, sectionLabel);
         if (!targetBuild.ok) return targetBuild;
 
+        if (Object.keys(actualSectionData).length === 0 && Object.keys(targetSectionData).length === 0) {
+            return { ok: false, message: 'Please enter at least one metric value for ' + sectionLabel + '.' };
+        }
+
         const payload = {
             actualDate: actualDate,
             targetDate: targetDate,
@@ -956,6 +960,8 @@ $(document).ready(function() {
             }
         };
 
+        let hasAnyData = false;
+
         for (const section of metricSectionOrder) {
             const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
             payload.actual[section] = {};
@@ -970,6 +976,17 @@ $(document).ready(function() {
             if (!targetBuild.ok) {
                 return targetBuild;
             }
+
+            if (Object.keys(payload.actual[section]).length > 0 || Object.keys(payload.target[section]).length > 0) {
+                hasAnyData = true;
+            }
+        }
+
+        if (!hasAnyData) {
+            return {
+                ok: false,
+                message: 'Please enter at least one metric value.'
+            };
         }
 
         return {
@@ -982,13 +999,7 @@ $(document).ready(function() {
         for (const field of fields) {
             const rawValue = $('#' + field).val();
             if (rawValue === null || rawValue === undefined || rawValue === '') {
-                if (optionalMetricFields.has(field)) {
-                    continue;
-                }
-                return {
-                    ok: false,
-                    message: 'Complete all fields for: ' + sectionLabel + '.'
-                };
+                continue;
             }
 
             const parsed = Number(rawValue);
@@ -1747,6 +1758,14 @@ function regroupRows($container){
 
         applyIssueBoardDateLimits();
 
+        dateInput.on('change', function() {
+            const selectedDate = $(this).val();
+            if (!selectedDate) {
+                return;
+            }
+            loadIssueBoardByDate(selectedDate);
+        });
+
         $('#issueBoardLastReviewDate, #issueBoardNextReviewDate').off('change').on('change', function() {
             const selected = $(this).val();
             if (!selected) {
@@ -1967,9 +1986,10 @@ function regroupRows($container){
     }
 
     function setIssueBoardSaveState() {
+        const isLoading = $('#issueBoardConfigTableBody .loading-row').length > 0;
         const hasRows = hasAtLeastOneIssueRow();
         const isValid = validateIssueBoardRows(false);
-        $('#saveIssueBoardBtn').prop('disabled', !(hasRows && isValid));
+        $('#saveIssueBoardBtn').prop('disabled', isLoading || !(hasRows && isValid));
     }
 
     function setIssueBoardSaveLoading(isLoading) {
@@ -2095,6 +2115,9 @@ function regroupRows($container){
             return;
         }
 
+        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="13" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading issue board data...</td></tr>');
+        setIssueBoardSaveState();
+
         $.ajax({
             url: '/api/issue-board/date/' + dateStr,
             type: 'GET',
@@ -2103,6 +2126,8 @@ function regroupRows($container){
             },
             error: function() {
                 populateIssueBoardConfigTable([]);
+                showIssueBoardPopup('Failed to load issue board data for ' + dateStr + '. Please try again.');
+                showIssueBoardToast('Load failed.', 'error');
             }
         });
     }
@@ -2173,8 +2198,7 @@ function regroupRows($container){
 
     function addIssueBoardInlineRow() {
         if ($('#issueBoardConfigTableBody').attr('data-locked') === '1') {
-            showIssueBoardPopup('Edit is locked after save. Use Cancel to unlock.');
-            return;
+            unlockIssueBoardRows();
         }
 
         $('#issueBoardConfigTableBody .placeholder-row').remove();
@@ -2189,6 +2213,31 @@ function regroupRows($container){
 
     $('#addIssueBoardRowTableBtn').on('click', function() {
         addIssueBoardInlineRow();
+    });
+
+    $('#loadLatestIssueBoardBtn').on('click', function() {
+        const confirmed = window.confirm('Copy data from the latest available board? This will replace any unsaved rows in the current table.');
+        if (!confirmed) {
+            return;
+        }
+
+        $.ajax({
+            url: '/api/issue-board/latest',
+            type: 'GET',
+            success: function(data) {
+                if (!data || data.length === 0) {
+                    showIssueBoardPopup('No previous board data found.');
+                    return;
+                }
+                populateIssueBoardConfigTable(data);
+                showIssueBoardPopup('Copied ' + data.length + ' rows from latest board.');
+                showIssueBoardToast('Data copied successfully.', 'success');
+            },
+            error: function() {
+                showIssueBoardPopup('Failed to load latest board data.');
+                showIssueBoardToast('Load failed.', 'error');
+            }
+        });
     });
 
     function bindIssueBoardDeleteButtons() {
@@ -3616,7 +3665,7 @@ function regroupRows($container){
         });
     });
 
-    // ==================== KPI FOOTER BUTTONS ====================
+    // ==================== INFO PORTAL ====================
 
     function toggleBtnType(num, type) {
         if (type === 'file') {
@@ -3651,7 +3700,7 @@ function regroupRows($container){
         $('#btn' + num + 'CurrentFileDisplay').hide();
 
         $.ajax({
-            url: '/api/dashboard-config/kpi-footer-buttons/upload/' + num,
+            url: '/api/dashboard-config/info-portal/upload/' + num,
             type: 'POST',
             data: formData,
             processData: false,
@@ -3904,9 +3953,9 @@ $('#licenseForm').on('submit', function(e) {
     });
 });
 
-    function loadKpiFooterButtonsConfig() {
+    function loadInfoPortalConfig() {
         $.ajax({
-            url: '/api/dashboard-config/kpi-footer-buttons',
+            url: '/api/dashboard-config/info-portal',
             type: 'GET',
             success: function(data) {
                 $('#kpiButton1Name').val(data.button1Label || '');
@@ -3932,7 +3981,7 @@ $('#licenseForm').on('submit', function(e) {
                 }
             },
             error: function() {
-                showMessage('kpiButtonsMessage', 'Unable to load footer button configuration.', 'error');
+                showMessage('infoPortalMessage', 'Unable to load Info Portal configuration.', 'error');
             }
         });
     }
@@ -3968,12 +4017,12 @@ $('#licenseForm').on('submit', function(e) {
         toggleBtnType(2, 'link');
     });
 
-    $('#cancelKpiButtonsBtn').on('click', function() {
-        loadKpiFooterButtonsConfig();
-        showMessage('kpiButtonsMessage', 'Changes discarded.', 'success');
+    $('#cancelInfoPortalBtn').on('click', function() {
+        loadInfoPortalConfig();
+        showMessage('infoPortalMessage', 'Changes discarded.', 'success');
     });
 
-    $('#saveKpiButtonsBtn').on('click', function() {
+    $('#saveInfoPortalBtn').on('click', function() {
         var type1 = $('input[name="btn1ActionType"]:checked').val() || 'link';
         var type2 = $('input[name="btn2ActionType"]:checked').val() || 'link';
         var label1 = ($('#kpiButton1Name').val() || '').trim();
@@ -3982,22 +4031,22 @@ $('#licenseForm').on('submit', function(e) {
         var url2   = ($('#kpiButton2Url').val() || '').trim();
 
         if (!label1) {
-            showMessage('kpiButtonsMessage', 'Button 1 label is required.', 'error'); return;
+            showMessage('infoPortalMessage', 'Button 1 label is required.', 'error'); return;
         }
         if (type1 === 'link' && !url1) {
-            showMessage('kpiButtonsMessage', 'Button 1 URL is required when action type is URL.', 'error'); return;
+            showMessage('infoPortalMessage', 'Button 1 URL is required when action type is URL.', 'error'); return;
         }
         if (type1 === 'file' && !$('#btn1CurrentFileName').text().trim()) {
-            showMessage('kpiButtonsMessage', 'Button 1 requires an uploaded file when action type is File.', 'error'); return;
+            showMessage('infoPortalMessage', 'Button 1 requires an uploaded file when action type is File.', 'error'); return;
         }
         if (!label2) {
-            showMessage('kpiButtonsMessage', 'Button 2 label is required.', 'error'); return;
+            showMessage('infoPortalMessage', 'Button 2 label is required.', 'error'); return;
         }
         if (type2 === 'link' && !url2) {
-            showMessage('kpiButtonsMessage', 'Button 2 URL is required when action type is URL.', 'error'); return;
+            showMessage('infoPortalMessage', 'Button 2 URL is required when action type is URL.', 'error'); return;
         }
         if (type2 === 'file' && !$('#btn2CurrentFileName').text().trim()) {
-            showMessage('kpiButtonsMessage', 'Button 2 requires an uploaded file when action type is File.', 'error'); return;
+            showMessage('infoPortalMessage', 'Button 2 requires an uploaded file when action type is File.', 'error'); return;
         }
 
         const payload = {
@@ -4009,23 +4058,23 @@ $('#licenseForm').on('submit', function(e) {
             button2Type:  type2
         };
 
-        const $btn = $('#saveKpiButtonsBtn');
+        const $btn = $('#saveInfoPortalBtn');
         $btn.prop('disabled', true);
         $btn.data('original-html', $btn.html());
         $btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
 
         $.ajax({
-            url: '/api/dashboard-config/kpi-footer-buttons',
+            url: '/api/dashboard-config/info-portal',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(payload),
             success: function() {
-                showMessage('kpiButtonsMessage', 'KPI footer buttons saved successfully!', 'success');
+                showMessage('infoPortalMessage', 'Info Portal settings saved successfully!', 'success');
                 updateKPIDashboard();
-                loadKpiFooterButtonsConfig();
+                loadInfoPortalConfig();
             },
             error: function() {
-                showMessage('kpiButtonsMessage', 'Error saving KPI footer buttons. Please try again.', 'error');
+                showMessage('infoPortalMessage', 'Error saving Info Portal settings. Please try again.', 'error');
             },
             complete: function() {
                 $btn.prop('disabled', false);

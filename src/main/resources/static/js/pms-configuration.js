@@ -46,7 +46,27 @@
                 {
                     key: 'PRODUCTION_METRICS_DATA',
                     label: 'Production Metrics Data',
-                    description: 'Metrics entry, imports, and updates for production metrics.'
+                    description: 'All production metrics sections (People, Quality, Service, Cost).'
+                },
+                {
+                    key: 'PRODUCTION_METRICS_DATA_PEOPLE',
+                    label: 'Production Metrics - People',
+                    description: 'People section of production metrics entry and updates.'
+                },
+                {
+                    key: 'PRODUCTION_METRICS_DATA_QUALITY',
+                    label: 'Production Metrics - Quality',
+                    description: 'Quality section of production metrics entry and updates.'
+                },
+                {
+                    key: 'PRODUCTION_METRICS_DATA_SERVICE',
+                    label: 'Production Metrics - Service',
+                    description: 'Service section of production metrics entry and updates.'
+                },
+                {
+                    key: 'PRODUCTION_METRICS_DATA_COST',
+                    label: 'Production Metrics - Cost',
+                    description: 'Cost section of production metrics entry and updates.'
                 }
             ]
         },
@@ -57,14 +77,11 @@
             items: [
                 { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board Configuration', description: 'Issue board templates and assignment setup.' },
                 { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Configuration', description: 'Schedules and settings for gemba walk planning.' },
-                { key: 'LEADERSHIP_GEMBA_TRACKER_CONFIGURATION', label: 'Safety Gemba Tracker Config', description: 'Leadership safety gemba tracker configuration.' },
                 { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Schedule Config', description: 'Training schedule periods and configuration data.' },
-                { key: 'MEETING_AGENDA_CONFIGURATION', label: 'PMS Agenda Config', description: 'Meeting agenda configuration and period updates.' },
-                { key: 'PROCESS_CONFIRMATION_CONFIGURATION', label: 'Process Confirmation Config', description: 'Process confirmation templates and period updates.' },
                 { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality Tracker Config', description: 'Abnormality tracker lists and save actions.' },
                 { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily Config', description: 'Health and safety daily cross settings.' },
                 { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking Config', description: 'LSR daily tracking settings and updates.' },
-                { key: 'KPI_FOOTER_BUTTONS', label: 'KPI Footer Buttons', description: 'Footer button labels, URLs, and uploads.' },
+                { key: 'INFO_PORTAL', label: 'Info Portal', description: 'Footer button labels, URLs, and uploads.' },
                 { key: 'KPI_TARGET_CROSS_COLOR', label: 'KPI Target Cross Color', description: 'Color rules used for KPI cross alert states.' },
                 { key: 'EMAIL_CONFIGURATION', label: 'Email Configuration', description: 'SMTP settings and outbound mail test configuration.' }
             ]

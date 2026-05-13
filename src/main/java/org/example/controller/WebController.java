@@ -75,7 +75,7 @@ public class WebController {
             case "abnormality-tracker" -> settingsView(model, "abnormality-tracker", "", "Abnormality Tracker");
             case "hs-cross" -> settingsView(model, "hs-cross", "", "H&S Cross Daily");
             case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking");
-            case "kpi-footer-buttons" -> settingsView(model, "kpi-footer-buttons", "", "KPI Footer Buttons");
+            case "info-portal" -> settingsView(model, "info-portal", "", "Info Portal");
             case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
             case "license" -> settingsView(model, "license", "", "License Management");
             default -> "redirect:/pms/top-priorities";

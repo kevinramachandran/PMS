@@ -5,6 +5,7 @@ $(document).ready(function() {
     const mainContent = $('.main-content');
 
     let availablePeriods = [];
+    let currentPeriodLabel = '';
 
     $('.nav-parent-toggle').on('click', function(e) {
         e.preventDefault();
@@ -127,6 +128,66 @@ $(document).ready(function() {
         });
     }
 
+    let currentTrainingData = [];
+    let trainingSortKey = null;
+    let trainingSortAsc = true;
+
+    function initializeTrainingSorting() {
+        $('table:has(#trainingScheduleBody) thead .sortable').on('click', function() {
+            const key = $(this).data('sort-key');
+            if (trainingSortKey === key) {
+                trainingSortAsc = !trainingSortAsc;
+            } else {
+                trainingSortKey = key;
+                trainingSortAsc = true;
+            }
+
+            updateTrainingSort();
+            updateTrainingSortIndicators();
+        });
+    }
+
+    function updateTrainingSortIndicators() {
+        $('table:has(#trainingScheduleBody) thead th').each(function() {
+            $(this).removeClass('sort-asc sort-desc');
+            const key = $(this).data('sort-key');
+            if (key === trainingSortKey) {
+                $(this).addClass(trainingSortAsc ? 'sort-asc' : 'sort-desc');
+            }
+        });
+    }
+
+    function updateTrainingSort() {
+        if (!trainingSortKey || !currentTrainingData.length) return;
+
+        const sorted = [...currentTrainingData].sort(function(a, b) {
+            let aVal = a[trainingSortKey];
+            let bVal = b[trainingSortKey];
+
+            if (aVal === null || aVal === undefined) aVal = '';
+            if (bVal === null || bVal === undefined) bVal = '';
+
+            if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+                const cmp = aVal.localeCompare(bVal);
+                return trainingSortAsc ? cmp : -cmp;
+            }
+
+            const numA = Number(aVal);
+            const numB = Number(bVal);
+            if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+                return trainingSortAsc ? (numA - numB) : (numB - numA);
+            }
+
+            const cmp = String(aVal).localeCompare(String(bVal));
+            return trainingSortAsc ? cmp : -cmp;
+        });
+
+        renderRows(sorted, currentPeriodLabel);
+    }
+
+
     function findPeriodLabel(month, year) {
         return availablePeriods.find(function(label) {
             const p = periodToMonthYear(label);
@@ -206,7 +267,10 @@ $(document).ready(function() {
             url: '/api/training-schedule/period/' + encodeURIComponent(periodLabel),
             type: 'GET',
             success: function(data) {
-                renderRows(Array.isArray(data) ? data : [], periodLabel);
+                currentTrainingData = Array.isArray(data) ? data : [];
+                currentPeriodLabel = periodLabel;
+                renderRows(currentTrainingData, periodLabel);
+                initializeTrainingSorting();
                 updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
             },
             error: function() {

@@ -188,6 +188,71 @@ $(document).ready(function() {
         });
     }
 
+    let currentIssueBoardData = [];
+    let issueBoardSortKey = null;
+    let issueBoardSortAsc = true;
+
+    function initializeIssueBoardSorting() {
+        $('#issueBoardTable thead .sortable').on('click', function() {
+            const key = $(this).data('sort-key');
+            if (issueBoardSortKey === key) {
+                issueBoardSortAsc = !issueBoardSortAsc;
+            } else {
+                issueBoardSortKey = key;
+                issueBoardSortAsc = true;
+            }
+
+            updateIssueBoardSort();
+            updateIssueBoardSortIndicators();
+        });
+    }
+
+    function updateIssueBoardSortIndicators() {
+        $('#issueBoardTable thead th').each(function() {
+            $(this).removeClass('sort-asc sort-desc');
+            const key = $(this).data('sort-key');
+            if (key === issueBoardSortKey) {
+                $(this).addClass(issueBoardSortAsc ? 'sort-asc' : 'sort-desc');
+            }
+        });
+    }
+
+    function updateIssueBoardSort() {
+        if (!issueBoardSortKey || !currentIssueBoardData.length) return;
+
+        const sorted = [...currentIssueBoardData].sort(function(a, b) {
+            let aVal = a[issueBoardSortKey];
+            let bVal = b[issueBoardSortKey];
+
+            if (issueBoardSortKey === 'dueDays') {
+                aVal = normalizeDueDays(a);
+                bVal = normalizeDueDays(b);
+            }
+
+            if (aVal === null || aVal === undefined) aVal = '';
+            if (bVal === null || bVal === undefined) bVal = '';
+
+            if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+                const cmp = aVal.localeCompare(bVal);
+                return issueBoardSortAsc ? cmp : -cmp;
+            }
+
+            const numA = Number(aVal);
+            const numB = Number(bVal);
+            if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+                return issueBoardSortAsc ? (numA - numB) : (numB - numA);
+            }
+
+            const cmp = String(aVal).localeCompare(String(bVal));
+            return issueBoardSortAsc ? cmp : -cmp;
+        });
+
+        renderRows(sorted);
+    }
+
+
     function loadIssueBoardData() {
         updateSyncStatus('Syncing...');
 
@@ -195,7 +260,9 @@ $(document).ready(function() {
             url: '/api/issue-board/latest',
             type: 'GET',
             success: function(data) {
-                renderRows(Array.isArray(data) ? data : []);
+                currentIssueBoardData = Array.isArray(data) ? data : [];
+                renderRows(currentIssueBoardData);
+                initializeIssueBoardSorting();
                 updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
             },
             error: function() {

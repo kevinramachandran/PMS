@@ -53,7 +53,7 @@
             <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker"><i class="fas fa-sliders"></i><span>Abnormality Tracker</span></a>
             <a href="/settings?config=hs-cross" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="H&amp;S Cross Daily"><i class="fas fa-sliders"></i><span>H&amp;S Cross Daily</span></a>
             <a href="/settings?config=lsr-tracking" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="LSR Tracking"><i class="fas fa-sliders"></i><span>LSR Tracking</span></a>
-            <a href="/settings?config=kpi-footer-buttons" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Footer Buttons"><i class="fas fa-sliders"></i><span>KPI Footer Buttons</span></a>
+            <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
             <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
             <a href="/pms-configuration" class="nav-item" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
             <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
@@ -94,9 +94,9 @@
                     <h2 style="color:var(--primary-green);margin:0 0 8px;font-size:1.6em;font-weight:700;">Select Client Portal</h2>
                     <p style="color:#6b7280;font-size:0.95em;margin:0;">Choose a client portal to open</p>
                 </div>
-                <div class="kpi-footer-buttons" id="clientButtonsContainer" style="gap:20px;">
-                    <a id="kpiFooterBtn1" href="#" target="_blank" class="kpi-footer-btn" style="padding:16px 40px;font-size:15px;display:none;"></a>
-                    <a id="kpiFooterBtn2" href="#" target="_blank" class="kpi-footer-btn" style="padding:16px 40px;font-size:15px;display:none;"></a>
+                <div class="info-portal-buttons" id="clientButtonsContainer" style="gap:20px;">
+                    <a id="infoPortalBtn1" href="#" target="_blank" class="info-portal-btn" style="padding:16px 40px;font-size:15px;display:none;"></a>
+                    <a id="infoPortalBtn2" href="#" target="_blank" class="info-portal-btn" style="padding:16px 40px;font-size:15px;display:none;"></a>
                 </div>
             </div>
         </div>
@@ -112,23 +112,23 @@
 
 <script>
     (function () {
-        /* Exact same logic as applyKpiFooterButtons in dashboard.js */
-        function applyKpiFooterButtons(config) {
-            var btn1 = document.getElementById('kpiFooterBtn1');
-            var btn2 = document.getElementById('kpiFooterBtn2');
+        /* Exact same logic as applyInfoPortalButtons in dashboard.js */
+        function applyInfoPortalButtons(config) {
+            var btn1 = document.getElementById('infoPortalBtn1');
+            var btn2 = document.getElementById('infoPortalBtn2');
 
             if (!btn1 || !btn2 || !config) return;
 
             var btn1Label = (config.kpiButton1Label || config.button1Label || btn1.textContent || 'Solvex').trim();
             var btn1Type  = (config.kpiButton1Type  || config.button1Type  || 'link').trim();
             var btn1Url   = btn1Type === 'file'
-                ? '/api/dashboard-config/kpi-footer-buttons/file/1'
+                ? '/api/dashboard-config/info-portal/file/1'
                 : (config.kpiButton1Url || config.button1Url || '').trim();
 
             var btn2Label = (config.kpiButton2Label || config.button2Label || btn2.textContent || 'Carlsbridge').trim();
             var btn2Type  = (config.kpiButton2Type  || config.button2Type  || 'link').trim();
             var btn2Url   = btn2Type === 'file'
-                ? '/api/dashboard-config/kpi-footer-buttons/file/2'
+                ? '/api/dashboard-config/info-portal/file/2'
                 : (config.kpiButton2Url || config.button2Url || '').trim();
 
             if (btn1Label && btn1Url) {
@@ -152,8 +152,8 @@
 
         fetch('/api/dashboard-config/kpi')
             .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-            .then(function (config) { applyKpiFooterButtons(config); })
-            .catch(function () { applyKpiFooterButtons({}); });
+            .then(function (config) { applyInfoPortalButtons(config); })
+            .catch(function () { applyInfoPortalButtons({}); });
     })();
 </script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">

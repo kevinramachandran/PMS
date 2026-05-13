@@ -208,8 +208,8 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION;
         }
 
-        if (path.startsWith("/api/dashboard-config/kpi-footer-buttons")) {
-            return RoleAccess.PAGE_KPI_FOOTER_BUTTONS;
+        if (path.startsWith("/api/dashboard-config/info-portal")) {
+            return RoleAccess.PAGE_INFO_PORTAL;
         }
 
         return "";

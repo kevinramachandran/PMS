@@ -132,6 +132,51 @@ $(document).ready(function() {
         });
     }
 
+    let currentGembaData = [];
+    let gembaFunctionOrder = null;
+
+    function initializeGembaSorting() {
+        $('table:has(#gembaScheduleBody) thead .sortable').on('click', function() {
+            const key = $(this).data('sort-key');
+            if (key === 'functionType') {
+                if (!gembaFunctionOrder) {
+                    gembaFunctionOrder = 'asc';
+                } else {
+                    gembaFunctionOrder = gembaFunctionOrder === 'asc' ? 'desc' : null;
+                }
+                updateGembaSort();
+                updateGembaSortIndicators();
+            }
+        });
+    }
+
+    function updateGembaSortIndicators() {
+        $('table:has(#gembaScheduleBody) thead th').each(function() {
+            $(this).removeClass('sort-asc sort-desc');
+            const key = $(this).data('sort-key');
+            if (key === 'functionType' && gembaFunctionOrder) {
+                $(this).addClass(gembaFunctionOrder === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+        });
+    }
+
+    function updateGembaSort() {
+        if (!gembaFunctionOrder || !currentGembaData.length) {
+            renderRowsForMonth(currentGembaData, selectedMonthKey);
+            return;
+        }
+
+        const sorted = [...currentGembaData].sort(function(a, b) {
+            const aType = (a.functionType || '').toLowerCase();
+            const bType = (b.functionType || '').toLowerCase();
+            const cmp = aType.localeCompare(bType);
+            return gembaFunctionOrder === 'asc' ? cmp : -cmp;
+        });
+
+        renderRowsForMonth(sorted, selectedMonthKey);
+    }
+
+
     function updateSyncStatus(text) {
         $('#gembaSyncStatus').text(text);
     }
@@ -204,7 +249,9 @@ $(document).ready(function() {
             url: '/api/gemba-schedule/date/' + latestDate,
             type: 'GET',
             success: function(data) {
-                renderRowsForMonth(Array.isArray(data) ? data : [], selectedMonthKey);
+                currentGembaData = Array.isArray(data) ? data : [];
+                renderRowsForMonth(currentGembaData, selectedMonthKey);
+                initializeGembaSorting();
                 updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
             },
             error: function() {

@@ -148,6 +148,7 @@ $(function () {
     // Render charts + table
     // -------------------------------------------------------
     function renderDashboard(entries) {
+        currentAbnormalityData = entries;
         const labels = entries.map(function (e) { return e.department || ''; });
         const yellowData = entries.map(function (e) { return e.yellowTags || 0; });
         const redData = entries.map(function (e) { return e.redTags || 0; });
@@ -156,6 +157,7 @@ $(function () {
         renderTagCountChart(labels, yellowData, redData);
         renderClosureChart(labels, closureData);
         renderSummaryTable(entries);
+        initializeAbnormalitySorting();
     }
 
     function renderTagCountChart(labels, yellowData, redData) {
@@ -332,6 +334,71 @@ $(function () {
             );
         });
     }
+
+    let currentAbnormalityData = [];
+    let abnormSortKey = null;
+    let abnormSortAsc = true;
+
+    function initializeAbnormalitySorting() {
+        $('table:has(#atSummaryBody) thead .sortable').on('click', function() {
+            const key = $(this).data('sort-key');
+            if (abnormSortKey === key) {
+                abnormSortAsc = !abnormSortAsc;
+            } else {
+                abnormSortKey = key;
+                abnormSortAsc = true;
+            }
+
+            updateAbnormSort();
+            updateAbnormSortIndicators();
+        });
+    }
+
+    function updateAbnormSortIndicators() {
+        $('table:has(#atSummaryBody) thead th').each(function() {
+            $(this).removeClass('sort-asc sort-desc');
+            const key = $(this).data('sort-key');
+            if (key === abnormSortKey) {
+                $(this).addClass(abnormSortAsc ? 'sort-asc' : 'sort-desc');
+            }
+        });
+    }
+
+    function updateAbnormSort() {
+        if (!abnormSortKey || !currentAbnormalityData.length) return;
+
+        const sorted = [...currentAbnormalityData].sort(function(a, b) {
+            let aVal = a[abnormSortKey];
+            let bVal = b[abnormSortKey];
+
+            if (abnormSortKey === 'totalTags') {
+                aVal = (a.yellowTags || 0) + (a.redTags || 0);
+                bVal = (b.yellowTags || 0) + (b.redTags || 0);
+            }
+
+            if (aVal === null || aVal === undefined) aVal = '';
+            if (bVal === null || bVal === undefined) bVal = '';
+
+            if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+                const cmp = aVal.localeCompare(bVal);
+                return abnormSortAsc ? cmp : -cmp;
+            }
+
+            const numA = Number(aVal);
+            const numB = Number(bVal);
+            if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+                return abnormSortAsc ? (numA - numB) : (numB - numA);
+            }
+
+            const cmp = String(aVal).localeCompare(String(bVal));
+            return abnormSortAsc ? cmp : -cmp;
+        });
+
+        renderSummaryTable(sorted);
+    }
+
 
     function renderEmpty() {
         if (tagCountChartInstance) { tagCountChartInstance.destroy(); tagCountChartInstance = null; }

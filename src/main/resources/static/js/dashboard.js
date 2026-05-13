@@ -171,7 +171,7 @@ function applyKpiTvFit() {
         return;
     }
 
-    const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight, 1);
+    const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight);
 
     stage.style.width = naturalWidth + 'px';
     stage.style.transform = 'scale(' + scale + ')';
@@ -873,8 +873,22 @@ window.openChart = function(chartId) {
     expandedOptions.maintainAspectRatio = false;
     expandedOptions.animation = false;
     expandedOptions.plugins = expandedOptions.plugins || {};
-    expandedOptions.plugins.legend = expandedOptions.plugins.legend || { display: true, position: 'top' };
+    expandedOptions.plugins.legend = { 
+        display: true, 
+        position: 'top',
+        labels: { font: { size: 11 } }
+    };
     expandedOptions.plugins.tooltip = expandedOptions.plugins.tooltip || { enabled: true };
+    
+    // Also improve axis font size in expanded view
+    if (expandedOptions.scales) {
+        if (expandedOptions.scales.x && expandedOptions.scales.x.ticks) {
+            expandedOptions.scales.x.ticks.font = { size: 11 };
+        }
+        if (expandedOptions.scales.y && expandedOptions.scales.y.ticks) {
+            expandedOptions.scales.y.ticks.font = { size: 11 };
+        }
+    }
 
     if (expandedChartInstance) {
         expandedChartInstance.destroy();
@@ -1166,9 +1180,9 @@ function renderLsrFocusRules(rulesMatrix) {
     foot.innerHTML = html.join('');
 }
 
-function applyKpiFooterButtons(config) {
-    const btn1 = document.getElementById('kpiFooterBtn1');
-    const btn2 = document.getElementById('kpiFooterBtn2');
+function applyInfoPortalButtons(config) {
+    const btn1 = document.getElementById('infoPortalBtn1');
+    const btn2 = document.getElementById('infoPortalBtn2');
 
     if (!btn1 || !btn2 || !config) {
         return;
@@ -1177,13 +1191,13 @@ function applyKpiFooterButtons(config) {
     const btn1Label = (config.kpiButton1Label || config.button1Label || btn1.textContent || 'Solvex').trim();
     const btn1Type  = (config.kpiButton1Type  || config.button1Type  || 'link').trim();
     const btn1Url   = btn1Type === 'file'
-        ? '/api/dashboard-config/kpi-footer-buttons/file/1'
+        ? '/api/dashboard-config/info-portal/file/1'
         : (config.kpiButton1Url || config.button1Url || '').trim();
 
     const btn2Label = (config.kpiButton2Label || config.button2Label || btn2.textContent || 'Carlsbridge').trim();
     const btn2Type  = (config.kpiButton2Type  || config.button2Type  || 'link').trim();
     const btn2Url   = btn2Type === 'file'
-        ? '/api/dashboard-config/kpi-footer-buttons/file/2'
+        ? '/api/dashboard-config/info-portal/file/2'
         : (config.kpiButton2Url || config.button2Url || '').trim();
 
     if (btn1Label && btn1Url) {
@@ -1223,13 +1237,13 @@ function loadKpiDashboardMeta() {
             setElementText('lsr12Target', config.lsrTarget12);
             setElementText('lsr5Target', config.lsrTarget5);
             renderLsrFocusRules(config.lsrFocusRules);
-            applyKpiFooterButtons(config);
+            applyInfoPortalButtons(config);
             kpiDashboardMetaLoaded = true;
         })
         .catch(function() {
             setElementText('pmsDeckTitle', '-');
             renderLsrFocusRules([]);
-            applyKpiFooterButtons({});
+            applyInfoPortalButtons({});
         });
 }
 
@@ -1484,13 +1498,21 @@ function loadProductionCharts(month, year) {
         type: 'GET',
         success: function(metrics) {
             const safeMetrics = Array.isArray(metrics) ? metrics : [];
-            renderAllCharts(safeMetrics);
-            renderDailyPerformanceTable(safeMetrics);
+            
+            // Filter metrics for charts to only include the requested month's days
+            const chartMetrics = safeMetrics.filter(function(m) {
+                if (!m.date) return false;
+                const dt = new Date(m.date);
+                return (dt.getMonth() + 1) === safeMonth && dt.getFullYear() === safeYear;
+            });
+
+            renderAllCharts(chartMetrics);
+            renderDailyPerformanceTable(safeMetrics, safeMonth, safeYear);
             updateSyncStatus('Last synced: ' + formatTime(new Date()));
         },
         error: function() {
             renderNoDataForAllCharts('API unavailable');
-            renderDailyPerformanceTable([]);
+            renderDailyPerformanceTable([], safeMonth, safeYear);
             showToast('Unable to load KPI dashboard data', 'kpi-load-error');
             updateSyncStatus('Sync failed');
         }
@@ -1869,10 +1891,10 @@ function buildKpiDataset(label, metrics, key, seriesType, index, palette) {
         type: 'bar',
         data,
         backgroundColor: barColor,
-        borderRadius: 4,
-        maxBarThickness: 20,
-        categoryPercentage: 0.62,
-        barPercentage: 0.86
+        borderRadius: 2,
+        maxBarThickness: 6,
+        categoryPercentage: 0.8,
+        barPercentage: 0.9
     };
 }
 
@@ -1982,7 +2004,7 @@ function buildKpiTargetDataset(label, data, baseColor, compareWithFtdData, canva
     };
 }
 
-function renderDailyPerformanceTable(metrics) {
+function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear) {
     const tbody = document.querySelector('.main-kpi-table tbody');
     if (!tbody) return;
 
@@ -1996,7 +2018,18 @@ function renderDailyPerformanceTable(metrics) {
         return;
     }
 
-    const today = new Date();
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    
+    let today;
+    if (selectedYear === currentYear && selectedMonth === currentMonth) {
+        today = now;
+    } else {
+        // If viewing a different month, use the last day of that month as "today"
+        today = new Date(selectedYear, selectedMonth, 0);
+    }
+    
     const currentDateKey = toLocalDateKey(today);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -2050,8 +2083,8 @@ function renderDailyPerformanceTable(metrics) {
                 '<td' + classAttr(todayTargetClass) + '>' + formatMetric(todayTarget, kpi.decimals) + '</td>' +
                 '<td' + classAttr(targetMtdClass) + '>' + formatMetric(targetMtdValue, kpi.decimals) + '</td>' +
                 '<td>' + formatMetric(targetYtdValue, kpi.decimals) + '</td>' +
-                '<td' + classAttr(yesterdayActualClass) + '>' + formatMetric(yesterdayActual, kpi.decimals) + '</td>' +
-                '<td' + classAttr(actualMtdClass) + '>' + formatMetric(actualMtdValue, kpi.decimals) + '</td>' +
+                '<td>' + formatMetric(yesterdayActual, kpi.decimals) + '</td>' +
+                '<td>' + formatMetric(actualMtdValue, kpi.decimals) + '</td>' +
                 '<td>' + formatMetric(actualYtdValue, kpi.decimals) + '</td>' +
             '</tr>';
     });
@@ -2262,9 +2295,9 @@ function renderChart(canvasId, config) {
             },
             plugins: {
                 legend: {
-                    display: true,
+                    display: false,
                     position: 'top',
-                    labels: { boxWidth: 10, font: { size: 9 } }
+                    labels: { boxWidth: 10, font: { size: 8 } }
                 },
                 tooltip: {
                     enabled: true
@@ -2273,11 +2306,18 @@ function renderChart(canvasId, config) {
             scales: {
                 x: {
                     grid: { color: '#E5E7EB' },
-                    ticks: { autoSkip: true, maxTicksLimit: 12 }
+                    ticks: { 
+                        autoSkip: true, 
+                        maxTicksLimit: 12,
+                        font: { size: 8 }
+                    }
                 },
                 y: {
                     beginAtZero: true,
-                    grid: { color: '#E5E7EB' }
+                    grid: { color: '#E5E7EB' },
+                    ticks: {
+                        font: { size: 8 }
+                    }
                 }
             }
         }

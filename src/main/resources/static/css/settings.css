@@ -1128,6 +1128,9 @@ padding:4px 8px;
     letter-spacing: 0.03em;
     text-transform: uppercase;
     border-bottom: 2px solid #0a5a27;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 #gembaConfigTable tbody td {
@@ -1166,6 +1169,9 @@ padding:4px 8px;
     text-transform: uppercase;
     border-bottom: 2px solid #0a5a27;
     white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 #leadershipGembaConfigTable tbody td {
@@ -1209,6 +1215,9 @@ padding:4px 8px;
     text-transform: uppercase;
     border-bottom: 2px solid #0a5a27;
     white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 #trainingScheduleConfigTable tbody td {
@@ -1282,7 +1291,7 @@ padding:4px 8px;
     margin-bottom: 24px;
 }
 
-/* ===== KPI Footer Buttons Config ===== */
+/* ===== Info Portal Configuration ===== */
 .footer-btn-card {
     border: 1.5px solid #d1d5db;
     border-radius: 10px;
@@ -1559,6 +1568,9 @@ padding:4px 8px;
     font-weight: 600;
     font-size: 12px;
     border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 #dailyDataTable tbody td {
@@ -1623,6 +1635,9 @@ padding:4px 8px;
     font-weight: 700;
     font-size: 12px;
     border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 #prioritiesInlineTable tbody td {
@@ -1901,7 +1916,7 @@ padding:4px 8px;
     position: sticky;
     top: 0;
     background: #ffffff;
-    z-index: 2;
+    z-index: 10;
     border-bottom: 2px solid #d1d5db;
     padding: 6px;
     font-size: 13px;
@@ -2015,7 +2030,7 @@ padding:4px 8px;
 #lsrConfigTable thead th {
     position: sticky;
     top: 0;
-    z-index: 2;
+    z-index: 10;
     background: #f1f5f9;
     padding: 8px 6px;
     font-size: 12px;

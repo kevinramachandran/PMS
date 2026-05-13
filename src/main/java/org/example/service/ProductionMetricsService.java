@@ -163,7 +163,7 @@ public class ProductionMetricsService {
 
     public List<ProductionMetrics> getRecordsByMonth(int month, int year) {
         YearMonth yearMonth = YearMonth.of(year, month);
-        List<ProductionMetrics> records = buildNormalizedRecordsBetween(yearMonth.atDay(1), yearMonth.atEndOfMonth());
+        List<ProductionMetrics> records = buildNormalizedRecordsBetween(yearMonth.atDay(1).minusDays(1), yearMonth.atEndOfMonth());
         attachCustomMetricSnapshots(records);
         return records;
     }

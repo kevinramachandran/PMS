@@ -13,6 +13,10 @@ public final class RoleAccess {
         public static final String LEGACY_PAGE_SETTINGS = "SETTINGS";
         public static final String PAGE_PMS_DATA_ENTRY = "PMS_DATA_ENTRY";
         public static final String PAGE_PRODUCTION_METRICS_DATA = "PRODUCTION_METRICS_DATA";
+        public static final String PAGE_PRODUCTION_METRICS_DATA_PEOPLE = "PRODUCTION_METRICS_DATA_PEOPLE";
+        public static final String PAGE_PRODUCTION_METRICS_DATA_QUALITY = "PRODUCTION_METRICS_DATA_QUALITY";
+        public static final String PAGE_PRODUCTION_METRICS_DATA_SERVICE = "PRODUCTION_METRICS_DATA_SERVICE";
+        public static final String PAGE_PRODUCTION_METRICS_DATA_COST = "PRODUCTION_METRICS_DATA_COST";
         public static final String PAGE_ISSUE_BOARD_CONFIGURATION = "ISSUE_BOARD_CONFIGURATION";
         public static final String PAGE_GEMBA_WALK_CONFIGURATION = "GEMBA_WALK_CONFIGURATION";
         public static final String PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION = "LEADERSHIP_GEMBA_TRACKER_CONFIGURATION";
@@ -22,7 +26,7 @@ public final class RoleAccess {
         public static final String PAGE_ABNORMALITY_TRACKER_CONFIGURATION = "ABNORMALITY_TRACKER_CONFIGURATION";
         public static final String PAGE_HS_CROSS_DAILY_CONFIGURATION = "HS_CROSS_DAILY_CONFIGURATION";
         public static final String PAGE_LSR_TRACKING_CONFIGURATION = "LSR_TRACKING_CONFIGURATION";
-        public static final String PAGE_KPI_FOOTER_BUTTONS = "KPI_FOOTER_BUTTONS";
+         public static final String PAGE_INFO_PORTAL = "INFO_PORTAL";
         public static final String PAGE_KPI_TARGET_CROSS_COLOR = "KPI_TARGET_CROSS_COLOR";
         public static final String PAGE_USER_MANAGEMENT = "USER_MANAGEMENT";
         public static final String PAGE_LICENSE_MANAGEMENT = "LICENSE_MANAGEMENT";
@@ -31,16 +35,17 @@ public final class RoleAccess {
         public static final Set<String> CONFIGURATION_NAV_PAGES = Set.of(
             PAGE_PMS_DATA_ENTRY,
             PAGE_PRODUCTION_METRICS_DATA,
+            PAGE_PRODUCTION_METRICS_DATA_PEOPLE,
+            PAGE_PRODUCTION_METRICS_DATA_QUALITY,
+            PAGE_PRODUCTION_METRICS_DATA_SERVICE,
+            PAGE_PRODUCTION_METRICS_DATA_COST,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
-            PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
-            PAGE_MEETING_AGENDA_CONFIGURATION,
-            PAGE_PROCESS_CONFIRMATION_CONFIGURATION,
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
-            PAGE_KPI_FOOTER_BUTTONS,
+            PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR
         );
 
@@ -49,30 +54,28 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
-            PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
-            PAGE_MEETING_AGENDA_CONFIGURATION,
-            PAGE_PROCESS_CONFIRMATION_CONFIGURATION,
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
-            PAGE_KPI_FOOTER_BUTTONS,
+            PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR
         );
 
         public static final Set<String> CONFIG_PAGES = Set.of(
             PAGE_PMS_DATA_ENTRY,
             PAGE_PRODUCTION_METRICS_DATA,
+            PAGE_PRODUCTION_METRICS_DATA_PEOPLE,
+            PAGE_PRODUCTION_METRICS_DATA_QUALITY,
+            PAGE_PRODUCTION_METRICS_DATA_SERVICE,
+            PAGE_PRODUCTION_METRICS_DATA_COST,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
-            PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
-            PAGE_MEETING_AGENDA_CONFIGURATION,
-            PAGE_PROCESS_CONFIRMATION_CONFIGURATION,
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
-            PAGE_KPI_FOOTER_BUTTONS,
+            PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_USER_MANAGEMENT,
             PAGE_LICENSE_MANAGEMENT,
@@ -129,6 +132,14 @@ public final class RoleAccess {
         return Set.copyOf(sanitized);
     }
 
+    private static final Set<String> PRODUCTION_METRICS_PAGE_KEYS = Set.of(
+        PAGE_PRODUCTION_METRICS_DATA,
+        PAGE_PRODUCTION_METRICS_DATA_PEOPLE,
+        PAGE_PRODUCTION_METRICS_DATA_QUALITY,
+        PAGE_PRODUCTION_METRICS_DATA_SERVICE,
+        PAGE_PRODUCTION_METRICS_DATA_COST
+    );
+
     public static boolean canViewPage(String role, Set<String> viewPages, String pageKey) {
         if (isAdmin(role)) {
             return true;
@@ -136,7 +147,13 @@ public final class RoleAccess {
         if (!USER.equals(normalize(role))) {
             return false;
         }
-        return sanitizePages(viewPages).contains(pageKey);
+
+        Set<String> sanitized = sanitizePages(viewPages);
+        if (PAGE_PRODUCTION_METRICS_DATA.equals(pageKey)) {
+            return sanitized.stream().anyMatch(PRODUCTION_METRICS_PAGE_KEYS::contains);
+        }
+
+        return sanitized.contains(pageKey);
     }
 
     public static boolean canEditPage(String role, Set<String> editPages, String pageKey) {
@@ -146,7 +163,13 @@ public final class RoleAccess {
         if (!USER.equals(normalize(role))) {
             return false;
         }
-        return sanitizePages(editPages).contains(pageKey);
+
+        Set<String> sanitized = sanitizePages(editPages);
+        if (PAGE_PRODUCTION_METRICS_DATA.equals(pageKey)) {
+            return sanitized.stream().anyMatch(PRODUCTION_METRICS_PAGE_KEYS::contains);
+        }
+
+        return sanitized.contains(pageKey);
     }
 
     public static boolean canViewAnyConfigurationPage(String role, Set<String> viewPages) {
@@ -178,14 +201,11 @@ public final class RoleAccess {
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
             case "gemba-schedule" -> PAGE_GEMBA_WALK_CONFIGURATION;
-            case "leadership-gemba-tracker" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "training-schedule" -> PAGE_TRAINING_SCHEDULE_CONFIGURATION;
-            case "meeting-agenda" -> PAGE_MEETING_AGENDA_CONFIGURATION;
-            case "process-confirmation" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
             case "abnormality-tracker" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
-            case "kpi-footer-buttons" -> PAGE_KPI_FOOTER_BUTTONS;
+            case "info-portal" -> PAGE_INFO_PORTAL;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
             case "license" -> PAGE_LICENSE_MANAGEMENT;
             default -> "";
@@ -202,14 +222,11 @@ public final class RoleAccess {
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
             case "gemba-schedule" -> PAGE_GEMBA_WALK_CONFIGURATION;
-            case "leadership-gemba-tracker" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "training-schedule" -> PAGE_TRAINING_SCHEDULE_CONFIGURATION;
-            case "meeting-agenda" -> PAGE_MEETING_AGENDA_CONFIGURATION;
-            case "process-confirmation" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
             case "abnormality-tracker" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
-            case "kpi-footer-buttons" -> PAGE_KPI_FOOTER_BUTTONS;
+            case "info-portal" -> PAGE_INFO_PORTAL;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
             case "license" -> PAGE_LICENSE_MANAGEMENT;
             default -> "";

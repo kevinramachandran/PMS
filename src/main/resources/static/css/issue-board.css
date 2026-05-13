@@ -42,10 +42,13 @@
 }
 
 .issue-table thead th {
-    background: #f9fafb;
-    color: #374151;
-    padding: 8px 8px;
-    border: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #0b6b2e;
+    color: #ffffff;
+    padding: 10px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     text-align: left;
     white-space: nowrap;
     letter-spacing: 0.03em;

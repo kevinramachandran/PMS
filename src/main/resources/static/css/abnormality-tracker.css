@@ -409,6 +409,9 @@
 }
 
 #abnormalityConfigTable th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     padding: 11px 12px;
     text-align: left;
     font-size: 12px;
@@ -418,6 +421,7 @@
     letter-spacing: 0.04em;
     border-bottom: 2px solid #056025;
     white-space: nowrap;
+    background: linear-gradient(135deg, #044e20 0%, #076830 100%);
 }
 
 #abnormalityConfigTable td {
