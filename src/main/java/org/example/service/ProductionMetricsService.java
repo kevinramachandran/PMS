@@ -1,6 +1,8 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import jakarta.persistence.Column;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -17,12 +19,14 @@ import org.example.repository.ProductionMetricCustomValueRepository;
 import org.example.repository.ProductionMetricsRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -43,11 +47,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductionMetricsService {
 
     private final ProductionMetricsRepository repository;
     private final ProductionMetricCustomDefinitionRepository customDefinitionRepository;
     private final ProductionMetricCustomValueRepository customValueRepository;
+    private final JdbcTemplate jdbcTemplate;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String ENTRY_TYPE_ACTUAL = "ACTUAL";
     private static final String ENTRY_TYPE_TARGET = "TARGET";
@@ -90,6 +96,7 @@ public class ProductionMetricsService {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void consolidateLegacySplitRows() {
+        normalizeLegacyNonNumericMetricPlaceholders();
         List<ProductionMetrics> allRecords = repository.findAll();
         if (allRecords.isEmpty()) {
             return;
@@ -120,6 +127,40 @@ public class ProductionMetricsService {
         if (!targetRowsToDelete.isEmpty()) {
             repository.deleteAll(targetRowsToDelete);
         }
+    }
+
+    private void normalizeLegacyNonNumericMetricPlaceholders() {
+        for (String fieldName : ALL_METRIC_FIELDS) {
+            String columnName = getColumnName(fieldName);
+            if (columnName == null) {
+                continue;
+            }
+
+            int updatedRows = jdbcTemplate.update("""
+                UPDATE production_metrics
+                SET %1$s = NULL
+                WHERE UPPER(TRIM(%1$s)) IN ('NP', 'N/P', 'NA', 'N/A')
+                """.formatted(quoteIdentifier(columnName)));
+
+            if (updatedRows > 0) {
+                log.info("Normalized {} legacy placeholder value(s) in production_metrics.{}", updatedRows, columnName);
+            }
+        }
+    }
+
+    private String getColumnName(String fieldName) {
+        try {
+            Field field = ProductionMetrics.class.getDeclaredField(fieldName);
+            Column column = field.getAnnotation(Column.class);
+            return column != null && !column.name().isBlank() ? column.name() : fieldName;
+        } catch (NoSuchFieldException ex) {
+            log.warn("Skipping unknown production metric field while normalizing placeholders: {}", fieldName);
+            return null;
+        }
+    }
+
+    private String quoteIdentifier(String identifier) {
+        return "`" + identifier.replace("`", "``") + "`";
     }
 
     // CRUD Operations

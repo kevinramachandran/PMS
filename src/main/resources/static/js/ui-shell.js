@@ -264,6 +264,11 @@
     function normalizeSidebarLabels() {
         document.querySelectorAll('.nav-parent-toggle').forEach(function (toggle) {
             const span = toggle.querySelector('span');
+            const currentLabel = span ? span.textContent.trim() : '';
+            const currentTooltip = (toggle.getAttribute('data-tooltip') || '').trim();
+            if (currentLabel !== 'PMS Data Entry' && currentTooltip !== 'PMS Data Entry') {
+                return;
+            }
             if (span) {
                 span.textContent = 'PMS4 Deck V0 Data';
             }

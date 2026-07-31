@@ -577,14 +577,11 @@
                     <i class="fas fa-table-list"></i>
                     <span>Issue Board</span>
                 </a>
-                <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk Schedule">
+                <a href="/gemba-schedule" class="nav-item" data-tooltip="Gemba Walk tracker">
                     <i class="fas fa-clipboard-list"></i>
-                    <span>Gemba Walk Schedule</span>
+                    <span>Gemba Walk tracker</span>
                 </a>
-                <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Safety Gemba - Tracker">
-                    <i class="fas fa-route"></i>
-                    <span>Safety Gemba - Tracker</span>
-                </a>
+
                 <a href="/training-schedule" class="nav-item" data-tooltip="Training Schedule">
                     <i class="fas fa-calendar-days"></i>
                     <span>Training Schedule</span>
@@ -593,13 +590,17 @@
                     <i class="fas fa-clipboard-check"></i>
                     <span>PMS Agenda</span>
                 </a>
-                <a href="/process-confirmation" class="nav-item" data-tooltip="PMS Process Confirmation">
-                    <i class="fas fa-list-check"></i>
-                    <span>PMS Process Confirmation</span>
-                </a>
                 <a href="/abnormality-tracker" class="nav-item" data-tooltip="Abnormality Tracker">
                     <i class="fas fa-triangle-exclamation"></i>
                     <span>Abnormality Tracker</span>
+                </a>
+                <a href="/leadership-gemba-tracker" class="nav-item" data-tooltip="Gemba Kaizen Ideas">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Gemba Kaizen Ideas</span>
+                </a>
+                <a href="/process-confirmation" class="nav-item" data-tooltip="Process Confirmations">
+                    <i class="fas fa-list-check"></i>
+                    <span>Process Confirmations</span>
                 </a>
                 <a href="/client-selection" class="nav-item" data-tooltip="Info Portal">
                     <i class="fas fa-external-link-alt"></i>
@@ -615,8 +616,14 @@
                         <a href="/settings?config=meeting-agenda" class="nav-item nav-child" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                         <a href="/settings?config=process-confirmation" class="nav-item nav-child" data-tooltip="PMS Process Confirmation"><i class="fas fa-list-check"></i><span>PMS Process Confirmation</span></a>
                         <a href="/settings?config=abnormality-tracker" class="nav-item nav-child" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-                        <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily"><i class="fas fa-shield-halved"></i><span>H&amp;S Cross Daily</span></a>
-                        <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking"><i class="fas fa-life-ring"></i><span>LSR Tracking</span></a>
+                    </div>
+                </div>
+                <div class="nav-parent">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Production KPI Data"><i class="fas fa-chart-area"></i><span>Production KPI Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/settings?config=metrics-data" class="nav-item nav-child" data-tooltip="Production KPI Data"><i class="fas fa-chart-area"></i><span>Production KPI Data</span></a>
+                        <a href="/settings?config=hs-cross" class="nav-item nav-child" data-tooltip="H&amp;S Cross Daily"><i class="fas fa-heartbeat"></i><span>H&amp;S Cross Daily</span></a>
+                        <a href="/settings?config=lsr-tracking" class="nav-item nav-child" data-tooltip="LSR Tracking"><i class="fas fa-graduation-cap"></i><span>LSR Tracking</span></a>
                     </div>
                 </div>
             </nav>
@@ -747,22 +754,23 @@
             sidebarOverlay.classList.remove('active');
         });
 
-        const navParentToggle = document.querySelector('.nav-parent-toggle');
-        const navChildren = document.querySelector('.nav-children');
-        const activeChild = document.querySelector('.nav-child.active');
+        document.querySelectorAll('.nav-parent-toggle').forEach((toggle) => {
+            const navChildren = toggle.nextElementSibling;
+            if (!navChildren || !navChildren.classList.contains('nav-children')) {
+                return;
+            }
 
-        if (activeChild && navParentToggle && navChildren) {
-            navParentToggle.classList.add('expanded');
-            navChildren.classList.add('show');
-        }
+            if (navChildren.querySelector('.nav-child.active')) {
+                toggle.classList.add('expanded');
+                navChildren.classList.add('show');
+            }
 
-        if (navParentToggle && navChildren) {
-            navParentToggle.addEventListener('click', (e) => {
+            toggle.addEventListener('click', (e) => {
                 e.preventDefault();
-                navParentToggle.classList.toggle('expanded');
+                toggle.classList.toggle('expanded');
                 navChildren.classList.toggle('show');
             });
-        }
+        });
 
         // Form submission
         document.getElementById('dailyDataForm').addEventListener('submit', async function(e) {

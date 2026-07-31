@@ -45,7 +45,7 @@
                 },
                 {
                     key: 'PRODUCTION_METRICS_DATA',
-                    label: 'Production Metrics Data',
+                    label: 'Production KPI Data',
                     description: 'All production metrics sections (People, Quality, Service, Cost).'
                 },
                 {

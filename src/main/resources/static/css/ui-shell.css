@@ -153,6 +153,13 @@ body.modern-shell .top-header {
     overflow-y: auto !important;
 }
 
+.nav-parent {
+    margin-top: 14px !important;
+    padding-top: 14px !important;
+    border-top-width: 3px !important;
+    border-top-color: rgba(255, 255, 255, 0.18) !important;
+}
+
 .main-content {
     padding-bottom: 42px !important;
 }
@@ -180,9 +187,7 @@ table th,
 }
 
 /* Hide pages not in the keep list */
-a[href="/leadership-gemba-tracker"],
 a[href="/meeting-agenda"],
-a[href="/process-confirmation"],
 a[href*="config=leadership-gemba-tracker"],
 a[href*="config=meeting-agenda"],
 a[href*="config=process-confirmation"] {

@@ -65,7 +65,7 @@ public class WebController {
 
         String normalizedConfig = config.trim().toLowerCase();
         return switch (normalizedConfig) {
-            case "metrics-data" -> settingsView(model, "metrics-data", "", "Production Metrics Data");
+            case "metrics-data" -> settingsView(model, "metrics-data", "", "Production KPI Data");
             case "issue-board" -> settingsView(model, "issue-board", "", "Issue Board");
             case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk");
             case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker");
@@ -119,7 +119,7 @@ public class WebController {
 
     @GetMapping("/pms/production-metrics")
     public String productionMetrics(Model model) {
-        return settingsView(model, "metrics-data", "", "Production Metrics Data");
+        return settingsView(model, "metrics-data", "", "Production KPI Data");
     }
 
     @GetMapping("/config/issue-board")
