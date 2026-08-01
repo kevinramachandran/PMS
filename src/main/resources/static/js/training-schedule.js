@@ -73,6 +73,20 @@ $(document).ready(function() {
         return dt.toLocaleString('en-GB', { month: 'short', year: 'numeric' });
     }
 
+    function monthKeyFromPeriod(label) {
+        const parsed = periodToMonthYear(label);
+        if (!parsed) return '';
+        return parsed.year + '-' + String(parsed.month).padStart(2, '0');
+    }
+
+    function periodLabelFromMonthKey(key) {
+        const dt = new Date(key + '-01T00:00:00');
+        if (Number.isNaN(dt.getTime())) return '';
+        const month = dt.toLocaleString('en-GB', { month: 'short' });
+        const year = String(dt.getFullYear()).slice(-2);
+        return month + "'" + year;
+    }
+
     function formatDate(d) {
         if (!d) return '-';
         const dt = new Date(d + 'T00:00:00');
@@ -97,18 +111,10 @@ $(document).ready(function() {
         const tbody = $('#trainingScheduleBody');
         tbody.empty();
 
-        const parsed = periodToMonthYear(periodLabel || '');
-        $('#tsMonth').text(parsed ? monthLabel(parsed.month, parsed.year) : '-');
-
         if (!rows || rows.length === 0) {
             tbody.html('<tr><td colspan="10" class="ts-empty">No training schedule configured for selected month.</td></tr>');
             return;
         }
-
-        const first = rows[0];
-        $('#tsKpi').text(first.kpiTitle || 'Training Compliance');
-        $('#tsTarget').text((first.targetPercent != null ? first.targetPercent : 100) + '%');
-        $('#tsResponsible').text(first.responsible || 'HR Mgr.');
 
         rows.forEach(function(r, idx) {
             tbody.append(
@@ -195,17 +201,20 @@ $(document).ready(function() {
         }) || null;
     }
 
-    function populateFilters(periods) {
-        const monthFilter = $('#trainingMonthFilter');
-        const yearFilter = $('#trainingYearFilter');
+    function findPeriodLabelByMonthKey(key) {
+        return availablePeriods.find(function(label) {
+            return monthKeyFromPeriod(label) === key;
+        }) || null;
+    }
 
-        monthFilter.empty();
-        yearFilter.empty();
+    function populateFilters(periods, preferredMonthKey) {
+        const monthFilter = $('#trainingMonthFilter');
 
         if (!periods || periods.length === 0) {
-            monthFilter.append('<option value="">No month</option>');
-            yearFilter.append('<option value="">No year</option>');
-            return;
+            monthFilter.val('');
+            monthFilter.prop('disabled', true);
+            monthFilter.removeAttr('min max');
+            return '';
         }
 
         const parsedPeriods = periods.map(function(label) {
@@ -214,46 +223,24 @@ $(document).ready(function() {
             return item.parsed !== null;
         });
 
-        const months = [];
-        const years = [];
-
-        parsedPeriods.forEach(function(item) {
-            if (!months.includes(item.parsed.month)) months.push(item.parsed.month);
-            if (!years.includes(item.parsed.year)) years.push(item.parsed.year);
-        });
-
-        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        years.sort(function(a, b) { return b - a; }).forEach(function(y) {
-            yearFilter.append('<option value="' + y + '">' + y + '</option>');
-        });
-
-        function refreshMonths(selectedYear, preferredMonth) {
-            monthFilter.empty();
-            const monthsForYear = parsedPeriods
-                .filter(function(item) { return item.parsed.year === selectedYear; })
-                .map(function(item) { return item.parsed.month; })
-                .filter(function(month, index, arr) { return arr.indexOf(month) === index; })
-                .sort(function(a, b) { return a - b; });
-
-            monthsForYear.forEach(function(m) {
-                monthFilter.append('<option value="' + m + '">' + monthNames[m] + '</option>');
-            });
-
-            const fallbackMonth = monthsForYear.length ? monthsForYear[monthsForYear.length - 1] : '';
-            const resolvedMonth = monthsForYear.includes(Number(preferredMonth)) ? Number(preferredMonth) : fallbackMonth;
-            monthFilter.val(resolvedMonth ? String(resolvedMonth) : '');
+        if (parsedPeriods.length === 0) {
+            monthFilter.val('');
+            monthFilter.prop('disabled', true);
+            monthFilter.removeAttr('min max');
+            return '';
         }
 
-        if (parsedPeriods.length > 0) {
-            const currentYear = new Date().getFullYear();
-            const preferredYear = years.includes(currentYear) ? currentYear : years[0];
-            yearFilter.val(String(preferredYear));
-            refreshMonths(preferredYear, parsedPeriods[0].parsed.month);
-        }
+        const availableMonthKeys = parsedPeriods
+            .map(function(item) { return monthKeyFromPeriod(item.label); })
+            .filter(function(key, index, arr) { return key && arr.indexOf(key) === index; })
+            .sort()
+            .reverse();
 
-        yearFilter.off('change.trainingFilterSync').on('change.trainingFilterSync', function() {
-            refreshMonths(Number($(this).val()), monthFilter.val());
-        });
+        const selectedMonthKey = preferredMonthKey || availableMonthKeys[0];
+        monthFilter.prop('disabled', false);
+        monthFilter.removeAttr('min max');
+        monthFilter.val(selectedMonthKey);
+        return selectedMonthKey;
     }
 
     function loadByPeriod(periodLabel) {
@@ -280,7 +267,26 @@ $(document).ready(function() {
         });
     }
 
-    function loadFiltersAndData() {
+    function loadByMonthKey(monthKey) {
+        if (!monthKey) {
+            renderRows([], '');
+            updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
+            return;
+        }
+
+        const periodLabel = findPeriodLabelByMonthKey(monthKey);
+        if (!periodLabel) {
+            currentTrainingData = [];
+            currentPeriodLabel = periodLabelFromMonthKey(monthKey);
+            renderRows([], currentPeriodLabel);
+            updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
+            return;
+        }
+
+        loadByPeriod(periodLabel);
+    }
+
+    function loadFiltersAndData(preferredMonthKey) {
         updateSyncStatus('Syncing...');
 
         $.ajax({
@@ -288,7 +294,7 @@ $(document).ready(function() {
             type: 'GET',
             success: function(data) {
                 availablePeriods = Array.isArray(data) ? data : [];
-                populateFilters(availablePeriods);
+                const selectedMonthKey = populateFilters(availablePeriods, preferredMonthKey);
 
                 if (availablePeriods.length === 0) {
                     renderRows([], '');
@@ -296,33 +302,31 @@ $(document).ready(function() {
                     return;
                 }
 
-                const month = Number($('#trainingMonthFilter').val());
-                const year = Number($('#trainingYearFilter').val());
-                loadByPeriod(findPeriodLabel(month, year) || availablePeriods[0]);
+                loadByMonthKey(selectedMonthKey);
             },
             error: function() {
                 availablePeriods = [];
-                populateFilters([]);
+                populateFilters([], '');
                 renderRows([], '');
                 updateSyncStatus('Sync failed');
             }
         });
     }
 
-    $('#trainingMonthFilter, #trainingYearFilter').on('change', function() {
-        const month = Number($('#trainingMonthFilter').val());
-        const year = Number($('#trainingYearFilter').val());
-        loadByPeriod(findPeriodLabel(month, year));
+    $('#trainingMonthFilter').on('change', function() {
+        loadByMonthKey($(this).val());
     });
 
     window.addEventListener('storage', function(e) {
         if (e.key === 'training-schedule-update') {
-            loadFiltersAndData();
+            loadFiltersAndData($('#trainingMonthFilter').val() || '');
         }
     });
 
     loadFiltersAndData();
-    setInterval(loadFiltersAndData, 30000);
+    setInterval(function() {
+        loadFiltersAndData($('#trainingMonthFilter').val() || '');
+    }, 30000);
 });
 
 // ── PDF Export ──────────────────────────────────────────────────────────────
@@ -331,10 +335,9 @@ function exportTrainingPdf() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
 
     var tableData   = PmsReport.readDomTable('trainingScheduleTable');
-    var monthText   = document.getElementById('tsMonth') ? document.getElementById('tsMonth').textContent.trim() : '-';
-    var kpiText     = document.getElementById('tsKpi')   ? document.getElementById('tsKpi').textContent.trim()   : 'Training Compliance';
-    var targetText  = document.getElementById('tsTarget') ? document.getElementById('tsTarget').textContent.trim() : '-';
-    var filterLabel = 'Month: ' + monthText + '   |   KPI: ' + kpiText + '   |   Target: ' + targetText;
+    var monthInput  = document.getElementById('trainingMonthFilter');
+    var monthText   = monthInput && monthInput.value ? formatTrainingMonthLabel(monthInput.value) : '-';
+    var filterLabel = 'Month: ' + monthText;
 
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
@@ -353,4 +356,12 @@ function exportTrainingPdf() {
     setTimeout(function() {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
     }, 2000);
+}
+
+function formatTrainingMonthLabel(key) {
+    var dateObj = new Date(key + '-01T00:00:00');
+    if (Number.isNaN(dateObj.getTime())) {
+        return key || '-';
+    }
+    return dateObj.toLocaleString('en-GB', { month: 'short', year: 'numeric' });
 }

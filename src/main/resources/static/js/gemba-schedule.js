@@ -203,8 +203,7 @@ $(document).ready(function() {
     }
 
     function populateMonthFilter(dates, selectedMonthKey) {
-        const monthSelect = $('#gembaMonthFilter');
-        monthSelect.empty();
+        const monthInput = $('#gembaMonthFilter');
 
         const uniqueMonths = [];
         dates.forEach(function(dateStr) {
@@ -213,17 +212,18 @@ $(document).ready(function() {
                 uniqueMonths.push(key);
             }
         });
+        uniqueMonths.sort().reverse();
 
         if (uniqueMonths.length === 0) {
-            monthSelect.append('<option value="">No month</option>');
+            monthInput.val('');
+            monthInput.prop('disabled', true);
+            monthInput.removeAttr('min max');
             return;
         }
 
-        uniqueMonths.forEach(function(key) {
-            monthSelect.append('<option value="' + key + '">' + monthLabelFromKey(key) + '</option>');
-        });
-
-        monthSelect.val(selectedMonthKey || uniqueMonths[0]);
+        monthInput.prop('disabled', false);
+        monthInput.removeAttr('min max');
+        monthInput.val(selectedMonthKey || uniqueMonths[0]);
     }
 
     function loadScheduleForMonth(selectedMonthKey) {
@@ -316,9 +316,7 @@ function exportGembaPdf() {
 
     var tableData   = PmsReport.readDomTable('gembaScheduleTable');
     var monthFilter = document.getElementById('gembaMonthFilter');
-    var monthLabel  = monthFilter && monthFilter.options[monthFilter.selectedIndex]
-        ? monthFilter.options[monthFilter.selectedIndex].text.trim()
-        : '-';
+    var monthLabel  = monthFilter && monthFilter.value ? formatGembaMonthLabel(monthFilter.value) : '-';
     var filterLabel = 'Month: ' + monthLabel;
 
     var today = new Date();
@@ -327,7 +325,7 @@ function exportGembaPdf() {
     var yyyy = today.getFullYear();
 
     PmsReport.generate({
-        title:       'Gemba Walk Schedule',
+        title:       'Gemba Walk Tracker',
         filterLabel: filterLabel,
         orientation: 'portrait',
         columns:     tableData.columns,
@@ -338,4 +336,13 @@ function exportGembaPdf() {
     setTimeout(function() {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
     }, 2000);
+}
+
+function formatGembaMonthLabel(key) {
+    var dateObj = new Date(key + '-01T00:00:00');
+    if (Number.isNaN(dateObj.getTime())) {
+        return key || '-';
+    }
+    var month = dateObj.toLocaleString('en-GB', { month: 'short' });
+    return month + "'" + dateObj.getFullYear();
 }

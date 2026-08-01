@@ -6,25 +6,6 @@
     overflow: hidden;
 }
 
-.ts-meta-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(180px, 1fr));
-    gap: 10px;
-    padding: 12px;
-    background: #f3f4f6;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.ts-meta-card {
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    background: #ffffff;
-    padding: 10px 12px;
-    color: #111827;
-    font-size: 14px;
-    font-weight: 600;
-}
-
 .ts-title-row {
     text-align: center;
     font-size: 34px;
@@ -120,11 +101,48 @@
     padding: 18px;
 }
 
-@media (max-width: 900px) {
-    .ts-meta-row {
-        grid-template-columns: 1fr;
-    }
+.training-month-picker {
+    position: relative;
+    width: 180px;
+}
 
+.training-month-picker input[type="month"] {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0 38px 0 12px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.training-month-picker input[type="month"]:focus {
+    outline: none;
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.16);
+}
+
+.training-month-picker input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.training-month-picker i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #374151;
+    pointer-events: none;
+}
+
+@media (max-width: 900px) {
     .ts-title-row {
         font-size: 22px;
     }

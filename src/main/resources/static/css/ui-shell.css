@@ -188,9 +188,7 @@ table th,
 
 /* Hide pages not in the keep list */
 a[href="/meeting-agenda"],
-a[href*="config=leadership-gemba-tracker"],
-a[href*="config=meeting-agenda"],
-a[href*="config=process-confirmation"] {
+a[href*="config=meeting-agenda"] {
     display: none !important;
 }
 

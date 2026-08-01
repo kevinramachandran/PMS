@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -53,14 +53,19 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-sliders"></i><span>Gemba Walk Schedule</span></a>
-                <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Safety Gemba - Tracker"><i class="fas fa-sliders"></i><span>Safety Gemba - Tracker</span></a>
-                <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Schedule"><i class="fas fa-sliders"></i><span>Training Schedule</span></a>
+                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-sliders"></i><span>Gemba Walk Scheduler</span></a>
+                <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Training Scheduler"><i class="fas fa-sliders"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
-                <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="PMS Process Confirmation"><i class="fas fa-sliders"></i><span>PMS Process Confirmation</span></a>
-                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Tracker"><i class="fas fa-sliders"></i><span>Abnormality Tracker</span></a>
+                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Abnormality Reporting"><i class="fas fa-sliders"></i><span>Abnormality Reporting</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
-                <a href="/settings?config=kpi-cross-color" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
+                <div class="nav-parent" th:if="${session.canViewSettings}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="KPI Configuration"><i class="fas fa-sliders"></i><span>KPI Configuration</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/settings?config=kpi-cross-color" class="nav-item nav-child" data-tooltip="KPI Target Cross Color"><i class="fas fa-sliders"></i><span>KPI Target Cross Color</span></a>
+                    </div>
+                </div>
+                <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
+                <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewSettings}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
                 <a href="/pms-configuration" class="nav-item" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
                 <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-id-card"></i><span>License Management</span></a>
                 <a href="/email-configuration" class="nav-item active" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email"><i class="fas fa-envelope"></i><span>Email</span></a>
