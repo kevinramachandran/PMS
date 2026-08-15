@@ -1,24 +1,4 @@
 $(document).ready(function() {
-    // Toggle nav children open/close
-    $('.nav-parent-toggle').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var $toggle = $(this);
-        var $children = $toggle.next('.nav-children');
-
-        if ($toggle.hasClass('expanded')) {
-            $toggle.removeClass('expanded');
-            $children.removeClass('show').slideUp(200);
-        } else {
-            $toggle.addClass('expanded');
-            $children.addClass('show').slideDown(200);
-        }
-    });
-
-    // Keep nav collapsed by default and only open the active branch
-    $('.nav-parent-toggle').removeClass('expanded');
-    $('.nav-children').removeClass('show').hide();
-
     function highlightCurrentNavigation() {
         const currentPath = window.location.pathname;
         const currentUrl = currentPath + window.location.search;
@@ -52,7 +32,7 @@ $(document).ready(function() {
         const $parentChildren = $activeChild.closest('.nav-children');
         const $parentToggle = $parentChildren.prev('.nav-parent-toggle');
         $parentToggle.addClass('expanded');
-        $parentChildren.addClass('show').show();
+        $parentChildren.addClass('show');
     }
 
     // Sidebar Toggle
@@ -150,8 +130,8 @@ function applyKpiTvFit() {
         return;
     }
 
-    // Keep fixed-fit mode only on wide screens; allow natural overflow + scroll on laptop-sized windows.
-    if (!isKpiTvLayout() || window.innerWidth <= 1440 || window.innerHeight <= 680) {
+    // Keep natural mobile/tablet scrolling, but fit the full dashboard on normal desktop screens.
+    if (!isKpiTvLayout() || window.innerWidth <= 1024 || window.innerHeight <= 560) {
         resetKpiTvFit(shell, stage);
         return;
     }
@@ -2107,6 +2087,19 @@ function toLocalDateKey(date) {
     return year + '-' + month + '-' + day;
 }
 
+function formatDisplayDate(dateValue) {
+    if (!dateValue) {
+        return '';
+    }
+
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+        return '';
+    }
+
+    return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 function loadDailyPerformanceSummary(month, year) {
     const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
     const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
@@ -2168,10 +2161,7 @@ function updateDailyPerformanceAsOf(dateValue, forceUpdate) {
         return;
     }
 
-    const day = String(parsed.getDate()).padStart(2, '0');
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    const year = parsed.getFullYear();
-    asOf.textContent = 'As of: ' + day + '-' + month + '-' + year;
+    asOf.textContent = 'As of: ' + formatDisplayDate(parsed);
 }
 
 function updateYesterdayDataDate(dateValue) {
@@ -2189,10 +2179,7 @@ function updateYesterdayDataDate(dateValue) {
         return;
     }
 
-    const day = String(parsed.getDate()).padStart(2, '0');
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    const year = parsed.getFullYear();
-    dateLabel.textContent = '[' + day + '-' + month + '-' + year + ']';
+    dateLabel.textContent = '[' + formatDisplayDate(parsed) + ']';
 }
 
 function updateDateLabel(elementId, dateValue) {
@@ -2207,10 +2194,7 @@ function updateDateLabel(elementId, dateValue) {
         el.textContent = '';
         return;
     }
-    const day = String(parsed.getDate()).padStart(2, '0');
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    const year = parsed.getFullYear();
-    el.textContent = '[' + day + '-' + month + '-' + year + ']';
+    el.textContent = '[' + formatDisplayDate(parsed) + ']';
 }
 
 function readNumber(record, fieldName) {

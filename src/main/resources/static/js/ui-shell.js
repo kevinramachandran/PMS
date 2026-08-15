@@ -301,7 +301,6 @@
             toggle.setAttribute('aria-expanded', 'false');
             if (children) {
                 children.classList.remove('show');
-                children.style.display = 'none';
             }
         }
 
@@ -311,7 +310,6 @@
             toggle.setAttribute('aria-expanded', 'true');
             if (children) {
                 children.classList.add('show');
-                children.style.display = 'block';
             }
         }
 
@@ -354,6 +352,11 @@
 
         if (activeChild) {
             activeChild.classList.add('active');
+            const parentChildren = activeChild.closest('.nav-children');
+            const parentToggle = parentChildren ? parentChildren.previousElementSibling : null;
+            if (parentToggle && parentToggle.classList.contains('nav-parent-toggle')) {
+                openBranch(parentToggle);
+            }
             return;
         }
 

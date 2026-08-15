@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -108,11 +108,12 @@
                             <th class="sortable" data-sort-key="venue">Venue</th>
                             <th class="sortable" data-sort-key="fpr">FPR</th>
                             <th class="sortable" data-sort-key="status">Status</th>
+                            <th th:if="${canEditCurrentPage}">Action</th>
                         </tr>
                         </thead>
                         <tbody id="trainingScheduleBody">
                         <tr>
-                            <td colspan="10" class="ts-empty">No training schedule configured. Open Training Schedule.</td>
+                            <td th:attr="colspan=${canEditCurrentPage} ? 11 : 10" class="ts-empty">No training schedule configured. Open Training Schedule.</td>
                         </tr>
                         </tbody>
                     </table>

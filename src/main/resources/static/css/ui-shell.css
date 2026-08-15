@@ -230,6 +230,23 @@ body.modern-shell .top-header {
     flex-shrink: 0 !important;
 }
 
+.nav-children {
+    padding: 4px 0 6px 18px !important;
+}
+
+.nav-children .nav-child,
+.sidebar .nav-children .nav-item.nav-child {
+    margin-left: 8px !important;
+    margin-right: 10px !important;
+    padding-left: 18px !important;
+}
+
+.nav-children .nav-child i {
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    font-size: 15px !important;
+}
+
 .nav-parent {
     margin-top: 14px !important;
     padding-top: 14px !important;
@@ -271,6 +288,16 @@ body.modern-shell .top-header {
     margin: 2px 6px !important;
     padding: 12px !important;
     gap: 0 !important;
+}
+
+.sidebar.collapsed .nav-children {
+    padding: 0 !important;
+}
+
+.sidebar.collapsed .nav-children .nav-child,
+.sidebar.collapsed .nav-children .nav-item.nav-child {
+    margin: 2px 6px !important;
+    padding: 12px !important;
 }
 
 .sidebar.collapsed .nav-item span,
@@ -421,4 +448,13 @@ body.modern-shell .footer {
 
 .settings-container.issue-board-full-page .settings-main {
     width: auto !important;
+}
+button > i,
+.btn > i,
+.nav-item > i,
+.header-icon > i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }

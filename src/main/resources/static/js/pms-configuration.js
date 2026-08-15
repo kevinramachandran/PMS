@@ -40,8 +40,8 @@
             items: [
                 {
                     key: 'PMS_DATA_ENTRY',
-                    label: 'PMS4 Deck V0 Data',
-                    description: 'All child pages under Top Priorities, weekly priorities, daily performance, and daily sections.'
+                    label: 'PMS4 Deck Data Pages',
+                    description: 'Top priorities, weekly priorities, daily performance, and daily section pages.'
                 },
                 {
                     key: 'PRODUCTION_METRICS_DATA',

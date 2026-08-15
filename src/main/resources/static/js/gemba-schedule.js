@@ -26,11 +26,17 @@ $(document).ready(function() {
     }
 
     let availableDates = [];
+    let currentGembaEditDate = '';
+    const canEditCurrentPage = String(document.body && document.body.dataset.canEditCurrentPage || '').toLowerCase() === 'true';
 
     function escapeHtml(value) {
         const div = document.createElement('div');
         div.textContent = value || '';
         return div.innerHTML;
+    }
+
+    function escapeAttr(value) {
+        return escapeHtml(value).replace(/'/g, '&#39;');
     }
 
     function rowClass(row) {
@@ -78,9 +84,10 @@ $(document).ready(function() {
     function renderRowsForMonth(rows, selectedMonthKey) {
         const tbody = $('#gembaScheduleBody');
         tbody.empty();
+        const colCount = canEditCurrentPage ? 6 : 5;
 
         if (!rows || rows.length === 0) {
-            tbody.append('<tr><td colspan="5" class="gemba-empty">No schedule configured for selected month.</td></tr>');
+            tbody.append('<tr><td colspan="' + colCount + '" class="gemba-empty">No schedule configured for selected month.</td></tr>');
             $('#gembaMonthLabel').text(selectedMonthKey ? monthLabelFromKey(selectedMonthKey) : '-');
             return;
         }
@@ -92,13 +99,14 @@ $(document).ready(function() {
         grouped.forEach(function(group) {
             tbody.append(
                 '<tr class="gemba-row-section">' +
-                '<td colspan="5">' + escapeHtml(group.type) + '</td>' +
+                '<td colspan="' + colCount + '">' + escapeHtml(group.type) + '</td>' +
                 '</tr>'
             );
 
             group.rows.forEach(function(row, index) {
                 row.__groupIndex = index;
                 const associate = row.associateName || row.functionName || '';
+                const editDate = row.scheduleDate || currentGembaEditDate || '';
                 tbody.append(
                     '<tr class="' + rowClass(row) + '">' +
                     '<td>' + escapeHtml(associate) + '</td>' +
@@ -106,6 +114,7 @@ $(document).ready(function() {
                     '<td>' + escapeHtml(row.week2) + '</td>' +
                     '<td>' + escapeHtml(row.week3) + '</td>' +
                     '<td>' + escapeHtml(row.week4) + '</td>' +
+                    (canEditCurrentPage ? '<td><button type="button" class="schedule-edit-link" data-date="' + escapeAttr(editDate) + '" title="Edit schedule" aria-label="Edit schedule"><i class="fas fa-pen-to-square"></i></button></td>' : '') +
                     '</tr>'
                 );
             });
@@ -225,6 +234,7 @@ $(document).ready(function() {
         updateSyncStatus('Syncing...');
 
         const latestDate = datesInMonth[0];
+        currentGembaEditDate = latestDate;
         $.ajax({
             url: '/api/gemba-schedule/date/' + latestDate,
             type: 'GET',
@@ -277,6 +287,14 @@ $(document).ready(function() {
         loadScheduleForMonth(selectedMonth);
     });
 
+    $('#gembaScheduleBody').on('click', '.schedule-edit-link', function() {
+        const editDate = $(this).data('date') || currentGembaEditDate;
+        if (editDate) {
+            sessionStorage.setItem('gemba-schedule-open-date', editDate);
+        }
+        window.location.href = '/settings?config=gemba-schedule';
+    });
+
     window.addEventListener('storage', function(e) {
         if (e.key === 'gemba-schedule-update') {
             loadFiltersAndSchedule($('#gembaMonthFilter').val() || '');
@@ -295,6 +313,10 @@ function exportGembaPdf() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
 
     var tableData   = PmsReport.readDomTable('gembaScheduleTable');
+    if (tableData.columns.length && String(tableData.columns[tableData.columns.length - 1]).toLowerCase() === 'action') {
+        tableData.columns = tableData.columns.slice(0, -1);
+        tableData.rows = tableData.rows.map(function(row) { return row.slice(0, -1); });
+    }
     var monthFilter = document.getElementById('gembaMonthFilter');
     var monthLabel  = monthFilter && monthFilter.value ? formatGembaMonthLabel(monthFilter.value) : '-';
     var filterLabel = 'Month: ' + monthLabel;
@@ -310,7 +332,7 @@ function exportGembaPdf() {
         orientation: 'portrait',
         columns:     tableData.columns,
         rows:        tableData.rows,
-        filename:    'Gemba-Walk-Schedule_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+        filename:    'Gemba-Walk-Schedule_' + (monthFilter && monthFilter.value ? monthFilter.value : yyyy + '-' + mm) + '.pdf'
     });
 
     setTimeout(function() {

@@ -242,8 +242,7 @@ public class IssueBoardNotificationService {
             html.append(buildDetailRow("Days Overdue", overdueDetail));
         }
 
-        html.append(buildDetailRow("Remarks", defaultText(item.getRemarks(), "-")))
-            .append("</table>")
+        html.append("</table>")
             .append("<p style='margin:16px 0 0 0;font-size:14px;'>")
             .append(escapeHtml(defaultText(footer, "")))
             .append("</p>")

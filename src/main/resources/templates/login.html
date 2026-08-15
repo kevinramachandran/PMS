@@ -27,18 +27,22 @@
 
         <div class="login-field">
             <label for="username">Username</label>
-            <input type="text" id="username" placeholder="Enter username"
-                   required autocomplete="username">
+            <div class="login-input-wrap">
+                <i class="fas fa-user login-field-icon" aria-hidden="true"></i>
+                <input type="text" id="username" placeholder="Enter username"
+                       required autocomplete="username">
+            </div>
         </div>
 
         <div class="login-field">
             <label for="password">Password</label>
-            <div class="password-input-wrap">
+            <div class="login-input-wrap password-input-wrap">
+                <i class="fas fa-lock login-field-icon password-lock-icon" id="passwordLockIcon" aria-hidden="true"></i>
                 <input type="password" id="password" placeholder="Enter password"
                        required autocomplete="current-password">
                 <button type="button" class="password-toggle-btn" id="togglePasswordBtn"
                         aria-label="Show password" title="Show password">
-                    <i class="fas fa-eye"></i>
+                    <span class="password-eye-icon" aria-hidden="true"></span>
                 </button>
             </div>
         </div>
@@ -57,6 +61,7 @@
             const errorBox   = document.getElementById('loginError');
             const errorMsg   = document.getElementById('loginErrorMsg');
             const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+            const passwordLockIcon = document.getElementById('passwordLockIcon');
 
             function showError(msg) {
                 errorMsg.textContent = msg;
@@ -130,9 +135,11 @@
                     passwordEl.type = showing ? 'password' : 'text';
                     togglePasswordBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
                     togglePasswordBtn.setAttribute('title', showing ? 'Show password' : 'Hide password');
-                    togglePasswordBtn.innerHTML = showing
-                        ? '<i class="fas fa-eye"></i>'
-                        : '<i class="fas fa-eye-slash"></i>';
+                    togglePasswordBtn.classList.toggle('is-visible', !showing);
+                    if (passwordLockIcon) {
+                        passwordLockIcon.classList.toggle('fa-lock', showing);
+                        passwordLockIcon.classList.toggle('fa-lock-open', !showing);
+                    }
                     passwordEl.focus();
                 });
             }

@@ -149,12 +149,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
         boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+        boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
 
         session.setAttribute("canViewSettings", RoleAccess.canViewAnyConfigurationPage(role, viewPermissions));
         session.setAttribute("canEditSettings", RoleAccess.canEditAnyConfigurationPage(role, editPermissions));
         session.setAttribute("canViewPmsDataEntry", canViewPmsDataEntry);
         session.setAttribute("canViewProductionMetricsData", canViewProductionMetricsData);
         session.setAttribute("canViewIssueBoardConfiguration", canViewIssueBoardConfiguration);
+        session.setAttribute("canEditIssueBoardConfiguration", canEditIssueBoardConfiguration);
         session.setAttribute("canViewGembaWalkConfiguration", canViewGembaWalkConfiguration);
         session.setAttribute("canViewLeadershipGembaTrackerConfiguration", canViewLeadershipGembaTrackerConfiguration);
         session.setAttribute("canViewTrainingScheduleConfiguration", canViewTrainingScheduleConfiguration);
@@ -239,7 +241,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_PRODUCTION_METRICS_DATA;
         }
 
-        if (path.startsWith("/config/issue-board") || path.startsWith("/api/issue-board")) {
+        if (path.startsWith("/issue-board") || path.startsWith("/config/issue-board") || path.startsWith("/api/issue-board")) {
             return RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION;
         }
 

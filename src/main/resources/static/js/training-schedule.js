@@ -6,6 +6,7 @@ $(document).ready(function() {
 
     let availablePeriods = [];
     let currentPeriodLabel = '';
+    const canEditCurrentPage = String(document.body && document.body.dataset.canEditCurrentPage || '').toLowerCase() === 'true';
 
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
@@ -38,6 +39,10 @@ $(document).ready(function() {
         return div.innerHTML;
     }
 
+    function safeAttr(value) {
+        return safeText(value).replace(/'/g, '&#39;');
+    }
+
     function periodToMonthYear(label) {
         const parts = String(label || '').split("'");
         if (parts.length !== 2) return null;
@@ -67,19 +72,26 @@ $(document).ready(function() {
         return month + "'" + year;
     }
 
+    function dateFromPeriodLabel(label) {
+        const key = monthKeyFromPeriod(label);
+        return key ? key + '-01' : '';
+    }
+
     function formatDate(d) {
         if (!d) return '-';
         const dt = new Date(d + 'T00:00:00');
         if (Number.isNaN(dt.getTime())) return d;
-        return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     function statusClass(status) {
-        return String(status || '').toLowerCase().includes('good') ? 'ts-status-good' : 'ts-status-bad';
+        const value = String(status || '').toLowerCase();
+        return (value.includes('completed') && !value.includes('not')) || value.includes('good') ? 'ts-status-good' : 'ts-status-bad';
     }
 
     function statusMarkup(status) {
-        const text = status || '';
+        const raw = String(status || '').trim();
+        const text = raw.toLowerCase() === 'daily good' ? 'Completed' : (raw.toLowerCase() === 'daily bad' ? 'Not Completed' : raw);
         const cls = statusClass(text);
         return '<span class="ts-status-pill ' + cls + '">' +
             '<span class="ts-status-dot"></span>' +
@@ -90,13 +102,15 @@ $(document).ready(function() {
     function renderRows(rows, periodLabel) {
         const tbody = $('#trainingScheduleBody');
         tbody.empty();
+        const colCount = canEditCurrentPage ? 11 : 10;
 
         if (!rows || rows.length === 0) {
-            tbody.html('<tr><td colspan="10" class="ts-empty">No training schedule configured for selected month.</td></tr>');
+            tbody.html('<tr><td colspan="' + colCount + '" class="ts-empty">No training schedule configured for selected month.</td></tr>');
             return;
         }
 
         rows.forEach(function(r, idx) {
+            const editDate = r.configDate || dateFromPeriodLabel(periodLabel);
             tbody.append(
                 '<tr>' +
                 '<td>' + (idx + 1) + '</td>' +
@@ -109,6 +123,7 @@ $(document).ready(function() {
                 '<td>' + safeText(r.venue) + '</td>' +
                 '<td>' + safeText(r.fpr) + '</td>' +
                 '<td class="ts-status-cell">' + statusMarkup(r.status) + '</td>' +
+                (canEditCurrentPage ? '<td><button type="button" class="schedule-edit-link" data-date="' + safeAttr(editDate) + '" title="Edit training" aria-label="Edit training"><i class="fas fa-pen-to-square"></i></button></td>' : '') +
                 '</tr>'
             );
         });
@@ -297,6 +312,14 @@ $(document).ready(function() {
         loadByMonthKey($(this).val());
     });
 
+    $('#trainingScheduleBody').on('click', '.schedule-edit-link', function() {
+        const editDate = $(this).data('date') || dateFromPeriodLabel(currentPeriodLabel);
+        if (editDate) {
+            sessionStorage.setItem('training-schedule-open-date', editDate);
+        }
+        window.location.href = '/settings?config=training-schedule';
+    });
+
     window.addEventListener('storage', function(e) {
         if (e.key === 'training-schedule-update') {
             loadFiltersAndData($('#trainingMonthFilter').val() || '');
@@ -315,6 +338,10 @@ function exportTrainingPdf() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
 
     var tableData   = PmsReport.readDomTable('trainingScheduleTable');
+    if (tableData.columns.length && String(tableData.columns[tableData.columns.length - 1]).toLowerCase() === 'action') {
+        tableData.columns = tableData.columns.slice(0, -1);
+        tableData.rows = tableData.rows.map(function(row) { return row.slice(0, -1); });
+    }
     var monthInput  = document.getElementById('trainingMonthFilter');
     var monthText   = monthInput && monthInput.value ? formatTrainingMonthLabel(monthInput.value) : '-';
     var filterLabel = 'Month: ' + monthText;
@@ -330,7 +357,7 @@ function exportTrainingPdf() {
         orientation: 'landscape',
         columns:     tableData.columns,
         rows:        tableData.rows,
-        filename:    'Training-Schedule_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+        filename:    'Training-Schedule_' + (monthInput && monthInput.value ? monthInput.value : yyyy + '-' + mm) + '.pdf'
     });
 
     setTimeout(function() {

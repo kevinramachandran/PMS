@@ -33,7 +33,7 @@ public class AuthService {
     @Autowired
     private LicenseService licenseService;
 
-    @Value("${app.internal.siva.password:Siva@2026}")
+    @Value("${app.internal.siva.password:}")
     private String sivaPassword;
 
     public boolean isInternalStaticUser(String username) {
@@ -58,6 +58,9 @@ public class AuthService {
 
         String normalizedUsername = username.trim();
         if (isInternalStaticUser(normalizedUsername)) {
+            if (!isSivaUserConfigured()) {
+                return Optional.empty();
+            }
             UserInfo siva = buildSivaUser();
             return passwordEncoder.matches(password, siva.getPassword())
                     ? Optional.of(siva)
@@ -71,7 +74,9 @@ public class AuthService {
 
     public List<UserInfo> getAllUsers() {
         List<UserInfo> users = new ArrayList<>();
-        users.add(buildSivaUser());
+        if (isSivaUserConfigured()) {
+            users.add(buildSivaUser());
+        }
         appUserRepository.findAll().stream()
                 .filter(u -> !isReservedUsername(u.getUsername()))
                 .map(this::toUserInfo)
@@ -202,13 +207,14 @@ public class AuthService {
         return isInternalStaticUser(username);
     }
 
+    private boolean isSivaUserConfigured() {
+        return sivaPassword != null && !sivaPassword.isBlank();
+    }
+
     private UserInfo buildSivaUser() {
-        String password = (sivaPassword == null || sivaPassword.isBlank())
-                ? "Siva@2026"
-                : sivaPassword;
         return new UserInfo(SIVA_USERNAME,
                 SIVA_EMAIL,
-                passwordEncoder.encode(password),
+                passwordEncoder.encode(sivaPassword),
                 RoleAccess.ADMIN,
                 RoleAccess.CONFIG_PAGES,
                 RoleAccess.CONFIG_PAGES);

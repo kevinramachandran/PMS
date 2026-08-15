@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -106,11 +106,12 @@
                             <th>Week # 2</th>
                             <th>Week # 3</th>
                             <th>Week # 4</th>
+                            <th th:if="${canEditCurrentPage}">Action</th>
                         </tr>
                         </thead>
                         <tbody id="gembaScheduleBody">
                         <tr>
-                            <td colspan="5" class="gemba-empty">No schedule configured. Open Gemba Walk Tracker.</td>
+                            <td th:attr="colspan=${canEditCurrentPage} ? 6 : 5" class="gemba-empty">No schedule configured. Open Gemba Walk Tracker.</td>
                         </tr>
                         </tbody>
                     </table>

@@ -205,12 +205,14 @@ public class AuthController {
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
         boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
         boolean canEditUserManagement = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+        boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
 
         session.setAttribute("canViewSettings", RoleAccess.canViewAnyConfigurationPage(role, viewPermissions));
         session.setAttribute("canEditSettings", RoleAccess.canEditAnyConfigurationPage(role, editPermissions));
         session.setAttribute("canViewPmsDataEntry", canViewPmsDataEntry);
         session.setAttribute("canViewProductionMetricsData", canViewProductionMetricsData);
         session.setAttribute("canViewIssueBoardConfiguration", canViewIssueBoardConfiguration);
+        session.setAttribute("canEditIssueBoardConfiguration", canEditIssueBoardConfiguration);
         session.setAttribute("canViewGembaWalkConfiguration", canViewGembaWalkConfiguration);
         session.setAttribute("canViewLeadershipGembaTrackerConfiguration", canViewLeadershipGembaTrackerConfiguration);
         session.setAttribute("canViewTrainingScheduleConfiguration", canViewTrainingScheduleConfiguration);

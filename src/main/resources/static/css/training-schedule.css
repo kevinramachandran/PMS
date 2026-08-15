@@ -101,6 +101,23 @@
     padding: 18px;
 }
 
+.schedule-edit-link {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #16a34a;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #15803d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.schedule-edit-link:hover {
+    background: #ecfdf5;
+}
+
 .training-month-picker {
     position: relative;
     width: 180px;

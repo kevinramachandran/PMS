@@ -6,13 +6,13 @@
     <title>Issue Board - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/issue-board.css?v=edit-link-20260814">
+    <link rel="stylesheet" href="/css/issue-board.css?v=history-update-20260815">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-can-edit-issue-board=${session.canEditIssueBoardConfiguration}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -90,8 +90,9 @@
             <section class="issue-board-card">
                 <div class="issue-board-title-row">
                     <div class="review-dates">
-                        <span>Last: <strong id="lastReviewDate">-</strong></span>
-                        <span>Next: <strong id="nextReviewDate">-</strong></span>
+                        <span>Last Updated: <strong id="issueLastUpdatedDate">-</strong></span>
+                        <span>Last Reviewed: <strong id="lastReviewDate">-</strong></span>
+                        <span>Next Review: <strong id="nextReviewDate">-</strong></span>
                     </div>
                     <div class="issue-search" role="search">
                         <i class="fas fa-search" aria-hidden="true"></i>
@@ -117,13 +118,13 @@
                             <th class="sortable" data-sort-key="targetDate">Target date</th>
                             <th class="sortable" data-sort-key="dueDays">Due days</th>
                             <th class="sortable" data-sort-key="status">Status</th>
-                            <th class="sortable" data-sort-key="remarks">Remarks</th>
-                            <th>Action</th>
+                            <th>History</th>
+                            <th th:if="${session.canEditIssueBoardConfiguration}">Action</th>
                         </tr>
                         </thead>
                         <tbody id="issueBoardBody">
                         <tr>
-                            <td colspan="13" class="empty-row">No issue board data configured. Open Issue Board.</td>
+                            <td th:attr="colspan=${session.canEditIssueBoardConfiguration} ? 13 : 12" class="empty-row">No issue board data configured. Open Issue Board.</td>
                         </tr>
                         </tbody>
                     </table>
@@ -140,8 +141,58 @@
     </main>
 </div>
 
+<div class="issue-drawer-backdrop" id="issueBoardDrawerBackdrop"></div>
+<aside class="issue-drawer" id="issueBoardDrawer" aria-hidden="true" aria-labelledby="issueBoardDrawerTitle">
+    <div class="issue-drawer-header">
+        <h2 id="issueBoardDrawerTitle">Update Issue</h2>
+        <button type="button" class="issue-drawer-close" id="issueBoardDrawerClose" aria-label="Close issue editor">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <form id="issueBoardDrawerForm" class="issue-drawer-form">
+        <input type="hidden" id="drawerIssueIndex">
+        <input type="hidden" id="drawerIssueId">
+        <div class="issue-drawer-summary" id="drawerIssueSummary"></div>
+        <div class="issue-drawer-grid">
+            <div class="form-group">
+                <label for="drawerIssueTargetDate">Target Date <span>*</span></label>
+                <input type="date" id="drawerIssueTargetDate" required>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssueStatus">Status <span>*</span></label>
+                <select id="drawerIssueStatus" required>
+                    <option value="0%">-</option>
+                    <option value="25%">P</option>
+                    <option value="50%">D</option>
+                    <option value="75%">C</option>
+                    <option value="100%">A</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssueCompletedDate">Completed Date</label>
+                <input type="date" id="drawerIssueCompletedDate">
+            </div>
+        </div>
+        <div class="issue-drawer-actions">
+            <button type="button" class="btn btn-secondary" id="issueBoardDrawerCancel"><i class="fas fa-times"></i> Cancel</button>
+            <button type="submit" class="btn btn-primary" id="issueBoardDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
+        </div>
+    </form>
+</aside>
+
+<div class="issue-drawer-backdrop" id="issueHistoryDrawerBackdrop"></div>
+<aside class="issue-drawer issue-history-drawer" id="issueHistoryDrawer" aria-hidden="true" aria-labelledby="issueHistoryDrawerTitle">
+    <div class="issue-drawer-header">
+        <h2 id="issueHistoryDrawerTitle">History</h2>
+        <button type="button" class="issue-drawer-close" id="issueHistoryDrawerClose" aria-label="Close issue history">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="issue-history-list" id="issueHistoryList"></div>
+</aside>
+
 <script src="/js/pdf-report.js"></script>
-<script src="/js/issue-board.js?v=nav-global-20260814"></script>
+<script src="/js/issue-board.js?v=history-update-20260815"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=username-global-20260814"></script>
 </body>

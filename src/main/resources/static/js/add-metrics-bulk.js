@@ -279,10 +279,7 @@
             return '-';
         }
 
-        const day = String(parsed.getDate()).padStart(2, '0');
-        const month = String(parsed.getMonth() + 1).padStart(2, '0');
-        const year = parsed.getFullYear();
-        return day + '-' + month + '-' + year;
+        return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     function escapeAttr(value) {

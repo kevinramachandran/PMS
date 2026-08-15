@@ -6,7 +6,7 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/settings.css?v=section-label-cleanup-20260814">
+    <link rel="stylesheet" href="/css/settings.css?v=issue-remarks-removed-20260815">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
@@ -73,6 +73,18 @@
                 <div class="header-left">
                     <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
                     <h1 th:text="${activeTitle != null and !#strings.isEmpty(activeTitle) ? activeTitle : 'PMS4 Deck V0 Data'}">PMS4 Deck V0 Data</h1>
+                </div>
+                <div class="header-center metrics-header-actions" th:if="${activePage == 'metrics-data'}">
+                    <button type="button" class="btn btn-secondary" id="exportMetricsCsvBtn">
+                        <i class="fas fa-file-export"></i> Export CSV
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="downloadMetricsCsvTemplateBtn">
+                        <i class="fas fa-file-download"></i> Download CSV Template
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="uploadMetricsCsvBtn" th:disabled="${!canEditCurrentPage}">
+                        <i class="fas fa-file-upload"></i> Upload CSV (All 4 Types)
+                    </button>
+                    <input type="file" id="metricsCsvFileInput" accept=".csv,text/csv" style="display:none;">
                 </div>
                 <div class="header-right">
                     <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
@@ -210,16 +222,6 @@
 
                             <div id="form-metrics-data" class="form-section">
                                 <form id="metricsDataForm" class="dynamic-form">
-                                    <div class="form-actions" style="margin-bottom:12px; justify-content:flex-start; gap:10px;">
-                                        <button type="button" class="btn btn-secondary" id="downloadMetricsCsvTemplateBtn">
-                                            <i class="fas fa-file-download"></i> Download CSV Template
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" id="uploadMetricsCsvBtn">
-                                            <i class="fas fa-file-upload"></i> Upload CSV (All 4 Types)
-                                        </button>
-                                        <input type="file" id="metricsCsvFileInput" accept=".csv,text/csv" style="display:none;">
-                                    </div>
-
                                     <div class="metrics-tabs" role="tablist" aria-label="Production Metrics Sections">
                                         <button type="button" class="metrics-tab active" data-tab="people">People</button>
                                         <button type="button" class="metrics-tab" data-tab="quality">Quality</button>
@@ -597,7 +599,6 @@
                                                 <th>Due days</th>
                                                 <th>Status</th>
                                                 <th>Completed date</th>
-                                                <th>Remarks</th>
                                                 <th>Action</th>
                                             </tr>
                                             </thead>
@@ -606,10 +607,7 @@
                                     </div>
                                     <div class="form-actions compact-actions" style="margin-top: 12px; display: flex; gap: 10px;">
                                         <button type="button" class="btn btn-secondary issue-add-row-btn" id="addIssueBoardRowTableBtn">
-                                            <i class="fas fa-plus"></i> Add New Row
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" id="loadLatestIssueBoardBtn">
-                                            <i class="fas fa-copy"></i> Copy from Latest Board
+                                            <i class="fas fa-plus"></i> Add New Issue
                                         </button>
                                     </div>
                                 </div>
@@ -626,6 +624,93 @@
                                 <div id="issueBoardMessage" class="form-message"></div>
                                 <div id="issueBoardPopup" class="issue-popup" aria-live="polite"></div>
                                 <div id="issueBoardToast" class="issue-board-toast" aria-live="polite"></div>
+                                <div class="issue-drawer-backdrop" id="issueConfigDrawerBackdrop"></div>
+                                <aside class="issue-drawer" id="issueConfigDrawer" aria-hidden="true" aria-labelledby="issueConfigDrawerTitle">
+                                    <div class="issue-drawer-header">
+                                        <h2 id="issueConfigDrawerTitle">Edit Issue</h2>
+                                        <button type="button" class="issue-drawer-close" id="issueConfigDrawerClose" aria-label="Close issue editor">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <form id="issueConfigDrawerForm" class="issue-drawer-form">
+                                        <input type="hidden" id="issueConfigDrawerRowIndex">
+                                        <div class="form-group">
+                                            <label for="issueConfigDrawerProblem">Problem <span>*</span></label>
+                                            <input type="text" id="issueConfigDrawerProblem" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="issueConfigDrawerPriority">Priority <span>*</span></label>
+                                            <select id="issueConfigDrawerPriority" required>
+                                                <option value="">Select priority</option>
+                                                <option value="High">High</option>
+                                                <option value="Medium">Medium</option>
+                                                <option value="Low">Low</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="issueConfigDrawerOwner">Name <span>*</span></label>
+                                            <input type="text" id="issueConfigDrawerOwner" required>
+                                        </div>
+                                        <div class="issue-drawer-grid">
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerIssueDate">Date <span>*</span></label>
+                                                <input type="date" id="issueConfigDrawerIssueDate" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerTargetDate">Target Date <span>*</span></label>
+                                                <input type="date" id="issueConfigDrawerTargetDate" required>
+                                            </div>
+                                        </div>
+                                        <div class="issue-drawer-grid">
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerTargetExt1">Target Date Ext. 1</label>
+                                                <input type="date" id="issueConfigDrawerTargetExt1">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerTargetExt2">Target Date Ext. 2</label>
+                                                <input type="date" id="issueConfigDrawerTargetExt2">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="issueConfigDrawerRootCause">Root Cause <span>*</span></label>
+                                            <textarea id="issueConfigDrawerRootCause" rows="3" required></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="issueConfigDrawerActions">Actions <span>*</span></label>
+                                            <textarea id="issueConfigDrawerActions" rows="3" required></textarea>
+                                        </div>
+                                        <div class="issue-drawer-grid">
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerResponsible">Responsible <span>*</span></label>
+                                                <input type="text" id="issueConfigDrawerResponsible" list="issueBoardResponsibleUsersList" autocomplete="off" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerDueDays">Due Days</label>
+                                                <input type="number" id="issueConfigDrawerDueDays" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="issue-drawer-grid">
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerStatus">Status <span>*</span></label>
+                                                <select id="issueConfigDrawerStatus" required>
+                                                    <option value="0%">-</option>
+                                                    <option value="25%">P</option>
+                                                    <option value="50%">D</option>
+                                                    <option value="75%">C</option>
+                                                    <option value="100%">A</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerCompletedDate">Completed Date</label>
+                                                <input type="date" id="issueConfigDrawerCompletedDate">
+                                            </div>
+                                        </div>
+                                        <div class="issue-drawer-actions">
+                                            <button type="button" class="btn btn-secondary" id="issueConfigDrawerCancel"><i class="fas fa-times"></i> Cancel</button>
+                                            <button type="submit" class="btn btn-primary" id="issueConfigDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
+                                        </div>
+                                    </form>
+                                </aside>
                             </div>
 
                             <div id="form-gemba-schedule" class="form-section issue-board-enterprise">
@@ -1109,6 +1194,13 @@
                                         <button type="button" class="btn btn-secondary" id="addAtRowBtn">
                                             <i class="fas fa-plus"></i> Add Row
                                         </button>
+                                        <button type="button" class="btn btn-secondary" id="downloadAtCsvTemplateBtn">
+                                            <i class="fas fa-download"></i> Download CSV Template
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="uploadAtCsvBtn">
+                                            <i class="fas fa-upload"></i> Upload CSV
+                                        </button>
+                                        <input type="file" id="atCsvFileInput" accept=".csv,text/csv" hidden>
                                     </div>
                                 </div>
 
@@ -1249,10 +1341,16 @@
                                         <button type="button" class="metrics-tab" data-section="cost">Cost</button>
                                     </div>
 
-                                    <div class="footer-btn-card kpi-rename-add-card">
+                                    <div id="kpiRenameMetricList" class="kpi-rename-list"></div>
+
+                                    <button type="button" id="showKpiRenameAddFormBtn" class="kpi-rename-add-trigger">
+                                        <i class="fas fa-plus"></i> Add Item
+                                    </button>
+
+                                    <div class="footer-btn-card kpi-rename-add-card" id="kpiRenameAddCard" hidden>
                                         <div class="kpi-rename-add-grid">
                                             <div class="form-group">
-                                                <label for="kpiRenameMetricLabel">Add Metric Label</label>
+                                                <label for="kpiRenameMetricLabel">Add Item Label</label>
                                                 <input type="text" id="kpiRenameMetricLabel" maxlength="160" placeholder="e.g. Absenteeism">
                                             </div>
                                             <div class="form-group">
@@ -1270,12 +1368,16 @@
                                                 </select>
                                             </div>
                                             <button type="button" id="addKpiRenameMetricBtn" class="btn btn-secondary">
-                                                <i class="fas fa-plus"></i> Add Metric
+                                                <i class="fas fa-plus"></i> Add Item
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div id="kpiRenameMetricList" class="kpi-rename-list"></div>
+                                    <div class="form-actions kpi-rename-save-colors-actions">
+                                        <button type="button" id="saveKpiRenameAlertColorsBtn" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save
+                                        </button>
+                                    </div>
                                     <div id="kpiRenameMessage" class="form-message"></div>
                                 </div>
                             </div>
@@ -1502,7 +1604,7 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=info-url-normalize-20260814"></script>
-    <script src="/js/settings.js?v=kpi-rename-color-mapped-20260814"></script>
+    <script src="/js/settings.js?v=issue-remarks-removed-20260815"></script>
     <script src="/js/hs-cross-config.js?v=hs-grey-accident-20260813"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-date-20260813"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">

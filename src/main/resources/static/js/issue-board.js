@@ -3,6 +3,7 @@ $(document).ready(function() {
     const sidebar = $('#sidebar');
     const sidebarOverlay = $('#sidebarOverlay');
     const mainContent = $('.main-content');
+    const canEditIssueBoard = String(document.body && document.body.dataset.canEditIssueBoard || '').toLowerCase() === 'true';
 
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
@@ -112,11 +113,26 @@ $(document).ready(function() {
             '</div>';
     }
 
-    function renderEditLink(row) {
-        const boardDate = row && row.boardDate ? row.boardDate : '';
+    function renderActionButtons(row) {
+        const sourceIndex = currentIssueBoardData.indexOf(row);
+        if (!canEditIssueBoard || !row || !row.id) {
+            return '';
+        }
         return '' +
-            '<button type="button" class="issue-edit-link" data-board-date="' + safeText(boardDate) + '" title="Edit this issue board row">' +
+            '<div class="issue-action-stack">' +
+            '<button type="button" class="issue-edit-link" data-index="' + sourceIndex + '" title="Update issue progress">' +
             '<i class="fas fa-pen-to-square"></i><span>Edit</span>' +
+            '</button>' +
+            '</div>';
+    }
+
+    function renderHistoryButton(row) {
+        if (!row || !row.id) {
+            return '-';
+        }
+        return '' +
+            '<button type="button" class="issue-history-link" data-id="' + safeText(row.id) + '" title="View history" aria-label="View issue history">' +
+            '<i class="fas fa-clock-rotate-left"></i>' +
             '</button>';
     }
 
@@ -155,14 +171,46 @@ $(document).ready(function() {
 
     function renderReviewDates(rows) {
         if (!rows || rows.length === 0) {
+            $('#issueLastUpdatedDate').text('-');
             $('#lastReviewDate').text('-');
             $('#nextReviewDate').text('-');
             return;
         }
 
         const first = rows[0];
+        $('#issueLastUpdatedDate').text(formatDisplayDate(first.boardDate));
         $('#lastReviewDate').text(formatDisplayDate(first.lastReviewDate));
         $('#nextReviewDate').text(formatDisplayDate(first.nextReviewDate));
+    }
+
+    function renderTargetDateCell(row) {
+        const baseDate = row.targetDate || '';
+        const extension1 = row.targetDateExtension1 || '';
+        const extension2 = row.targetDateExtension2 || '';
+        const effective = extension2 || extension1 || baseDate;
+        const dates = [];
+
+        if (baseDate) {
+            dates.push({ value: baseDate, revised: !!extension1 || !!extension2 });
+        }
+        if (extension1) {
+            dates.push({ value: extension1, revised: !!extension2 });
+        }
+        if (extension2) {
+            dates.push({ value: extension2, revised: false });
+        }
+
+        if (dates.length === 0 && effective) {
+            dates.push({ value: effective, revised: false });
+        }
+        if (dates.length === 0) {
+            return '-';
+        }
+
+        return '<div class="issue-target-date-stack">' + dates.map(function(item) {
+            const cls = item.revised ? 'issue-target-date-old' : 'issue-target-date-current';
+            return '<span class="' + cls + '">' + safeText(formatDisplayDate(item.value)) + '</span>';
+        }).join('') + '</div>';
     }
 
     function renderRows(rows, emptyMessage) {
@@ -170,7 +218,7 @@ $(document).ready(function() {
         tbody.empty();
 
         if (!rows || rows.length === 0) {
-            tbody.append('<tr><td colspan="13" class="empty-row">' + safeText(emptyMessage || 'No issue board data configured. Open Issue Board Configuration.') + '</td></tr>');
+            tbody.append('<tr><td colspan="' + (canEditIssueBoard ? '13' : '12') + '" class="empty-row">' + safeText(emptyMessage || 'No issue board data configured. Open Issue Board Configuration.') + '</td></tr>');
             return;
         }
 
@@ -182,15 +230,15 @@ $(document).ready(function() {
                 '<td>' + safeText(row.problem) + '</td>' +
                 '<td>' + safeText(row.priority) + '</td>' +
                 '<td>' + safeText(row.ownerName) + '</td>' +
-                '<td>' + safeText(row.issueDate) + '</td>' +
+                '<td>' + safeText(formatDisplayDate(row.issueDate)) + '</td>' +
                 '<td>' + safeText(row.rootCause) + '</td>' +
                 '<td>' + safeText(row.actions) + '</td>' +
                 '<td>' + safeText(row.responsible) + '</td>' +
-                '<td>' + safeText(formatDisplayDate(row.targetDate)) + '</td>' +
+                '<td>' + renderTargetDateCell(row) + '</td>' +
                 '<td class="' + dueClass(dueDays) + '">' + safeText(dueDays) + '</td>' +
-                '<td>' + renderStatusCircle(row.status) + '</td>' +
-                '<td>' + safeText(row.remarks) + '</td>' +
-                '<td>' + renderEditLink(row) + '</td>' +
+                '<td class="issue-icon-cell issue-status-col">' + renderStatusCircle(row.status) + '</td>' +
+                '<td class="issue-icon-cell issue-history-col">' + renderHistoryButton(row) + '</td>' +
+                (canEditIssueBoard ? '<td class="issue-icon-cell issue-action-col">' + renderActionButtons(row) + '</td>' : '') +
                 '</tr>';
             tbody.append(tr);
         });
@@ -278,7 +326,7 @@ $(document).ready(function() {
             dueDays,
             statusToPercent(row.status) + '%',
             row.status,
-            row.remarks
+            row.completedDate
         ].map(function(value) {
             return value === null || value === undefined ? '' : String(value).toLowerCase();
         }).join(' ');
@@ -326,12 +374,155 @@ $(document).ready(function() {
         });
     }
 
+    function setIssueDrawerOpen(open) {
+        $('#issueBoardDrawer').toggleClass('open', open).attr('aria-hidden', open ? 'false' : 'true');
+        $('#issueBoardDrawerBackdrop').toggleClass('open', open);
+    }
+
+    function setHistoryDrawerOpen(open) {
+        $('#issueHistoryDrawer').toggleClass('open', open).attr('aria-hidden', open ? 'false' : 'true');
+        $('#issueHistoryDrawerBackdrop').toggleClass('open', open);
+    }
+
+    function getIssueDrawerPayload() {
+        const targetDate = $('#drawerIssueTargetDate').val();
+        return {
+            targetDate: targetDate || null,
+            status: $('#drawerIssueStatus').val() || '0%',
+            completedDate: $('#drawerIssueCompletedDate').val() || null
+        };
+    }
+
+    function fillIssueDrawer(row, index) {
+        $('#drawerIssueIndex').val(index === null || index === undefined ? '' : index);
+        $('#drawerIssueId').val(row.id || '');
+        $('#issueBoardDrawerTitle').text('Update Issue');
+        $('#issueBoardDrawerSave').html('<i class="fas fa-check"></i> Update Issue');
+        $('#drawerIssueSummary').html(
+            '<strong>' + safeText(row.problem || 'Issue') + '</strong>' +
+            '<span>' + safeText(row.responsible || '-') + '</span>'
+        );
+        $('#drawerIssueTargetDate').val(row.targetDate || '');
+        $('#drawerIssueStatus').val(row.status || '0%');
+        $('#drawerIssueCompletedDate').val(row.completedDate || '');
+    }
+
     $('#issueBoardBody').on('click', '.issue-edit-link', function() {
-        const boardDate = $(this).data('board-date');
-        if (boardDate) {
-            sessionStorage.setItem('issue-board-open-date', boardDate);
+        const index = Number($(this).data('index'));
+        const row = currentIssueBoardData[index];
+        if (!canEditIssueBoard || !row) {
+            return;
         }
-        window.location.href = '/settings?config=issue-board';
+        fillIssueDrawer(row, index);
+        setIssueDrawerOpen(true);
+    });
+
+    function formatHistoryDate(value) {
+        if (!value) {
+            return '-';
+        }
+        const normalized = String(value).replace(' ', 'T');
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return date.toLocaleString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function renderHistoryEntries(entries) {
+        const list = $('#issueHistoryList');
+        list.empty();
+        if (!entries || entries.length === 0) {
+            list.html('<div class="issue-history-empty">No history yet.</div>');
+            return;
+        }
+        entries.forEach(function(entry) {
+            list.append(
+                '<div class="issue-history-item">' +
+                '<div class="issue-history-meta">' +
+                '<strong>' + safeText(entry.editedBy || '-') + '</strong>' +
+                '<span>' + safeText(formatHistoryDate(entry.editedAt)) + '</span>' +
+                '</div>' +
+                '<div class="issue-history-change">' +
+                '<span>' + safeText(entry.fieldName || 'Field') + '</span>' +
+                '<b>' + safeText(entry.oldValue || '-') + '</b>' +
+                '<i class="fas fa-arrow-right" aria-hidden="true"></i>' +
+                '<b>' + safeText(entry.newValue || '-') + '</b>' +
+                '</div>' +
+                '</div>'
+            );
+        });
+    }
+
+    $('#issueBoardBody').on('click', '.issue-history-link', function() {
+        const id = $(this).data('id');
+        $('#issueHistoryList').html('<div class="issue-history-empty">Loading...</div>');
+        setHistoryDrawerOpen(true);
+        $.ajax({
+            url: '/api/issue-board/' + id + '/history',
+            type: 'GET',
+            success: function(data) {
+                renderHistoryEntries(Array.isArray(data) ? data : []);
+            },
+            error: function() {
+                $('#issueHistoryList').html('<div class="issue-history-empty">Failed to load history.</div>');
+            }
+        });
+    });
+
+    $('#issueBoardDrawerClose, #issueBoardDrawerCancel, #issueBoardDrawerBackdrop').on('click', function() {
+        setIssueDrawerOpen(false);
+    });
+
+    $('#issueHistoryDrawerClose, #issueHistoryDrawerBackdrop').on('click', function() {
+        setHistoryDrawerOpen(false);
+    });
+
+    $('#issueBoardDrawerForm').on('submit', function(event) {
+        event.preventDefault();
+        if (!canEditIssueBoard) {
+            return;
+        }
+        const row = getIssueDrawerPayload();
+        const id = $('#drawerIssueId').val();
+        const indexValue = $('#drawerIssueIndex').val();
+        if (!id || !row.targetDate) {
+            return;
+        }
+        if (row.status === '100%' && !row.completedDate) {
+            $('#drawerIssueCompletedDate').trigger('focus');
+            return;
+        }
+
+        $('#issueBoardDrawerSave').prop('disabled', true);
+        $.ajax({
+            url: '/api/issue-board/' + id + '/progress',
+            type: 'PATCH',
+            contentType: 'application/json',
+            data: JSON.stringify(row),
+            success: function(saved) {
+                const index = Number(indexValue);
+                if (Number.isInteger(index) && currentIssueBoardData[index]) {
+                    currentIssueBoardData[index] = Object.assign({}, currentIssueBoardData[index], saved || row);
+                }
+                applyIssueBoardView();
+                localStorage.setItem('issue-board-update', Date.now());
+                updateSyncStatus('Issue updated');
+                setIssueDrawerOpen(false);
+            },
+            error: function() {
+                updateSyncStatus('Save failed');
+            },
+            complete: function() {
+                $('#issueBoardDrawerSave').prop('disabled', false);
+            }
+        });
     });
 
 
@@ -362,6 +553,7 @@ $(document).ready(function() {
     });
 
     initializeIssueSearch();
+    $('body').toggleClass('issue-board-readonly', !canEditIssueBoard);
     loadIssueBoardData();
     setInterval(loadIssueBoardData, 30000);
 });
@@ -372,9 +564,10 @@ function exportIssueBoardPdf() {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
 
     var tableData = PmsReport.readDomTable('issueBoardTable');
+    var updatedDate = document.getElementById('issueLastUpdatedDate') ? document.getElementById('issueLastUpdatedDate').textContent.trim() : '-';
     var lastDate  = document.getElementById('lastReviewDate') ? document.getElementById('lastReviewDate').textContent.trim() : '-';
     var nextDate  = document.getElementById('nextReviewDate') ? document.getElementById('nextReviewDate').textContent.trim() : '-';
-    var filterLabel = 'Last Review: ' + lastDate + '   |   Next Review: ' + nextDate;
+    var filterLabel = 'Last Updated: ' + updatedDate + '   |   Last Reviewed: ' + lastDate + '   |   Next Review: ' + nextDate;
 
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');

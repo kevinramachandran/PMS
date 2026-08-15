@@ -38,7 +38,6 @@ public interface IssueBoardItemRepository extends JpaRepository<IssueBoardItem, 
            "   OR LOWER(COALESCE(i.ownerName, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
            "   OR LOWER(COALESCE(i.priority, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
            "   OR LOWER(COALESCE(i.status, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
-           "   OR LOWER(COALESCE(i.remarks, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
            "ORDER BY i.boardDate DESC, i.rowOrder ASC, i.id ASC")
     List<IssueBoardItem> searchIssues(@Param("term") String term, Pageable pageable);
 }

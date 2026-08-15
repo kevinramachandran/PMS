@@ -1,6 +1,9 @@
 package org.example.service;
 
 import org.example.entity.IssueBoardItem;
+import org.example.entity.IssueBoardItemHistory;
+import org.example.model.IssueBoardProgressUpdate;
+import org.example.repository.IssueBoardItemHistoryRepository;
 import org.example.repository.IssueBoardItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,11 +27,14 @@ public class IssueBoardItemService {
     private static final Logger log = LoggerFactory.getLogger(IssueBoardItemService.class);
 
     private final IssueBoardItemRepository repository;
+    private final IssueBoardItemHistoryRepository historyRepository;
     private final IssueBoardNotificationService notificationService;
 
     public IssueBoardItemService(IssueBoardItemRepository repository,
+                                 IssueBoardItemHistoryRepository historyRepository,
                                  IssueBoardNotificationService notificationService) {
         this.repository = repository;
+        this.historyRepository = historyRepository;
         this.notificationService = notificationService;
     }
 
@@ -50,6 +58,47 @@ public class IssueBoardItemService {
         }
 
         return repository.searchIssues(normalized, PageRequest.of(0, 12));
+    }
+
+    public List<IssueBoardItemHistory> getHistory(Long issueBoardItemId) {
+        if (issueBoardItemId == null) {
+            return Collections.emptyList();
+        }
+        return historyRepository.findByIssueBoardItemIdOrderByEditedAtDescIdDesc(issueBoardItemId);
+    }
+
+    @Transactional
+    public IssueBoardItem updateProgress(Long id, IssueBoardProgressUpdate update, String editedBy) {
+        IssueBoardItem item = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+
+        String user = editedBy == null || editedBy.isBlank() ? "system" : editedBy.trim();
+        List<IssueBoardItemHistory> history = new ArrayList<>();
+
+        if (!sameDate(item.getTargetDate(), update.getTargetDate())) {
+            history.add(historyEntry(id, "Target Date", item.getTargetDate(), update.getTargetDate(), user));
+            item.setTargetDate(update.getTargetDate());
+            item.setDueDays(calculateDueDays(update.getTargetDate()));
+        }
+
+        String nextStatus = update.getStatus() == null || update.getStatus().isBlank()
+                ? "0%"
+                : update.getStatus().trim();
+        if (!sameText(item.getStatus(), nextStatus)) {
+            history.add(historyEntry(id, "Status", item.getStatus(), nextStatus, user));
+            item.setStatus(nextStatus);
+        }
+
+        if (!sameDate(item.getCompletedDate(), update.getCompletedDate())) {
+            history.add(historyEntry(id, "Completed Date", item.getCompletedDate(), update.getCompletedDate(), user));
+            item.setCompletedDate(update.getCompletedDate());
+        }
+
+        IssueBoardItem saved = repository.save(item);
+        if (!history.isEmpty()) {
+            historyRepository.saveAll(history);
+        }
+        return saved;
     }
 
     @Transactional
@@ -84,5 +133,41 @@ public class IssueBoardItemService {
             }
         }
         return mapped;
+    }
+
+    private IssueBoardItemHistory historyEntry(Long issueBoardItemId,
+                                               String fieldName,
+                                               Object oldValue,
+                                               Object newValue,
+                                               String editedBy) {
+        IssueBoardItemHistory entry = new IssueBoardItemHistory();
+        entry.setIssueBoardItemId(issueBoardItemId);
+        entry.setFieldName(fieldName);
+        entry.setOldValue(valueText(oldValue));
+        entry.setNewValue(valueText(newValue));
+        entry.setEditedBy(editedBy);
+        entry.setEditedAt(LocalDateTime.now());
+        return entry;
+    }
+
+    private String valueText(Object value) {
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private boolean sameDate(LocalDate first, LocalDate second) {
+        return first == null ? second == null : first.equals(second);
+    }
+
+    private boolean sameText(String first, String second) {
+        String normalizedFirst = first == null ? "" : first.trim();
+        String normalizedSecond = second == null ? "" : second.trim();
+        return normalizedFirst.equals(normalizedSecond);
+    }
+
+    private Integer calculateDueDays(LocalDate targetDate) {
+        if (targetDate == null) {
+            return null;
+        }
+        return Math.toIntExact(ChronoUnit.DAYS.between(LocalDate.now(), targetDate));
     }
 }
