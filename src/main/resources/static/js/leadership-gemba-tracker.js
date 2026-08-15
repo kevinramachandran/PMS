@@ -6,26 +6,6 @@ $(document).ready(function() {
 
     let availablePeriods = [];
 
-    $('.nav-parent-toggle').on('click', function(e) {
-        e.preventDefault();
-        $(this).addClass('expanded');
-        $(this).next('.nav-children').addClass('show').show();
-    });
-
-    $('.nav-parent-toggle').addClass('expanded');
-    $('.nav-children').addClass('show').show();
-
-    const currentPath = window.location.pathname;
-    const currentUrl = currentPath + window.location.search;
-    const $matchedChild = $('.nav-child').filter(function() {
-        const href = $(this).attr('href');
-        return href && (href === currentUrl || href === currentPath);
-    }).first();
-    if ($matchedChild.length) {
-        $('.nav-child').removeClass('active');
-        $matchedChild.addClass('active');
-    }
-
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
             sidebar.toggleClass('active');
@@ -112,14 +92,10 @@ $(document).ready(function() {
 
     function populateFilters(periods) {
         const monthFilter = $('#lgtMonthFilter');
-        const yearFilter = $('#lgtYearFilter');
-
-        monthFilter.empty();
-        yearFilter.empty();
 
         if (!periods || periods.length === 0) {
-            monthFilter.append('<option value="">No month</option>');
-            yearFilter.append('<option value="">No year</option>');
+            monthFilter.val('');
+            monthFilter.removeAttr('min max');
             return;
         }
 
@@ -127,50 +103,20 @@ $(document).ready(function() {
             .map(function(p) { return { label: p, parsed: periodToMonthYear(p) }; })
             .filter(function(p) { return p.parsed !== null; });
 
-        const months = [];
-        const years = [];
-
-        periodPairs.forEach(function(p) {
-            const m = p.parsed.month;
-            const y = p.parsed.year;
-            if (!months.includes(m)) months.push(m);
-            if (!years.includes(y)) years.push(y);
-        });
-
-        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        years.sort(function(a, b) { return b - a; }).forEach(function(y) {
-            yearFilter.append('<option value="' + y + '">' + y + '</option>');
-        });
-
-        function refreshMonths(selectedYear, preferredMonth) {
-            monthFilter.empty();
-            const monthsForYear = periodPairs
-                .filter(function(item) { return item.parsed.year === selectedYear; })
-                .map(function(item) { return item.parsed.month; })
-                .filter(function(month, index, arr) { return arr.indexOf(month) === index; })
-                .sort(function(a, b) { return a - b; });
-
-            monthsForYear.forEach(function(m) {
-                monthFilter.append('<option value="' + m + '">' + monthNames[m] + '</option>');
-            });
-
-            const fallbackMonth = monthsForYear.length ? monthsForYear[monthsForYear.length - 1] : '';
-            const resolvedMonth = monthsForYear.includes(Number(preferredMonth)) ? Number(preferredMonth) : fallbackMonth;
-            monthFilter.val(resolvedMonth ? String(resolvedMonth) : '');
+        if (periodPairs.length === 0) {
+            monthFilter.val('');
+            monthFilter.removeAttr('min max');
+            return;
         }
 
-        const currentYear = new Date().getFullYear();
-        const preferredYear = years.includes(currentYear) ? currentYear : years[0];
-        yearFilter.val(String(preferredYear));
-
-        const latest = periodPairs.find(function(item) { return item.parsed.year === preferredYear; }) || periodPairs[0];
-        if (latest) {
-            refreshMonths(preferredYear, latest.parsed.month);
-        }
-
-        yearFilter.off('change.lgtFilterSync').on('change.lgtFilterSync', function() {
-            refreshMonths(Number($(this).val()), monthFilter.val());
-        });
+        const values = periodPairs.map(function(item) {
+            return monthInputValue(item.parsed.month, item.parsed.year);
+        }).sort();
+        const current = monthInputValue(new Date().getMonth() + 1, new Date().getFullYear());
+        const selected = values.includes(current) ? current : values[values.length - 1];
+        monthFilter.attr('min', values[0]);
+        monthFilter.attr('max', values[values.length - 1]);
+        monthFilter.val(selected);
     }
 
     function findPeriodLabel(month, year) {
@@ -178,6 +124,16 @@ $(document).ready(function() {
             const p = periodToMonthYear(label);
             return p && p.month === month && p.year === year;
         }) || null;
+    }
+
+    function monthInputValue(month, year) {
+        return year + '-' + String(month).padStart(2, '0');
+    }
+
+    function monthInputToPeriodLabel(value) {
+        const parts = String(value || '').split('-');
+        if (parts.length !== 2) return null;
+        return findPeriodLabel(Number(parts[1]), Number(parts[0]));
     }
 
     function loadByPeriod(periodLabel) {
@@ -217,9 +173,7 @@ $(document).ready(function() {
                     return;
                 }
 
-                const month = Number($('#lgtMonthFilter').val());
-                const year = Number($('#lgtYearFilter').val());
-                loadByPeriod(findPeriodLabel(month, year) || availablePeriods[0]);
+                loadByPeriod(monthInputToPeriodLabel($('#lgtMonthFilter').val()) || availablePeriods[0]);
             },
             error: function() {
                 availablePeriods = [];
@@ -230,10 +184,8 @@ $(document).ready(function() {
         });
     }
 
-    $('#lgtMonthFilter, #lgtYearFilter').on('change', function() {
-        const month = Number($('#lgtMonthFilter').val());
-        const year = Number($('#lgtYearFilter').val());
-        loadByPeriod(findPeriodLabel(month, year));
+    $('#lgtMonthFilter').on('change', function() {
+        loadByPeriod(monthInputToPeriodLabel($(this).val()));
     });
 
     window.addEventListener('storage', function(e) {

@@ -29,6 +29,61 @@
     color: #4b5563;
 }
 
+.issue-search {
+    width: min(360px, 44vw);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #6b7280;
+}
+
+.issue-search:focus-within {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.issue-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.issue-search input::placeholder {
+    color: #9ca3af;
+}
+
+.issue-search-clear {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.issue-search.has-value .issue-search-clear {
+    display: inline-flex;
+}
+
+.issue-search-clear:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
 .issue-table-wrap {
     overflow: auto;
 }
@@ -49,7 +104,7 @@
     color: #ffffff;
     padding: 10px 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: left;
+    text-align: center;
     white-space: nowrap;
     letter-spacing: 0.03em;
     text-transform: uppercase;
@@ -58,9 +113,11 @@
 
 .issue-table tbody td {
     border: 1px solid #e5e7eb;
-    padding: 6px 8px;
+    padding: 8px 10px;
     vertical-align: middle;
     background: #ffffff;
+    text-align: center;
+    line-height: 1.35;
 }
 
 .issue-table tbody tr:nth-child(even) td {
@@ -73,6 +130,12 @@
 
 .issue-table td {
     word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.issue-table th,
+.issue-table td {
+    min-height: 42px;
 }
 
 .issue-table th:nth-child(1),
@@ -99,6 +162,23 @@
     text-align: center;
 }
 
+.issue-table th:nth-child(13),
+.issue-table td:nth-child(13) {
+    width: 86px;
+    text-align: center;
+}
+
+.issue-table th:nth-child(2),
+.issue-table td:nth-child(2),
+.issue-table th:nth-child(6),
+.issue-table td:nth-child(6),
+.issue-table th:nth-child(7),
+.issue-table td:nth-child(7),
+.issue-table th:nth-child(12),
+.issue-table td:nth-child(12) {
+    text-align: center;
+}
+
 .empty-row {
     text-align: center;
     color: #6b7280;
@@ -113,32 +193,81 @@
 
 .progress-circle {
     --progress: 0;
-    --size: 44px;
+    --size: 48px;
     width: var(--size);
     height: var(--size);
     border-radius: 50%;
-    background: conic-gradient(#16a34a calc(var(--progress) * 1%), #e5e7eb 0);
+    background:
+        linear-gradient(90deg, transparent 48%, #ffffff 48% 52%, transparent 52%),
+        linear-gradient(0deg, transparent 48%, #ffffff 48% 52%, transparent 52%),
+        conic-gradient(#16a34a calc(var(--progress) * 1%), #e5e7eb 0);
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    box-shadow: inset 0 0 0 1px #cbd5e1;
 }
 
 .progress-circle::before {
     content: "";
     position: absolute;
-    width: 32px;
-    height: 32px;
-    border-radius: 999px;
+    inset: 15px;
+    border-radius: 50%;
     background: #ffffff;
+    box-shadow: 0 0 0 1px #e5e7eb;
+    z-index: 1;
 }
 
-.progress-circle-label {
-    position: relative;
-    z-index: 1;
-    font-size: 10px;
+.pdca-quarter {
+    position: absolute;
+    z-index: 2;
+    font-size: 8px;
+    font-weight: 800;
+    color: #475569;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.pdca-p {
+    top: 7px;
+    right: 12px;
+}
+
+.pdca-d {
+    right: 7px;
+    bottom: 12px;
+}
+
+.pdca-c {
+    left: 12px;
+    bottom: 7px;
+}
+
+.pdca-a {
+    left: 7px;
+    top: 12px;
+}
+
+.issue-edit-link {
+    border: none;
+    background: transparent;
+    color: #0b6b2e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
     font-weight: 700;
-    color: #1f2937;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
+.issue-edit-link:hover,
+.issue-edit-link:focus {
+    background: #e8f5ee;
+    color: #064e25;
+    outline: none;
 }
 
 .status-pill {
@@ -193,5 +322,15 @@
         flex-direction: column;
         gap: 6px;
         align-items: flex-end;
+    }
+
+    .issue-board-title-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .issue-search {
+        width: 100%;
     }
 }

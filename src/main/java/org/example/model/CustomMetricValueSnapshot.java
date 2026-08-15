@@ -16,10 +16,10 @@ public class CustomMetricValueSnapshot {
     private String unit;
     private Integer decimals;
     private Integer displayOrder;
-    private Double ftdActual;
-    private Double ftdTarget;
-    private Double mtdActual;
-    private Double mtdTarget;
-    private Double ytdActual;
-    private Double ytdTarget;
+    private String ftdActual;
+    private String ftdTarget;
+    private String mtdActual;
+    private String mtdTarget;
+    private String ytdActual;
+    private String ytdTarget;
 }

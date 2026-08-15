@@ -31,7 +31,7 @@ public class AuthController {
     @GetMapping("/pms-login")
     public String loginPage(HttpSession session) {
         if (session.getAttribute("username") != null) {
-            return "redirect:/kpi-dashboard";
+            return "redirect:" + landingPageForSession(session);
         }
         return "login";
     }
@@ -58,35 +58,20 @@ public class AuthController {
             String normalizedRole = RoleAccess.normalize(user.get().getRole());
             Set<String> viewPermissions = user.get().getViewPermissions();
             Set<String> editPermissions = user.get().getEditPermissions();
-            boolean canViewSettings = RoleAccess.canViewAnyConfigurationPage(normalizedRole, viewPermissions);
-            boolean canEditSettings = RoleAccess.canEditAnyConfigurationPage(normalizedRole, editPermissions);
-            boolean canViewEmailConfiguration = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
-            boolean canEditEmailConfiguration = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
-            boolean canViewUserManagement = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
-            boolean canEditUserManagement = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
-            boolean canViewLicenseManagement = RoleAccess.canViewPage(normalizedRole, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
-            boolean canEditLicenseManagement = RoleAccess.canEditPage(normalizedRole, editPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
-
             session.setAttribute("username", user.get().getUsername());
             session.setAttribute("role", normalizedRole);
             session.setAttribute("roleLabel", RoleAccess.displayName(normalizedRole));
             session.setAttribute("email",    user.get().getEmail());
             session.setAttribute("viewPermissions", viewPermissions);
             session.setAttribute("editPermissions", editPermissions);
-            session.setAttribute("canViewSettings", canViewSettings);
-            session.setAttribute("canEditSettings", canEditSettings);
-            session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
-            session.setAttribute("canEditEmailConfiguration", canEditEmailConfiguration);
-            session.setAttribute("canViewUserManagement", canViewUserManagement);
-            session.setAttribute("canEditUserManagement", canEditUserManagement);
-            session.setAttribute("canViewLicenseManagement", canViewLicenseManagement);
-            session.setAttribute("canEditLicenseManagement", canEditLicenseManagement);
+            applyPermissionSessionAttributes(session, normalizedRole, viewPermissions, editPermissions);
             return Map.of(
                     "status",   "success",
                     "role", normalizedRole,
                     "roleLabel", RoleAccess.displayName(normalizedRole),
                 "username", user.get().getUsername(),
-                "email",    user.get().getEmail()
+                "email",    user.get().getEmail(),
+                "redirectUrl", landingPageFor(normalizedRole, viewPermissions)
             );
         }
         return Map.of("status", "error", "message", "Invalid credentials");
@@ -195,6 +180,135 @@ public class AuthController {
         }
         String role = (String) session.getAttribute("role");
         return RoleAccess.canEditPage(role, toPermissionSet(session.getAttribute("editPermissions")), pageKey);
+    }
+
+    private void applyPermissionSessionAttributes(HttpSession session,
+                                                  String role,
+                                                  Set<String> viewPermissions,
+                                                  Set<String> editPermissions) {
+        boolean canViewPmsDataEntry = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PMS_DATA_ENTRY);
+        boolean canViewProductionMetricsData = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PRODUCTION_METRICS_DATA);
+        boolean canViewIssueBoardConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
+        boolean canViewGembaWalkConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION);
+        boolean canViewLeadershipGembaTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION);
+        boolean canViewTrainingScheduleConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION);
+        boolean canViewMeetingAgendaConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION);
+        boolean canViewProcessConfirmationConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION);
+        boolean canViewAbnormalityTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION);
+        boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
+        boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
+        boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
+        boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
+        boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+        boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
+        boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+        boolean canEditUserManagement = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+
+        session.setAttribute("canViewSettings", RoleAccess.canViewAnyConfigurationPage(role, viewPermissions));
+        session.setAttribute("canEditSettings", RoleAccess.canEditAnyConfigurationPage(role, editPermissions));
+        session.setAttribute("canViewPmsDataEntry", canViewPmsDataEntry);
+        session.setAttribute("canViewProductionMetricsData", canViewProductionMetricsData);
+        session.setAttribute("canViewIssueBoardConfiguration", canViewIssueBoardConfiguration);
+        session.setAttribute("canViewGembaWalkConfiguration", canViewGembaWalkConfiguration);
+        session.setAttribute("canViewLeadershipGembaTrackerConfiguration", canViewLeadershipGembaTrackerConfiguration);
+        session.setAttribute("canViewTrainingScheduleConfiguration", canViewTrainingScheduleConfiguration);
+        session.setAttribute("canViewMeetingAgendaConfiguration", canViewMeetingAgendaConfiguration);
+        session.setAttribute("canViewProcessConfirmationConfiguration", canViewProcessConfirmationConfiguration);
+        session.setAttribute("canViewAbnormalityTrackerConfiguration", canViewAbnormalityTrackerConfiguration);
+        session.setAttribute("canViewHsCrossDailyConfiguration", canViewHsCrossDailyConfiguration);
+        session.setAttribute("canViewLsrTrackingConfiguration", canViewLsrTrackingConfiguration);
+        session.setAttribute("canViewInfoPortal", canViewInfoPortal);
+        session.setAttribute("canViewKpiTargetCrossColor", canViewKpiTargetCrossColor);
+        session.setAttribute("canViewKpiRenameDashboard", canViewKpiRenameDashboard);
+        session.setAttribute("canViewKpiPlantName", canViewKpiPlantName);
+        session.setAttribute("canViewUserManagement", canViewUserManagement);
+        session.setAttribute("canEditUserManagement", canEditUserManagement);
+        session.setAttribute("canViewLicenseManagement", canViewLicenseManagement);
+        session.setAttribute("canEditLicenseManagement", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT));
+        session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
+        session.setAttribute("canEditEmailConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION));
+        session.setAttribute("canViewConfigurationSettingsGroup",
+                canViewIssueBoardConfiguration || canViewGembaWalkConfiguration || canViewLeadershipGembaTrackerConfiguration
+                        || canViewTrainingScheduleConfiguration || canViewMeetingAgendaConfiguration
+                        || canViewProcessConfirmationConfiguration || canViewAbnormalityTrackerConfiguration);
+        session.setAttribute("canViewProductionSettingsGroup",
+                canViewProductionMetricsData || canViewHsCrossDailyConfiguration || canViewLsrTrackingConfiguration);
+        session.setAttribute("canViewKpiConfigurationGroup", canViewKpiTargetCrossColor || canViewKpiRenameDashboard || canViewKpiPlantName);
+        session.setAttribute("canViewKpiDashboard",
+                RoleAccess.isAdmin(role) || canViewPmsDataEntry || canViewProductionMetricsData);
+    }
+
+    private String landingPageForSession(HttpSession session) {
+        if (session == null) {
+            return "/pms-login";
+        }
+        return landingPageFor((String) session.getAttribute("role"), toPermissionSet(session.getAttribute("viewPermissions")));
+    }
+
+    private String landingPageFor(String role, Set<String> viewPermissions) {
+        if (RoleAccess.isAdmin(role)) {
+            return "/kpi-dashboard";
+        }
+        Set<String> pages = RoleAccess.sanitizePages(viewPermissions);
+        if (pages.contains(RoleAccess.PAGE_PMS_DATA_ENTRY)
+                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA)
+                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_PEOPLE)
+                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_QUALITY)
+                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_SERVICE)
+                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_COST)) {
+            return "/kpi-dashboard";
+        }
+        if (pages.contains(RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION)) {
+            return "/issue-board";
+        }
+        if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION)) {
+            return "/gemba-schedule";
+        }
+        if (pages.contains(RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION)) {
+            return "/training-schedule";
+        }
+        if (pages.contains(RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION)) {
+            return "/meeting-agenda";
+        }
+        if (pages.contains(RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION)) {
+            return "/abnormality-tracker";
+        }
+        if (pages.contains(RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION)) {
+            return "/leadership-gemba-tracker";
+        }
+        if (pages.contains(RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION)) {
+            return "/process-confirmation";
+        }
+        if (pages.contains(RoleAccess.PAGE_INFO_PORTAL)) {
+            return "/client-selection";
+        }
+        if (pages.contains(RoleAccess.PAGE_USER_MANAGEMENT)) {
+            return "/pms-configuration";
+        }
+        if (pages.contains(RoleAccess.PAGE_LICENSE_MANAGEMENT)) {
+            return "/settings?config=license";
+        }
+        if (pages.contains(RoleAccess.PAGE_EMAIL_CONFIGURATION)) {
+            return "/email-configuration";
+        }
+        if (pages.contains(RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION)) {
+            return "/settings?config=hs-cross";
+        }
+        if (pages.contains(RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION)) {
+            return "/settings?config=lsr-tracking";
+        }
+        if (pages.contains(RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR)) {
+            return "/settings?config=kpi-rename-dashboard";
+        }
+        if (pages.contains(RoleAccess.PAGE_KPI_RENAME_DASHBOARD)) {
+            return "/settings?config=kpi-rename-dashboard";
+        }
+        if (pages.contains(RoleAccess.PAGE_KPI_PLANT_NAME)) {
+            return "/settings?config=kpi-rename-dashboard";
+        }
+        return "/kpi-dashboard";
     }
 
     private Map<String, Object> toUserResponse(AppUser user) {

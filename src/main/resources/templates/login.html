@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login â€“ Carlsberg PMS</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/login.css">
 </head>
@@ -36,8 +33,14 @@
 
         <div class="login-field">
             <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter password"
-                   required autocomplete="current-password">
+            <div class="password-input-wrap">
+                <input type="password" id="password" placeholder="Enter password"
+                       required autocomplete="current-password">
+                <button type="button" class="password-toggle-btn" id="togglePasswordBtn"
+                        aria-label="Show password" title="Show password">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
         </div>
 
         <button class="login-btn" id="loginBtn" type="button">
@@ -53,6 +56,7 @@
             const loginBtn   = document.getElementById('loginBtn');
             const errorBox   = document.getElementById('loginError');
             const errorMsg   = document.getElementById('loginErrorMsg');
+            const togglePasswordBtn = document.getElementById('togglePasswordBtn');
 
             function showError(msg) {
                 errorMsg.textContent = msg;
@@ -100,7 +104,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.status === 'success') {
-                        window.location.href = '/kpi-dashboard';
+                        window.location.href = data.redirectUrl || '/kpi-dashboard';
                     } else {
                         if (data.code === 'LICENSE_EXPIRED') {
                             showError('License has expired. Only internal static users can sign in.');
@@ -120,6 +124,19 @@
 
             loginBtn.addEventListener('click', doLogin);
 
+            if (togglePasswordBtn) {
+                togglePasswordBtn.addEventListener('click', function () {
+                    const showing = passwordEl.type === 'text';
+                    passwordEl.type = showing ? 'password' : 'text';
+                    togglePasswordBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+                    togglePasswordBtn.setAttribute('title', showing ? 'Show password' : 'Hide password');
+                    togglePasswordBtn.innerHTML = showing
+                        ? '<i class="fas fa-eye"></i>'
+                        : '<i class="fas fa-eye-slash"></i>';
+                    passwordEl.focus();
+                });
+            }
+
             [usernameEl, passwordEl].forEach(function (el) {
                 el.addEventListener('keydown', function (e) {
                     if (e.key === 'Enter') doLogin();
@@ -129,9 +146,11 @@
     </script>
 
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js"></script>
+<script src="/js/ui-shell.js?v=username-global-20260814"></script>
 </body>
 </html>
+
+
 
 
 

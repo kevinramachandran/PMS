@@ -1181,42 +1181,46 @@ function renderLsrFocusRules(rulesMatrix) {
 }
 
 function applyInfoPortalButtons(config) {
-    const btn1 = document.getElementById('infoPortalBtn1');
-    const btn2 = document.getElementById('infoPortalBtn2');
-
-    if (!btn1 || !btn2 || !config) {
+    const containers = document.querySelectorAll('.kpi-footer, .info-portal-buttons');
+    if (!containers.length || !config) {
         return;
     }
 
-    const btn1Label = (config.kpiButton1Label || config.button1Label || btn1.textContent || 'Solvex').trim();
-    const btn1Type  = (config.kpiButton1Type  || config.button1Type  || 'link').trim();
-    const btn1Url   = btn1Type === 'file'
-        ? '/api/dashboard-config/info-portal/file/1'
-        : (config.kpiButton1Url || config.button1Url || '').trim();
-
-    const btn2Label = (config.kpiButton2Label || config.button2Label || btn2.textContent || 'Carlsbridge').trim();
-    const btn2Type  = (config.kpiButton2Type  || config.button2Type  || 'link').trim();
-    const btn2Url   = btn2Type === 'file'
-        ? '/api/dashboard-config/info-portal/file/2'
-        : (config.kpiButton2Url || config.button2Url || '').trim();
-
-    if (btn1Label && btn1Url) {
-        btn1.textContent = btn1Label;
-        btn1.href = btn1Url;
-        btn1.target = '_blank';
-        btn1.style.display = 'inline-flex';
-    } else {
-        btn1.style.display = 'none';
+    function normalizeInfoPortalHref(url) {
+        const trimmed = String(url || '').trim();
+        if (!trimmed) {
+            return '';
+        }
+        if (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(trimmed)) {
+            return trimmed;
+        }
+        return 'https://' + trimmed;
     }
 
-    if (btn2Label && btn2Url) {
-        btn2.textContent = btn2Label;
-        btn2.href = btn2Url;
-        btn2.target = '_blank';
-        btn2.style.display = 'inline-flex';
-    } else {
-        btn2.style.display = 'none';
-    }
+    const buttons = Array.isArray(config.buttons) ? config.buttons : [
+        { id: 1, label: config.kpiButton1Label || config.button1Label, type: config.kpiButton1Type || config.button1Type, url: config.kpiButton1Url || config.button1Url },
+        { id: 2, label: config.kpiButton2Label || config.button2Label, type: config.kpiButton2Type || config.button2Type, url: config.kpiButton2Url || config.button2Url }
+    ];
+
+    containers.forEach(function(container) {
+        container.innerHTML = '';
+        buttons.forEach(function(button) {
+            const label = String((button && button.label) || '').trim();
+            const type = String((button && button.type) || 'link').trim();
+            const href = type === 'file'
+                ? '/api/dashboard-config/info-portal/file/' + button.id
+                : normalizeInfoPortalHref(button && button.url);
+            if (!label || !href) {
+                return;
+            }
+            const anchor = document.createElement('a');
+            anchor.className = container.classList.contains('kpi-footer') ? 'kpi-footer-btn' : 'info-portal-btn';
+            anchor.href = href;
+            anchor.target = '_blank';
+            anchor.textContent = label;
+            container.appendChild(anchor);
+        });
+    });
 }
 
 function loadKpiDashboardMeta() {
@@ -1533,12 +1537,6 @@ function initializeKpiMonthFilter() {
         loadProductionCharts(selectedKpiMonth, selectedKpiYear);
         return;
     }
-
-    const options = buildKpiMonthOptions(18);
-    $filter.empty();
-    options.forEach(function(item) {
-        $filter.append('<option value="' + item.value + '">' + item.label + '</option>');
-    });
 
     const currentValue = selectedKpiYear + '-' + String(selectedKpiMonth).padStart(2, '0');
     $filter.val(currentValue);
@@ -1909,6 +1907,15 @@ function readMetricSeries(metrics, key) {
 }
 
 function readMetricValue(record, fieldName) {
+    const value = readMetricRawValue(record, fieldName);
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+}
+
+function readMetricRawValue(record, fieldName) {
     if (!record || !fieldName) {
         return null;
     }
@@ -1929,20 +1936,10 @@ function readMetricValue(record, fieldName) {
             return null;
         }
 
-        const customValue = match[valueKey];
-        if (customValue === null || customValue === undefined || customValue === '') {
-            return null;
-        }
-        const parsedCustomValue = Number(customValue);
-        return Number.isFinite(parsedCustomValue) ? parsedCustomValue : null;
+        return match[valueKey];
     }
 
-    const value = record[fieldName];
-    if (value === null || value === undefined || value === '') {
-        return null;
-    }
-    const numeric = Number(value);
-    return Number.isFinite(numeric) ? numeric : null;
+    return record[fieldName];
 }
 
 function findCrossingIndex(primaryData, compareData) {
@@ -2067,6 +2064,13 @@ function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear) {
         const targetYtdValue = readNumber(todayTargetRecord, kpi.targetYtdField || kpi.ytdField);
         const actualMtdValue = readNumber(yesterdayActualRecord, kpi.mtdField);
         const actualYtdValue = readNumber(yesterdayActualRecord, kpi.ytdField);
+        const todayTargetRaw = readMetricRawValue(todayTargetRecord, kpi.targetField);
+        const yesterdayTargetRaw = readMetricRawValue(yesterdayTargetRecord, kpi.targetField);
+        const yesterdayActualRaw = readMetricRawValue(yesterdayActualRecord, kpi.actualField);
+        const targetMtdRaw = readMetricRawValue(todayTargetRecord, kpi.targetMtdField || kpi.mtdField);
+        const targetYtdRaw = readMetricRawValue(todayTargetRecord, kpi.targetYtdField || kpi.ytdField);
+        const actualMtdRaw = readMetricRawValue(yesterdayActualRecord, kpi.mtdField);
+        const actualYtdRaw = readMetricRawValue(yesterdayActualRecord, kpi.ytdField);
 
         const yesterdayTargetClass = getPerformanceClass(yesterdayTarget, todayTarget, kpi.higherIsBetter);
         const todayTargetClass = getPerformanceClass(todayTarget, yesterdayTarget, kpi.higherIsBetter);
@@ -2079,13 +2083,13 @@ function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear) {
                 '<td>' + (index + 1) + '</td>' +
                 '<td class="text-left">' + escapeHtmlText(kpi.name) + '</td>' +
                 '<td>' + escapeHtmlText(kpi.unit) + '</td>' +
-                '<td' + classAttr(yesterdayTargetClass) + '>' + formatMetric(yesterdayTarget, kpi.decimals) + '</td>' +
-                '<td' + classAttr(todayTargetClass) + '>' + formatMetric(todayTarget, kpi.decimals) + '</td>' +
-                '<td' + classAttr(targetMtdClass) + '>' + formatMetric(targetMtdValue, kpi.decimals) + '</td>' +
-                '<td>' + formatMetric(targetYtdValue, kpi.decimals) + '</td>' +
-                '<td>' + formatMetric(yesterdayActual, kpi.decimals) + '</td>' +
-                '<td>' + formatMetric(actualMtdValue, kpi.decimals) + '</td>' +
-                '<td>' + formatMetric(actualYtdValue, kpi.decimals) + '</td>' +
+                '<td' + classAttr(yesterdayTargetClass) + '>' + formatMetricRawValue(yesterdayTargetRaw, kpi.decimals) + '</td>' +
+                '<td' + classAttr(todayTargetClass) + '>' + formatMetricRawValue(todayTargetRaw, kpi.decimals) + '</td>' +
+                '<td' + classAttr(targetMtdClass) + '>' + formatMetricRawValue(targetMtdRaw, kpi.decimals) + '</td>' +
+                '<td>' + formatMetricRawValue(targetYtdRaw, kpi.decimals) + '</td>' +
+                '<td>' + formatMetricRawValue(yesterdayActualRaw, kpi.decimals) + '</td>' +
+                '<td>' + formatMetricRawValue(actualMtdRaw, kpi.decimals) + '</td>' +
+                '<td>' + formatMetricRawValue(actualYtdRaw, kpi.decimals) + '</td>' +
             '</tr>';
     });
 
@@ -2230,6 +2234,14 @@ function formatMetric(value, decimals) {
         return '-';
     }
     return Number(value).toFixed(decimals);
+}
+
+function formatMetricRawValue(value, decimals) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric.toFixed(decimals) : escapeHtmlText(value);
 }
 
 function getPerformanceClass(value, target, higherIsBetter) {

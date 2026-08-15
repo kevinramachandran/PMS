@@ -39,4 +39,5 @@ public class TrainingScheduleController {
             @RequestBody List<TrainingScheduleItem> rows) {
         return service.replaceByDate(LocalDate.parse(date), rows);
     }
+
 }

@@ -4,6 +4,7 @@ import org.example.entity.IssueBoardItem;
 import org.example.repository.IssueBoardItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,15 @@ public class IssueBoardItemService {
         }
 
         return repository.findByBoardDateOrderByRowOrderAscIdAsc(latest.get().getBoardDate());
+    }
+
+    public List<IssueBoardItem> searchIssues(String term) {
+        String normalized = term == null ? "" : term.trim();
+        if (normalized.length() < 2) {
+            return Collections.emptyList();
+        }
+
+        return repository.searchIssues(normalized, PageRequest.of(0, 12));
     }
 
     @Transactional

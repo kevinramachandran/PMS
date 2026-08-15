@@ -21,9 +21,35 @@
     let lsrState = {};
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth() + 1;
+    let maxDays = 31;
 
     function daysInMonth(year, month) {
         return new Date(year, month, 0).getDate();
+    }
+
+    function getYesterday() {
+        const date = new Date();
+        date.setDate(date.getDate() - 1);
+        return date;
+    }
+
+    function formatDateValue(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+
+    function parseDateValue(value) {
+        const parts = String(value || '').split('-');
+        if (parts.length !== 3) return null;
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+        if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+            return null;
+        }
+        return { year, month, day };
     }
 
     function getLsrStatusClass(value) {
@@ -37,34 +63,16 @@
     }
 
     function setLoading(isLoading) {
-        const yearSel = document.getElementById('lsrYearSel');
-        const monthSel = document.getElementById('lsrMonthSel');
+        const dateInput = document.getElementById('lsrDateInput');
         const saveBtn = document.getElementById('saveLsrBtn');
         const tbody = document.getElementById('lsrTableBody');
 
-        if (yearSel) yearSel.disabled = isLoading;
-        if (monthSel) monthSel.disabled = isLoading;
+        if (dateInput) dateInput.disabled = isLoading;
         if (saveBtn) saveBtn.disabled = isLoading;
 
         if (isLoading && tbody) {
             tbody.innerHTML = `<tr><td colspan="6" class="lsr-loading-cell">Loading data\u2026</td></tr>`;
         }
-    }
-
-    function initYearDropdown() {
-        const yearSel = document.getElementById('lsrYearSel');
-        if (!yearSel) return;
-
-        yearSel.innerHTML = '';
-        const startYear = 2020;
-        const endYear = new Date().getFullYear() + 1;
-        for (let y = startYear; y <= endYear; y++) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            yearSel.appendChild(opt);
-        }
-        yearSel.value = currentYear;
     }
 
     function buildTable() {
@@ -73,7 +81,6 @@
         tbody.innerHTML = '';
 
         lsrState = {};
-        const maxDays = daysInMonth(currentYear, currentMonth);
 
         for (let day = 1; day <= maxDays; day++) {
             lsrState[day] = {};
@@ -122,12 +129,21 @@
     }
 
     function loadLsrData() {
-        const yearSel = document.getElementById('lsrYearSel');
-        if (!yearSel) return;
+        const dateInput = document.getElementById('lsrDateInput');
+        if (!dateInput) return;
 
-        currentYear = parseInt(yearSel.value, 10);
-        const monthSel = document.getElementById('lsrMonthSel');
-        currentMonth = parseInt(monthSel.value, 10);
+        const yesterdayValue = formatDateValue(getYesterday());
+        dateInput.max = yesterdayValue;
+        if (!dateInput.value || dateInput.value > yesterdayValue) {
+            dateInput.value = yesterdayValue;
+        }
+
+        const selected = parseDateValue(dateInput.value);
+        if (!selected) return;
+
+        currentYear = selected.year;
+        currentMonth = selected.month;
+        maxDays = Math.min(selected.day, daysInMonth(currentYear, currentMonth));
 
         setLoading(true);
         const requestId = ++lastRequestId;
@@ -233,16 +249,13 @@
     }
 
     function init() {
-        initYearDropdown();
-
-        const monthSel = document.getElementById('lsrMonthSel');
-        if (monthSel) {
-            monthSel.value = String(currentMonth);
+        const dateInput = document.getElementById('lsrDateInput');
+        if (dateInput) {
+            const yesterdayValue = formatDateValue(getYesterday());
+            dateInput.max = yesterdayValue;
+            dateInput.value = yesterdayValue;
+            dateInput.addEventListener('change', loadLsrData);
         }
-
-        const yearSel = document.getElementById('lsrYearSel');
-        if (yearSel) yearSel.addEventListener('change', loadLsrData);
-        if (monthSel) monthSel.addEventListener('change', loadLsrData);
 
         const saveBtn = document.getElementById('saveLsrBtn');
         if (saveBtn) {

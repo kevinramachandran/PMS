@@ -45,7 +45,7 @@ public class LicenseController {
      * Open API — no session required. Generates an AES-encrypted license token
      * from the supplied payload and returns it WITHOUT saving to DB.
      *
-     * Payload: { vendorName, dateFrom, dateTo, userCount, licenseText }
+     * Payload: { vendorName, licensedBy, licensedTo, softwareVersion, dateFrom, dateTo, userCount, licenseText }
      */
     @PostMapping("/generate")
     public Map<String, Object> generateToken(@RequestBody LicenseGeneratePayload payload) {

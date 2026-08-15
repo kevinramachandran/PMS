@@ -15,8 +15,8 @@ public class MetricsEntryPayload {
 
     private LocalDate date;
     private String entryType;
-    private Map<String, Double> people = new LinkedHashMap<>();
-    private Map<String, Double> quality = new LinkedHashMap<>();
-    private Map<String, Double> service = new LinkedHashMap<>();
-    private Map<String, Double> cost = new LinkedHashMap<>();
+    private Map<String, Object> people = new LinkedHashMap<>();
+    private Map<String, Object> quality = new LinkedHashMap<>();
+    private Map<String, Object> service = new LinkedHashMap<>();
+    private Map<String, Object> cost = new LinkedHashMap<>();
 }

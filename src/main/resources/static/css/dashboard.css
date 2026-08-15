@@ -255,6 +255,30 @@ body {
     line-height: 1;
 }
 
+.nav-item span.pms-nav-label-stack {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1.1;
+}
+
+.pms-nav-main-label {
+    line-height: 1.1;
+}
+
+.pms-nav-edited-date {
+    color: rgba(226, 232, 240, 0.74);
+    font-size: 9px;
+    font-weight: 500;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.nav-item.active .pms-nav-edited-date {
+    color: rgba(255, 255, 255, 0.84);
+}
+
 .nav-item:hover i {
     color: #ffffff;
 }
@@ -1153,6 +1177,7 @@ body {
 }
 
 .kpi-footer-button:hover,
+.info-portal-btn:hover,
 .kpi-footer-btn:hover {
     background-color: var(--accent-green);
     transform: translateY(-2px);
@@ -1160,6 +1185,7 @@ body {
 }
 
 .kpi-footer-button:active,
+.info-portal-btn:active,
 .kpi-footer-btn:active {
     transform: translateY(0);
     box-shadow: 0 2px 6px rgba(11, 107, 46, 0.2);
@@ -3928,7 +3954,7 @@ body:not(.kpi-tv-layout).modern-shell .footer {
 
 /* ===== KPI Dashboard TV Fit Overrides ===== */
 body.kpi-tv-layout {
-    zoom: 100%;
+    zoom: 90%;
     overflow-x: hidden !important;
 }
 

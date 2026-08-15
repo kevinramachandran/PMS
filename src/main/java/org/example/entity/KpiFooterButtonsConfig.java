@@ -3,6 +3,7 @@ package org.example.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 @Entity
@@ -41,6 +42,13 @@ public class KpiFooterButtonsConfig {
 
     @Column(length = 500)
     private String button2FileName; // original display filename
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String buttonsJson;
+
+    @Column(length = 160)
+    private String plantName;
 
     public Long getId() {
         return id;
@@ -128,5 +136,21 @@ public class KpiFooterButtonsConfig {
 
     public void setButton2FileName(String button2FileName) {
         this.button2FileName = button2FileName;
+    }
+
+    public String getButtonsJson() {
+        return buttonsJson;
+    }
+
+    public void setButtonsJson(String buttonsJson) {
+        this.buttonsJson = buttonsJson;
+    }
+
+    public String getPlantName() {
+        return plantName;
+    }
+
+    public void setPlantName(String plantName) {
+        this.plantName = plantName;
     }
 }

@@ -24,6 +24,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/js/**",       // static JS
                         "/images/**",   // static images
                         "/favicon.ico",
+                        "/www.*",       // bare external Info Portal links saved without protocol
                         "/actuator/**",
                         "/error"        // Spring error page
                 );

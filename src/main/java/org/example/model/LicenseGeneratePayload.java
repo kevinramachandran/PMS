@@ -7,6 +7,9 @@ import java.time.LocalDate;
 public class LicenseGeneratePayload {
 
     private String vendorName;
+    private String licensedBy;
+    private String licensedTo;
+    private String softwareVersion;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFrom;
@@ -23,6 +26,30 @@ public class LicenseGeneratePayload {
 
     public void setVendorName(String vendorName) {
         this.vendorName = vendorName;
+    }
+
+    public String getLicensedBy() {
+        return licensedBy;
+    }
+
+    public void setLicensedBy(String licensedBy) {
+        this.licensedBy = licensedBy;
+    }
+
+    public String getLicensedTo() {
+        return licensedTo;
+    }
+
+    public void setLicensedTo(String licensedTo) {
+        this.licensedTo = licensedTo;
+    }
+
+    public String getSoftwareVersion() {
+        return softwareVersion;
+    }
+
+    public void setSoftwareVersion(String softwareVersion) {
+        this.softwareVersion = softwareVersion;
     }
 
     public LocalDate getDateFrom() {

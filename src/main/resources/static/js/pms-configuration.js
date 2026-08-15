@@ -50,22 +50,22 @@
                 },
                 {
                     key: 'PRODUCTION_METRICS_DATA_PEOPLE',
-                    label: 'Production Metrics - People',
+                    label: 'Production KPI Data - People',
                     description: 'People section of production metrics entry and updates.'
                 },
                 {
                     key: 'PRODUCTION_METRICS_DATA_QUALITY',
-                    label: 'Production Metrics - Quality',
+                    label: 'Production KPI Data - Quality',
                     description: 'Quality section of production metrics entry and updates.'
                 },
                 {
                     key: 'PRODUCTION_METRICS_DATA_SERVICE',
-                    label: 'Production Metrics - Service',
+                    label: 'Production KPI Data - Service',
                     description: 'Service section of production metrics entry and updates.'
                 },
                 {
                     key: 'PRODUCTION_METRICS_DATA_COST',
-                    label: 'Production Metrics - Cost',
+                    label: 'Production KPI Data - Cost',
                     description: 'Cost section of production metrics entry and updates.'
                 }
             ]
@@ -75,15 +75,18 @@
             label: 'Configuration Pages',
             description: 'Setup screens that control daily boards, trackers, and KPI modules.',
             items: [
-                { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board Configuration', description: 'Issue board templates and assignment setup.' },
-                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Configuration', description: 'Schedules and settings for gemba walk planning.' },
-                { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Schedule Config', description: 'Training schedule periods and configuration data.' },
-                { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality Tracker Config', description: 'Abnormality tracker lists and save actions.' },
-                { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily Config', description: 'Health and safety daily cross settings.' },
-                { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking Config', description: 'LSR daily tracking settings and updates.' },
+                { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board', description: 'Issue board templates and assignment setup.' },
+                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Scheduler', description: 'Schedules and settings for gemba walk planning.' },
+                { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Scheduler', description: 'Training schedule periods and configuration data.' },
+                { key: 'MEETING_AGENDA_CONFIGURATION', label: 'PMS Agenda', description: 'PMS agenda configuration and save actions.' },
+                { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality Reporting', description: 'Abnormality tracker lists and save actions.' },
                 { key: 'INFO_PORTAL', label: 'Info Portal', description: 'Footer button labels, URLs, and uploads.' },
-                { key: 'KPI_TARGET_CROSS_COLOR', label: 'KPI Target Cross Color', description: 'Color rules used for KPI cross alert states.' },
-                { key: 'EMAIL_CONFIGURATION', label: 'Email Configuration', description: 'SMTP settings and outbound mail test configuration.' }
+                { key: 'LEADERSHIP_GEMBA_TRACKER_CONFIGURATION', label: 'Gemba Kaizen Ideas', description: 'Gemba Kaizen Ideas configuration and tracker setup.' },
+                { key: 'PROCESS_CONFIRMATION_CONFIGURATION', label: 'Process Confirmations', description: 'Process confirmation configuration and save actions.' },
+                { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily', description: 'Health and safety daily cross settings.' },
+                { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking', description: 'LSR daily tracking settings and updates.' },
+                { key: 'KPI_RENAME_DASHBOARD', label: 'KPI Configuration', description: 'Maintain plant name, KPI labels, units, decimal precision, and target cross colors.' },
+                { key: 'EMAIL_CONFIGURATION', label: 'Email', description: 'SMTP settings and outbound mail test configuration.' }
             ]
         },
         {
@@ -97,14 +100,23 @@
         }
     ];
 
+    const LEGACY_PERMISSION_ALIASES = {
+        KPI_TARGET_CROSS_COLOR: 'KPI_RENAME_DASHBOARD',
+        KPI_PLANT_NAME: 'KPI_RENAME_DASHBOARD'
+    };
+
     const PERMISSION_LABELS = PERMISSION_GROUPS
         .flatMap(function (group) { return group.items; })
         .reduce(function (accumulator, item) {
             accumulator[item.key] = item.label;
             return accumulator;
         }, {});
+    PERMISSION_LABELS.KPI_TARGET_CROSS_COLOR = 'KPI Configuration';
+    PERMISSION_LABELS.KPI_PLANT_NAME = 'KPI Configuration';
 
-    const ALL_PERMISSION_KEYS = Object.keys(PERMISSION_LABELS);
+    const ALL_PERMISSION_KEYS = PERMISSION_GROUPS
+        .flatMap(function (group) { return group.items; })
+        .map(function (item) { return item.key; });
 
     function normalizeRole(role) {
         const value = String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
@@ -131,6 +143,20 @@
             targetEl.className = 'form-message';
             targetEl.textContent = '';
         }, 3500);
+    }
+
+    function parseJsonResponse(response) {
+        if (response.status === 401) {
+            window.location.href = '/pms-login';
+            return Promise.reject(new Error('Unauthorized'));
+        }
+        return response.json().then(function (data) {
+            if (!response.ok) {
+                data.status = data.status || 'error';
+                data.message = data.message || (response.status === 403 ? 'You have view-only access.' : 'Request failed.');
+            }
+            return data;
+        });
     }
 
     function userIcon(role) {
@@ -229,7 +255,11 @@
         const normalized = new Set(readArray(values));
         const inputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="' + type + '"]');
         inputs.forEach(function (input) {
-            input.checked = normalized.has(String(input.dataset.page || '').toUpperCase());
+            const page = String(input.dataset.page || '').toUpperCase();
+            const aliasMatchesPage = Object.keys(LEGACY_PERMISSION_ALIASES).some(function (legacyKey) {
+                return normalized.has(legacyKey) && LEGACY_PERMISSION_ALIASES[legacyKey] === page;
+            });
+            input.checked = normalized.has(page) || aliasMatchesPage;
         });
     }
 
@@ -393,10 +423,10 @@
         if (!tableBody) return;
 
         fetch('/api/users')
-            .then(function (r) { return r.json(); })
+            .then(parseJsonResponse)
             .then(function (data) {
                 if (data.status !== 'success') {
-                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:14px;">Failed to load users.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:14px;">' + escapeHtml(data.message || 'Failed to load users.') + '</td></tr>';
                     return;
                 }
                 renderUsers(data.users);
@@ -407,6 +437,10 @@
     }
 
     function addUser() {
+        if (!canEditUserManagement) {
+            showMessage(tableMessageEl, 'You have view-only access for User Management.', 'warning');
+            return;
+        }
         const username = (usernameEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
@@ -435,7 +469,7 @@
                 editPermissions: permissions.editPermissions
             })
         })
-            .then(function (r) { return r.json(); })
+            .then(parseJsonResponse)
             .then(function (data) {
                 if (data.status === 'success') {
                     showMessage(messageEl, 'User added successfully.', 'success');
@@ -493,6 +527,10 @@
     }
 
     function saveEdit() {
+        if (!canEditUserManagement) {
+            showMessage(editMessageEl, 'You have view-only access for User Management.', 'warning');
+            return;
+        }
         const id = editUserIdEl.value;
         const email = (editEmailEl.value || '').trim();
         const role = normalizeRole(editRoleEl.value || 'USER');
@@ -520,7 +558,7 @@
                 editPermissions: permissions.editPermissions
             })
         })
-            .then(function (r) { return r.json(); })
+            .then(parseJsonResponse)
             .then(function (data) {
                 if (data.status === 'success') {
                     showMessage(tableMessageEl, 'User updated successfully.', 'success');
@@ -540,13 +578,18 @@
     }
 
     function deleteUser(id) {
+        if (!canEditUserManagement) {
+            showMessage(tableMessageEl, 'You have view-only access for User Management.', 'warning');
+            closeDeleteModal();
+            return;
+        }
         if (!id) return;
 
         confirmDeleteBtn.disabled = true;
         confirmDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
 
         fetch('/api/users/' + encodeURIComponent(id), { method: 'DELETE' })
-            .then(function (r) { return r.json(); })
+            .then(parseJsonResponse)
             .then(function (data) {
                 if (data.status === 'success') {
                     showMessage(tableMessageEl, 'User deleted successfully.', 'success');

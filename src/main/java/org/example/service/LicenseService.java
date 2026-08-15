@@ -122,7 +122,7 @@ public class LicenseService {
             String normalizedToken = normalizeToken(token);
             String inner = decrypt(normalizedToken);
             String[] parts = inner.split(FIELD_SEP, -1);
-            if (parts.length != 5) {
+            if (parts.length != 5 && parts.length != 8) {
                 return DecodeTokenResult.error("Invalid token format");
             }
 
@@ -131,6 +131,9 @@ public class LicenseService {
             LocalDate dateTo   = LocalDate.parse(parts[2], DATE_FMT);
             int userCount      = Integer.parseInt(parts[3]);
             String licenseText = parts[4];
+            String licensedBy = parts.length >= 8 ? parts[5] : vendorName;
+            String licensedTo = parts.length >= 8 ? parts[6] : "";
+            String softwareVersion = parts.length >= 8 ? parts[7] : "2.0.0";
 
             Map<String, Object> fields = new LinkedHashMap<>();
             fields.put("vendorName",  vendorName);
@@ -138,6 +141,9 @@ public class LicenseService {
             fields.put("dateTo",      dateTo.toString());
             fields.put("userCount",   userCount);
             fields.put("licenseText", licenseText);
+            fields.put("licensedBy", licensedBy);
+            fields.put("licensedTo", licensedTo);
+            fields.put("softwareVersion", softwareVersion);
             return DecodeTokenResult.success(fields);
         } catch (Exception e) {
             return DecodeTokenResult.error("Invalid or tampered token");
@@ -167,6 +173,9 @@ public class LicenseService {
         license.setDateTo(LocalDate.parse((String) f.get("dateTo"), DATE_FMT));
         license.setUserCount((Integer) f.get("userCount"));
         license.setLicenseText((String) f.get("licenseText"));
+        license.setLicensedBy((String) f.get("licensedBy"));
+        license.setLicensedTo((String) f.get("licensedTo"));
+        license.setSoftwareVersion((String) f.get("softwareVersion"));
         license.setLicenseToken(normalizedToken);
         license.setCreatedBy(actor == null ? "" : actor.trim());
 
@@ -192,6 +201,9 @@ public class LicenseService {
 
         res.put("id", license.getId());
         res.put("vendorName", license.getVendorName());
+        res.put("licensedBy", firstPresent(license.getLicensedBy(), license.getVendorName()));
+        res.put("licensedTo", firstPresent(license.getLicensedTo(), ""));
+        res.put("softwareVersion", firstPresent(license.getSoftwareVersion(), "2.0.0"));
         res.put("dateFrom", license.getDateFrom());
         res.put("dateTo", license.getDateTo());
         res.put("userCount", license.getUserCount());
@@ -208,11 +220,19 @@ public class LicenseService {
     // ==================== PRIVATE HELPERS ====================
 
     private String buildInner(LicenseGeneratePayload payload) {
+        String vendorName = clean(payload.getVendorName());
+        String licensedBy = firstPresent(payload.getLicensedBy(), vendorName);
+        String licensedTo = firstPresent(payload.getLicensedTo(), "-");
+        String softwareVersion = firstPresent(payload.getSoftwareVersion(), "2.0.0");
+
         return payload.getVendorName().trim()
                 + FIELD_SEP + payload.getDateFrom().format(DATE_FMT)
                 + FIELD_SEP + payload.getDateTo().format(DATE_FMT)
                 + FIELD_SEP + payload.getUserCount()
-                + FIELD_SEP + payload.getLicenseText().trim();
+                + FIELD_SEP + payload.getLicenseText().trim()
+                + FIELD_SEP + licensedBy
+                + FIELD_SEP + licensedTo
+                + FIELD_SEP + softwareVersion;
     }
 
     private String encrypt(String plaintext) throws Exception {
@@ -231,6 +251,15 @@ public class LicenseService {
 
     private String normalizeToken(String token) {
         return token == null ? "" : token.replaceAll("\\s+", "").trim();
+    }
+
+    private String firstPresent(String value, String fallback) {
+        String cleaned = clean(value);
+        return cleaned.isEmpty() ? clean(fallback) : cleaned;
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private Optional<String> validatePayload(LicenseGeneratePayload payload) {

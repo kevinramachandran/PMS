@@ -32,6 +32,11 @@ public class IssueBoardItemController {
         return service.getLatestBoard();
     }
 
+    @GetMapping("/search")
+    public List<IssueBoardItem> searchIssues(@RequestParam(defaultValue = "") String q) {
+        return service.searchIssues(q);
+    }
+
     @GetMapping("/assignable-users")
     public Map<String, Object> getAssignableUsers() {
         List<Map<String, String>> users = authService.getManageableUsers().stream()

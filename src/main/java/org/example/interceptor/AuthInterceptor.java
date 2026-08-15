@@ -73,12 +73,14 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (RoleAccess.isAdmin(role)) {
+            applyNavigationSessionAttributes(session, role, RoleAccess.CONFIG_PAGES, RoleAccess.CONFIG_PAGES);
             applyPermissionAttributes(request, true, true, protectedPageKeyForRequest(request));
             return true;
         }
 
         Set<String> viewPermissions = extractPermissions(session, "viewPermissions");
         Set<String> editPermissions = extractPermissions(session, "editPermissions");
+        applyNavigationSessionAttributes(session, role, viewPermissions, editPermissions);
         String protectedPageKey = resolveProtectedPageKey(request);
         boolean canViewCurrentPage = protectedPageKey == null || protectedPageKey.isBlank()
                 || RoleAccess.canViewPage(role, viewPermissions, protectedPageKey);
@@ -121,6 +123,67 @@ public class AuthInterceptor implements HandlerInterceptor {
         request.setAttribute("currentPageKey", protectedPageKey == null ? "" : protectedPageKey);
     }
 
+    private void applyNavigationSessionAttributes(HttpSession session,
+                                                  String role,
+                                                  Set<String> viewPermissions,
+                                                  Set<String> editPermissions) {
+        if (session == null) {
+            return;
+        }
+
+        boolean canViewPmsDataEntry = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PMS_DATA_ENTRY);
+        boolean canViewProductionMetricsData = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PRODUCTION_METRICS_DATA);
+        boolean canViewIssueBoardConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
+        boolean canViewGembaWalkConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION);
+        boolean canViewLeadershipGembaTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION);
+        boolean canViewTrainingScheduleConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION);
+        boolean canViewMeetingAgendaConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION);
+        boolean canViewProcessConfirmationConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION);
+        boolean canViewAbnormalityTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION);
+        boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
+        boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
+        boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
+        boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
+        boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+        boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
+        boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+
+        session.setAttribute("canViewSettings", RoleAccess.canViewAnyConfigurationPage(role, viewPermissions));
+        session.setAttribute("canEditSettings", RoleAccess.canEditAnyConfigurationPage(role, editPermissions));
+        session.setAttribute("canViewPmsDataEntry", canViewPmsDataEntry);
+        session.setAttribute("canViewProductionMetricsData", canViewProductionMetricsData);
+        session.setAttribute("canViewIssueBoardConfiguration", canViewIssueBoardConfiguration);
+        session.setAttribute("canViewGembaWalkConfiguration", canViewGembaWalkConfiguration);
+        session.setAttribute("canViewLeadershipGembaTrackerConfiguration", canViewLeadershipGembaTrackerConfiguration);
+        session.setAttribute("canViewTrainingScheduleConfiguration", canViewTrainingScheduleConfiguration);
+        session.setAttribute("canViewMeetingAgendaConfiguration", canViewMeetingAgendaConfiguration);
+        session.setAttribute("canViewProcessConfirmationConfiguration", canViewProcessConfirmationConfiguration);
+        session.setAttribute("canViewAbnormalityTrackerConfiguration", canViewAbnormalityTrackerConfiguration);
+        session.setAttribute("canViewHsCrossDailyConfiguration", canViewHsCrossDailyConfiguration);
+        session.setAttribute("canViewLsrTrackingConfiguration", canViewLsrTrackingConfiguration);
+        session.setAttribute("canViewInfoPortal", canViewInfoPortal);
+        session.setAttribute("canViewKpiTargetCrossColor", canViewKpiTargetCrossColor);
+        session.setAttribute("canViewKpiRenameDashboard", canViewKpiRenameDashboard);
+        session.setAttribute("canViewKpiPlantName", canViewKpiPlantName);
+        session.setAttribute("canViewUserManagement", canViewUserManagement);
+        session.setAttribute("canEditUserManagement", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT));
+        session.setAttribute("canViewLicenseManagement", canViewLicenseManagement);
+        session.setAttribute("canEditLicenseManagement", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT));
+        session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
+        session.setAttribute("canEditEmailConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION));
+        session.setAttribute("canViewConfigurationSettingsGroup",
+                canViewIssueBoardConfiguration || canViewGembaWalkConfiguration || canViewLeadershipGembaTrackerConfiguration
+                        || canViewTrainingScheduleConfiguration || canViewMeetingAgendaConfiguration
+                        || canViewProcessConfirmationConfiguration || canViewAbnormalityTrackerConfiguration);
+        session.setAttribute("canViewProductionSettingsGroup",
+                canViewProductionMetricsData || canViewHsCrossDailyConfiguration || canViewLsrTrackingConfiguration);
+        session.setAttribute("canViewKpiConfigurationGroup", canViewKpiTargetCrossColor || canViewKpiRenameDashboard || canViewKpiPlantName);
+        session.setAttribute("canViewKpiDashboard",
+                RoleAccess.isAdmin(role) || canViewPmsDataEntry || canViewProductionMetricsData);
+    }
+
     private boolean isReadMethod(String method) {
         return "GET".equalsIgnoreCase(method);
     }
@@ -156,6 +219,10 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return "";
             }
             return RoleAccess.PAGE_LICENSE_MANAGEMENT;
+        }
+
+        if (path.startsWith("/api/dashboard-config/plant-name")) {
+            return RoleAccess.PAGE_KPI_PLANT_NAME;
         }
 
         if (path.startsWith("/settings")) {

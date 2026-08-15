@@ -77,6 +77,8 @@ public class WebController {
             case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking");
             case "info-portal" -> settingsView(model, "info-portal", "", "Info Portal");
             case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
+            case "kpi-rename-dashboard" -> settingsView(model, "kpi-rename-dashboard", "", "KPI Configuration");
+            case "kpi-plant-name" -> settingsView(model, "kpi-plant-name", "", "Rename Plant Name");
             case "license" -> settingsView(model, "license", "", "License Management");
             default -> "redirect:/pms/top-priorities";
         };
@@ -170,6 +172,11 @@ public class WebController {
     @GetMapping("/client-selection")
     public String clientSelection() {
         return "client-selection";
+    }
+
+    @GetMapping("/{externalUrl:www\\..+}")
+    public String redirectBareExternalUrl(@PathVariable String externalUrl) {
+        return "redirect:https://" + externalUrl;
     }
 
     @GetMapping("/add-metrics")

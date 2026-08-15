@@ -22,10 +22,10 @@ public class AppUser {
     @Column(nullable = false, length = 20)
     private String role;
 
-    @Column(name = "page_view_permissions", length = 500)
+    @Column(name = "page_view_permissions", columnDefinition = "TEXT")
     private String pageViewPermissions;
 
-    @Column(name = "page_edit_permissions", length = 500)
+    @Column(name = "page_edit_permissions", columnDefinition = "TEXT")
     private String pageEditPermissions;
 
     public Long getId() {

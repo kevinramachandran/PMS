@@ -41,6 +41,18 @@ public class MetricsEntryController {
         }
     }
 
+    @GetMapping("/latest-target")
+    public ResponseEntity<?> getLatestTargetByDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        try {
+            return productionMetricsService.getLatestTargetEntryBundle(date)
+                    .<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.noContent().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/custom-definitions")
     public ResponseEntity<List<CustomMetricDefinitionPayload>> getCustomMetricDefinitions() {
         return ResponseEntity.ok(productionMetricsService.getCustomMetricDefinitions());

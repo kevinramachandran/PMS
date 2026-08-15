@@ -60,58 +60,67 @@ $(function () {
         applySavedSidebarState();
     });
 
-    // Expand parent nav if child is active
-    const $activeChild = $('.nav-child.active');
-    if ($activeChild.length) {
-        const $parent = $activeChild.closest('.nav-parent');
-        $parent.find('.nav-parent-toggle').addClass('expanded');
-        $parent.find('.nav-children').addClass('show').show();
-    }
-
-    $('.nav-parent-toggle').on('click', function (e) {
-        e.preventDefault();
-        const $parent = $(this).closest('.nav-parent');
-        $(this).addClass('expanded');
-        $parent.find('.nav-children').addClass('show').show();
-    });
-
-    $('.nav-parent-toggle').addClass('expanded');
-    $('.nav-children').addClass('show').show();
-
-    const currentPath = window.location.pathname;
-    const currentUrl = currentPath + window.location.search;
-    const $matchedChild = $('.nav-child').filter(function() {
-        const href = $(this).attr('href');
-        return href && (href === currentUrl || href === currentPath);
-    }).first();
-    if ($matchedChild.length) {
-        $('.nav-child').removeClass('active');
-        $matchedChild.addClass('active');
-    }
-
     // -------------------------------------------------------
     // Load period filter then render charts
     // -------------------------------------------------------
+    function periodToMonthYear(label) {
+        const parts = String(label || '').split("'");
+        if (parts.length !== 2) return null;
+        const monthMap = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+        const month = monthMap[parts[0]];
+        const yy = Number(parts[1]);
+        if (!month || Number.isNaN(yy)) return null;
+        return { month: month, year: 2000 + yy };
+    }
+
+    function monthInputValue(month, year) {
+        return year + '-' + String(month).padStart(2, '0');
+    }
+
+    function findPeriodLabelByValue(periods, monthValue) {
+        const parts = String(monthValue || '').split('-');
+        if (parts.length !== 2) return null;
+        const year = Number(parts[0]);
+        const month = Number(parts[1]);
+        return (periods || []).find(function(label) {
+            const parsed = periodToMonthYear(label);
+            return parsed && parsed.year === year && parsed.month === month;
+        }) || null;
+    }
+
     function loadPeriodsAndRender() {
         $.ajax({
             url: '/api/abnormality-tracker/periods',
             type: 'GET',
             success: function (periods) {
-                const $select = $('#atPeriodFilter');
-                $select.empty();
+                const $filter = $('#atPeriodFilter');
+                $filter.data('periods', periods || []);
 
                 if (!periods || periods.length === 0) {
-                    $select.append('<option value="">No data configured</option>');
+                    $filter.val('');
                     renderEmpty();
                     return;
                 }
 
-                periods.forEach(function (p) {
-                    $select.append('<option value="' + escAttr(p) + '">' + escHtml(p) + '</option>');
-                });
+                const parsedPeriods = periods.map(function(label) {
+                    return { label: label, parsed: periodToMonthYear(label) };
+                }).filter(function(item) { return item.parsed !== null; });
 
-                // Load latest (first in list)
-                loadDataForPeriod(periods[0]);
+                if (parsedPeriods.length === 0) {
+                    $filter.val('');
+                    renderEmpty();
+                    return;
+                }
+
+                const values = parsedPeriods.map(function(item) {
+                    return monthInputValue(item.parsed.month, item.parsed.year);
+                }).sort();
+
+                $filter.attr('min', values[0]);
+                $filter.attr('max', values[values.length - 1]);
+                $filter.val(values[values.length - 1]);
+
+                loadDataForPeriod(findPeriodLabelByValue(periods, $filter.val()) || periods[0]);
             },
             error: function () {
                 renderEmpty();
@@ -120,9 +129,11 @@ $(function () {
     }
 
     $('#atPeriodFilter').on('change', function () {
-        const selected = $(this).val();
+        const selected = findPeriodLabelByValue($('#atPeriodFilter').data('periods') || [], $(this).val());
         if (selected) {
             loadDataForPeriod(selected);
+        } else {
+            renderEmpty();
         }
     });
 

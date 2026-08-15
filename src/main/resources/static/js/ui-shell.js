@@ -212,8 +212,10 @@
         });
 
         if (!headerRight.querySelector('.pms-profile')) {
+            const avatarEl = header.querySelector('.user-avatar');
             const existingName = (header.querySelector('.profile-name') && header.querySelector('.profile-name').textContent.trim())
-                || (header.querySelector('.user-avatar') && header.querySelector('.user-avatar').textContent.trim())
+                || (avatarEl && avatarEl.getAttribute('data-username') && avatarEl.getAttribute('data-username').trim())
+                || (avatarEl && avatarEl.textContent.trim())
                 || 'User';
             const logoutHref = (header.querySelector('a[href="/logout"]') && header.querySelector('a[href="/logout"]').getAttribute('href')) || '/logout';
 
@@ -233,7 +235,7 @@
             profile.innerHTML = '' +
                 '<button type="button" class="pms-profile-btn">' +
                 '<i class="fas fa-user-circle"></i>' +
-                '<span>' + existingName + '</span>' +
+                '<span class="pms-profile-name">' + existingName + '</span>' +
                 '<i class="fas fa-chevron-down"></i>' +
                 '</button>' +
                 '<div class="pms-profile-menu">' +
@@ -282,6 +284,178 @@
         });
     }
 
+    function setupSidebarDropdowns() {
+        const toggles = Array.from(document.querySelectorAll('.nav-parent-toggle'));
+        if (!toggles.length) {
+            return;
+        }
+
+        function childrenFor(toggle) {
+            const next = toggle.nextElementSibling;
+            return next && next.classList.contains('nav-children') ? next : null;
+        }
+
+        function closeBranch(toggle) {
+            const children = childrenFor(toggle);
+            toggle.classList.remove('expanded');
+            toggle.setAttribute('aria-expanded', 'false');
+            if (children) {
+                children.classList.remove('show');
+                children.style.display = 'none';
+            }
+        }
+
+        function openBranch(toggle) {
+            const children = childrenFor(toggle);
+            toggle.classList.add('expanded');
+            toggle.setAttribute('aria-expanded', 'true');
+            if (children) {
+                children.classList.add('show');
+                children.style.display = 'block';
+            }
+        }
+
+        toggles.forEach(function (toggle) {
+            closeBranch(toggle);
+            toggle.setAttribute('role', 'button');
+            toggle.setAttribute('aria-expanded', 'false');
+
+            if (toggle.dataset.pmsNavBound === 'true') {
+                return;
+            }
+            toggle.dataset.pmsNavBound = 'true';
+
+            toggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                if (toggle.classList.contains('expanded')) {
+                    closeBranch(toggle);
+                } else {
+                    openBranch(toggle);
+                }
+            }, true);
+        });
+
+        const currentPath = window.location.pathname;
+        const currentUrl = currentPath + window.location.search;
+        let activeChild = null;
+
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach(function (item) {
+            item.classList.remove('active');
+        });
+
+        document.querySelectorAll('.sidebar-nav .nav-child').forEach(function (link) {
+            const href = link.getAttribute('href');
+            if (!activeChild && href && (href === currentUrl || href === currentPath)) {
+                activeChild = link;
+            }
+        });
+
+        if (activeChild) {
+            activeChild.classList.add('active');
+            return;
+        }
+
+        document.querySelectorAll('.sidebar-nav .nav-item:not(.nav-child):not(.nav-parent-toggle)').forEach(function (link) {
+            const href = link.getAttribute('href');
+            if (href && (href === currentUrl || href === currentPath)) {
+                link.classList.add('active');
+            }
+        });
+    }
+
+    function formatShortDate(dateValue) {
+        if (!dateValue) {
+            return '';
+        }
+
+        const parsed = new Date(String(dateValue) + 'T00:00:00');
+        if (Number.isNaN(parsed.getTime())) {
+            return '';
+        }
+
+        return parsed.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+
+    function latestDateFromRows(rows) {
+        if (!Array.isArray(rows)) {
+            rows = rows ? [rows] : [];
+        }
+
+        return rows.reduce(function (latest, row) {
+            const dateValue = row && (row.date || row.targetDate || row.updatedAt || row.createdAt);
+            if (!dateValue) {
+                return latest;
+            }
+
+            const parsed = new Date(String(dateValue).substring(0, 10) + 'T00:00:00');
+            if (Number.isNaN(parsed.getTime())) {
+                return latest;
+            }
+
+            if (!latest || parsed.getTime() > latest.getTime()) {
+                return parsed;
+            }
+            return latest;
+        }, null);
+    }
+
+    function applyPmsDeckNavDate(href, dateValue) {
+        document.querySelectorAll('.sidebar-nav .nav-child[href="' + href + '"]').forEach(function (link) {
+            const span = link.querySelector('span');
+            if (!span) {
+                return;
+            }
+
+            if (!span.dataset.baseLabel) {
+                span.dataset.baseLabel = span.textContent.trim();
+            }
+
+            span.classList.add('pms-nav-label-stack');
+            span.innerHTML = '' +
+                '<span class="pms-nav-main-label">' + span.dataset.baseLabel + '</span>' +
+                '<span class="pms-nav-edited-date">' + (dateValue ? 'Last edited: ' + dateValue : 'Last edited: -') + '</span>';
+        });
+    }
+
+    function loadPmsDeckNavDates() {
+        const pmsDeckItems = [
+            { href: '/pms/top-priorities', url: '/api/priorities/type/TOP_3' },
+            { href: '/pms/weekly-priorities', url: '/api/priorities/type/WEEKLY' },
+            { href: '/pms/daily-performance', url: '/api/daily-performance/current-month' },
+            { href: '/pms/people-daily', url: '/api/daily-data/type/PEOPLE' },
+            { href: '/pms/quality-daily', url: '/api/daily-data/type/QUALITY' },
+            { href: '/pms/service-daily', url: '/api/daily-data/type/SERVICE' },
+            { href: '/pms/cost-daily', url: '/api/daily-data/type/COST' }
+        ];
+
+        pmsDeckItems.forEach(function (item) {
+            if (!document.querySelector('.sidebar-nav .nav-child[href="' + item.href + '"]')) {
+                return;
+            }
+
+            fetch(item.url, { headers: { 'Accept': 'application/json' } })
+                .then(function (response) {
+                    if (!response.ok || response.status === 204) {
+                        return null;
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    const latest = latestDateFromRows(data);
+                    applyPmsDeckNavDate(item.href, latest ? formatShortDate(latest.toISOString().substring(0, 10)) : '');
+                })
+                .catch(function () {
+                    applyPmsDeckNavDate(item.href, '');
+                });
+        });
+    }
+
     function fixFooterBranding() {
         document.querySelectorAll('.footer').forEach(function (footer) {
             if (!footer.querySelector('img')) {
@@ -304,6 +478,8 @@
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.top-header').forEach(enhanceHeader);
         normalizeSidebarLabels();
+        setupSidebarDropdowns();
+        loadPmsDeckNavDates();
         fixFooterBranding();
         standardizeTableAlignment(document);
         bindTableAlignmentObserver();

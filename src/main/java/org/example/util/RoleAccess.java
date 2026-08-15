@@ -26,8 +26,10 @@ public final class RoleAccess {
         public static final String PAGE_ABNORMALITY_TRACKER_CONFIGURATION = "ABNORMALITY_TRACKER_CONFIGURATION";
         public static final String PAGE_HS_CROSS_DAILY_CONFIGURATION = "HS_CROSS_DAILY_CONFIGURATION";
         public static final String PAGE_LSR_TRACKING_CONFIGURATION = "LSR_TRACKING_CONFIGURATION";
-         public static final String PAGE_INFO_PORTAL = "INFO_PORTAL";
+        public static final String PAGE_INFO_PORTAL = "INFO_PORTAL";
         public static final String PAGE_KPI_TARGET_CROSS_COLOR = "KPI_TARGET_CROSS_COLOR";
+        public static final String PAGE_KPI_RENAME_DASHBOARD = "KPI_RENAME_DASHBOARD";
+        public static final String PAGE_KPI_PLANT_NAME = "KPI_PLANT_NAME";
         public static final String PAGE_USER_MANAGEMENT = "USER_MANAGEMENT";
         public static final String PAGE_LICENSE_MANAGEMENT = "LICENSE_MANAGEMENT";
     public static final String PAGE_EMAIL_CONFIGURATION = "EMAIL_CONFIGURATION";
@@ -41,12 +43,17 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA_COST,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
+            PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
+            PAGE_MEETING_AGENDA_CONFIGURATION,
+            PAGE_PROCESS_CONFIRMATION_CONFIGURATION,
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL,
-            PAGE_KPI_TARGET_CROSS_COLOR
+            PAGE_KPI_TARGET_CROSS_COLOR,
+            PAGE_KPI_RENAME_DASHBOARD,
+            PAGE_KPI_PLANT_NAME
         );
 
         public static final Set<String> LEGACY_SETTINGS_EQUIVALENT_PAGES = Set.of(
@@ -54,12 +61,17 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
+            PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
+            PAGE_MEETING_AGENDA_CONFIGURATION,
+            PAGE_PROCESS_CONFIRMATION_CONFIGURATION,
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL,
-            PAGE_KPI_TARGET_CROSS_COLOR
+            PAGE_KPI_TARGET_CROSS_COLOR,
+            PAGE_KPI_RENAME_DASHBOARD,
+            PAGE_KPI_PLANT_NAME
         );
 
         public static final Set<String> CONFIG_PAGES = Set.of(
@@ -71,12 +83,17 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA_COST,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
+            PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
+            PAGE_MEETING_AGENDA_CONFIGURATION,
+            PAGE_PROCESS_CONFIRMATION_CONFIGURATION,
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR,
+            PAGE_KPI_RENAME_DASHBOARD,
+            PAGE_KPI_PLANT_NAME,
             PAGE_USER_MANAGEMENT,
             PAGE_LICENSE_MANAGEMENT,
             PAGE_EMAIL_CONFIGURATION
@@ -152,6 +169,11 @@ public final class RoleAccess {
         if (PAGE_PRODUCTION_METRICS_DATA.equals(pageKey)) {
             return sanitized.stream().anyMatch(PRODUCTION_METRICS_PAGE_KEYS::contains);
         }
+        if (PAGE_KPI_RENAME_DASHBOARD.equals(pageKey)) {
+            return sanitized.contains(PAGE_KPI_RENAME_DASHBOARD)
+                    || sanitized.contains(PAGE_KPI_PLANT_NAME)
+                    || sanitized.contains(PAGE_KPI_TARGET_CROSS_COLOR);
+        }
 
         return sanitized.contains(pageKey);
     }
@@ -167,6 +189,11 @@ public final class RoleAccess {
         Set<String> sanitized = sanitizePages(editPages);
         if (PAGE_PRODUCTION_METRICS_DATA.equals(pageKey)) {
             return sanitized.stream().anyMatch(PRODUCTION_METRICS_PAGE_KEYS::contains);
+        }
+        if (PAGE_KPI_RENAME_DASHBOARD.equals(pageKey)) {
+            return sanitized.contains(PAGE_KPI_RENAME_DASHBOARD)
+                    || sanitized.contains(PAGE_KPI_PLANT_NAME)
+                    || sanitized.contains(PAGE_KPI_TARGET_CROSS_COLOR);
         }
 
         return sanitized.contains(pageKey);
@@ -201,12 +228,17 @@ public final class RoleAccess {
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
             case "gemba-schedule" -> PAGE_GEMBA_WALK_CONFIGURATION;
+            case "leadership-gemba-tracker" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "training-schedule" -> PAGE_TRAINING_SCHEDULE_CONFIGURATION;
+            case "meeting-agenda" -> PAGE_MEETING_AGENDA_CONFIGURATION;
+            case "process-confirmation" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
             case "abnormality-tracker" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
             case "info-portal" -> PAGE_INFO_PORTAL;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
+            case "kpi-rename-dashboard" -> PAGE_KPI_RENAME_DASHBOARD;
+            case "kpi-plant-name" -> PAGE_KPI_PLANT_NAME;
             case "license" -> PAGE_LICENSE_MANAGEMENT;
             default -> "";
         };
@@ -222,12 +254,17 @@ public final class RoleAccess {
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
             case "gemba-schedule" -> PAGE_GEMBA_WALK_CONFIGURATION;
+            case "leadership-gemba-tracker" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "training-schedule" -> PAGE_TRAINING_SCHEDULE_CONFIGURATION;
+            case "meeting-agenda" -> PAGE_MEETING_AGENDA_CONFIGURATION;
+            case "process-confirmation" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
             case "abnormality-tracker" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
             case "info-portal" -> PAGE_INFO_PORTAL;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
+            case "kpi-rename-dashboard" -> PAGE_KPI_RENAME_DASHBOARD;
+            case "kpi-plant-name" -> PAGE_KPI_PLANT_NAME;
             case "license" -> PAGE_LICENSE_MANAGEMENT;
             default -> "";
         };

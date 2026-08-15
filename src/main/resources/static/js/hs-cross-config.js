@@ -1,10 +1,8 @@
 /* H&S Cross Daily - Settings Configuration Script */
 (function () {
     const ACCIDENT_OPTIONS = [
-        { value: '', label: 'Not Set' },
-        { value: 'ZERO', label: 'Zero Accident' },
-        { value: 'WITH_LOST', label: 'With Lost Days' },
-        { value: 'WITHOUT_LOST', label: 'Without Lost Days' }
+        { value: 'ZERO', label: 'Zero Accidents' },
+        { value: 'WITH_LOST', label: 'Accidents' }
     ];
 
     const NEAR_MISS_OPTIONS = [
@@ -29,6 +27,33 @@
         return new Date(y, m, 0).getDate();
     }
 
+    function getYesterday() {
+        const date = new Date();
+        date.setDate(date.getDate() - 1);
+        return date;
+    }
+
+    function formatDateValue(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+
+    function parseDateValue(value) {
+        const parts = String(value || '').split('-');
+        if (parts.length !== 3) {
+            return null;
+        }
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+        if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+            return null;
+        }
+        return { year, month, day };
+    }
+
     function getMessageElement() {
         return document.getElementById('hsCrossMessage');
     }
@@ -48,20 +73,29 @@
         return value === 'NONE' ? 'hs-status-safe' : 'hs-status-issue';
     }
 
+    function normalizeAccidentStatus(value) {
+        if (value === 'WITH_LOST' || value === 'WITHOUT_LOST') {
+            return 'WITH_LOST';
+        }
+        return 'ZERO';
+    }
+
     function applySelectStatusClass(selectEl, field, value) {
         if (!selectEl) return;
         selectEl.classList.remove('hs-status-notset', 'hs-status-safe', 'hs-status-issue');
+        if (field === 'accidentStatus') {
+            selectEl.classList.add('hs-status-notset');
+            return;
+        }
         selectEl.classList.add(getStatusClass(field, value));
     }
 
     function setLoading(isLoading) {
         const saveBtn = document.getElementById('saveHsCrossBtn');
-        const yearSel = document.getElementById('hsCrossYearSel');
-        const monthSel = document.getElementById('hsCrossMonthSel');
+        const dateInput = document.getElementById('hsCrossDateInput');
 
         if (saveBtn) saveBtn.disabled = isLoading;
-        if (yearSel) yearSel.disabled = isLoading;
-        if (monthSel) monthSel.disabled = isLoading;
+        if (dateInput) dateInput.disabled = isLoading;
 
         if (isLoading) {
             showMessage('Loading...', 'info');
@@ -85,7 +119,7 @@
             select.appendChild(optEl);
         });
 
-        select.value = value || '';
+        select.value = field === 'accidentStatus' ? normalizeAccidentStatus(value) : (value || '');
         applySelectStatusClass(select, field, select.value);
         select.addEventListener('change', onFieldChange);
 
@@ -134,13 +168,23 @@
     }
 
     function loadHsCrossData() {
-        const yearEl = document.getElementById('hsCrossYearSel');
-        const monthEl = document.getElementById('hsCrossMonthSel');
-        if (!yearEl || !monthEl) return;
+        const dateInput = document.getElementById('hsCrossDateInput');
+        if (!dateInput) return;
 
-        currentYear = parseInt(yearEl.value, 10);
-        currentMonth = parseInt(monthEl.value, 10);
-        maxDays = daysInMonth(currentYear, currentMonth);
+        const yesterdayValue = formatDateValue(getYesterday());
+        dateInput.max = yesterdayValue;
+        if (!dateInput.value || dateInput.value > yesterdayValue) {
+            dateInput.value = yesterdayValue;
+        }
+
+        const selected = parseDateValue(dateInput.value);
+        if (!selected) {
+            return;
+        }
+
+        currentYear = selected.year;
+        currentMonth = selected.month;
+        maxDays = Math.min(selected.day, daysInMonth(currentYear, currentMonth));
         hsState = {};
 
         const requestId = ++lastRequestId;
@@ -153,13 +197,13 @@
                 data.forEach(entry => {
                     hsState[entry.day] = {
                         id: entry.id,
-                        accidentStatus: entry.accidentStatus || null,
+                        accidentStatus: normalizeAccidentStatus(entry.accidentStatus),
                         nearMissStatus: entry.nearMissStatus || null,
                         safetyConcernStatus: entry.safetyConcernStatus || null
                     };
                 });
                 buildTable();
-                showMessage('Data loaded successfully for selected month.', 'info');
+                showMessage('Data loaded successfully up to selected date.', 'info');
             })
             .catch(() => {
                 if (requestId !== lastRequestId) return;
@@ -217,28 +261,14 @@
         });
     }
 
-    function initYearSelector() {
-        const sel = document.getElementById('hsCrossYearSel');
-        if (!sel) return;
-        const now = new Date();
-        for (let y = now.getFullYear() - 2; y <= now.getFullYear() + 1; y++) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
-            if (y === now.getFullYear()) opt.selected = true;
-            sel.appendChild(opt);
-        }
-    }
-
     function init() {
-        initYearSelector();
-
-        const monthSel = document.getElementById('hsCrossMonthSel');
-        if (monthSel) monthSel.value = new Date().getMonth() + 1;
-
-        const yearSel = document.getElementById('hsCrossYearSel');
-        if (yearSel) yearSel.addEventListener('change', loadHsCrossData);
-        if (monthSel) monthSel.addEventListener('change', loadHsCrossData);
+        const dateInput = document.getElementById('hsCrossDateInput');
+        if (dateInput) {
+            const yesterdayValue = formatDateValue(getYesterday());
+            dateInput.max = yesterdayValue;
+            dateInput.value = yesterdayValue;
+            dateInput.addEventListener('change', loadHsCrossData);
+        }
 
         const saveBtn = document.getElementById('saveHsCrossBtn');
         if (saveBtn) saveBtn.addEventListener('click', saveHsCrossData);

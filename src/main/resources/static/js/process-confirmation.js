@@ -19,26 +19,6 @@ $(document).ready(function() {
         'Are the top priorities until next meeting clear?'
     ];
 
-    $('.nav-parent-toggle').on('click', function(e) {
-        e.preventDefault();
-        $(this).addClass('expanded');
-        $(this).next('.nav-children').addClass('show').show();
-    });
-
-    $('.nav-parent-toggle').addClass('expanded');
-    $('.nav-children').addClass('show').show();
-
-    const currentPath = window.location.pathname;
-    const currentUrl = currentPath + window.location.search;
-    const $matchedChild = $('.nav-child').filter(function() {
-        const href = $(this).attr('href');
-        return href && (href === currentUrl || href === currentPath);
-    }).first();
-    if ($matchedChild.length) {
-        $('.nav-child').removeClass('active');
-        $matchedChild.addClass('active');
-    }
-
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
             sidebar.toggleClass('active');
@@ -204,15 +184,22 @@ $(document).ready(function() {
         }) || null;
     }
 
+    function monthInputValue(month, year) {
+        return year + '-' + String(month).padStart(2, '0');
+    }
+
+    function monthInputToPeriodLabel(value) {
+        const parts = String(value || '').split('-');
+        if (parts.length !== 2) return null;
+        return findPeriodLabel(Number(parts[1]), Number(parts[0]));
+    }
+
     function populateFilters(periods) {
         const monthFilter = $('#pcMonthFilter');
-        const yearFilter = $('#pcYearFilter');
-        monthFilter.empty();
-        yearFilter.empty();
 
         if (!periods || periods.length === 0) {
-            monthFilter.append('<option value="">No month</option>');
-            yearFilter.append('<option value="">No year</option>');
+            monthFilter.val('');
+            monthFilter.removeAttr('min max');
             return;
         }
 
@@ -220,45 +207,20 @@ $(document).ready(function() {
             return { label: label, parsed: periodToMonthYear(label) };
         }).filter(function(item) { return item.parsed !== null; });
 
-        const months = [];
-        const years = [];
-        parsed.forEach(function(item) {
-            if (!months.includes(item.parsed.month)) months.push(item.parsed.month);
-            if (!years.includes(item.parsed.year)) years.push(item.parsed.year);
-        });
-
-        const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        years.sort(function(a, b) { return b - a; }).forEach(function(y) {
-            yearFilter.append('<option value="' + y + '">' + y + '</option>');
-        });
-
-        function refreshMonths(selectedYear, preferredMonth) {
-            monthFilter.empty();
-            const monthsForYear = parsed
-                .filter(function(item) { return item.parsed.year === selectedYear; })
-                .map(function(item) { return item.parsed.month; })
-                .filter(function(month, index, arr) { return arr.indexOf(month) === index; })
-                .sort(function(a, b) { return a - b; });
-
-            monthsForYear.forEach(function(m) {
-                monthFilter.append('<option value="' + m + '">' + monthNames[m] + '</option>');
-            });
-
-            const fallbackMonth = monthsForYear.length ? monthsForYear[monthsForYear.length - 1] : '';
-            const resolvedMonth = monthsForYear.includes(Number(preferredMonth)) ? Number(preferredMonth) : fallbackMonth;
-            monthFilter.val(resolvedMonth ? String(resolvedMonth) : '');
+        if (parsed.length === 0) {
+            monthFilter.val('');
+            monthFilter.removeAttr('min max');
+            return;
         }
 
-        if (parsed.length > 0) {
-            const currentYear = new Date().getFullYear();
-            const preferredYear = years.includes(currentYear) ? currentYear : years[0];
-            yearFilter.val(String(preferredYear));
-            refreshMonths(preferredYear, parsed[0].parsed.month);
-        }
-
-        yearFilter.off('change.pcFilterSync').on('change.pcFilterSync', function() {
-            refreshMonths(Number($(this).val()), monthFilter.val());
-        });
+        const values = parsed.map(function(item) {
+            return monthInputValue(item.parsed.month, item.parsed.year);
+        }).sort();
+        const current = monthInputValue(new Date().getMonth() + 1, new Date().getFullYear());
+        const selected = values.includes(current) ? current : values[values.length - 1];
+        monthFilter.attr('min', values[0]);
+        monthFilter.attr('max', values[values.length - 1]);
+        monthFilter.val(selected);
     }
 
     function loadByPeriod(periodLabel) {
@@ -297,9 +259,7 @@ $(document).ready(function() {
                     return;
                 }
 
-                const month = Number($('#pcMonthFilter').val());
-                const year = Number($('#pcYearFilter').val());
-                loadByPeriod(findPeriodLabel(month, year) || availablePeriods[0]);
+                loadByPeriod(monthInputToPeriodLabel($('#pcMonthFilter').val()) || availablePeriods[0]);
             },
             error: function() {
                 availablePeriods = [];
@@ -310,10 +270,8 @@ $(document).ready(function() {
         });
     }
 
-    $('#pcMonthFilter, #pcYearFilter').on('change', function() {
-        const month = Number($('#pcMonthFilter').val());
-        const year = Number($('#pcYearFilter').val());
-        loadByPeriod(findPeriodLabel(month, year));
+    $('#pcMonthFilter').on('change', function() {
+        loadByPeriod(monthInputToPeriodLabel($(this).val()));
     });
 
     window.addEventListener('storage', function(e) {

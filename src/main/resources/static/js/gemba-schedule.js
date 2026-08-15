@@ -4,26 +4,6 @@ $(document).ready(function() {
     const sidebarOverlay = $('#sidebarOverlay');
     const mainContent = $('.main-content');
 
-    $('.nav-parent-toggle').on('click', function(e) {
-        e.preventDefault();
-        $(this).addClass('expanded');
-        $(this).next('.nav-children').addClass('show').show();
-    });
-
-    $('.nav-parent-toggle').addClass('expanded');
-    $('.nav-children').addClass('show').show();
-
-    const currentPath = window.location.pathname;
-    const currentUrl = currentPath + window.location.search;
-    const $matchedChild = $('.nav-child').filter(function() {
-        const href = $(this).attr('href');
-        return href && (href === currentUrl || href === currentPath);
-    }).first();
-    if ($matchedChild.length) {
-        $('.nav-child').removeClass('active');
-        $matchedChild.addClass('active');
-    }
-
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
             sidebar.toggleClass('active');

@@ -16,6 +16,15 @@ public class AppLicense {
     @Column(nullable = false, length = 180)
     private String vendorName;
 
+    @Column(length = 180)
+    private String licensedBy;
+
+    @Column(length = 180)
+    private String licensedTo;
+
+    @Column(length = 80)
+    private String softwareVersion;
+
     @Column(nullable = false)
     private LocalDate dateFrom;
 
@@ -28,7 +37,7 @@ public class AppLicense {
     @Column(nullable = false, length = 500)
     private String licenseText;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, length = 1500)
     private String licenseToken;
 
     @Column(length = 120)
@@ -68,6 +77,30 @@ public class AppLicense {
 
     public void setVendorName(String vendorName) {
         this.vendorName = vendorName;
+    }
+
+    public String getLicensedBy() {
+        return licensedBy;
+    }
+
+    public void setLicensedBy(String licensedBy) {
+        this.licensedBy = licensedBy;
+    }
+
+    public String getLicensedTo() {
+        return licensedTo;
+    }
+
+    public void setLicensedTo(String licensedTo) {
+        this.licensedTo = licensedTo;
+    }
+
+    public String getSoftwareVersion() {
+        return softwareVersion;
+    }
+
+    public void setSoftwareVersion(String softwareVersion) {
+        this.softwareVersion = softwareVersion;
     }
 
     public LocalDate getDateFrom() {

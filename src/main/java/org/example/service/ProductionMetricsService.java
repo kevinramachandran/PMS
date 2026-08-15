@@ -138,8 +138,8 @@ public class ProductionMetricsService {
 
             int updatedRows = jdbcTemplate.update("""
                 UPDATE production_metrics
-                SET %1$s = NULL
-                WHERE UPPER(TRIM(%1$s)) IN ('NP', 'N/P', 'NA', 'N/A')
+                SET %1$s = 'NP'
+                WHERE UPPER(TRIM(%1$s)) IN ('N/P', 'NA', 'N/A')
                 """.formatted(quoteIdentifier(columnName)));
 
             if (updatedRows > 0) {
@@ -306,6 +306,29 @@ public class ProductionMetricsService {
         return findNormalizedRecordByActualDate(actualDate).map(this::toMetricsEntryBundlePayload);
     }
 
+    public Optional<MetricsEntryBundlePayload> getLatestTargetEntryBundle(LocalDate actualDate) {
+        validateActualEntryDate(actualDate);
+        LocalDate selectedTargetDate = actualDate.plusDays(1);
+
+        return repository.findByDateLessThanEqualOrderByDateDesc(actualDate.atTime(23, 59, 59))
+                .stream()
+                .filter(record -> record.getDate() != null)
+                .filter(record -> !ENTRY_TYPE_TARGET.equalsIgnoreCase(record.getEntryType()))
+                .map(this::normalizeStoredRecord)
+                .filter(this::hasAnyTargetValue)
+                .findFirst()
+                .map(metrics -> {
+                    MetricsEntryBundlePayload bundle = toMetricsEntryBundlePayload(metrics);
+                    bundle.setActualDate(actualDate);
+                    bundle.setTargetDate(selectedTargetDate);
+                    if (bundle.getTarget() != null) {
+                        bundle.getTarget().setDate(selectedTargetDate);
+                        bundle.getTarget().setEntryType(ENTRY_TYPE_TARGET);
+                    }
+                    return bundle;
+                });
+    }
+
     @Transactional
     public MetricsEntryBundlePayload saveMetricsEntryBundle(MetricsEntryBundlePayload payload) {
         if (payload == null) {
@@ -449,7 +472,9 @@ public class ProductionMetricsService {
                 continue;
             }
 
-            if (value instanceof Number numberValue && numberValue.doubleValue() < 0) {
+            if (ALL_METRIC_FIELDS.contains(field)) {
+                value = normalizeMetricValue(field, value);
+            } else if (value instanceof Number numberValue && numberValue.doubleValue() < 0) {
                 throw new IllegalArgumentException(field + " cannot be negative");
             }
 
@@ -471,7 +496,9 @@ public class ProductionMetricsService {
             }
 
             Object value = sourceWrapper.getPropertyValue(field);
-            if (value instanceof Number numberValue && numberValue.doubleValue() < 0) {
+            if (ALL_METRIC_FIELDS.contains(field)) {
+                value = normalizeMetricValue(field, value);
+            } else if (value instanceof Number numberValue && numberValue.doubleValue() < 0) {
                 throw new IllegalArgumentException(field + " cannot be negative");
             }
             targetWrapper.setPropertyValue(field, value);
@@ -538,8 +565,8 @@ public class ProductionMetricsService {
         }
 
         for (CustomMetricValueSnapshot snapshot : snapshots) {
-            Map<String, Double> actualSection = resolveSectionMap(actualPayload, snapshot.getSection());
-            Map<String, Double> targetSection = resolveSectionMap(targetPayload, snapshot.getSection());
+            Map<String, Object> actualSection = resolveSectionMap(actualPayload, snapshot.getSection());
+            Map<String, Object> targetSection = resolveSectionMap(targetPayload, snapshot.getSection());
             if (actualSection == null || targetSection == null) {
                 continue;
             }
@@ -554,31 +581,28 @@ public class ProductionMetricsService {
         }
     }
 
-    private Map<String, Double> extractSectionValues(ProductionMetrics metrics, List<String> fields) {
-        Map<String, Double> sectionValues = new LinkedHashMap<>();
+    private Map<String, Object> extractSectionValues(ProductionMetrics metrics, List<String> fields) {
+        Map<String, Object> sectionValues = new LinkedHashMap<>();
         BeanWrapperImpl wrapper = new BeanWrapperImpl(metrics);
 
         for (String field : fields) {
             Object value = wrapper.getPropertyValue(field);
-            sectionValues.put(field, value instanceof Number ? ((Number) value).doubleValue() : null);
+            sectionValues.put(field, value);
         }
 
         return sectionValues;
     }
 
-    private boolean applySectionValuesIfPresent(ProductionMetrics target, Map<String, Double> values, List<String> fields, String sectionName) {
+    private boolean applySectionValuesIfPresent(ProductionMetrics target, Map<String, Object> values, List<String> fields, String sectionName) {
         if (values == null || values.isEmpty()) {
             return false;
         }
 
         BeanWrapperImpl wrapper = new BeanWrapperImpl(target);
         for (String field : fields) {
-            Double value = values.get(field);
+            String value = normalizeMetricValue(field, values.get(field));
             if (value == null) {
                 continue;
-            }
-            if (value < 0) {
-                throw new IllegalArgumentException(field + " cannot be negative");
             }
             wrapper.setPropertyValue(field, value);
         }
@@ -588,7 +612,7 @@ public class ProductionMetricsService {
 
     private boolean applyCustomSectionValuesIfPresent(
             ProductionMetrics metrics,
-            Map<String, Double> values,
+            Map<String, Object> values,
             String expectedSection,
             Map<Long, ProductionMetricCustomValue> customValuesToSave,
             Map<Long, ProductionMetricCustomDefinition> definitionCache
@@ -598,13 +622,11 @@ public class ProductionMetricsService {
         }
 
         boolean updated = false;
-        for (Map.Entry<String, Double> entry : values.entrySet()) {
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
             CustomFieldDescriptor descriptor = parseCustomField(entry.getKey());
-            if (descriptor == null || entry.getValue() == null) {
+            String value = normalizeMetricValue(entry.getKey(), entry.getValue());
+            if (descriptor == null || value == null) {
                 continue;
-            }
-            if (entry.getValue() < 0) {
-                throw new IllegalArgumentException(entry.getKey() + " cannot be negative");
             }
 
             ProductionMetricCustomDefinition definition = definitionCache.computeIfAbsent(
@@ -620,7 +642,7 @@ public class ProductionMetricsService {
                     id -> findExistingOrCreateCustomValue(metrics, definition)
             );
             customValue.setDefinition(definition);
-            applyCustomFieldValue(customValue, descriptor.valueKey(), entry.getValue());
+            applyCustomFieldValue(customValue, descriptor.valueKey(), value);
             updated = true;
         }
 
@@ -648,11 +670,11 @@ public class ProductionMetricsService {
                 && isSectionEmpty(payload.getCost());
     }
 
-    private boolean isSectionEmpty(Map<String, Double> section) {
+    private boolean isSectionEmpty(Map<String, Object> section) {
         if (section == null || section.isEmpty()) {
             return true;
         }
-        return section.values().stream().allMatch(value -> value == null);
+        return section.values().stream().allMatch(value -> value == null || String.valueOf(value).trim().isEmpty());
     }
 
     private void validateActualEntryDate(LocalDate date) {
@@ -792,6 +814,28 @@ public class ProductionMetricsService {
         }
     }
 
+    private boolean hasAnyTargetValue(ProductionMetrics metrics) {
+        BeanWrapperImpl wrapper = new BeanWrapperImpl(metrics);
+        for (String field : ALL_METRIC_FIELDS) {
+            if (!field.endsWith("Target")) {
+                continue;
+            }
+            Object value = wrapper.getPropertyValue(field);
+            if (value != null && !String.valueOf(value).trim().isEmpty()) {
+                return true;
+            }
+        }
+
+        return resolveCustomMetricSnapshots(metrics).stream()
+                .anyMatch(snapshot -> hasText(snapshot.getFtdTarget())
+                        || hasText(snapshot.getMtdTarget())
+                        || hasText(snapshot.getYtdTarget()));
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
     private void deleteLegacyTargetRecord(LocalDate targetDate) {
         findLegacyTargetRecord(targetDate).ifPresent(record -> {
             if (record.getId() != null) {
@@ -915,7 +959,7 @@ public class ProductionMetricsService {
         return value;
     }
 
-    private void applyCustomFieldValue(ProductionMetricCustomValue customValue, String valueKey, Double value) {
+    private void applyCustomFieldValue(ProductionMetricCustomValue customValue, String valueKey, String value) {
         switch (valueKey) {
             case "FtdActual" -> customValue.setFtdActual(value);
             case "FtdTarget" -> customValue.setFtdTarget(value);
@@ -927,7 +971,7 @@ public class ProductionMetricsService {
         }
     }
 
-    private Map<String, Double> resolveSectionMap(MetricsEntryPayload payload, String section) {
+    private Map<String, Object> resolveSectionMap(MetricsEntryPayload payload, String section) {
         if (payload == null || section == null) {
             return null;
         }
@@ -943,6 +987,45 @@ public class ProductionMetricsService {
 
     private String buildCustomFieldName(Long definitionId, String valueKey) {
         return "customMetric" + definitionId + valueKey;
+    }
+
+    private Double toMetricNumber(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        String text = String.valueOf(value).trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return Double.valueOf(text);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private String normalizeMetricValue(String fieldName, Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        if ("NP".equalsIgnoreCase(text)) {
+            return "NP";
+        }
+        Double numericValue = toMetricNumber(text);
+        if (numericValue == null) {
+            throw new IllegalArgumentException(fieldName + " must be a valid number or NP");
+        }
+        if (numericValue < 0) {
+            throw new IllegalArgumentException(fieldName + " cannot be negative");
+        }
+        return text;
     }
 
     private CustomFieldDescriptor parseCustomField(String fieldName) {
@@ -1122,16 +1205,8 @@ public class ProductionMetricsService {
                             continue;
                         }
 
-                        Double parsedValue = parseDouble(rawValue);
-                        if (parsedValue == null) {
-                            throw new IllegalArgumentException("Invalid numeric value for " + field + ": " + rawValue);
-                        }
-
-                        if (parsedValue < 0) {
-                            throw new IllegalArgumentException(field + " cannot be negative");
-                        }
-
-                        wrapper.setPropertyValue(field, parsedValue);
+                        String normalizedValue = normalizeMetricValue(field, rawValue);
+                        wrapper.setPropertyValue(field, normalizedValue);
                         hasAnyMetricValue = true;
                     }
 
@@ -1184,14 +1259,6 @@ public class ProductionMetricsService {
             }
         }
         return false;
-    }
-
-    private Double parseDouble(String value) {
-        try {
-            return value != null && !value.trim().isEmpty() ? Double.parseDouble(value.trim()) : null;
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 
     private String toSnakeCase(String value) {

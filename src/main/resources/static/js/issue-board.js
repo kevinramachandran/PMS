@@ -4,26 +4,6 @@ $(document).ready(function() {
     const sidebarOverlay = $('#sidebarOverlay');
     const mainContent = $('.main-content');
 
-    $('.nav-parent-toggle').on('click', function(e) {
-        e.preventDefault();
-        $(this).addClass('expanded');
-        $(this).next('.nav-children').addClass('show').show();
-    });
-
-    $('.nav-parent-toggle').addClass('expanded');
-    $('.nav-children').addClass('show').show();
-
-    const currentPath = window.location.pathname;
-    const currentUrl = currentPath + window.location.search;
-    const $matchedChild = $('.nav-child').filter(function() {
-        const href = $(this).attr('href');
-        return href && (href === currentUrl || href === currentPath);
-    }).first();
-    if ($matchedChild.length) {
-        $('.nav-child').removeClass('active');
-        $matchedChild.addClass('active');
-    }
-
     hamburger.on('click', function() {
         if (window.innerWidth <= 768) {
             sidebar.toggleClass('active');
@@ -109,14 +89,35 @@ $(document).ready(function() {
         return clampPercent(normalized);
     }
 
+    function percentToPdcaStage(percent) {
+        if (percent >= 100) return 'A';
+        if (percent >= 75) return 'C';
+        if (percent >= 50) return 'D';
+        if (percent >= 25) return 'P';
+        return '-';
+    }
+
     function renderStatusCircle(status) {
         const progress = statusToPercent(status);
+        const stage = percentToPdcaStage(progress);
+        const title = stage === '-' ? 'PDCA not started' : 'PDCA: ' + stage + ' (' + progress + '%)';
         return '' +
             '<div class="status-cell">' +
-            '<div class="progress-circle" data-value="' + progress + '" style="--progress: ' + progress + ';" title="Status: ' + progress + '%">' +
-            '<span class="progress-circle-label">' + progress + '%</span>' +
+            '<div class="progress-circle" data-value="' + progress + '" style="--progress: ' + progress + ';" title="' + title + '">' +
+            '<span class="pdca-quarter pdca-p">P</span>' +
+            '<span class="pdca-quarter pdca-d">D</span>' +
+            '<span class="pdca-quarter pdca-c">C</span>' +
+            '<span class="pdca-quarter pdca-a">A</span>' +
             '</div>' +
             '</div>';
+    }
+
+    function renderEditLink(row) {
+        const boardDate = row && row.boardDate ? row.boardDate : '';
+        return '' +
+            '<button type="button" class="issue-edit-link" data-board-date="' + safeText(boardDate) + '" title="Edit this issue board row">' +
+            '<i class="fas fa-pen-to-square"></i><span>Edit</span>' +
+            '</button>';
     }
 
     function dueClass(dueDays) {
@@ -152,12 +153,8 @@ $(document).ready(function() {
         return Math.round((target.getTime() - todayUtc.getTime()) / msPerDay);
     }
 
-    function renderRows(rows) {
-        const tbody = $('#issueBoardBody');
-        tbody.empty();
-
+    function renderReviewDates(rows) {
         if (!rows || rows.length === 0) {
-            tbody.append('<tr><td colspan="12" class="empty-row">No issue board data configured. Open Issue Board Configuration.</td></tr>');
             $('#lastReviewDate').text('-');
             $('#nextReviewDate').text('-');
             return;
@@ -166,6 +163,16 @@ $(document).ready(function() {
         const first = rows[0];
         $('#lastReviewDate').text(formatDisplayDate(first.lastReviewDate));
         $('#nextReviewDate').text(formatDisplayDate(first.nextReviewDate));
+    }
+
+    function renderRows(rows, emptyMessage) {
+        const tbody = $('#issueBoardBody');
+        tbody.empty();
+
+        if (!rows || rows.length === 0) {
+            tbody.append('<tr><td colspan="13" class="empty-row">' + safeText(emptyMessage || 'No issue board data configured. Open Issue Board Configuration.') + '</td></tr>');
+            return;
+        }
 
         rows.forEach(function(row, index) {
             const dueDays = normalizeDueDays(row);
@@ -183,6 +190,7 @@ $(document).ready(function() {
                 '<td class="' + dueClass(dueDays) + '">' + safeText(dueDays) + '</td>' +
                 '<td>' + renderStatusCircle(row.status) + '</td>' +
                 '<td>' + safeText(row.remarks) + '</td>' +
+                '<td>' + renderEditLink(row) + '</td>' +
                 '</tr>';
             tbody.append(tr);
         });
@@ -191,9 +199,10 @@ $(document).ready(function() {
     let currentIssueBoardData = [];
     let issueBoardSortKey = null;
     let issueBoardSortAsc = true;
+    let issueBoardSearchTerm = '';
 
     function initializeIssueBoardSorting() {
-        $('#issueBoardTable thead .sortable').on('click', function() {
+        $('#issueBoardTable thead .sortable').off('click.issueSort').on('click.issueSort', function() {
             const key = $(this).data('sort-key');
             if (issueBoardSortKey === key) {
                 issueBoardSortAsc = !issueBoardSortAsc;
@@ -202,7 +211,7 @@ $(document).ready(function() {
                 issueBoardSortAsc = true;
             }
 
-            updateIssueBoardSort();
+            applyIssueBoardView();
             updateIssueBoardSortIndicators();
         });
     }
@@ -217,10 +226,12 @@ $(document).ready(function() {
         });
     }
 
-    function updateIssueBoardSort() {
-        if (!issueBoardSortKey || !currentIssueBoardData.length) return;
+    function sortIssueRows(rows) {
+        if (!issueBoardSortKey || !rows.length) {
+            return rows;
+        }
 
-        const sorted = [...currentIssueBoardData].sort(function(a, b) {
+        return [...rows].sort(function(a, b) {
             let aVal = a[issueBoardSortKey];
             let bVal = b[issueBoardSortKey];
 
@@ -248,9 +259,80 @@ $(document).ready(function() {
             const cmp = String(aVal).localeCompare(String(bVal));
             return issueBoardSortAsc ? cmp : -cmp;
         });
-
-        renderRows(sorted);
     }
+
+    function rowSearchText(row, index) {
+        const dueDays = normalizeDueDays(row);
+        return [
+            index + 1,
+            row.problem,
+            row.priority,
+            row.ownerName,
+            row.issueDate,
+            formatDisplayDate(row.issueDate),
+            row.rootCause,
+            row.actions,
+            row.responsible,
+            row.targetDate,
+            formatDisplayDate(row.targetDate),
+            dueDays,
+            statusToPercent(row.status) + '%',
+            row.status,
+            row.remarks
+        ].map(function(value) {
+            return value === null || value === undefined ? '' : String(value).toLowerCase();
+        }).join(' ');
+    }
+
+    function filterIssueRows(rows) {
+        const term = issueBoardSearchTerm.trim().toLowerCase();
+        if (!term) {
+            return rows;
+        }
+
+        return rows.filter(function(row, index) {
+            return rowSearchText(row, index).includes(term);
+        });
+    }
+
+    function applyIssueBoardView() {
+        renderReviewDates(currentIssueBoardData);
+        const filtered = filterIssueRows(currentIssueBoardData);
+        const sorted = sortIssueRows(filtered);
+        const emptyMessage = issueBoardSearchTerm.trim()
+            ? 'No matching issues found.'
+            : 'No issue board data configured. Open Issue Board Configuration.';
+
+        renderRows(sorted, emptyMessage);
+    }
+
+    function initializeIssueSearch() {
+        const searchInput = $('#issueBoardSearch');
+        const searchWrap = searchInput.closest('.issue-search');
+        const clearBtn = $('#issueBoardSearchClear');
+
+        searchInput.off('input.issueSearch').on('input.issueSearch', function() {
+            issueBoardSearchTerm = $(this).val() || '';
+            searchWrap.toggleClass('has-value', issueBoardSearchTerm.trim().length > 0);
+            applyIssueBoardView();
+        });
+
+        clearBtn.off('click.issueSearch').on('click.issueSearch', function() {
+            searchInput.val('');
+            issueBoardSearchTerm = '';
+            searchWrap.removeClass('has-value');
+            searchInput.trigger('focus');
+            applyIssueBoardView();
+        });
+    }
+
+    $('#issueBoardBody').on('click', '.issue-edit-link', function() {
+        const boardDate = $(this).data('board-date');
+        if (boardDate) {
+            sessionStorage.setItem('issue-board-open-date', boardDate);
+        }
+        window.location.href = '/settings?config=issue-board';
+    });
 
 
     function loadIssueBoardData() {
@@ -261,12 +343,13 @@ $(document).ready(function() {
             type: 'GET',
             success: function(data) {
                 currentIssueBoardData = Array.isArray(data) ? data : [];
-                renderRows(currentIssueBoardData);
+                applyIssueBoardView();
                 initializeIssueBoardSorting();
                 updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
             },
             error: function() {
-                renderRows([]);
+                currentIssueBoardData = [];
+                applyIssueBoardView();
                 updateSyncStatus('Sync failed');
             }
         });
@@ -278,6 +361,7 @@ $(document).ready(function() {
         }
     });
 
+    initializeIssueSearch();
     loadIssueBoardData();
     setInterval(loadIssueBoardData, 30000);
 });

@@ -5,6 +5,7 @@ import org.example.config.SystemAdminInitializer;
 import org.example.model.UserInfo;
 import org.example.repository.AppUserRepository;
 import org.example.util.RoleAccess;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +22,8 @@ import java.util.stream.Collectors;
 @Service
 public class AuthService {
 
-    private static final PasswordEncoder STATIC_ENCODER = new BCryptPasswordEncoder();
-
-    private static final List<UserInfo> STATIC_SYSTEM_USERS = List.of(
-        new UserInfo("siva", "system.admin.a@internal.local", STATIC_ENCODER.encode("Password@123"), "ADMIN", RoleAccess.CONFIG_PAGES, RoleAccess.CONFIG_PAGES),
-        new UserInfo("kevin", "system.admin.b@internal.local", STATIC_ENCODER.encode("Password@123"), "ADMIN", RoleAccess.CONFIG_PAGES, RoleAccess.CONFIG_PAGES)
-    );
-
-    private static final Set<String> INTERNAL_STATIC_USERNAMES = Set.of("siva", "kevin");
+    private static final String SIVA_USERNAME = "siva";
+    private static final String SIVA_EMAIL = "system.admin.a@internal.local";
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -38,11 +33,14 @@ public class AuthService {
     @Autowired
     private LicenseService licenseService;
 
+    @Value("${app.internal.siva.password:Siva@2026}")
+    private String sivaPassword;
+
     public boolean isInternalStaticUser(String username) {
         if (username == null) {
             return false;
         }
-        return INTERNAL_STATIC_USERNAMES.contains(username.trim().toLowerCase(Locale.ROOT));
+        return SIVA_USERNAME.equals(username.trim().toLowerCase(Locale.ROOT));
     }
 
     public boolean isLicenseBypassUser(String username) {
@@ -51,7 +49,7 @@ public class AuthService {
         }
 
         String normalized = username.trim().toLowerCase(Locale.ROOT);
-        return INTERNAL_STATIC_USERNAMES.contains(normalized)
+        return isInternalStaticUser(normalized)
                 || SystemAdminInitializer.SYSTEM_ADMIN_USERNAME.equalsIgnoreCase(normalized);
     }
 
@@ -59,12 +57,11 @@ public class AuthService {
         if (username == null || password == null) return Optional.empty();
 
         String normalizedUsername = username.trim();
-
-        Optional<UserInfo> staticUser = STATIC_SYSTEM_USERS.stream()
-                .filter(u -> u.getUsername().equalsIgnoreCase(normalizedUsername))
-                .findFirst();
-        if (staticUser.isPresent()) {
-            return staticUser.filter(u -> passwordEncoder.matches(password, u.getPassword()));
+        if (isInternalStaticUser(normalizedUsername)) {
+            UserInfo siva = buildSivaUser();
+            return passwordEncoder.matches(password, siva.getPassword())
+                    ? Optional.of(siva)
+                    : Optional.empty();
         }
 
         return appUserRepository.findByUsernameIgnoreCase(username.trim())
@@ -73,7 +70,8 @@ public class AuthService {
     }
 
     public List<UserInfo> getAllUsers() {
-        List<UserInfo> users = new ArrayList<>(STATIC_SYSTEM_USERS);
+        List<UserInfo> users = new ArrayList<>();
+        users.add(buildSivaUser());
         appUserRepository.findAll().stream()
                 .filter(u -> !isReservedUsername(u.getUsername()))
                 .map(this::toUserInfo)
@@ -202,6 +200,18 @@ public class AuthService {
 
     private boolean isReservedUsername(String username) {
         return isInternalStaticUser(username);
+    }
+
+    private UserInfo buildSivaUser() {
+        String password = (sivaPassword == null || sivaPassword.isBlank())
+                ? "Siva@2026"
+                : sivaPassword;
+        return new UserInfo(SIVA_USERNAME,
+                SIVA_EMAIL,
+                passwordEncoder.encode(password),
+                RoleAccess.ADMIN,
+                RoleAccess.CONFIG_PAGES,
+                RoleAccess.CONFIG_PAGES);
     }
 
     private boolean matchesAndMigrateIfLegacy(AppUser user, String rawPassword) {

@@ -16,7 +16,7 @@ if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -65,6 +65,9 @@ tasks.register<Copy>("copyJar") {
 tasks.register<Copy>("bundleWindowsService") {
     description = "Builds a Windows service deployment bundle with the application JAR and WinSW assets."
     dependsOn("bootJar")
+    doFirst {
+        delete(windowsServiceDir)
+    }
     from(tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar").map { it.archiveFile }) {
         into("app")
         rename { "app.jar" }

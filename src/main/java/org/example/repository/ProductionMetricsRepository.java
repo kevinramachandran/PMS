@@ -18,6 +18,8 @@ public interface ProductionMetricsRepository extends JpaRepository<ProductionMet
 
     List<ProductionMetrics> findByDateBetweenOrderByDateAsc(LocalDateTime startDate, LocalDateTime endDate);
 
+    List<ProductionMetrics> findByDateLessThanEqualOrderByDateDesc(LocalDateTime date);
+
     boolean existsByDate(LocalDateTime date);
 
     void deleteByDate(LocalDateTime date);

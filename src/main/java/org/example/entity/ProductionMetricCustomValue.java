@@ -42,23 +42,23 @@ public class ProductionMetricCustomValue {
     @JoinColumn(name = "definition_id", nullable = false)
     private ProductionMetricCustomDefinition definition;
 
-    @Column(name = "ftd_actual")
-    private Double ftdActual;
+    @Column(name = "ftd_actual", length = 64)
+    private String ftdActual;
 
-    @Column(name = "ftd_target")
-    private Double ftdTarget;
+    @Column(name = "ftd_target", length = 64)
+    private String ftdTarget;
 
-    @Column(name = "mtd_actual")
-    private Double mtdActual;
+    @Column(name = "mtd_actual", length = 64)
+    private String mtdActual;
 
-    @Column(name = "mtd_target")
-    private Double mtdTarget;
+    @Column(name = "mtd_target", length = 64)
+    private String mtdTarget;
 
-    @Column(name = "ytd_actual")
-    private Double ytdActual;
+    @Column(name = "ytd_actual", length = 64)
+    private String ytdActual;
 
-    @Column(name = "ytd_target")
-    private Double ytdTarget;
+    @Column(name = "ytd_target", length = 64)
+    private String ytdTarget;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
