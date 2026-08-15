@@ -1835,19 +1835,19 @@ function regroupRows($container){
 
     const kpiRenameDefaultMetrics = {
         people: [
-            { label: 'Production Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'peopleProductivityChart' },
-            { label: 'Logistics Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'peopleProductivityChart' }
+            { label: 'Production Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'productionProductivityChart' },
+            { label: 'Logistics Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'logisticsProductivityChart' }
         ],
         quality: [
             { label: 'Internal Sensory Score', unit: 'HL/HI', decimals: 1, chartId: 'qualitySensoryChart' },
-            { label: 'Consumer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'qualityComplaintChart' },
-            { label: 'Customer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'qualityComplaintChart' }
+            { label: 'Consumer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'consumerComplaintChart' },
+            { label: 'Customer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'customerComplaintChart' }
         ],
         service: [
             { label: 'No. of Brews & Volume', unit: 'Nos & HL', decimals: 0 },
             { label: 'Dispatch', unit: 'No. of Cases & HL', decimals: 0 },
-            { label: 'Process Confirmation - BP', unit: '%', decimals: 0, chartId: 'qualityProcessConfirmationChart' },
-            { label: 'Process Confirmation - Pack', unit: '%', decimals: 0, chartId: 'qualityProcessConfirmationChart' },
+            { label: 'Process Confirmation - BP', unit: '%', decimals: 0, chartId: 'processConfirmationBpChart' },
+            { label: 'Process Confirmation - Pack', unit: '%', decimals: 0, chartId: 'processConfirmationPackChart' },
             { label: 'OEE', unit: '%', decimals: 1, chartId: 'serviceOeeChart' },
             { label: 'Beer Loss', unit: 'HL', decimals: 2, chartId: 'serviceBeerLossChart' },
             { label: 'WUR', unit: 'HL/HI', decimals: 2, chartId: 'serviceWurChart' }
