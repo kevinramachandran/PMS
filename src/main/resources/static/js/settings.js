@@ -2896,6 +2896,7 @@ function regroupRows($container){
     function setIssueConfigDrawerOpen(open) {
         $('#issueConfigDrawer').toggleClass('open', open).attr('aria-hidden', open ? 'false' : 'true');
         $('#issueConfigDrawerBackdrop').toggleClass('open', open);
+        $('body').toggleClass('drawer-open', open);
     }
 
     function openIssueConfigDrawer($row) {

@@ -377,11 +377,13 @@ $(document).ready(function() {
     function setIssueDrawerOpen(open) {
         $('#issueBoardDrawer').toggleClass('open', open).attr('aria-hidden', open ? 'false' : 'true');
         $('#issueBoardDrawerBackdrop').toggleClass('open', open);
+        $('body').toggleClass('drawer-open', open);
     }
 
     function setHistoryDrawerOpen(open) {
         $('#issueHistoryDrawer').toggleClass('open', open).attr('aria-hidden', open ? 'false' : 'true');
         $('#issueHistoryDrawerBackdrop').toggleClass('open', open);
+        $('body').toggleClass('drawer-open', open);
     }
 
     function getIssueDrawerPayload() {

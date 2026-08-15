@@ -366,6 +366,7 @@ function closeChartModal() {
 
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('drawer-open');
 }
 
 window.closeChartModal = closeChartModal;
@@ -880,6 +881,7 @@ window.openChart = function(chartId) {
 
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('drawer-open');
     expandedCanvas.dataset.chartId = chartId;
 
     expandedChartInstance = new Chart(expandedCanvas.getContext('2d'), {
@@ -1083,6 +1085,7 @@ window.openLsrOverview = function () {
     customContent.style.display = 'block';
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('drawer-open');
 };
 
 // Open H&S Overview in modal
@@ -1115,6 +1118,7 @@ window.openHsOverview = function () {
     customContent.style.display = 'block';
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('drawer-open');
 };
 
 let selectedKpiMonth = new Date().getMonth() + 1;
