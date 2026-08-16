@@ -17,6 +17,8 @@ public interface PrioritiesRepository extends JpaRepository<Priorities, Long> {
 
     Optional<Priorities> findTopByTypeAndDateBetweenOrderByDateDescIdDesc(String type, LocalDate startDate, LocalDate endDate);
 
+    Optional<Priorities> findTopByTypeAndDateLessThanEqualOrderByDateDescIdDesc(String type, LocalDate endDate);
+
     void deleteByTypeAndDate(String type, LocalDate date);
 
 }

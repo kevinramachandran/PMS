@@ -244,7 +244,7 @@ $(document).ready(function() {
                 '<td>' + safeText(row.actions) + '</td>' +
                 '<td>' + safeText(row.responsible) + '</td>' +
                 '<td>' + renderTargetDateCell(row) + '</td>' +
-                '<td class="' + dueClass(dueDays) + '">' + safeText(dueDays) + '</td>' +
+                '<td class="issue-due-days-cell ' + dueClass(dueDays) + '">' + safeText(dueDays) + '</td>' +
                 '<td class="issue-icon-cell issue-status-col">' + renderStatusCircle(row.status) + '</td>' +
                 '<td class="issue-icon-cell issue-history-col">' + renderHistoryButton(row) + '</td>' +
                 (canEditIssueBoard ? '<td class="issue-icon-cell issue-action-col">' + renderActionButtons(row) + '</td>' : '') +
@@ -590,7 +590,7 @@ function exportIssueBoardPdf() {
     var filterLabel = 'Last Updated: ' + updatedDate + '   |   Last Reviewed: ' + lastDate + '   |   Next Review: ' + nextDate;
 
     var rows  = window.__issueBoardRows || [];
-    var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Resp.', 'Target date', 'Due', 'Status'];
+    var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date', 'Due days', 'Status', 'Completed date'];
     var tableRows = rows.map(function(row, index) {
         var targetDate = getIssueBoardEffectiveTargetDate(row);
         var dueDays = getIssueBoardDueDays(row);
@@ -602,10 +602,12 @@ function exportIssueBoardPdf() {
             row.ownerName || '',
             row.issueDate || '',
             row.rootCause || '',
+            row.actions || '',
             row.responsible || '',
             targetDate,
             dueDays,
-            status
+            status,
+            row.completedDate || ''
         ];
     });
 
@@ -634,7 +636,7 @@ function exportIssueBoardPdf() {
 function buildIssueHistoryParagraphs() {
     var rows = window.__issueBoardRows || [];
     var deferred = $.Deferred();
-    var summaries = [];
+    var paragraphs = [];
     var pending = 0;
 
     if (!rows || rows.length === 0) {
@@ -654,17 +656,18 @@ function buildIssueHistoryParagraphs() {
                 if (entries.length === 0) {
                     return;
                 }
-                summaries.push(buildIssueHistorySummary(row, index, entries));
+                paragraphs.push(buildIssueHistoryParagraph(row, index, entries));
             },
             complete: function() {
                 pending--;
                 if (pending === 0) {
-                    summaries.sort(function(a, b) { return a.index - b.index; });
-                    var lines = summaries.map(function(summary) { return summary.text; });
-                    var paragraphs = lines.length > 0
-                        ? [{ title: 'History Summary', text: lines.join('\n') }]
-                        : [];
-                    deferred.resolve(paragraphs);
+                    paragraphs.sort(function(a, b) { return a.index - b.index; });
+                    deferred.resolve(paragraphs.map(function(paragraph) {
+                        return {
+                            title: paragraph.title,
+                            text: paragraph.text
+                        };
+                    }));
                 }
             }
         });
@@ -677,21 +680,20 @@ function buildIssueHistoryParagraphs() {
     return deferred.promise();
 }
 
-function buildIssueHistorySummary(row, index, entries) {
-    var latestEntries = entries.slice(0, 2).map(function(entry) {
+function buildIssueHistoryParagraph(row, index, entries) {
+    var sentences = entries.map(function(entry) {
         var fieldName = entry.fieldName || 'Field';
+        var oldValue = entry.oldValue || '-';
         var newValue = entry.newValue || '-';
         var editedBy = entry.editedBy || '-';
         var at = formatIssueHistoryDate(entry.editedAt);
-        return fieldName + ' -> ' + newValue + ' by ' + editedBy + (at ? ' on ' + at : '');
+        return fieldName + ' changed from "' + oldValue + '" to "' + newValue + '" by ' + editedBy + (at ? ' on ' + at : '') + '.';
     });
-    var suffix = entries.length > latestEntries.length
-        ? ' +' + (entries.length - latestEntries.length) + ' more'
-        : '';
 
     return {
         index: index,
-        text: '#' + (index + 1) + ' ' + (row.problem || 'Issue') + ': ' + latestEntries.join('; ') + suffix
+        title: 'History - #' + (index + 1) + ' ' + (row.problem || 'Issue'),
+        text: sentences.join(' ')
     };
 }
 

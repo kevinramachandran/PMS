@@ -60,7 +60,9 @@ public class PrioritiesService {
 
     public List<Priorities> getLatestByTypeAndMonth(String type, int month, int year) {
         YearMonth selectedMonth = YearMonth.of(year, month);
+        LocalDate monthEnd = selectedMonth.atEndOfMonth();
         return repo.findTopByTypeAndDateBetweenOrderByDateDescIdDesc(type, selectedMonth.atDay(1), selectedMonth.atEndOfMonth())
+                .or(() -> repo.findTopByTypeAndDateLessThanEqualOrderByDateDescIdDesc(type, monthEnd))
                 .map(List::of)
                 .orElseGet(List::of);
     }

@@ -60,7 +60,11 @@ public class DailyDataService {
 
     public List<DailyData> getLatestByTypeAndMonth(String type, int month, int year) {
         YearMonth selectedMonth = YearMonth.of(year, month);
-        LocalDate latestDate = repo.findLatestDateByTypeWithinRange(type, selectedMonth.atDay(1), selectedMonth.atEndOfMonth());
+        LocalDate monthEnd = selectedMonth.atEndOfMonth();
+        LocalDate latestDate = repo.findLatestDateByTypeWithinRange(type, selectedMonth.atDay(1), monthEnd);
+        if (latestDate == null) {
+            latestDate = repo.findLatestDateByTypeOnOrBefore(type, monthEnd);
+        }
         if (latestDate == null) {
             return List.of();
         }

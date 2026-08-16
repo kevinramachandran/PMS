@@ -120,6 +120,7 @@ function resetKpiTvFit(shell, stage) {
     stage.style.width = '';
     stage.style.transform = '';
     shell.style.height = '';
+    shell.style.overflow = '';
 }
 
 function applyKpiTvFit() {
@@ -142,7 +143,6 @@ function applyKpiTvFit() {
 
     const availableWidth = shell.clientWidth;
     const shellTop = shell.getBoundingClientRect().top;
-    const availableHeight = Math.max(window.innerHeight - shellTop - 12, 320);
     const naturalWidth = Math.ceil(stage.scrollWidth);
     const naturalHeight = Math.ceil(stage.offsetHeight);
 
@@ -151,11 +151,12 @@ function applyKpiTvFit() {
         return;
     }
 
-    const scale = Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight);
+    const scale = Math.min(availableWidth / naturalWidth, 1);
 
     stage.style.width = naturalWidth + 'px';
     stage.style.transform = 'scale(' + scale + ')';
     shell.style.height = Math.ceil(naturalHeight * scale) + 'px';
+    shell.style.overflow = 'hidden';
 }
 
 function syncDailyTopRowHeight() {
@@ -221,6 +222,13 @@ function scheduleKpiTvFit() {
     });
 }
 
+function refreshKpiDashboardLayout() {
+    window.requestAnimationFrame(function() {
+        syncDailyTopRowHeight();
+        scheduleKpiTvFit();
+    });
+}
+
 function initializeKpiTvFit() {
     const stage = document.getElementById('dashboardMainStage');
 
@@ -237,6 +245,17 @@ function initializeKpiTvFit() {
             scheduleKpiTvFit();
         });
         kpiTvFitResizeObserver.observe(stage);
+    }
+
+    const dashboardRight = document.querySelector('.dashboard-right');
+    if (dashboardRight && 'MutationObserver' in window) {
+        const observer = new MutationObserver(refreshKpiDashboardLayout);
+        observer.observe(dashboardRight, {
+            attributes: true,
+            childList: true,
+            subtree: true,
+            attributeFilter: ['class', 'hidden']
+        });
     }
 
     window.__kpiTvFitBound = true;
@@ -1271,6 +1290,42 @@ const fixedKpiTableConfig = [
         higherIsBetter: true
     },
     {
+        name: 'Consumer Complaint',
+        unit: 'Units/MHL',
+        actualField: 'kpiConsumerComplaintUnitsMhlFtdActual',
+        targetField: 'kpiConsumerComplaintUnitsMhlFtdTarget',
+        mtdField: 'kpiConsumerComplaintUnitsMhlMtdActual',
+        targetMtdField: 'kpiConsumerComplaintUnitsMhlMtdTarget',
+        ytdField: 'kpiConsumerComplaintUnitsMhlYtdActual',
+        targetYtdField: 'kpiConsumerComplaintUnitsMhlYtdTarget',
+        decimals: 0,
+        higherIsBetter: false
+    },
+    {
+        name: 'Customer Complaint',
+        unit: 'Units/MHL',
+        actualField: 'kpiCustomerComplaintUnitsMhlFtdActual',
+        targetField: 'kpiCustomerComplaintUnitsMhlFtdTarget',
+        mtdField: 'kpiCustomerComplaintUnitsMhlMtdActual',
+        targetMtdField: 'kpiCustomerComplaintUnitsMhlMtdTarget',
+        ytdField: 'kpiCustomerComplaintUnitsMhlYtdActual',
+        targetYtdField: 'kpiCustomerComplaintUnitsMhlYtdTarget',
+        decimals: 0,
+        higherIsBetter: false
+    },
+    {
+        name: 'Beer Loss',
+        unit: 'HL',
+        actualField: 'kpiBeerLossFtdActual',
+        targetField: 'kpiBeerLossFtdTarget',
+        mtdField: 'kpiBeerLossMtdActual',
+        targetMtdField: 'kpiBeerLossMtdTarget',
+        ytdField: 'kpiBeerLossYtdActual',
+        targetYtdField: 'kpiBeerLossYtdTarget',
+        decimals: 2,
+        higherIsBetter: false
+    },
+    {
         name: 'WUR',
         unit: 'HL/HI',
         actualField: 'kpiWurHlHlFtdActual',
@@ -1307,6 +1362,18 @@ const fixedKpiTableConfig = [
         higherIsBetter: false
     },
     {
+        name: 'RGB Ratio',
+        unit: '-',
+        actualField: 'kpiRgbRatioFtdActual',
+        targetField: 'kpiRgbRatioFtdTarget',
+        mtdField: 'kpiRgbRatioMtdActual',
+        targetMtdField: 'kpiRgbRatioMtdTarget',
+        ytdField: 'kpiRgbRatioYtdActual',
+        targetYtdField: 'kpiRgbRatioYtdTarget',
+        decimals: 0,
+        higherIsBetter: true
+    },
+    {
         name: 'No. of Brews & Volume',
         unit: 'Nos & HL',
         actualField: 'noOfBrewsFtdActual',
@@ -1327,6 +1394,30 @@ const fixedKpiTableConfig = [
         targetMtdField: 'dispatchMtdTarget',
         ytdField: 'dispatchYtdActual',
         targetYtdField: 'dispatchYtdTarget',
+        decimals: 0,
+        higherIsBetter: true
+    },
+    {
+        name: 'Process Confirmation - BP',
+        unit: '%',
+        actualField: 'processConfirmationBpFtdActual',
+        targetField: 'processConfirmationBpFtdTarget',
+        mtdField: 'processConfirmationBpMtdActual',
+        targetMtdField: 'processConfirmationBpMtdTarget',
+        ytdField: 'processConfirmationBpYtdActual',
+        targetYtdField: 'processConfirmationBpYtdTarget',
+        decimals: 0,
+        higherIsBetter: true
+    },
+    {
+        name: 'Process Confirmation - Pack',
+        unit: '%',
+        actualField: 'processConfirmationPackFtdActual',
+        targetField: 'processConfirmationPackFtdTarget',
+        mtdField: 'processConfirmationPackMtdActual',
+        targetMtdField: 'processConfirmationPackMtdTarget',
+        ytdField: 'processConfirmationPackYtdActual',
+        targetYtdField: 'processConfirmationPackYtdTarget',
         decimals: 0,
         higherIsBetter: true
     },
@@ -1590,8 +1681,8 @@ function renderAllCharts(metrics) {
     // 1) PEOPLE - Productivity (Production + Logistics)
     renderKpiMixedChart('peopleProductivityChart', labels, metrics, {
         actualSeries: [
-            { label: 'Production Actual', key: 'productionProductivityFtdActual' },
-            { label: 'Logistics Actual', key: 'logisticsProductivityFtdActual' }
+            { label: 'Production Actual', key: 'productionProductivityFtdActual', metricChartId: 'productionProductivityChart' },
+            { label: 'Logistics Actual', key: 'logisticsProductivityFtdActual', metricChartId: 'logisticsProductivityChart' }
         ],
         targetSeries: [
             {
@@ -1626,8 +1717,8 @@ function renderAllCharts(metrics) {
     // 3) QUALITY - Process Confirmation (B&P and Pack)
     renderKpiMixedChart('qualityProcessConfirmationChart', labels, metrics, {
         actualSeries: [
-            { label: 'B&P Actual', key: 'processConfirmationBpFtdActual' },
-            { label: 'Pack Actual', key: 'processConfirmationPackFtdActual' }
+            { label: 'B&P Actual', key: 'processConfirmationBpFtdActual', metricChartId: 'processConfirmationBpChart' },
+            { label: 'Pack Actual', key: 'processConfirmationPackFtdActual', metricChartId: 'processConfirmationPackChart' }
         ],
         targetSeries: [
             {
@@ -1648,8 +1739,8 @@ function renderAllCharts(metrics) {
     // 4) QUALITY - Complaint (Customer & Consumer)
     renderKpiMixedChart('qualityComplaintChart', labels, metrics, {
         actualSeries: [
-            { label: 'Consumer Actual', key: 'kpiConsumerComplaintUnitsMhlFtdActual' },
-            { label: 'Customer Actual', key: 'kpiCustomerComplaintUnitsMhlFtdActual' }
+            { label: 'Consumer Actual', key: 'kpiConsumerComplaintUnitsMhlFtdActual', metricChartId: 'consumerComplaintChart' },
+            { label: 'Customer Actual', key: 'kpiCustomerComplaintUnitsMhlFtdActual', metricChartId: 'customerComplaintChart' }
         ],
         targetSeries: [
             {
@@ -1752,6 +1843,7 @@ function renderAllCharts(metrics) {
     });
 
     renderCustomMetricCharts(labels, metrics);
+    refreshKpiDashboardLayout();
 }
 
 function renderCustomMetricCharts(labels, metrics) {
@@ -1853,9 +1945,47 @@ function getKpiPalette(canvasId) {
     };
 }
 
+function getKpiChartVisibilityKey(chartId) {
+    return 'kpiChartVisibility_' + chartId;
+}
+
+function isKpiMetricGraphVisible(chartId) {
+    return !chartId || localStorage.getItem(getKpiChartVisibilityKey(chartId)) !== 'hidden';
+}
+
+function setKpiChartCardVisible(canvasId, visible) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        return;
+    }
+
+    const card = canvas.closest('.chart-box');
+    if (card) {
+        card.classList.toggle('kpi-chart-hidden', !visible);
+        card.hidden = !visible;
+    }
+
+    if (!visible && chartInstances[canvasId]) {
+        chartInstances[canvasId].destroy();
+        delete chartInstances[canvasId];
+    }
+
+    refreshKpiDashboardLayout();
+}
+
 function renderKpiMixedChart(canvasId, labels, metrics, seriesConfig) {
-    const actualSeries = seriesConfig.actualSeries || [];
-    const targetSeries = seriesConfig.targetSeries || [];
+    const actualSeries = (seriesConfig.actualSeries || []).filter(function(series) {
+        return isKpiMetricGraphVisible(series.metricChartId || canvasId);
+    });
+    const targetSeries = (seriesConfig.targetSeries || []).filter(function(series) {
+        return isKpiMetricGraphVisible(series.metricChartId || canvasId);
+    });
+    const hasVisibleSeries = actualSeries.length > 0 || targetSeries.length > 0;
+    setKpiChartCardVisible(canvasId, hasVisibleSeries);
+    if (!hasVisibleSeries) {
+        return;
+    }
+
     const palette = getKpiPalette(canvasId);
 
     const datasets = [];

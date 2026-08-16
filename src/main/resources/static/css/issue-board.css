@@ -236,10 +236,10 @@
 }
 
 .issue-table tbody td.issue-icon-cell {
-    padding-left: 0;
-    padding-right: 0;
-    text-align: center;
-    vertical-align: middle;
+    padding-left: 6px;
+    padding-right: 6px;
+    text-align: center !important;
+    vertical-align: middle !important;
 }
 
 .issue-icon-cell > .status-cell,
@@ -247,6 +247,28 @@
 .issue-icon-cell > .issue-action-stack {
     margin-left: auto;
     margin-right: auto;
+}
+
+.issue-status-col,
+.issue-history-col,
+.issue-action-col,
+.issue-table th:nth-child(11),
+.issue-table th:nth-child(12),
+.issue-table th:nth-child(13) {
+    text-align: center !important;
+}
+
+.issue-icon-cell > .status-cell {
+    display: inline-flex;
+    width: 100%;
+    min-width: 60px;
+}
+
+.issue-icon-cell > .issue-history-link,
+.issue-icon-cell > .issue-action-stack {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .progress-circle {
@@ -611,21 +633,62 @@
     color: #166534;
 }
 
+body.issue-board-page .footer,
+body.issue-board-page.modern-shell .footer {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin-top: auto;
+}
+
+body.issue-board-page .content-area {
+    padding-bottom: 24px !important;
+}
+
+body.issue-board-page .issue-drawer {
+    z-index: 2200;
+}
+
+body.issue-board-page .issue-drawer-backdrop {
+    z-index: 2190;
+}
+
+.issue-table td.issue-due-days-cell {
+    text-align: center;
+    font-weight: 900;
+}
+
+.issue-table td.due-overdue {
+    background: #fee2e2 !important;
+    color: #b91c1c;
+}
+
+.issue-table td.due-today {
+    background: #fef3c7 !important;
+    color: #92400e;
+}
+
+.issue-table td.due-upcoming {
+    background: #dcfce7 !important;
+    color: #166534;
+}
+
 .due-overdue {
-    background: #ef4444;
-    color: #ffffff;
+    background: #fee2e2;
+    color: #b91c1c;
     font-weight: 700;
 }
 
 .due-today {
-    background: #f59e0b;
-    color: #ffffff;
+    background: #fef3c7;
+    color: #92400e;
     font-weight: 700;
 }
 
 .due-upcoming {
-    background: #16a34a;
-    color: #ffffff;
+    background: #dcfce7;
+    color: #166534;
     font-weight: 700;
 }
 

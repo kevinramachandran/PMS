@@ -147,6 +147,7 @@ $(document).ready(function() {
         '#resetKpiPlantNameBtn',
         '#addKpiRenameMetricBtn',
         '#saveKpiRenameAlertColorsBtn',
+        '.kpi-rename-visibility-btn',
         '.kpi-rename-edit-btn',
         '.kpi-rename-cancel-edit-btn',
         '.kpi-rename-delete-btn',
@@ -1879,16 +1880,42 @@ function regroupRows($container){
         return $('#kpiRenameTabs .metrics-tab.active').data('section') || 'people';
     }
 
+    function getKpiChartVisibilityKey(chartId) {
+        return 'kpiChartVisibility_' + chartId;
+    }
+
+    function isKpiChartVisible(chartId) {
+        return !chartId || localStorage.getItem(getKpiChartVisibilityKey(chartId)) !== 'hidden';
+    }
+
+    function buildKpiRenameStatusHtml(chartId, isDraft) {
+        const visible = isDraft || isKpiChartVisible(chartId);
+        return '<span class="kpi-rename-status' + (visible ? '' : ' kpi-rename-status-hidden') + '">' + (visible ? 'Visible' : 'Hidden') + '</span>';
+    }
+
+    function buildKpiRenameVisibilityAction(chartId) {
+        if (!chartId) {
+            return '<span class="kpi-rename-muted">No graph</span>';
+        }
+
+        const visible = isKpiChartVisible(chartId);
+        return '<button type="button" class="kpi-rename-visibility-btn' + (visible ? '' : ' is-hidden') + '" data-chart-id="' + escapeAttributeValue(chartId) + '" title="' + (visible ? 'Hide graph' : 'Show graph') + '">' +
+            '<i class="fas ' + (visible ? 'fa-eye-slash' : 'fa-eye') + '"></i>' +
+            '<span>' + (visible ? 'Hide' : 'Show') + '</span>' +
+            '</button>';
+    }
+
     function buildKpiCrossColorInlineHtml(chartId, rowKey) {
         const radioName = 'kpiRenameCross_' + (rowKey || chartId || ('row_' + Math.random().toString(36).slice(2)));
         const savedColor = localStorage.getItem('kpiCrossAlertColor_' + chartId) || '#DC2626';
         function option(hex, label) {
             const checked = savedColor === hex ? ' checked' : '';
             return '' +
-                '<label class="kpi-rename-color-option" title="' + label + '">' +
+                '<label class="kpi-rename-color-option" style="--kpi-option-color:' + hex + ';" title="' + label + '">' +
                     '<input type="radio" class="kpi-rename-color-radio" name="' + escapeAttributeValue(radioName) + '" data-chart-id="' + escapeAttributeValue(chartId || '') + '" value="' + hex + '"' + checked + '>' +
-                    '<span style="background:' + hex + '"></span>' +
+                    '<span class="kpi-rename-color-swatch"></span>' +
                     '<em>' + label + '</em>' +
+                    '<i class="fas fa-check kpi-rename-color-check" aria-hidden="true"></i>' +
                 '</label>';
         }
         return '' +
@@ -1906,8 +1933,8 @@ function regroupRows($container){
                 '<td><input type="text" value="' + escapeAttributeValue(metric.label) + '" readonly></td>' +
                 '<td><input type="text" value="' + escapeAttributeValue(metric.unit || '-') + '" readonly></td>' +
                 '<td>' + (metric.chartId ? buildKpiCrossColorInlineHtml(metric.chartId, rowKey) : '<span class="kpi-rename-muted">No chart</span>') + '</td>' +
-                '<td><span class="kpi-rename-status">Visible</span></td>' +
-                '<td><span class="kpi-rename-muted">Default KPI</span></td>' +
+                '<td>' + buildKpiRenameStatusHtml(metric.chartId, false) + '</td>' +
+                '<td><div class="kpi-rename-actions">' + buildKpiRenameVisibilityAction(metric.chartId) + '</div></td>' +
             '</tr>';
     }
 
@@ -1925,7 +1952,7 @@ function regroupRows($container){
                 '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label || '') + '"' + (isDraft ? '' : ' readonly') + '></td>' +
                 '<td><input type="text" class="kpi-rename-unit" maxlength="64" value="' + escapeAttributeValue(metric.unit || '-') + '"' + (isDraft ? '' : ' readonly') + '></td>' +
                 '<td><input type="hidden" class="kpi-rename-decimals" value="' + escapeAttributeValue(decimals) + '">' + (chartId ? buildKpiCrossColorInlineHtml(chartId, rowKey) : '<span class="kpi-rename-muted">Available after save</span>') + '</td>' +
-                '<td><span class="kpi-rename-status">' + (isDraft ? 'Pending' : 'Visible') + '</span></td>' +
+                '<td>' + (isDraft ? '<span class="kpi-rename-status">Pending</span>' : buildKpiRenameStatusHtml(chartId, false)) + '</td>' +
                 '<td>' + buildKpiRenameCustomActions(metric) + '</td>' +
             '</tr>';
     }
@@ -1940,6 +1967,7 @@ function regroupRows($container){
 
         return '' +
             '<div class="kpi-rename-actions">' +
+                buildKpiRenameVisibilityAction('customMetricChart' + metric.id) +
                 '<button type="button" class="kpi-rename-edit-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Edit KPI"><i class="fas fa-pen-to-square"></i></button>' +
                 '<button type="button" class="kpi-rename-cancel-edit-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Cancel edit" hidden><i class="fas fa-xmark"></i></button>' +
                 '<button type="button" class="kpi-rename-delete-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Delete KPI"><i class="fas fa-trash-alt"></i></button>' +
@@ -2131,7 +2159,7 @@ function regroupRows($container){
         });
 
         if (savedCount === 0 && requests.length === 0) {
-            showMessage('kpiRenameMessage', 'No items or alert colors available to save.', 'error');
+            showMessage('kpiRenameMessage', 'No KPI dashboard configuration changes available to save.', 'error');
             return;
         }
 
@@ -2141,9 +2169,10 @@ function regroupRows($container){
             kpiRenameDraftItems = [];
             localStorage.setItem('kpi-dashboard-update', Date.now());
             loadKpiRenameDashboard();
-            const itemPart = requests.length ? requests.length + ' item change(s)' : '';
-            const colorPart = savedColorCount ? savedColorCount + ' alert color(s)' : '';
-            showMessage('kpiRenameMessage', [itemPart, colorPart].filter(Boolean).join(' and ') + ' saved.', 'success');
+            const itemPart = requests.length ? requests.length + ' KPI item change(s)' : '';
+            const colorPart = savedColorCount ? savedColorCount + ' alert color setting(s)' : '';
+            const detail = [itemPart, colorPart].filter(Boolean).join(' and ');
+            showMessage('kpiRenameMessage', detail ? detail + ' saved.' : 'KPI dashboard configuration saved.', 'success');
         }).fail(function(xhr) {
             showMessage('kpiRenameMessage', (xhr && xhr.responseText) || 'Unable to save KPI Configuration changes.', 'error');
         }).always(function() {
@@ -2180,6 +2209,19 @@ function regroupRows($container){
     $('#kpiRenameMetricList').on('click', '.kpi-rename-delete-btn', function() {
         const id = $(this).data('id');
         window.openDeleteCustomMetricModal(id);
+    });
+
+    $('#kpiRenameMetricList').on('click', '.kpi-rename-visibility-btn', function() {
+        const chartId = $(this).data('chart-id');
+        if (!chartId) {
+            return;
+        }
+
+        const nextHidden = isKpiChartVisible(chartId);
+        localStorage.setItem(getKpiChartVisibilityKey(chartId), nextHidden ? 'hidden' : 'visible');
+        localStorage.setItem('kpi-dashboard-update', Date.now());
+        renderKpiRenameDashboard();
+        showMessage('kpiRenameMessage', nextHidden ? 'Dashboard graph visibility updated: hidden.' : 'Dashboard graph visibility updated: shown.', 'success');
     });
 
     $('#kpiRenameMetricList').on('click', '.kpi-rename-edit-btn', function() {
