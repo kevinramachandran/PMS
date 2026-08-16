@@ -1714,8 +1714,8 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 3) QUALITY - Process Confirmation (B&P and Pack)
-    renderKpiMixedChart('qualityProcessConfirmationChart', labels, metrics, {
+    // 4) SERVICE - Process Confirmation (B&P and Pack)
+    renderKpiMixedChart('serviceProcessConfirmationChart', labels, metrics, {
         actualSeries: [
             { label: 'B&P Actual', key: 'processConfirmationBpFtdActual', metricChartId: 'processConfirmationBpChart' },
             { label: 'Pack Actual', key: 'processConfirmationPackFtdActual', metricChartId: 'processConfirmationPackChart' }
@@ -1736,7 +1736,7 @@ function renderAllCharts(metrics) {
         ]
     });
 
-    // 4) QUALITY - Complaint (Customer & Consumer)
+    // 5) QUALITY - Complaint (Customer & Consumer)
     renderKpiMixedChart('qualityComplaintChart', labels, metrics, {
         actualSeries: [
             { label: 'Consumer Actual', key: 'kpiConsumerComplaintUnitsMhlFtdActual', metricChartId: 'consumerComplaintChart' },
@@ -1880,7 +1880,7 @@ const kpiChartPalettes = {
         bars: ['#2E7D32', '#4CAF50', '#1B5E20'],
         lines: ['#1B5E20', '#388E3C', '#2E7D32']
     },
-    qualityProcessConfirmationChart: {
+    serviceProcessConfirmationChart: {
         bars: ['#388E3C', '#66BB6A', '#2E7D32'],
         lines: ['#1B5E20', '#43A047', '#2E7D32']
     },
@@ -2491,7 +2491,7 @@ function renderNoDataForAllCharts(message) {
     const ids = [
         'peopleProductivityChart',
         'qualitySensoryChart',
-        'qualityProcessConfirmationChart',
+        'serviceProcessConfirmationChart',
         'qualityComplaintChart',
         'serviceOeeChart',
         'serviceBeerLossChart',

@@ -4950,7 +4950,7 @@ function regroupRows($container){
     const KPI_CROSS_CHARTS = [
         'peopleProductivityChart',
         'qualitySensoryChart',
-        'qualityProcessConfirmationChart',
+        'serviceProcessConfirmationChart',
         'qualityComplaintChart',
         'serviceOeeChart',
         'serviceBeerLossChart',
