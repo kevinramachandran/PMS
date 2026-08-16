@@ -1133,8 +1133,19 @@ public class ProductionMetricsService {
 
     // CSV Export (same unified format as template)
     public ByteArrayInputStream exportToCSV() throws IOException {
-        List<ProductionMetrics> records = repository.findAll();
+        return exportRecordsToCSV(repository.findAll());
+    }
 
+    public ByteArrayInputStream exportToCSV(int month, int year) throws IOException {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        List<ProductionMetrics> records = repository.findByDateBetweenOrderByDateAsc(
+                yearMonth.atDay(1).atStartOfDay(),
+                yearMonth.atEndOfMonth().atTime(23, 59, 59)
+        );
+        return exportRecordsToCSV(records);
+    }
+
+    private ByteArrayInputStream exportRecordsToCSV(List<ProductionMetrics> records) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         List<String> headers = new ArrayList<>();
         headers.add("actualDate");

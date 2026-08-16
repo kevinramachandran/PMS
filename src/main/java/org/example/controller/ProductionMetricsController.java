@@ -207,13 +207,24 @@ public class ProductionMetricsController {
     }
 
     @GetMapping("/export/csv")
-    public ResponseEntity<Resource> exportToCSV() {
+    public ResponseEntity<Resource> exportToCSV(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+        if ((month == null) != (year == null) || (month != null && (month < 1 || month > 12))) {
+            return ResponseEntity.badRequest().build();
+        }
+
         try {
-            ByteArrayInputStream data = service.exportToCSV();
+            ByteArrayInputStream data = month == null
+                    ? service.exportToCSV()
+                    : service.exportToCSV(month, year);
             InputStreamResource resource = new InputStreamResource(data);
+            String filename = month == null
+                    ? "production_metrics.csv"
+                    : String.format("production_metrics_%04d-%02d.csv", year, month);
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=production_metrics.csv")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                     .contentType(MediaType.parseMediaType("text/csv"))
                     .body(resource);
         } catch (IOException e) {

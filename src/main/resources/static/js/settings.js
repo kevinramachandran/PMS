@@ -147,7 +147,10 @@ $(document).ready(function() {
         '#resetKpiPlantNameBtn',
         '#addKpiRenameMetricBtn',
         '#saveKpiRenameAlertColorsBtn',
+        '.kpi-rename-edit-btn',
+        '.kpi-rename-cancel-edit-btn',
         '.kpi-rename-delete-btn',
+        '.kpi-rename-remove-draft-btn',
         '.metrics-add-custom-btn',
         '.metrics-custom-save-btn',
         '.metrics-custom-cancel-btn'
@@ -770,7 +773,19 @@ $(document).ready(function() {
     });
 
     $('#exportMetricsCsvBtn').on('click', function() {
-        window.location.href = '/api/production-metrics/export/csv';
+        const selectedDate = $('#metricsDateInput').val();
+        const exportDate = selectedDate || getYesterdayDateString();
+        const parsed = new Date(exportDate + 'T00:00:00');
+        if (Number.isNaN(parsed.getTime())) {
+            window.location.href = '/api/production-metrics/export/csv';
+            return;
+        }
+
+        const params = new URLSearchParams({
+            month: String(parsed.getMonth() + 1),
+            year: String(parsed.getFullYear())
+        });
+        window.location.href = '/api/production-metrics/export/csv?' + params.toString();
     });
 
     $('#uploadMetricsCsvBtn').on('click', function() {
@@ -1571,6 +1586,7 @@ $(document).ready(function() {
             success: function() {
                 showMetricsToast('Metric deleted', 'success');
                 loadCustomMetricDefinitions();
+                showMessage('kpiRenameMessage', 'KPI deleted.', 'success');
             }
         });
     };
@@ -1891,6 +1907,7 @@ function regroupRows($container){
                 '<td><input type="text" value="' + escapeAttributeValue(metric.unit || '-') + '" readonly></td>' +
                 '<td>' + (metric.chartId ? buildKpiCrossColorInlineHtml(metric.chartId, rowKey) : '<span class="kpi-rename-muted">No chart</span>') + '</td>' +
                 '<td><span class="kpi-rename-status">Visible</span></td>' +
+                '<td><span class="kpi-rename-muted">Default KPI</span></td>' +
             '</tr>';
     }
 
@@ -1905,11 +1922,28 @@ function regroupRows($container){
 
         return '' +
             '<tr class="kpi-rename-row kpi-rename-row-custom' + (isDraft ? ' kpi-rename-row-draft' : '') + '"' + rowIdAttr + ' data-row-key="' + escapeAttributeValue(rowKey) + '">' +
-                '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label || '') + '"></td>' +
-                '<td><input type="text" class="kpi-rename-unit" maxlength="64" value="' + escapeAttributeValue(metric.unit || '-') + '"></td>' +
+                '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label || '') + '"' + (isDraft ? '' : ' readonly') + '></td>' +
+                '<td><input type="text" class="kpi-rename-unit" maxlength="64" value="' + escapeAttributeValue(metric.unit || '-') + '"' + (isDraft ? '' : ' readonly') + '></td>' +
                 '<td><input type="hidden" class="kpi-rename-decimals" value="' + escapeAttributeValue(decimals) + '">' + (chartId ? buildKpiCrossColorInlineHtml(chartId, rowKey) : '<span class="kpi-rename-muted">Available after save</span>') + '</td>' +
                 '<td><span class="kpi-rename-status">' + (isDraft ? 'Pending' : 'Visible') + '</span></td>' +
+                '<td>' + buildKpiRenameCustomActions(metric) + '</td>' +
             '</tr>';
+    }
+
+    function buildKpiRenameCustomActions(metric) {
+        if (metric._draft) {
+            return '' +
+                '<div class="kpi-rename-actions">' +
+                    '<button type="button" class="kpi-rename-remove-draft-btn" data-draft-id="' + escapeAttributeValue(metric.draftId) + '" title="Remove unsaved KPI"><i class="fas fa-trash-alt"></i></button>' +
+                '</div>';
+        }
+
+        return '' +
+            '<div class="kpi-rename-actions">' +
+                '<button type="button" class="kpi-rename-edit-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Edit KPI"><i class="fas fa-pen-to-square"></i></button>' +
+                '<button type="button" class="kpi-rename-cancel-edit-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Cancel edit" hidden><i class="fas fa-xmark"></i></button>' +
+                '<button type="button" class="kpi-rename-delete-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Delete KPI"><i class="fas fa-trash-alt"></i></button>' +
+            '</div>';
     }
 
     function renderKpiRenameDashboard() {
@@ -1940,6 +1974,7 @@ function regroupRows($container){
                             '<th>Unit</th>' +
                             '<th>Alert Color</th>' +
                             '<th>Status</th>' +
+                            '<th>Action</th>' +
                         '</tr>' +
                     '</thead>' +
                     '<tbody>' + rows.join('') + '</tbody>' +
@@ -2145,6 +2180,33 @@ function regroupRows($container){
     $('#kpiRenameMetricList').on('click', '.kpi-rename-delete-btn', function() {
         const id = $(this).data('id');
         window.openDeleteCustomMetricModal(id);
+    });
+
+    $('#kpiRenameMetricList').on('click', '.kpi-rename-edit-btn', function() {
+        const $row = $(this).closest('.kpi-rename-row-custom');
+        $row.addClass('kpi-rename-row-editing');
+        $row.find('.kpi-rename-label, .kpi-rename-unit').prop('readonly', false);
+        $row.find('.kpi-rename-label').trigger('focus').select();
+        $row.find('.kpi-rename-edit-btn').prop('hidden', true);
+        $row.find('.kpi-rename-cancel-edit-btn').prop('hidden', false);
+        showMessage('kpiRenameMessage', 'Edit KPI text and click Save to apply.', 'success');
+    });
+
+    $('#kpiRenameMetricList').on('click', '.kpi-rename-cancel-edit-btn', function() {
+        const id = $(this).data('id');
+        const metric = customMetricDefinitions.find(function(item) {
+            return Number(item.id) === Number(id);
+        });
+        const $row = $(this).closest('.kpi-rename-row-custom');
+        if (metric) {
+            $row.find('.kpi-rename-label').val(metric.label || '');
+            $row.find('.kpi-rename-unit').val(metric.unit || '-');
+        }
+        $row.removeClass('kpi-rename-row-editing');
+        $row.find('.kpi-rename-label, .kpi-rename-unit').prop('readonly', true).removeClass('field-invalid');
+        $row.find('.kpi-rename-edit-btn').prop('hidden', false);
+        $row.find('.kpi-rename-cancel-edit-btn').prop('hidden', true);
+        showMessage('kpiRenameMessage', 'Edit cancelled.', 'success');
     });
 
     $('#kpiRenameMetricList').on('click', '.kpi-rename-remove-draft-btn', function() {

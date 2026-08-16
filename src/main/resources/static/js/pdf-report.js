@@ -111,12 +111,13 @@
      * Main API: generate a table-based PDF report.
      *
      * config = {
-     *   title:         string        – report heading
-     *   filterLabel:   string|null   – e.g. "Month: Apr 2026"
+     *   title:         string        - report heading
+     *   filterLabel:   string|null   - e.g. "Month: Apr 2026"
      *   orientation:   'landscape'|'portrait'
-     *   columns:       string[]      – header row
-     *   rows:          string[][]    – data rows
-     *   filename:      string        – output filename (e.g. 'issue-board.pdf')
+     *   columns:       string[]      - header row
+     *   rows:          string[][]    - data rows
+     *   filename:      string        - output filename (e.g. 'issue-board.pdf')
+     *   paragraphs:    [{title, text}]  (optional, rendered as text after the table)
      *   extraImages:   [{dataUrl, x, y, w, h, caption}]  (optional, added after table)
      * }
      */
@@ -138,6 +139,48 @@
                 tableLineColor:   [200, 215, 200],
                 tableLineWidth:   0.2
             });
+
+            // Optional text paragraphs appended after the table (e.g. issue history)
+            if (config.paragraphs && config.paragraphs.length > 0) {
+                var pPageW = doc.internal.pageSize.getWidth();
+                var pPageH = doc.internal.pageSize.getHeight();
+                var pY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : startY + 10;
+
+                config.paragraphs.forEach(function (paragraph) {
+                    var pTitle = paragraph.title || '';
+                    var pBody = paragraph.text || '';
+
+                    if (pTitle) {
+                        if (pY + 10 > pPageH - 15) {
+                            doc.addPage();
+                            pY = 15;
+                        }
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 61, 36);
+                        doc.text(pTitle, 10, pY);
+                        doc.setTextColor(0, 0, 0);
+                        pY += 6;
+                    }
+
+                    if (pBody) {
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(8);
+                        doc.setTextColor(60, 60, 60);
+                        var bodyLines = doc.splitTextToSize(pBody, pPageW - 20);
+                        bodyLines.forEach(function (line) {
+                            if (pY + 5 > pPageH - 15) {
+                                doc.addPage();
+                                pY = 15;
+                            }
+                            doc.text(line, 10, pY);
+                            pY += 5;
+                        });
+                        doc.setTextColor(0, 0, 0);
+                        pY += 4;
+                    }
+                });
+            }
 
             // Optional chart images appended after the table
             if (config.extraImages && config.extraImages.length > 0) {

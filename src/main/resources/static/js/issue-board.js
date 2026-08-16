@@ -149,16 +149,25 @@ $(document).ready(function() {
         return parsed < 0 ? 'due-overdue' : (parsed === 0 ? 'due-today' : 'due-upcoming');
     }
 
+    function getEffectiveTargetDate(row) {
+        if (!row) {
+            return '';
+        }
+
+        return row.targetDateExtension2 || row.targetDateExtension1 || row.targetDate || '';
+    }
+
     function normalizeDueDays(row) {
         if (row.dueDays !== null && row.dueDays !== undefined && row.dueDays !== '') {
             return row.dueDays;
         }
 
-        if (!row.targetDate) {
+        const effectiveTargetDate = getEffectiveTargetDate(row);
+        if (!effectiveTargetDate) {
             return '';
         }
 
-        const target = new Date(row.targetDate + 'T00:00:00');
+        const target = new Date(effectiveTargetDate + 'T00:00:00');
         const today = new Date();
         const todayUtc = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         if (Number.isNaN(target.getTime())) {
@@ -187,7 +196,7 @@ $(document).ready(function() {
         const baseDate = row.targetDate || '';
         const extension1 = row.targetDateExtension1 || '';
         const extension2 = row.targetDateExtension2 || '';
-        const effective = extension2 || extension1 || baseDate;
+        const effective = getEffectiveTargetDate(row);
         const dates = [];
 
         if (baseDate) {
@@ -311,6 +320,7 @@ $(document).ready(function() {
 
     function rowSearchText(row, index) {
         const dueDays = normalizeDueDays(row);
+        const effectiveTargetDate = getEffectiveTargetDate(row);
         return [
             index + 1,
             row.problem,
@@ -322,7 +332,13 @@ $(document).ready(function() {
             row.actions,
             row.responsible,
             row.targetDate,
+            row.targetDateExtension1,
+            row.targetDateExtension2,
+            effectiveTargetDate,
             formatDisplayDate(row.targetDate),
+            formatDisplayDate(row.targetDateExtension1),
+            formatDisplayDate(row.targetDateExtension2),
+            formatDisplayDate(effectiveTargetDate),
             dueDays,
             statusToPercent(row.status) + '%',
             row.status,
@@ -512,6 +528,7 @@ $(document).ready(function() {
                 const index = Number(indexValue);
                 if (Number.isInteger(index) && currentIssueBoardData[index]) {
                     currentIssueBoardData[index] = Object.assign({}, currentIssueBoardData[index], saved || row);
+                    window.__issueBoardRows = currentIssueBoardData;
                 }
                 applyIssueBoardView();
                 localStorage.setItem('issue-board-update', Date.now());
@@ -536,12 +553,14 @@ $(document).ready(function() {
             type: 'GET',
             success: function(data) {
                 currentIssueBoardData = Array.isArray(data) ? data : [];
+                window.__issueBoardRows = currentIssueBoardData;
                 applyIssueBoardView();
                 initializeIssueBoardSorting();
                 updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
             },
             error: function() {
                 currentIssueBoardData = [];
+                window.__issueBoardRows = [];
                 applyIssueBoardView();
                 updateSyncStatus('Sync failed');
             }
@@ -565,27 +584,195 @@ function exportIssueBoardPdf() {
     var btn = document.getElementById('issueBoardPdfBtn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
 
-    var tableData = PmsReport.readDomTable('issueBoardTable');
     var updatedDate = document.getElementById('issueLastUpdatedDate') ? document.getElementById('issueLastUpdatedDate').textContent.trim() : '-';
     var lastDate  = document.getElementById('lastReviewDate') ? document.getElementById('lastReviewDate').textContent.trim() : '-';
     var nextDate  = document.getElementById('nextReviewDate') ? document.getElementById('nextReviewDate').textContent.trim() : '-';
     var filterLabel = 'Last Updated: ' + updatedDate + '   |   Last Reviewed: ' + lastDate + '   |   Next Review: ' + nextDate;
+
+    var rows  = window.__issueBoardRows || [];
+    var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Resp.', 'Target date', 'Due', 'Status'];
+    var tableRows = rows.map(function(row, index) {
+        var targetDate = getIssueBoardEffectiveTargetDate(row);
+        var dueDays = getIssueBoardDueDays(row);
+        var status = getIssueBoardStatusLabel(row.status);
+        return [
+            (index + 1),
+            row.problem || '',
+            row.priority || '',
+            row.ownerName || '',
+            row.issueDate || '',
+            row.rootCause || '',
+            row.responsible || '',
+            targetDate,
+            dueDays,
+            status
+        ];
+    });
 
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0');
     var yyyy = today.getFullYear();
 
-    PmsReport.generate({
-        title:       'Issue Board',
-        filterLabel: filterLabel,
-        orientation: 'landscape',
-        columns:     tableData.columns,
-        rows:        tableData.rows,
-        filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+    buildIssueHistoryParagraphs().done(function(paragraphs) {
+        PmsReport.generate({
+            title:       'Issue Board',
+            filterLabel: filterLabel,
+            orientation: 'landscape',
+            columns:     columns,
+            rows:        tableRows,
+            paragraphs:  paragraphs,
+            filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+        });
+
+        setTimeout(function() {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+        }, 2000);
+    });
+}
+
+function buildIssueHistoryParagraphs() {
+    var rows = window.__issueBoardRows || [];
+    var deferred = $.Deferred();
+    var summaries = [];
+    var pending = 0;
+
+    if (!rows || rows.length === 0) {
+        return deferred.resolve([]).promise();
+    }
+
+    rows.forEach(function(row, index) {
+        if (!row || row.id == null) {
+            return;
+        }
+        pending++;
+        $.ajax({
+            url: '/api/issue-board/' + row.id + '/history',
+            type: 'GET',
+            success: function(data) {
+                var entries = Array.isArray(data) ? data : [];
+                if (entries.length === 0) {
+                    return;
+                }
+                summaries.push(buildIssueHistorySummary(row, index, entries));
+            },
+            complete: function() {
+                pending--;
+                if (pending === 0) {
+                    summaries.sort(function(a, b) { return a.index - b.index; });
+                    var lines = summaries.map(function(summary) { return summary.text; });
+                    var paragraphs = lines.length > 0
+                        ? [{ title: 'History Summary', text: lines.join('\n') }]
+                        : [];
+                    deferred.resolve(paragraphs);
+                }
+            }
+        });
     });
 
-    setTimeout(function() {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
-    }, 2000);
+    if (pending === 0) {
+        deferred.resolve([]);
+    }
+
+    return deferred.promise();
+}
+
+function buildIssueHistorySummary(row, index, entries) {
+    var latestEntries = entries.slice(0, 2).map(function(entry) {
+        var fieldName = entry.fieldName || 'Field';
+        var newValue = entry.newValue || '-';
+        var editedBy = entry.editedBy || '-';
+        var at = formatIssueHistoryDate(entry.editedAt);
+        return fieldName + ' -> ' + newValue + ' by ' + editedBy + (at ? ' on ' + at : '');
+    });
+    var suffix = entries.length > latestEntries.length
+        ? ' +' + (entries.length - latestEntries.length) + ' more'
+        : '';
+
+    return {
+        index: index,
+        text: '#' + (index + 1) + ' ' + (row.problem || 'Issue') + ': ' + latestEntries.join('; ') + suffix
+    };
+}
+
+function getIssueBoardEffectiveTargetDate(row) {
+    if (!row) {
+        return '';
+    }
+
+    return row.targetDateExtension2 || row.targetDateExtension1 || row.targetDate || '';
+}
+
+function getIssueBoardDueDays(row) {
+    if (row && row.dueDays !== null && row.dueDays !== undefined && row.dueDays !== '') {
+        return row.dueDays;
+    }
+
+    var targetDate = getIssueBoardEffectiveTargetDate(row);
+    if (!targetDate) {
+        return '';
+    }
+
+    var target = new Date(targetDate + 'T00:00:00');
+    if (Number.isNaN(target.getTime())) {
+        return '';
+    }
+
+    var today = new Date();
+    var todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    var msPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((target.getTime() - todayDate.getTime()) / msPerDay);
+}
+
+function getIssueBoardStatusLabel(status) {
+    var percent = getIssueBoardStatusPercent(status);
+    var stage = getIssueBoardPdcaStage(percent);
+    return stage;
+}
+
+function getIssueBoardStatusPercent(status) {
+    if (status === null || status === undefined || status === '') {
+        return 0;
+    }
+
+    var normalized = String(status).trim().toLowerCase();
+    if (normalized.slice(-1) === '%') {
+        return clampIssueBoardPercent(normalized.slice(0, -1));
+    }
+    if (normalized === 'done' || normalized === 'closed') {
+        return 100;
+    }
+    if (normalized === 'in-progress' || normalized === 'in progress') {
+        return 50;
+    }
+    if (normalized === 'open') {
+        return 0;
+    }
+
+    return clampIssueBoardPercent(normalized);
+}
+
+function clampIssueBoardPercent(value) {
+    var parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+        return 0;
+    }
+    return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function getIssueBoardPdcaStage(percent) {
+    if (percent >= 100) return 'A';
+    if (percent >= 75) return 'C';
+    if (percent >= 50) return 'D';
+    if (percent >= 25) return 'P';
+    return '-';
+}
+
+function formatIssueHistoryDate(value) {
+    if (!value) {
+        return '';
+    }
+
+    var normalized = String(value).replace('T', ' ');
+    return normalized.length > 16 ? normalized.slice(0, 16) : normalized;
 }

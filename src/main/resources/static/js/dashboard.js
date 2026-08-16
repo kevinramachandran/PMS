@@ -1597,12 +1597,14 @@ function renderAllCharts(metrics) {
             {
                 labelPrefix: 'Production',
                 ftdKey: 'productionProductivityFtdTarget',
-                mtdKey: 'productionProductivityMtdTarget'
+                mtdKey: 'productionProductivityMtdTarget',
+                metricChartId: 'productionProductivityChart'
             },
             {
                 labelPrefix: 'Logistics',
                 ftdKey: 'logisticsProductivityFtdTarget',
-                mtdKey: 'logisticsProductivityMtdTarget'
+                mtdKey: 'logisticsProductivityMtdTarget',
+                metricChartId: 'logisticsProductivityChart'
             }
         ]
     });
@@ -1631,12 +1633,14 @@ function renderAllCharts(metrics) {
             {
                 labelPrefix: 'B&P',
                 ftdKey: 'processConfirmationBpFtdTarget',
-                mtdKey: 'processConfirmationBpMtdTarget'
+                mtdKey: 'processConfirmationBpMtdTarget',
+                metricChartId: 'processConfirmationBpChart'
             },
             {
                 labelPrefix: 'Pack',
                 ftdKey: 'processConfirmationPackFtdTarget',
-                mtdKey: 'processConfirmationPackMtdTarget'
+                mtdKey: 'processConfirmationPackMtdTarget',
+                metricChartId: 'processConfirmationPackChart'
             }
         ]
     });
@@ -1651,12 +1655,14 @@ function renderAllCharts(metrics) {
             {
                 labelPrefix: 'Consumer',
                 ftdKey: 'kpiConsumerComplaintUnitsMhlFtdTarget',
-                mtdKey: 'kpiConsumerComplaintUnitsMhlMtdTarget'
+                mtdKey: 'kpiConsumerComplaintUnitsMhlMtdTarget',
+                metricChartId: 'consumerComplaintChart'
             },
             {
                 labelPrefix: 'Customer',
                 ftdKey: 'kpiCustomerComplaintUnitsMhlFtdTarget',
-                mtdKey: 'kpiCustomerComplaintUnitsMhlMtdTarget'
+                mtdKey: 'kpiCustomerComplaintUnitsMhlMtdTarget',
+                metricChartId: 'customerComplaintChart'
             }
         ]
     });
@@ -1770,6 +1776,14 @@ const kpiChartPalettes = {
         bars: ['#1B5E20', '#43A047', '#2E7D32'],
         lines: ['#0a2e0a', '#66BB6A', '#1B5E20']
     },
+    productionProductivityChart: {
+        bars: ['#1B5E20', '#43A047', '#2E7D32'],
+        lines: ['#0a2e0a', '#66BB6A', '#1B5E20']
+    },
+    logisticsProductivityChart: {
+        bars: ['#2E7D32', '#66BB6A', '#1B5E20'],
+        lines: ['#1B5E20', '#43A047', '#2E7D32']
+    },
     qualitySensoryChart: {
         bars: ['#2E7D32', '#4CAF50', '#1B5E20'],
         lines: ['#1B5E20', '#388E3C', '#2E7D32']
@@ -1778,9 +1792,25 @@ const kpiChartPalettes = {
         bars: ['#388E3C', '#66BB6A', '#2E7D32'],
         lines: ['#1B5E20', '#43A047', '#2E7D32']
     },
+    processConfirmationBpChart: {
+        bars: ['#388E3C', '#66BB6A', '#2E7D32'],
+        lines: ['#1B5E20', '#43A047', '#2E7D32']
+    },
+    processConfirmationPackChart: {
+        bars: ['#43A047', '#81C784', '#2E7D32'],
+        lines: ['#2E7D32', '#66BB6A', '#1B5E20']
+    },
     qualityComplaintChart: {
         bars: ['#43A047', '#81C784', '#388E3C'],
         lines: ['#1B5E20', '#4CAF50', '#2E7D32']
+    },
+    consumerComplaintChart: {
+        bars: ['#43A047', '#81C784', '#388E3C'],
+        lines: ['#1B5E20', '#4CAF50', '#2E7D32']
+    },
+    customerComplaintChart: {
+        bars: ['#558B2F', '#AED581', '#33691E'],
+        lines: ['#2E7D32', '#7CB342', '#1B5E20']
     },
     serviceOeeChart: {
         bars: ['#00695C', '#26A69A', '#004D40'],
@@ -1840,13 +1870,14 @@ function renderKpiMixedChart(canvasId, labels, metrics, seriesConfig) {
         const prefix = (series.labelPrefix || '').trim();
         const ftdLabel = prefix ? (prefix + ' FTD Target') : 'FTD Target';
         const mtdLabel = prefix ? (prefix + ' MTD Target') : 'MTD Target';
+        const metricChartId = series.metricChartId || canvasId;
 
-        const ftdDataset = buildKpiTargetDataset(ftdLabel, ftdData, palette.lines[index % palette.lines.length], mtdData, canvasId);
+        const ftdDataset = buildKpiTargetDataset(ftdLabel, ftdData, palette.lines[index % palette.lines.length], mtdData, metricChartId);
         if (ftdDataset) {
             datasets.push(ftdDataset);
         }
 
-        const mtdDataset = buildKpiTargetDataset(mtdLabel, mtdData, palette.lines[(index + 1) % palette.lines.length], null, canvasId);
+        const mtdDataset = buildKpiTargetDataset(mtdLabel, mtdData, palette.lines[(index + 1) % palette.lines.length], null, metricChartId);
         if (mtdDataset) {
             datasets.push(mtdDataset);
         }

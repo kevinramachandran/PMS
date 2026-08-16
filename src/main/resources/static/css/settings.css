@@ -672,8 +672,40 @@
 .kpi-rename-actions {
     display: flex;
     gap: 8px;
-    align-items: end;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.kpi-rename-actions button {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #166534;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.kpi-rename-actions button:hover,
+.kpi-rename-actions button:focus {
+    border-color: #16a34a;
+    background: #ecfdf5;
+}
+
+.kpi-rename-actions .kpi-rename-delete-btn,
+.kpi-rename-actions .kpi-rename-remove-draft-btn {
+    color: #b91c1c;
+}
+
+.kpi-rename-actions .kpi-rename-delete-btn:hover,
+.kpi-rename-actions .kpi-rename-delete-btn:focus,
+.kpi-rename-actions .kpi-rename-remove-draft-btn:hover,
+.kpi-rename-actions .kpi-rename-remove-draft-btn:focus {
+    border-color: #ef4444;
+    background: #fef2f2;
 }
 
 .kpi-rename-save-colors-actions {

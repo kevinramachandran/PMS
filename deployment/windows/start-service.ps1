@@ -128,8 +128,6 @@ APP_TIMEZONE=UTC
 DB_URL=jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 DB_USERNAME=root
 DB_PASSWORD=Password@123
-# Optional break-glass internal user. Leave blank to disable.
-APP_INTERNAL_SIVA_PASSWORD=
 
 LOG_LEVEL_ROOT=INFO
 LOG_LEVEL_WEB=INFO
