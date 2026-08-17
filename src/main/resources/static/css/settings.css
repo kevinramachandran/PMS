@@ -237,6 +237,80 @@
     white-space: nowrap;
 }
 
+.metrics-export-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1600;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(15, 23, 42, 0.46);
+    backdrop-filter: blur(2px);
+}
+
+.metrics-export-modal.show {
+    display: flex;
+}
+
+.metrics-export-dialog {
+    width: min(420px, 100%);
+    padding: 20px;
+    border: 1px solid #dce6df;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.24);
+}
+
+.metrics-export-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.metrics-export-header h3 {
+    margin: 0;
+    color: #102014;
+    font-size: 18px;
+    line-height: 1.3;
+}
+
+.metrics-export-close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #d9e5dc;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+}
+
+.metrics-export-close:hover {
+    background: #f8fafc;
+    color: #0b6b2e;
+}
+
+.metrics-export-copy {
+    margin: 0 0 16px;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.metrics-export-dialog .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metrics-export-dialog select {
+    width: 100%;
+}
+
+.metrics-export-dialog .form-actions {
+    margin-top: 18px;
+}
+
 .metrics-tab {
     border: 1px solid var(--border-color);
     background: #ffffff;
@@ -1635,8 +1709,8 @@ padding:4px 8px;
 }
 
 #form-issue-board #issueBoardConfigTable {
-    width: max(100%, 1480px);
-    min-width: 1480px;
+    width: max(100%, 1580px);
+    min-width: 1580px;
     table-layout: fixed;
 }
 
@@ -1703,12 +1777,12 @@ padding:4px 8px;
 
 #form-issue-board #issueBoardConfigTable thead th:nth-child(12),
 #form-issue-board #issueBoardConfigTable tbody td:nth-child(12) {
-    width: 145px;
+    width: 100px;
 }
 
 #form-issue-board #issueBoardConfigTable thead th:nth-child(13),
 #form-issue-board #issueBoardConfigTable tbody td:nth-child(13) {
-    width: 100px;
+    width: 145px;
 }
 
 #form-issue-board #issueBoardConfigTable input[type="text"],
@@ -1780,6 +1854,7 @@ padding:4px 8px;
 }
 
 #form-issue-board #issueBoardConfigTable .issue-edit,
+#form-issue-board #issueBoardConfigTable .issue-config-history,
 #form-issue-board #issueBoardConfigTable .issue-delete {
     width: 34px;
     height: 34px;
@@ -1798,6 +1873,22 @@ padding:4px 8px;
 
 #form-issue-board #issueBoardConfigTable .issue-edit:hover {
     background: #ecfdf5;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-config-history {
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-config-history:hover {
+    background: #eff6ff;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-config-history:disabled {
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 #form-issue-board #issueBoardConfigTable .issue-delete {

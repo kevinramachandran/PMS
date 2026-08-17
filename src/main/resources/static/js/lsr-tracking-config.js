@@ -52,6 +52,27 @@
         return { year, month, day };
     }
 
+    function formatRecordDate(year, month, day) {
+        return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    }
+
+    function csvCell(value) {
+        const text = value == null ? '' : String(value);
+        return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    }
+
+    function downloadCsv(csv, filename) {
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     function getLsrStatusClass(value) {
         if (!value) return 'lsr-status-notset';
         return value === 'SAFE' ? 'lsr-status-safe' : 'lsr-status-unsafe';
@@ -65,10 +86,12 @@
     function setLoading(isLoading) {
         const dateInput = document.getElementById('lsrDateInput');
         const saveBtn = document.getElementById('saveLsrBtn');
+        const downloadBtn = document.getElementById('downloadLsrCsvBtn');
         const tbody = document.getElementById('lsrTableBody');
 
         if (dateInput) dateInput.disabled = isLoading;
         if (saveBtn) saveBtn.disabled = isLoading;
+        if (downloadBtn) downloadBtn.disabled = isLoading;
 
         if (isLoading && tbody) {
             tbody.innerHTML = `<tr><td colspan="6" class="lsr-loading-cell">Loading data\u2026</td></tr>`;
@@ -237,6 +260,26 @@
             });
     }
 
+    function downloadLsrCsv() {
+        const rows = [
+            ['date', 'year', 'month', 'day'].concat(LSR_FIELDS.map(field => field.key))
+        ];
+
+        for (let day = 1; day <= maxDays; day++) {
+            const entry = lsrState[day] || {};
+            rows.push([
+                formatRecordDate(currentYear, currentMonth, day),
+                currentYear,
+                currentMonth,
+                day
+            ].concat(LSR_FIELDS.map(field => entry[field.key] || '')));
+        }
+
+        const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+        downloadCsv(csv, 'lsr-tracking-' + currentYear + '-' + String(currentMonth).padStart(2, '0') + '.csv');
+        showMessage('LSR CSV downloaded.', 'success');
+    }
+
     function showMessage(text, type) {
         const msgEl = document.getElementById('lsrMessage');
         if (!msgEl) return;
@@ -260,6 +303,11 @@
         const saveBtn = document.getElementById('saveLsrBtn');
         if (saveBtn) {
             saveBtn.addEventListener('click', saveLsrData);
+        }
+
+        const downloadBtn = document.getElementById('downloadLsrCsvBtn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', downloadLsrCsv);
         }
 
         const lsrItem = document.querySelector('[data-config="lsr-tracking"]');

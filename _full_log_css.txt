@@ -1,0 +1,5059 @@
+commit a6d20dc19b327cb8c43eaa1419086416d591fc54
+Author: Zencoder <zencoder@example.com>
+Date:   Sun Aug 16 23:35:44 2026 +0530
+
+    commit the changes
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index f1104fe..813b4c9 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -442,6 +442,19 @@
+     gap: 14px;
+ }
+ 
++.kpi-rename-page-header {
++    display: flex;
++    align-items: center;
++    min-height: 36px;
++}
++
++.kpi-rename-page-header h2 {
++    margin: 0;
++    color: #0b6b2e;
++    font-size: 22px;
++    font-weight: 800;
++}
++
+ .kpi-rename-tabs {
+     justify-content: flex-start;
+     margin-bottom: 0;
+@@ -556,16 +569,18 @@
+     min-height: 42px;
+     border: 0;
+     background: transparent;
+-    gap: 18px;
++    gap: 8px;
+     display: flex;
+     align-items: center;
++    justify-content: flex-start;
+ }
+ 
+ .kpi-rename-table .kpi-rename-color-option {
+     min-height: 42px;
+-    padding: 0 10px;
+-    border: 1px solid transparent;
++    padding: 0 12px;
++    border: 1px solid #dbe5df;
+     border-radius: 6px;
++    background: #ffffff;
+ }
+ 
+ .kpi-rename-muted {
+@@ -606,12 +621,11 @@
+ 
+ .kpi-rename-color-group {
+     min-height: 38px;
+-    display: grid;
+-    grid-template-columns: repeat(3, minmax(0, 1fr));
+-    overflow: hidden;
+-    border: 1px solid #d1d5db;
+-    border-radius: 8px;
+-    background: #ffffff;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    border: 0;
++    background: transparent;
+ }
+ 
+ .kpi-rename-color-option {
+@@ -621,16 +635,21 @@
+     justify-content: center;
+     gap: 6px;
+     min-width: 0;
+-    padding: 0 10px;
+-    border-right: 1px solid #e5e7eb;
++    min-height: 38px;
++    padding: 0 12px;
++    border: 1px solid #dbe5df;
++    border-radius: 6px;
++    background: #ffffff;
+     cursor: pointer;
+     font-size: 12px;
+     font-weight: 700;
+     color: #334155;
++    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+ }
+ 
+-.kpi-rename-color-option:last-child {
+-    border-right: 0;
++.kpi-rename-color-option:hover {
++    border-color: color-mix(in srgb, var(--kpi-option-color, #16a34a) 45%, #dbe5df);
++    background: color-mix(in srgb, var(--kpi-option-color, #16a34a) 7%, #ffffff);
+ }
+ 
+ .kpi-rename-color-option input {
+@@ -639,11 +658,13 @@
+     pointer-events: none;
+ }
+ 
+-.kpi-rename-color-option span {
++.kpi-rename-color-option .kpi-rename-color-swatch {
+     width: 12px;
+     height: 12px;
+     flex: 0 0 12px;
+     border-radius: 50%;
++    background: var(--kpi-option-color, #16a34a);
++    box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px color-mix(in srgb, var(--kpi-option-color, #16a34a) 55%, #cbd5e1);
+ }
+ 
+ .kpi-rename-color-option em {
+@@ -653,12 +674,23 @@
+     white-space: nowrap;
+ }
+ 
++.kpi-rename-color-check {
++    display: none;
++    color: var(--kpi-option-color, #16a34a);
++    font-size: 11px;
++}
++
+ .kpi-rename-color-option:has(input:checked),
+ .kpi-rename-color-option.is-selected {
+-    background: #dcfce7;
+-    color: #065f46;
+-    border-color: #16a34a;
+-    box-shadow: inset 0 0 0 1px #16a34a;
++    background: color-mix(in srgb, var(--kpi-option-color, #16a34a) 12%, #ffffff);
++    color: #0f172a;
++    border-color: var(--kpi-option-color, #16a34a);
++    box-shadow: 0 0 0 2px color-mix(in srgb, var(--kpi-option-color, #16a34a) 18%, transparent);
++}
++
++.kpi-rename-color-option:has(input:checked) .kpi-rename-color-check,
++.kpi-rename-color-option.is-selected .kpi-rename-color-check {
++    display: inline-block;
+ }
+ 
+ .kpi-rename-color-empty span {
+@@ -732,6 +764,24 @@
+     font-weight: 800;
+ }
+ 
++.kpi-rename-status-hidden {
++    background: #f1f5f9;
++    color: #475569;
++}
++
++.kpi-rename-visibility-btn {
++    min-width: 72px;
++    width: auto !important;
++    padding: 0 10px;
++    gap: 6px;
++    font-size: 12px;
++    font-weight: 800;
++}
++
++.kpi-rename-visibility-btn.is-hidden {
++    color: #475569;
++}
++
+ .kpi-rename-add-trigger {
+     width: auto;
+     height: 36px;
+
+commit 0c84649ad4b486616a15ca2232852fa80300f64d
+Author: Zencoder <zencoder@example.com>
+Date:   Sun Aug 16 12:11:17 2026 +0530
+
+    User Siva
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 823600d..f1104fe 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -672,8 +672,40 @@
+ .kpi-rename-actions {
+     display: flex;
+     gap: 8px;
+-    align-items: end;
+-    justify-content: flex-end;
++    align-items: center;
++    justify-content: flex-start;
++}
++
++.kpi-rename-actions button {
++    width: 34px;
++    height: 34px;
++    border: 1px solid #d1d5db;
++    border-radius: 6px;
++    background: #ffffff;
++    color: #166534;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    cursor: pointer;
++}
++
++.kpi-rename-actions button:hover,
++.kpi-rename-actions button:focus {
++    border-color: #16a34a;
++    background: #ecfdf5;
++}
++
++.kpi-rename-actions .kpi-rename-delete-btn,
++.kpi-rename-actions .kpi-rename-remove-draft-btn {
++    color: #b91c1c;
++}
++
++.kpi-rename-actions .kpi-rename-delete-btn:hover,
++.kpi-rename-actions .kpi-rename-delete-btn:focus,
++.kpi-rename-actions .kpi-rename-remove-draft-btn:hover,
++.kpi-rename-actions .kpi-rename-remove-draft-btn:focus {
++    border-color: #ef4444;
++    background: #fef2f2;
+ }
+ 
+ .kpi-rename-save-colors-actions {
+
+commit d29575f871e8acd2b562a0ac917e9f475cc2df24
+Author: Zencoder <zencoder@example.com>
+Date:   Sat Aug 15 23:01:46 2026 +0530
+
+    bug update
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 28758dd..823600d 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -224,6 +224,19 @@
+     margin-bottom: 16px;
+ }
+ 
++.metrics-header-actions {
++    justify-content: flex-start !important;
++    gap: 8px;
++    flex-wrap: wrap;
++    min-width: 0;
++}
++
++.metrics-header-actions .btn {
++    min-height: 32px;
++    padding: 7px 12px;
++    white-space: nowrap;
++}
++
+ .metrics-tab {
+     border: 1px solid var(--border-color);
+     background: #ffffff;
+@@ -453,6 +466,7 @@
+ 
+ .kpi-rename-add-card {
+     padding: 14px;
++    margin-top: 12px;
+ }
+ 
+ .kpi-rename-add-grid {
+@@ -465,6 +479,102 @@
+ .kpi-rename-list {
+     display: grid;
+     gap: 12px;
++    padding: 18px 18px 0;
++    border: 1px solid #e5e7eb;
++    border-radius: 8px;
++    background: #ffffff;
++    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
++}
++
++.kpi-rename-table-wrap {
++    border-radius: 8px;
++    max-height: 460px;
++    overflow: auto;
++    border: 1px solid #e5e7eb;
++}
++
++.kpi-rename-table {
++    width: 100%;
++    border-collapse: collapse;
++    min-width: 900px;
++}
++
++.kpi-rename-table th {
++    position: sticky;
++    top: 0;
++    z-index: 1;
++    padding: 14px 16px;
++    background: linear-gradient(180deg, #008a3d, #057131);
++    color: #ffffff;
++    font-size: 12px;
++    font-weight: 800;
++    text-align: left;
++    text-transform: uppercase;
++}
++
++.kpi-rename-table td {
++    padding: 14px 16px;
++    border-bottom: 1px solid #dbe5df;
++    background: #ffffff;
++    vertical-align: middle;
++}
++
++.kpi-rename-table tr:nth-child(even) td {
++    background: #fbfdfc;
++}
++
++.kpi-rename-table input,
++.kpi-rename-table select {
++    width: 100%;
++    min-height: 42px;
++    padding: 9px 12px;
++    border: 1px solid #d1d5db;
++    border-radius: 6px;
++    background: #ffffff;
++    color: #0f172a;
++    font-size: 13px;
++}
++
++.kpi-rename-table input[readonly] {
++    background: #f8fafc;
++    color: #334155;
++}
++
++.kpi-rename-table .kpi-rename-row {
++    padding: 0;
++    border: 0;
++    border-radius: 0;
++    background: transparent;
++}
++
++.kpi-rename-table .kpi-rename-row-meta {
++    margin: 0;
++    white-space: nowrap;
++}
++
++.kpi-rename-table .kpi-rename-color-group {
++    min-height: 42px;
++    border: 0;
++    background: transparent;
++    gap: 18px;
++    display: flex;
++    align-items: center;
++}
++
++.kpi-rename-table .kpi-rename-color-option {
++    min-height: 42px;
++    padding: 0 10px;
++    border: 1px solid transparent;
++    border-radius: 6px;
++}
++
++.kpi-rename-muted {
++    display: inline-flex;
++    align-items: center;
++    min-height: 32px;
++    color: #64748b;
++    font-size: 12px;
++    font-weight: 700;
+ }
+ 
+ .kpi-rename-row {
+@@ -543,10 +653,12 @@
+     white-space: nowrap;
+ }
+ 
+-.kpi-rename-color-option:has(input:checked) {
++.kpi-rename-color-option:has(input:checked),
++.kpi-rename-color-option.is-selected {
+     background: #dcfce7;
+     color: #065f46;
+-    box-shadow: inset 0 0 0 2px #16a34a;
++    border-color: #16a34a;
++    box-shadow: inset 0 0 0 1px #16a34a;
+ }
+ 
+ .kpi-rename-color-empty span {
+@@ -564,11 +676,23 @@
+     justify-content: flex-end;
+ }
+ 
++.kpi-rename-save-colors-actions {
++    margin-top: 28px;
++    padding: 18px;
++    border: 1px solid #e5e7eb;
++    border-radius: 8px;
++    background: #ffffff;
++    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
++    justify-content: flex-start;
++}
++
+ .kpi-rename-status {
+     display: inline-flex;
+     align-items: center;
++    justify-content: center;
+     min-height: 38px;
+-    padding: 0 12px;
++    min-width: 86px;
++    padding: 0 14px;
+     border-radius: 999px;
+     background: #dcfce7;
+     color: #047857;
+@@ -576,6 +700,31 @@
+     font-weight: 800;
+ }
+ 
++.kpi-rename-add-trigger {
++    width: auto;
++    height: 36px;
++    margin: 14px 18px 18px;
++    border: 1px solid #16a34a;
++    border-radius: 6px;
++    background: #ffffff;
++    color: #0b6b2e;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    gap: 8px;
++    padding: 0 14px;
++    font-size: 13px;
++    font-weight: 800;
++    cursor: pointer;
++    white-space: nowrap;
++}
++
++.kpi-rename-add-trigger:hover,
++.kpi-rename-add-trigger:focus {
++    background: #ecfdf5;
++    outline: none;
++}
++
+ .kpi-rename-empty {
+     padding: 20px;
+     border: 1px dashed var(--border-color);
+@@ -1280,6 +1429,11 @@ padding:4px 8px;
+     text-decoration: line-through;
+ }
+ 
++#issueBoardConfigTable .ib-date-struck:disabled {
++    cursor: not-allowed;
++    opacity: 0.72;
++}
++
+ #issueBoardConfigTable .ib-invalid {
+     border-color: #ef4444 !important;
+     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16) !important;
+@@ -1399,8 +1553,8 @@ padding:4px 8px;
+ }
+ 
+ #form-issue-board #issueBoardConfigTable {
+-    width: max(100%, 1840px);
+-    min-width: 1840px;
++    width: max(100%, 1480px);
++    min-width: 1480px;
+     table-layout: fixed;
+ }
+ 
+@@ -1472,7 +1626,7 @@ padding:4px 8px;
+ 
+ #form-issue-board #issueBoardConfigTable thead th:nth-child(13),
+ #form-issue-board #issueBoardConfigTable tbody td:nth-child(13) {
+-    width: 90px;
++    width: 100px;
+ }
+ 
+ #form-issue-board #issueBoardConfigTable input[type="text"],
+@@ -1500,6 +1654,221 @@ padding:4px 8px;
+     min-width: 0;
+ }
+ 
++#form-issue-board #issueBoardConfigTable .ib-display-cell {
++    text-align: center;
++    color: #111827;
++    font-weight: 600;
++    line-height: 1.35;
++}
++
++#form-issue-board #issueBoardConfigTable .ib-cell-text {
++    display: inline-block;
++    max-width: 100%;
++    overflow-wrap: anywhere;
++}
++
++#form-issue-board #issueBoardConfigTable .ib-priority-pill {
++    display: inline-flex;
++    min-width: 64px;
++    justify-content: center;
++    border-radius: 8px;
++    padding: 7px 10px;
++    font-weight: 800;
++}
++
++#form-issue-board #issueBoardConfigTable .ib-priority-high {
++    background: #fee2e2;
++    color: #dc2626;
++}
++
++#form-issue-board #issueBoardConfigTable .ib-priority-medium {
++    background: #fef3c7;
++    color: #b45309;
++}
++
++#form-issue-board #issueBoardConfigTable .ib-priority-low {
++    background: #dcfce7;
++    color: #15803d;
++}
++
++#form-issue-board #issueBoardConfigTable .ib-action-stack {
++    display: inline-flex;
++    gap: 8px;
++    justify-content: center;
++}
++
++#form-issue-board #issueBoardConfigTable .issue-edit,
++#form-issue-board #issueBoardConfigTable .issue-delete {
++    width: 34px;
++    height: 34px;
++    border-radius: 6px;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    cursor: pointer;
++    background: #ffffff;
++}
++
++#form-issue-board #issueBoardConfigTable .issue-edit {
++    border: 1px solid #86efac;
++    color: #0b6b2e;
++}
++
++#form-issue-board #issueBoardConfigTable .issue-edit:hover {
++    background: #ecfdf5;
++}
++
++#form-issue-board #issueBoardConfigTable .issue-delete {
++    border: 1px solid #fecaca;
++    color: #dc2626;
++}
++
++#form-issue-board #issueBoardConfigTable .issue-delete:hover {
++    background: #fef2f2;
++}
++
++#form-issue-board .issue-drawer-backdrop {
++    position: fixed;
++    inset: 0;
++    z-index: 1200;
++    background: rgba(15, 23, 42, 0.24);
++    opacity: 0;
++    pointer-events: none;
++    transition: opacity 0.2s ease;
++}
++
++#form-issue-board .issue-drawer-backdrop.open {
++    opacity: 1;
++    pointer-events: auto;
++}
++
++#form-issue-board .issue-drawer {
++    position: fixed;
++    top: 0;
++    right: 0;
++    z-index: 1201;
++    width: min(390px, 100vw);
++    height: 100vh;
++    background: #ffffff;
++    border-left: 1px solid #e5e7eb;
++    box-shadow: -16px 0 34px rgba(15, 23, 42, 0.14);
++    transform: translateX(100%);
++    transition: transform 0.24s ease;
++    display: flex;
++    flex-direction: column;
++}
++
++#form-issue-board .issue-drawer.open {
++    transform: translateX(0);
++}
++
++#form-issue-board .issue-drawer-header {
++    display: flex;
++    align-items: center;
++    justify-content: space-between;
++    padding: 20px 22px 12px;
++    border-bottom: 1px solid #eef2f7;
++}
++
++#form-issue-board .issue-drawer-header h2 {
++    margin: 0;
++    font-size: 18px;
++    font-weight: 800;
++    color: #047434;
++}
++
++#form-issue-board .issue-drawer-close {
++    width: 34px;
++    height: 34px;
++    border: 0;
++    border-radius: 6px;
++    background: transparent;
++    color: #111827;
++    cursor: pointer;
++}
++
++#form-issue-board .issue-drawer-form {
++    flex: 1;
++    overflow-y: auto;
++    display: flex;
++    flex-direction: column;
++    gap: 14px;
++    padding: 18px 22px 22px;
++}
++
++#form-issue-board .issue-drawer-form .form-group {
++    display: flex;
++    flex-direction: column;
++    gap: 6px;
++}
++
++#form-issue-board .issue-drawer-form label span {
++    color: #dc2626;
++}
++
++#form-issue-board .issue-drawer-form input,
++#form-issue-board .issue-drawer-form select,
++#form-issue-board .issue-drawer-form textarea {
++    width: 100%;
++    border: 1px solid #cbd5e1;
++    border-radius: 6px;
++    background: #ffffff;
++    color: #111827;
++    font-size: 13px;
++    padding: 10px 12px;
++    outline: none;
++}
++
++#form-issue-board .issue-drawer-form textarea {
++    resize: vertical;
++}
++
++#form-issue-board .issue-drawer-form input:focus,
++#form-issue-board .issue-drawer-form select:focus,
++#form-issue-board .issue-drawer-form textarea:focus {
++    border-color: #16a34a;
++    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
++}
++
++#form-issue-board .issue-drawer-grid {
++    display: grid;
++    grid-template-columns: 1fr 1fr;
++    gap: 14px;
++}
++
++#form-issue-board .issue-drawer-actions {
++    position: sticky;
++    bottom: 0;
++    display: flex;
++    align-items: center;
++    justify-content: flex-start;
++    gap: 12px;
++    margin-top: auto;
++    padding: 16px 0 0;
++    background: #ffffff;
++    border-top: 1px solid #eef2f7;
++}
++
++#form-issue-board .issue-drawer-actions .btn {
++    min-height: 42px;
++    border-radius: 6px;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    gap: 8px;
++    padding: 0 16px;
++    line-height: 1;
++    white-space: nowrap;
++}
++
++#form-issue-board .issue-drawer-actions .btn-secondary {
++    min-width: 96px;
++}
++
++#form-issue-board .issue-drawer-actions .btn-primary {
++    min-width: 148px;
++}
++
+ #form-issue-board .issue-add-row-btn {
+     border: 1px solid #86efac;
+     background: #dcfce7;
+@@ -2897,6 +3266,33 @@ table select {
+     font-size: 12px;
+ }
+ 
++.daily-data-table td:last-child,
++.issue-config-table-wrap td:last-child,
++.hs-cross-table-wrap td:last-child,
++.lsr-table-wrap td:last-child {
++    text-align: center;
++    vertical-align: middle;
++}
++
++.daily-data-table td:last-child > button,
++.issue-config-table-wrap td:last-child > button,
++.hs-cross-table-wrap td:last-child > button,
++.lsr-table-wrap td:last-child > button,
++.daily-data-table td:last-child .ib-action-stack,
++.issue-config-table-wrap td:last-child .ib-action-stack {
++    margin-left: auto;
++    margin-right: auto;
++}
++
++.daily-data-table button i,
++.issue-config-table-wrap button i,
++.hs-cross-table-wrap button i,
++.lsr-table-wrap button i {
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++}
++
+ #gembaConfigTable,
+ #leadershipGembaConfigTable {
+     min-width: 0;
+
+commit 01920e1b7d1ddeb9214dd8e6ef7bf85a011a1fc7
+Author: Zencoder <zencoder@example.com>
+Date:   Sat Aug 15 19:11:04 2026 +0530
+
+    Save current PMS updates
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index c1c2048..28758dd 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -210,6 +210,13 @@
+     color: var(--text-secondary);
+ }
+ 
++.license-identity-text {
++    font-size: 13px;
++    font-weight: 600;
++    color: #1f2937;
++    line-height: 1.5;
++}
++
+ .metrics-tabs {
+     display: flex;
+     gap: 10px;
+@@ -415,6 +422,181 @@
+     background: #991b1b;
+ }
+ 
++.kpi-rename-shell {
++    width: min(1120px, 100%);
++    margin: 0 auto;
++    display: grid;
++    gap: 14px;
++}
++
++.kpi-rename-tabs {
++    justify-content: flex-start;
++    margin-bottom: 0;
++}
++
++.kpi-rename-plant-card {
++    padding: 14px;
++}
++
++.kpi-rename-plant-grid {
++    display: grid;
++    grid-template-columns: minmax(220px, 320px) minmax(280px, 1fr) auto;
++    gap: 12px;
++    align-items: end;
++}
++
++.kpi-rename-plant-actions {
++    display: flex;
++    gap: 8px;
++    justify-content: flex-end;
++}
++
++.kpi-rename-add-card {
++    padding: 14px;
++}
++
++.kpi-rename-add-grid {
++    display: grid;
++    grid-template-columns: minmax(260px, 1fr) minmax(140px, 220px) minmax(120px, 160px) auto;
++    gap: 12px;
++    align-items: end;
++}
++
++.kpi-rename-list {
++    display: grid;
++    gap: 12px;
++}
++
++.kpi-rename-row {
++    padding: 12px 14px;
++    border: 1px solid var(--border-color);
++    border-radius: 8px;
++    background: #ffffff;
++}
++
++.kpi-rename-row-meta {
++    margin-bottom: 8px;
++    font-size: 11px;
++    font-weight: 800;
++    letter-spacing: 0.04em;
++    text-transform: uppercase;
++    color: #6b7280;
++}
++
++.kpi-rename-row-grid {
++    display: grid;
++    grid-template-columns: minmax(220px, 1fr) minmax(120px, 180px) minmax(260px, 300px) minmax(110px, 150px) auto;
++    gap: 12px;
++    align-items: end;
++}
++
++.kpi-rename-row-default .kpi-rename-row-grid {
++    grid-template-columns: minmax(220px, 1fr) minmax(120px, 180px) minmax(260px, 300px) minmax(110px, 150px) auto;
++}
++
++.kpi-rename-color-group {
++    min-height: 38px;
++    display: grid;
++    grid-template-columns: repeat(3, minmax(0, 1fr));
++    overflow: hidden;
++    border: 1px solid #d1d5db;
++    border-radius: 8px;
++    background: #ffffff;
++}
++
++.kpi-rename-color-option {
++    position: relative;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    gap: 6px;
++    min-width: 0;
++    padding: 0 10px;
++    border-right: 1px solid #e5e7eb;
++    cursor: pointer;
++    font-size: 12px;
++    font-weight: 700;
++    color: #334155;
++}
++
++.kpi-rename-color-option:last-child {
++    border-right: 0;
++}
++
++.kpi-rename-color-option input {
++    position: absolute;
++    opacity: 0;
++    pointer-events: none;
++}
++
++.kpi-rename-color-option span {
++    width: 12px;
++    height: 12px;
++    flex: 0 0 12px;
++    border-radius: 50%;
++}
++
++.kpi-rename-color-option em {
++    font-style: normal;
++    overflow: visible;
++    text-overflow: clip;
++    white-space: nowrap;
++}
++
++.kpi-rename-color-option:has(input:checked) {
++    background: #dcfce7;
++    color: #065f46;
++    box-shadow: inset 0 0 0 2px #16a34a;
++}
++
++.kpi-rename-color-empty span {
++    display: inline-flex;
++    align-items: center;
++    min-height: 38px;
++    color: #94a3b8;
++    font-weight: 700;
++}
++
++.kpi-rename-actions {
++    display: flex;
++    gap: 8px;
++    align-items: end;
++    justify-content: flex-end;
++}
++
++.kpi-rename-status {
++    display: inline-flex;
++    align-items: center;
++    min-height: 38px;
++    padding: 0 12px;
++    border-radius: 999px;
++    background: #dcfce7;
++    color: #047857;
++    font-size: 12px;
++    font-weight: 800;
++}
++
++.kpi-rename-empty {
++    padding: 20px;
++    border: 1px dashed var(--border-color);
++    border-radius: 8px;
++    color: var(--text-secondary);
++    text-align: center;
++}
++
++@media (max-width: 900px) {
++    .kpi-rename-add-grid,
++    .kpi-rename-plant-grid,
++    .kpi-rename-row-grid {
++        grid-template-columns: 1fr;
++    }
++
++    .kpi-rename-actions,
++    .kpi-rename-plant-actions {
++        justify-content: flex-start;
++    }
++}
++
+ .metrics-type-group h3 {
+     color: var(--primary-green);
+     margin-bottom: 14px;
+@@ -473,8 +655,17 @@
+     border-radius: 10px;
+     box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+     background: #fbfdfb;
+-    padding: 14px;
+-    margin-bottom: 14px;
++    padding: 12px;
++    margin-bottom: 12px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-board-meta-card {
++    padding: 10px 12px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-board-meta-card .section-subtitle {
++    margin-bottom: 8px;
++    white-space: nowrap;
+ }
+ 
+ #form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid,
+@@ -486,6 +677,89 @@
+     margin-bottom: 0;
+ }
+ 
++#form-issue-board.issue-board-enterprise .issue-board-meta-card .issue-board-meta-grid.form-grid {
++    grid-template-columns: repeat(3, minmax(180px, 1fr));
++    align-items: end;
++}
++
++#form-gemba-schedule.issue-board-enterprise .gemba-last-updated-field label {
++    white-space: nowrap;
++}
++
++#form-training-schedule.issue-board-enterprise .training-header-grid.form-grid {
++    grid-template-columns: repeat(2, minmax(240px, 1fr));
++    align-items: end;
++}
++
++#form-training-schedule.issue-board-enterprise .training-last-updated-field label {
++    white-space: nowrap;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-toolbar {
++    display: flex;
++    justify-content: flex-end;
++    margin-bottom: 10px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search {
++    width: min(360px, 100%);
++    height: 36px;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    padding: 0 10px;
++    border: 1px solid #d1d5db;
++    border-radius: 8px;
++    background: #ffffff;
++    color: #6b7280;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search:focus-within {
++    border-color: #16a34a;
++    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search input {
++    width: 100%;
++    min-width: 0;
++    border: 0;
++    outline: 0;
++    background: transparent;
++    color: #111827;
++    font-size: 13px;
++    font-weight: 500;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search input::placeholder {
++    color: #9ca3af;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search-clear {
++    width: 24px;
++    height: 24px;
++    border: 0;
++    border-radius: 6px;
++    background: transparent;
++    color: #6b7280;
++    cursor: pointer;
++    display: none;
++    align-items: center;
++    justify-content: center;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search.has-value .issue-config-search-clear {
++    display: inline-flex;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-search-clear:hover {
++    background: #f3f4f6;
++    color: #111827;
++}
++
++#issueBoardConfigTableBody .issue-config-search-hidden {
++    display: none;
++}
++
+ #form-issue-board.issue-board-enterprise .form-group label,
+ #form-gemba-schedule.issue-board-enterprise .form-group label,
+ #form-training-schedule.issue-board-enterprise .form-group label,
+@@ -783,6 +1057,60 @@
+     gap: 10px;
+ }
+ 
++.metrics-csv-confirm-modal {
++    background: rgba(15, 23, 42, 0.42);
++    backdrop-filter: blur(2px);
++}
++
++.metrics-csv-confirm-content {
++    width: min(440px, calc(100vw - 32px));
++    padding: 24px;
++    border: 1px solid #dce6df;
++    border-radius: 12px;
++    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.22);
++}
++
++.metrics-csv-confirm-icon {
++    width: 44px;
++    height: 44px;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    margin-bottom: 12px;
++    border-radius: 10px;
++    background: #dcfce7;
++    color: #0b6b2e;
++    font-size: 18px;
++}
++
++.metrics-csv-confirm-content h3 {
++    margin: 0 0 10px;
++    color: #102014;
++    font-size: 18px;
++    line-height: 1.3;
++}
++
++.metrics-csv-confirm-content p {
++    margin: 0;
++    color: #334155;
++    font-size: 14px;
++    line-height: 1.5;
++}
++
++.metrics-csv-confirm-note {
++    margin-top: 10px !important;
++    padding: 10px 12px;
++    border-left: 3px solid #16a34a;
++    border-radius: 8px;
++    background: #f0fdf4;
++    color: #166534 !important;
++    font-weight: 600;
++}
++
++.metrics-csv-confirm-content .modal-actions {
++    margin-top: 20px;
++}
++
+ .metrics-row{
+     display:grid;
+     grid-template-columns:repeat(3,1fr);
+@@ -882,128 +1210,294 @@ padding:4px 8px;
+     min-width: 170px;
+ }
+ 
+-#issueBoardConfigTable tbody tr:nth-child(even) {
+-    background: #f8fbf9;
++#issueBoardConfigTable tbody tr:nth-child(even) {
++    background: #f8fbf9;
++}
++
++#issueBoardConfigTable tbody tr:hover {
++    background: #ecf7f0;
++}
++
++#issueBoardConfigTable input[type="text"],
++#issueBoardConfigTable input[type="date"],
++#issueBoardConfigTable input[type="number"],
++#issueBoardConfigTable select {
++    width: 100%;
++    min-width: 120px;
++    min-height: 36px;
++    padding: 7px 9px;
++    border: 1px solid #ced7d1;
++    border-radius: 8px;
++    font-size: 13px;
++    box-sizing: border-box;
++}
++
++#issueBoardConfigTable .ib-due-days,
++#issueBoardConfigTable .ib-status-cell,
++#issueBoardConfigTable .ib-completed-cell,
++#issueBoardConfigTable .ib-action-cell {
++    text-align: center;
++}
++
++#issueBoardConfigTable .ib-text-cell {
++    text-align: left;
++}
++
++#issueBoardConfigTable .ib-problem,
++#issueBoardConfigTable .ib-root-cause,
++#issueBoardConfigTable .ib-actions,
++#issueBoardConfigTable .ib-responsible,
++#issueBoardConfigTable .ib-owner,
++#issueBoardConfigTable .ib-remarks {
++    min-width: 150px;
++}
++
++#issueBoardConfigTable .ib-due-days {
++    background: #f8fafc;
++    color: #334155;
++    font-weight: 700;
++}
++
++#issueBoardConfigTable .ib-target-date-cell {
++    min-width: 170px;
++}
++
++#issueBoardConfigTable .ib-target-date-stack {
++    display: flex;
++    flex-direction: column;
++    gap: 6px;
++    min-width: 150px;
++}
++
++#issueBoardConfigTable .ib-target-date-stack input {
++    width: 100%;
++}
++
++#issueBoardConfigTable .ib-date-struck {
++    color: #64748b;
++    background: #f1f5f9;
++    border-color: #cbd5e1;
++    text-decoration: line-through;
++}
++
++#issueBoardConfigTable .ib-invalid {
++    border-color: #ef4444 !important;
++    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16) !important;
++}
++
++#issueBoardConfigTable .ib-completed-date.required {
++    border-color: #ef4444;
++    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
++}
++
++#issueBoardConfigTable .ib-status-wrap {
++    display: flex;
++    flex-direction: column;
++    gap: 4px;
++    min-width: 96px;
++}
++
++#issueBoardConfigTable .ib-progress-row {
++    display: flex;
++    align-items: center;
++    justify-content: center;
++}
++
++#issueBoardConfigTable .ib-pdca-circle {
++    --pdca-progress: 0;
++    width: 48px;
++    height: 48px;
++    border-radius: 50%;
++    position: relative;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    background:
++        linear-gradient(90deg, transparent 48%, #ffffff 48% 52%, transparent 52%),
++        linear-gradient(0deg, transparent 48%, #ffffff 48% 52%, transparent 52%),
++        conic-gradient(#16a34a calc(var(--pdca-progress) * 1%), #e5e7eb 0);
++    box-shadow: inset 0 0 0 1px #cbd5e1;
++    transition: background 0.2s ease;
++}
++
++#issueBoardConfigTable .ib-pdca-circle::before {
++    content: "";
++    position: absolute;
++    inset: 15px;
++    border-radius: 50%;
++    background: #ffffff;
++    box-shadow: 0 0 0 1px #e5e7eb;
++    z-index: 1;
++}
++
++#issueBoardConfigTable .ib-pdca-quarter {
++    position: absolute;
++    z-index: 2;
++    font-size: 8px;
++    font-weight: 800;
++    color: #475569;
++    line-height: 1;
++    pointer-events: none;
++}
++
++#issueBoardConfigTable .ib-pdca-p {
++    top: 7px;
++    right: 12px;
++}
++
++#issueBoardConfigTable .ib-pdca-d {
++    right: 7px;
++    bottom: 12px;
++}
++
++#issueBoardConfigTable .ib-pdca-c {
++    left: 12px;
++    bottom: 7px;
++}
++
++#issueBoardConfigTable .ib-pdca-a {
++    left: 7px;
++    top: 12px;
++}
++
++#issueBoardConfigTable .issue-delete {
++    border: 1px solid #fecaca;
++    background: #ffffff;
++    color: #dc2626;
++    width: 34px;
++    height: 34px;
++    border-radius: 8px;
++    cursor: pointer;
++    transition: all 0.2s ease;
++}
++
++#issueBoardConfigTable .issue-delete:hover {
++    background: #fee2e2;
++    border-color: #fca5a5;
++}
++
++#form-issue-board.issue-board-enterprise .issue-board-form-card,
++#form-issue-board.issue-board-enterprise .issue-board-table-card {
++    padding: 12px 14px;
++    margin-bottom: 10px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-board-meta-card .issue-board-meta-grid.form-grid {
++    gap: 12px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-toolbar {
++    margin-bottom: 8px;
++}
++
++#form-issue-board.issue-board-enterprise .compact-actions {
++    margin-top: 8px !important;
++}
++
++#form-issue-board.issue-board-enterprise .sticky-save-bar {
++    margin-top: 0;
+ }
+ 
+-#issueBoardConfigTable tbody tr:hover {
+-    background: #ecf7f0;
++#form-issue-board #issueBoardConfigTable {
++    width: max(100%, 1840px);
++    min-width: 1840px;
++    table-layout: fixed;
+ }
+ 
+-#issueBoardConfigTable input[type="text"],
+-#issueBoardConfigTable input[type="date"],
+-#issueBoardConfigTable input[type="number"],
+-#issueBoardConfigTable select {
+-    width: 100%;
+-    min-width: 120px;
+-    min-height: 36px;
+-    padding: 7px 9px;
+-    border: 1px solid #ced7d1;
+-    border-radius: 8px;
+-    font-size: 13px;
+-    box-sizing: border-box;
++#form-issue-board #issueBoardConfigTable thead th,
++#form-issue-board #issueBoardConfigTable tbody td {
++    vertical-align: middle;
+ }
+ 
+-#issueBoardConfigTable .ib-due-days,
+-#issueBoardConfigTable .ib-status-cell,
+-#issueBoardConfigTable .ib-completed-cell,
+-#issueBoardConfigTable .ib-action-cell {
+-    text-align: center;
++#form-issue-board #issueBoardConfigTable tbody td {
++    padding: 8px;
+ }
+ 
+-#issueBoardConfigTable .ib-text-cell {
+-    text-align: left;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(1),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(1) {
++    width: 170px;
+ }
+ 
+-#issueBoardConfigTable .ib-problem,
+-#issueBoardConfigTable .ib-root-cause,
+-#issueBoardConfigTable .ib-actions,
+-#issueBoardConfigTable .ib-responsible,
+-#issueBoardConfigTable .ib-owner,
+-#issueBoardConfigTable .ib-remarks {
+-    min-width: 150px;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(2),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(2) {
++    width: 110px;
+ }
+ 
+-#issueBoardConfigTable .ib-due-days {
+-    background: #f8fafc;
+-    color: #334155;
+-    font-weight: 700;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(3),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(3),
++#form-issue-board #issueBoardConfigTable thead th:nth-child(7),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(7) {
++    width: 140px;
+ }
+ 
+-#issueBoardConfigTable .ib-invalid {
+-    border-color: #ef4444 !important;
+-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16) !important;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(4),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(4) {
++    width: 145px;
+ }
+ 
+-#issueBoardConfigTable .ib-completed-date.required {
+-    border-color: #ef4444;
+-    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
++#form-issue-board #issueBoardConfigTable thead th:nth-child(5),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(5) {
++    width: 180px;
+ }
+ 
+-#issueBoardConfigTable .ib-status-wrap {
+-    display: flex;
+-    flex-direction: column;
+-    gap: 4px;
+-    min-width: 140px;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(6),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(6) {
++    width: 195px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress-row {
+-    display: flex;
+-    align-items: center;
+-    gap: 6px;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(8),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(8) {
++    width: 180px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress {
+-    flex: 1;
+-    min-width: 0;
+-    height: 8px;
+-    border-radius: 999px;
+-    background: #e5e7eb;
+-    overflow: hidden;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(9),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(9) {
++    width: 120px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress-bar {
+-    height: 100%;
+-    width: 0;
+-    border-radius: 999px;
+-    transition: width 0.2s ease, background-color 0.2s ease;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(10),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(10) {
++    width: 150px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress-label {
+-    font-size: 11px;
+-    font-weight: 700;
+-    color: #4b5563;
+-    min-width: 30px;
+-    text-align: right;
+-    white-space: nowrap;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(11),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(11) {
++    width: 175px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress-bar.low {
+-    background: #dc2626;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(12),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(12) {
++    width: 145px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress-bar.medium {
+-    background: #ea580c;
++#form-issue-board #issueBoardConfigTable thead th:nth-child(13),
++#form-issue-board #issueBoardConfigTable tbody td:nth-child(13) {
++    width: 90px;
+ }
+ 
+-#issueBoardConfigTable .ib-progress-bar.high {
+-    background: #16a34a;
++#form-issue-board #issueBoardConfigTable input[type="text"],
++#form-issue-board #issueBoardConfigTable input[type="date"],
++#form-issue-board #issueBoardConfigTable input[type="number"],
++#form-issue-board #issueBoardConfigTable select,
++#form-issue-board #issueBoardConfigTable .ib-problem,
++#form-issue-board #issueBoardConfigTable .ib-root-cause,
++#form-issue-board #issueBoardConfigTable .ib-actions,
++#form-issue-board #issueBoardConfigTable .ib-responsible,
++#form-issue-board #issueBoardConfigTable .ib-owner,
++#form-issue-board #issueBoardConfigTable .ib-remarks,
++#form-issue-board #issueBoardConfigTable .ib-target-date-stack {
++    min-width: 0;
+ }
+ 
+-#issueBoardConfigTable .issue-delete {
+-    border: 1px solid #fecaca;
+-    background: #ffffff;
+-    color: #dc2626;
+-    width: 34px;
+-    height: 34px;
+-    border-radius: 8px;
+-    cursor: pointer;
+-    transition: all 0.2s ease;
++#form-issue-board #issueBoardConfigTable .ib-target-date-stack {
++    gap: 5px;
+ }
+ 
+-#issueBoardConfigTable .issue-delete:hover {
+-    background: #fee2e2;
+-    border-color: #fca5a5;
++#form-issue-board #issueBoardConfigTable .ib-status-wrap {
++    align-items: center;
++    justify-content: center;
++    gap: 6px;
++    min-width: 0;
+ }
+ 
+ #form-issue-board .issue-add-row-btn {
+@@ -1241,6 +1735,106 @@ padding:4px 8px;
+     font-size: 13px;
+ }
+ 
++.training-issue-search {
++    position: relative;
++    width: min(420px, 100%);
++    height: 38px;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    margin: 0 0 12px auto;
++    padding: 0 10px;
++    border: 1px solid #d1d5db;
++    border-radius: 8px;
++    background: #ffffff;
++    color: #6b7280;
++}
++
++.training-issue-search:focus-within {
++    border-color: #16a34a;
++    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
++}
++
++.training-issue-search input {
++    width: 100%;
++    min-width: 0;
++    border: 0;
++    outline: 0;
++    background: transparent;
++    color: #111827;
++    font-size: 13px;
++    font-weight: 500;
++}
++
++.training-issue-search-clear {
++    width: 24px;
++    height: 24px;
++    border: 0;
++    border-radius: 6px;
++    background: transparent;
++    color: #6b7280;
++    cursor: pointer;
++    display: none;
++    align-items: center;
++    justify-content: center;
++}
++
++.training-issue-search.has-value .training-issue-search-clear {
++    display: inline-flex;
++}
++
++.training-issue-search-results {
++    position: absolute;
++    top: calc(100% + 6px);
++    left: 0;
++    right: 0;
++    z-index: 30;
++    display: none;
++    max-height: 260px;
++    overflow: auto;
++    border: 1px solid #dbe5df;
++    border-radius: 8px;
++    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
++    background: #ffffff;
++}
++
++.training-issue-search.has-results .training-issue-search-results {
++    display: block;
++}
++
++.training-issue-search-result,
++.training-issue-search-empty {
++    padding: 10px 12px;
++    border-bottom: 1px solid #eef2f0;
++    font-size: 12px;
++    color: #334155;
++}
++
++.training-issue-search-result {
++    display: block;
++    width: 100%;
++    border: 0;
++    background: #ffffff;
++    text-align: left;
++    cursor: pointer;
++}
++
++.training-issue-search-result:hover {
++    background: #f0fdf4;
++}
++
++.training-issue-search-result strong {
++    display: block;
++    margin-bottom: 4px;
++    color: #0b6b2e;
++    font-size: 13px;
++}
++
++.training-issue-search-meta {
++    color: #64748b;
++    font-size: 11px;
++}
++
+ /* Right Panel - Main Settings */
+ .settings-main {
+     flex: 1;
+@@ -1310,6 +1904,48 @@ padding:4px 8px;
+     gap: 8px;
+ }
+ 
++.footer-btn-card-header .info-button-remove {
++    margin-left: auto;
++}
++
++.info-portal-config-toolbar {
++    display: flex;
++    justify-content: flex-end;
++    margin-bottom: 14px;
++}
++
++.info-portal-buttons-editor {
++    display: flex;
++    flex-direction: column;
++    gap: 14px;
++}
++
++.info-portal-empty {
++    border: 1px dashed #cbd5e1;
++    border-radius: 10px;
++    padding: 18px;
++    color: #64748b;
++    background: #f8fafc;
++    font-size: 13px;
++    font-weight: 600;
++    text-align: center;
++}
++
++.info-button-remove {
++    width: 32px;
++    height: 32px;
++    padding: 0;
++    border: 1px solid #fecaca;
++    border-radius: 8px;
++    background: #ffffff;
++    color: #dc2626;
++    justify-content: center;
++}
++
++.info-button-remove:hover {
++    background: #fee2e2;
++}
++
+ .field-required {
+     color: #dc2626;
+     font-size: 13px;
+@@ -1498,6 +2134,13 @@ padding:4px 8px;
+     box-shadow: 0 0 0 3px rgba(11, 107, 46, 0.1);
+ }
+ 
++input[type="date"]::-webkit-calendar-picker-indicator,
++input[type="month"]::-webkit-calendar-picker-indicator {
++    cursor: pointer;
++    opacity: 1;
++    pointer-events: auto;
++}
++
+ .form-actions {
+     display: flex;
+     gap: 12px;
+@@ -1868,14 +2511,21 @@ padding:4px 8px;
+ }
+ 
+ /* H&S Cross Daily Configuration - compact modern UX */
++#form-hs-cross.form-section {
++    max-width: none;
++    margin: 0;
++    padding: 0;
++}
++
+ .hs-cross-config-shell {
+-    max-width: 1200px;
+-    margin: 0 auto;
++    width: 100%;
++    max-width: none;
++    margin: 0;
+ }
+ 
+ .hs-cross-header-card {
+     display: flex;
+-    justify-content: space-between;
++    justify-content: flex-start;
+     align-items: flex-end;
+     gap: 14px;
+     flex-wrap: wrap;
+@@ -1886,6 +2536,17 @@ padding:4px 8px;
+     margin-bottom: 10px;
+ }
+ 
++#form-hs-cross .hs-cross-header-card,
++#form-hs-cross .hs-cross-table-wrap,
++#form-hs-cross .form-actions,
++#form-hs-cross .form-message {
++    width: 100%;
++}
++
++#form-hs-cross .hs-cross-table-wrap {
++    margin: 0 !important;
++}
++
+ #form-hs-cross .form-subtitle {
+     margin-bottom: 0;
+     font-size: 13px;
+@@ -1982,15 +2643,22 @@ padding:4px 8px;
+    LSR Tracking Config Styles
+    ================================================ */
+ 
++#form-lsr-tracking.form-section {
++    max-width: none;
++    margin: 0;
++    padding: 0;
++}
++
+ .lsr-config-shell {
+-    max-width: 1200px;
+-    margin: 0 auto;
+-    padding: 0 8px;
++    width: 100%;
++    max-width: none;
++    margin: 0;
++    padding: 0;
+ }
+ 
+ .lsr-header-card {
+     display: flex;
+-    justify-content: space-between;
++    justify-content: flex-start;
+     align-items: flex-start;
+     flex-wrap: wrap;
+     gap: 10px;
+@@ -2001,6 +2669,17 @@ padding:4px 8px;
+     margin-bottom: 14px;
+ }
+ 
++#form-lsr-tracking .lsr-header-card,
++#form-lsr-tracking .lsr-table-wrap,
++#form-lsr-tracking .form-actions,
++#form-lsr-tracking .form-message {
++    width: 100%;
++}
++
++#form-lsr-tracking .lsr-table-wrap {
++    margin: 0 !important;
++}
++
+ .lsr-header-card h2 {
+     margin: 0 0 4px;
+     font-size: 1.1rem;
+@@ -2105,7 +2784,7 @@ padding:4px 8px;
+ .form-section {
+     max-width: 1200px;
+     margin: 0 auto;
+-    padding: 10px;
++    padding: 6px;
+ }
+ 
+ .config-form-section,
+@@ -2113,8 +2792,8 @@ padding:4px 8px;
+     border: 1px solid #dbe5df;
+     border-radius: 10px;
+     background: #f8fbf9;
+-    padding: 12px;
+-    margin-bottom: 12px;
++    padding: 10px;
++    margin-bottom: 10px;
+ }
+ 
+ .section-subtitle {
+@@ -2219,8 +2898,61 @@ table select {
+ }
+ 
+ #gembaConfigTable,
+-#leadershipGembaConfigTable,
++#leadershipGembaConfigTable {
++    min-width: 0;
++}
++
++#form-training-schedule.issue-board-enterprise .issue-config-table-wrap {
++    width: 100%;
++    max-width: 100%;
++    overflow-x: auto;
++}
++
+ #trainingScheduleConfigTable {
++    width: max(100%, 1320px);
++    min-width: 1320px;
++    table-layout: fixed;
++}
++
++#trainingScheduleConfigTable thead th:nth-child(1),
++#trainingScheduleConfigTable tbody td:nth-child(1) {
++    width: 160px;
++}
++
++#trainingScheduleConfigTable thead th:nth-child(2),
++#trainingScheduleConfigTable tbody td:nth-child(2) {
++    width: 150px;
++}
++
++#trainingScheduleConfigTable thead th:nth-child(3),
++#trainingScheduleConfigTable tbody td:nth-child(3),
++#trainingScheduleConfigTable thead th:nth-child(7),
++#trainingScheduleConfigTable tbody td:nth-child(7),
++#trainingScheduleConfigTable thead th:nth-child(8),
++#trainingScheduleConfigTable tbody td:nth-child(8),
++#trainingScheduleConfigTable thead th:nth-child(9),
++#trainingScheduleConfigTable tbody td:nth-child(9) {
++    width: 140px;
++}
++
++#trainingScheduleConfigTable thead th:nth-child(4),
++#trainingScheduleConfigTable tbody td:nth-child(4),
++#trainingScheduleConfigTable thead th:nth-child(5),
++#trainingScheduleConfigTable tbody td:nth-child(5),
++#trainingScheduleConfigTable thead th:nth-child(6),
++#trainingScheduleConfigTable tbody td:nth-child(6) {
++    width: 130px;
++}
++
++#trainingScheduleConfigTable thead th:nth-child(10),
++#trainingScheduleConfigTable tbody td:nth-child(10) {
++    width: 120px;
++}
++
++#trainingScheduleConfigTable input[type="text"],
++#trainingScheduleConfigTable input[type="date"],
++#trainingScheduleConfigTable input[type="number"],
++#trainingScheduleConfigTable select {
+     min-width: 0;
+ }
+ 
+
+commit 58f0afcab17c5c15ec9c2499b5c3499d5a360a9c
+Author: Zencoder <zencoder@example.com>
+Date:   Tue May 26 07:51:39 2026 +0530
+
+    Bug fix 26 May
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index ca8a26d..4c04795 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -1318,7 +1318,7 @@ padding:4px 8px;
+ 
+ #gembaConfigTable {
+     width: 100%;
+-    min-width: 1250px;
++    min-width: 1120px;
+     border-collapse: collapse;
+ }
+ 
+@@ -2446,6 +2446,27 @@ table select {
+     font-size: 12px;
+ }
+ 
++.settings-main table thead th,
++.daily-data-table th,
++.hs-cross-table-wrap th,
++.lsr-table-wrap th,
++#issueBoardConfigTable thead th,
++#gembaConfigTable thead th,
++#leadershipGembaConfigTable thead th,
++#trainingScheduleConfigTable thead th,
++#dailyDataTable thead th,
++#prioritiesInlineTable thead th,
++#hsCrossConfigTable thead th,
++#lsrConfigTable thead th {
++    white-space: normal;
++    overflow: visible;
++    text-overflow: clip;
++    overflow-wrap: anywhere;
++    word-break: normal;
++    line-height: 1.25;
++    vertical-align: middle;
++}
++
+ #gembaConfigTable,
+ #leadershipGembaConfigTable,
+ #trainingScheduleConfigTable {
+
+commit 5d205ae5c01a59e4d0ad94cf31c59016e5c8546a
+Author: Zencoder <zencoder@example.com>
+Date:   Sun May 17 15:42:39 2026 +0530
+
+    17/05/2026 reease
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 204e818..ca8a26d 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -212,43 +212,185 @@
+ 
+ .metrics-dashboard-label-row {
+     display: grid;
+-    grid-template-columns: minmax(260px, 420px) auto;
++    grid-template-columns: minmax(280px, 1fr) minmax(180px, 0.7fr);
+     align-items: end;
++    gap: 14px;
++    padding: 14px 16px;
++    border: 1px solid rgba(11, 107, 46, 0.16);
++    border-radius: 12px;
++    background: linear-gradient(180deg, #f8fcfa 0%, #f3f8f5 100%);
++    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
++}
++
++.metric-customization-shell {
++    margin-top: 18px;
++    padding: 0;
++}
++
++.rename-custom-add {
++    display: grid;
++    grid-template-columns: minmax(260px, 1fr) minmax(150px, 220px) minmax(110px, 170px) auto;
++    gap: 14px;
++    align-items: end;
++    margin: 16px 0;
++    padding: 14px;
++    border: 1px solid #e2e8f0;
++    border-radius: 12px;
++    background: #ffffff;
++    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
++}
++
++.rename-metric-list {
++    display: grid;
+     gap: 12px;
+-    padding: 12px 14px;
+-    border: 1px solid rgba(11, 107, 46, 0.18);
+-    border-radius: 10px;
++}
++
++.rename-metric-row {
++    display: grid;
++    grid-template-columns: minmax(260px, 1.35fr) minmax(150px, 0.55fr) minmax(110px, 0.35fr) auto;
++    gap: 14px;
++    align-items: center;
++    border: 1px solid #dfe7e2;
++    border-radius: 12px;
++    background: #ffffff;
++    padding: 14px;
++    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
++    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
++}
++
++.rename-metric-row:hover {
++    border-color: rgba(11, 107, 46, 0.28);
++    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
++    transform: translateY(-1px);
++}
++
++.rename-metric-row.is-inactive {
++    opacity: 0.7;
++    background: #f9fafb;
++}
++
++.rename-metric-meta {
++    color: #64748b;
++    font-size: 11px;
++    font-weight: 700;
++    line-height: 1;
++    margin-bottom: 8px;
++    letter-spacing: 0.04em;
++    text-transform: uppercase;
++}
++
++.rename-metric-label,
++.rename-metric-unit,
++.rename-metric-decimals,
++#renameCustomMetricLabel,
++#renameCustomMetricUnit,
++#renameCustomMetricDecimals {
++    width: 100%;
++    min-height: 38px;
++    border: 1px solid #d7dee7;
++    border-radius: 8px;
+     background: #f8fafc;
++    color: #0f172a;
++    font-size: 14px;
++    line-height: 1.2;
++    padding: 8px 11px;
++    outline: none;
++    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
++}
++
++.rename-metric-label:focus,
++.rename-metric-unit:focus,
++.rename-metric-decimals:focus,
++#renameCustomMetricLabel:focus,
++#renameCustomMetricUnit:focus,
++#renameCustomMetricDecimals:focus {
++    border-color: #16a34a;
++    background: #ffffff;
++    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
++}
++
++.rename-metric-status {
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    min-height: 28px;
++    padding: 5px 10px;
++    border-radius: 999px;
++    font-size: 12px;
++    font-weight: 800;
++    line-height: 1;
++}
++
++.rename-metric-status.is-visible {
++    background: #dcfce7;
++    color: #166534;
++}
++
++.rename-metric-status.is-hidden {
++    background: #f1f5f9;
++    color: #64748b;
++}
++
++.rename-metric-actions {
++    display: inline-flex;
++    gap: 10px;
++    justify-content: flex-end;
++    align-items: center;
++}
++
++.rename-metric-actions .btn {
++    min-width: 96px;
++    min-height: 38px;
++    border-radius: 8px;
++    font-weight: 700;
++    white-space: nowrap;
++}
++
++.metrics-dashboard-label-row .btn,
++.rename-custom-add .btn {
++    min-height: 38px;
++    border-radius: 8px;
++    font-weight: 700;
++}
++
++.rename-custom-add .btn {
++    padding-inline: 18px;
+ }
+ 
+ .metrics-tabs {
+     display: flex;
+-    gap: 10px;
++    gap: 8px;
+     flex-wrap: wrap;
+     margin-bottom: 16px;
++    padding: 4px;
++    border: 1px solid #e2e8f0;
++    border-radius: 999px;
++    background: #f8fafc;
++    width: fit-content;
+ }
+ 
+ .metrics-tab {
+-    border: 1px solid var(--border-color);
+-    background: #ffffff;
++    border: 1px solid transparent;
++    background: transparent;
+     color: var(--text-primary);
+     border-radius: 999px;
+     padding: 8px 18px;
+     font-size: 14px;
+-    font-weight: 600;
++    font-weight: 700;
+     cursor: pointer;
+-    transition: all 0.2s ease;
++    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+ }
+ 
+ .metrics-tab:hover {
+-    border-color: var(--primary-green);
++    background: #eef7f0;
+     color: var(--primary-green);
+ }
+ 
+ .metrics-tab.active {
+-    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
++    background: #16a34a;
+     color: #ffffff;
+     border-color: transparent;
++    box-shadow: 0 3px 10px rgba(22, 163, 74, 0.25);
+ }
+ 
+ .metrics-tab-panel {
+@@ -794,6 +936,57 @@
+     gap: 10px;
+ }
+ 
++.metrics-export-modal {
++    position: fixed;
++    inset: 0;
++    z-index: 1300;
++    display: none;
++    align-items: center;
++    justify-content: center;
++    padding: 18px;
++    background: rgba(15, 23, 42, 0.52);
++}
++
++.metrics-export-modal.show {
++    display: flex;
++}
++
++.metrics-export-dialog {
++    width: min(520px, 100%);
++    background: #ffffff;
++    border-radius: 10px;
++    padding: 18px;
++    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
++}
++
++.metrics-export-header {
++    display: flex;
++    align-items: center;
++    justify-content: space-between;
++    gap: 12px;
++    margin-bottom: 14px;
++}
++
++.metrics-export-header h3 {
++    margin: 0;
++    font-size: 18px;
++    color: var(--text-primary);
++}
++
++.metrics-export-close {
++    border: none;
++    background: #eef2f7;
++    color: #334155;
++    width: 34px;
++    height: 34px;
++    border-radius: 8px;
++    cursor: pointer;
++}
++
++.metrics-export-close:hover {
++    background: #e2e8f0;
++}
++
+ .metrics-row{
+     display:grid;
+     grid-template-columns:repeat(3,1fr);
+@@ -1789,6 +1982,26 @@ padding:4px 8px;
+         grid-template-columns: 1fr;
+     }
+ 
++    .rename-custom-add,
++    .rename-metric-row {
++        grid-template-columns: 1fr;
++    }
++
++    .metrics-tabs {
++        width: 100%;
++        border-radius: 14px;
++    }
++
++    .rename-metric-actions {
++        justify-content: stretch;
++    }
++
++    .rename-metric-actions .btn,
++    .metrics-dashboard-label-row .btn,
++    .rename-custom-add .btn {
++        width: 100%;
++    }
++
+     .form-grid {
+         grid-template-columns: 1fr;
+     }
+
+commit 08cdaf45fe7347afc1575b8494711a8ee45491fa
+Author: Zencoder <zencoder@example.com>
+Date:   Thu May 14 22:08:50 2026 +0530
+
+    V3
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index c1c2048..204e818 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -210,6 +210,17 @@
+     color: var(--text-secondary);
+ }
+ 
++.metrics-dashboard-label-row {
++    display: grid;
++    grid-template-columns: minmax(260px, 420px) auto;
++    align-items: end;
++    gap: 12px;
++    padding: 12px 14px;
++    border: 1px solid rgba(11, 107, 46, 0.18);
++    border-radius: 10px;
++    background: #f8fafc;
++}
++
+ .metrics-tabs {
+     display: flex;
+     gap: 10px;
+@@ -1774,6 +1785,10 @@ padding:4px 8px;
+         grid-template-columns: 1fr;
+     }
+ 
++    .metrics-dashboard-label-row {
++        grid-template-columns: 1fr;
++    }
++
+     .form-grid {
+         grid-template-columns: 1fr;
+     }
+
+commit 044e750ee39ae193844baecce3812549cd01bb59
+Author: Zencoder <zencoder@example.com>
+Date:   Wed May 13 23:48:50 2026 +0530
+
+    Save tracked code changes
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index da64b85..c1c2048 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -1128,6 +1128,9 @@ padding:4px 8px;
+     letter-spacing: 0.03em;
+     text-transform: uppercase;
+     border-bottom: 2px solid #0a5a27;
++    position: sticky;
++    top: 0;
++    z-index: 10;
+ }
+ 
+ #gembaConfigTable tbody td {
+@@ -1166,6 +1169,9 @@ padding:4px 8px;
+     text-transform: uppercase;
+     border-bottom: 2px solid #0a5a27;
+     white-space: nowrap;
++    position: sticky;
++    top: 0;
++    z-index: 10;
+ }
+ 
+ #leadershipGembaConfigTable tbody td {
+@@ -1209,6 +1215,9 @@ padding:4px 8px;
+     text-transform: uppercase;
+     border-bottom: 2px solid #0a5a27;
+     white-space: nowrap;
++    position: sticky;
++    top: 0;
++    z-index: 10;
+ }
+ 
+ #trainingScheduleConfigTable tbody td {
+@@ -1282,7 +1291,7 @@ padding:4px 8px;
+     margin-bottom: 24px;
+ }
+ 
+-/* ===== KPI Footer Buttons Config ===== */
++/* ===== Info Portal Configuration ===== */
+ .footer-btn-card {
+     border: 1.5px solid #d1d5db;
+     border-radius: 10px;
+@@ -1559,6 +1568,9 @@ padding:4px 8px;
+     font-weight: 600;
+     font-size: 12px;
+     border-bottom: 2px solid var(--border-color);
++    position: sticky;
++    top: 0;
++    z-index: 10;
+ }
+ 
+ #dailyDataTable tbody td {
+@@ -1623,6 +1635,9 @@ padding:4px 8px;
+     font-weight: 700;
+     font-size: 12px;
+     border-bottom: 2px solid var(--border-color);
++    position: sticky;
++    top: 0;
++    z-index: 10;
+ }
+ 
+ #prioritiesInlineTable tbody td {
+@@ -1901,7 +1916,7 @@ padding:4px 8px;
+     position: sticky;
+     top: 0;
+     background: #ffffff;
+-    z-index: 2;
++    z-index: 10;
+     border-bottom: 2px solid #d1d5db;
+     padding: 6px;
+     font-size: 13px;
+@@ -2015,7 +2030,7 @@ padding:4px 8px;
+ #lsrConfigTable thead th {
+     position: sticky;
+     top: 0;
+-    z-index: 2;
++    z-index: 10;
+     background: #f1f5f9;
+     padding: 8px 6px;
+     font-size: 12px;
+
+commit 69f35efbc992e8cd726e74095d95251c810873c2
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Fri Apr 24 12:15:24 2026 +0530
+
+    V2 Final commit
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index cc56204..da64b85 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -766,6 +766,7 @@
+     display: flex;
+     justify-content: center;
+     align-items: center;
++    z-index: 1200;
+ }
+ 
+ .modal-content {
+@@ -789,6 +790,75 @@
+     margin-bottom:18px;
+ }
+ 
++.metric-actions{
++display:inline-flex;
++gap:8px;
++margin-left:10px;
++vertical-align:middle;
++}
++
++.metric-actions{
++display:inline-flex;
++align-items:center;
++gap:8px;
++margin-left:10px;
++vertical-align:middle;
++}
++
++.metric-edit-btn,
++.metric-delete-btn,
++.metric-save-inline,
++.metric-cancel-inline{
++border:none;
++background:transparent;
++cursor:pointer;
++padding:6px 8px;
++border-radius:8px;
++font-size:14px;
++line-height:1;
++transition:all .2s ease;
++}
++
++
++/* Edit */
++.metric-edit-btn:hover{
++background:#eef7ef;
++transform:scale(1.05);
++}
++
++
++/* Delete */
++.metric-delete-btn:hover{
++background:#fff1f1;
++transform:scale(1.05);
++}
++
++
++/* Save */
++.metric-save-inline:hover{
++background:#eef7ef;
++}
++
++
++/* Cancel */
++.metric-cancel-inline:hover{
++background:#f5f5f5;
++}
++
++
++.metric-inline-editor{
++display:inline-flex;
++align-items:center;
++gap:6px;
++margin-right:8px;
++}
++
++
++.metric-inline-input{
++width:140px;
++padding:4px 8px;
++}
++
+ .metrics-entry-grid-actual,
+ .metrics-entry-grid-target {
+     display: block; /* override old grid */
+@@ -2375,3 +2445,53 @@ table select {
+         align-items: stretch;
+     }
+ }
++
++/* --- Delete Custom Metric Modal --- */
++.delete-metric-modal-content {
++    width: 440px;
++    max-width: 440px;
++}
++
++.delete-metric-modal-content h3 {
++    margin-top: 0;
++    color: #991b1b;
++    font-size: 16px;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++}
++
++.delete-modal-icon {
++    color: #dc2626;
++    font-size: 15px;
++}
++
++.delete-metric-modal-msg {
++    color: #374151;
++    font-size: 14px;
++    line-height: 1.6;
++    margin: 12px 0 4px;
++}
++
++.btn-danger {
++    background: #dc2626;
++    color: #fff;
++    border: none;
++    padding: 8px 18px;
++    border-radius: 6px;
++    cursor: pointer;
++    font-size: 13px;
++    font-weight: 600;
++    transition: background 0.2s;
++}
++
++.btn-danger:hover {
++    background: #b91c1c;
++}
++
++.btn-sm {
++    padding: 5px 14px;
++    font-size: 12px;
++    width: auto;
++    align-self: flex-start;
++}
+
+commit cf431d62e8781f719185ead305d3be873958418c
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Fri Apr 24 10:49:18 2026 +0530
+
+    Same row change
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index d6c078e..cc56204 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -756,6 +756,44 @@
+     min-width: 190px;
+ }
+ 
++.custom-modal {
++    position: fixed;
++    top: 0;
++    left: 0;
++    width: 100%;
++    height: 100%;
++    background: rgba(0,0,0,0.5);
++    display: flex;
++    justify-content: center;
++    align-items: center;
++}
++
++.modal-content {
++    background: #fff;
++    padding: 20px;
++    border-radius: 10px;
++    width: 400px;
++}
++
++.modal-actions {
++    margin-top: 10px;
++    display: flex;
++    justify-content: flex-end;
++    gap: 10px;
++}
++
++.metrics-row{
++    display:grid;
++    grid-template-columns:repeat(3,1fr);
++    gap:16px;
++    margin-bottom:18px;
++}
++
++.metrics-entry-grid-actual,
++.metrics-entry-grid-target {
++    display: block; /* override old grid */
++}
++
+ #issueBoardConfigTable thead th:nth-child(8),
+ #issueBoardConfigTable tbody td:nth-child(8),
+ #issueBoardConfigTable thead th:nth-child(12),
+
+commit 26000e68dbd08d78a66019a857aea923845f7399
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Wed Apr 22 10:15:20 2026 +0530
+
+    Refine dashboard layouts and restore issue board priority
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 60fe951..d6c078e 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -434,26 +434,41 @@
+     margin-bottom: 14px;
+ }
+ 
+-#form-issue-board.issue-board-enterprise {
++#form-issue-board.issue-board-enterprise,
++#form-gemba-schedule.issue-board-enterprise,
++#form-training-schedule.issue-board-enterprise,
++#form-abnormality-tracker.issue-board-enterprise {
+     max-width: 1380px;
+     margin: 0 auto;
+ }
+ 
+-#form-issue-board.issue-board-enterprise h2 {
++#form-issue-board.issue-board-enterprise h2,
++#form-gemba-schedule.issue-board-enterprise h2,
++#form-training-schedule.issue-board-enterprise h2,
++#form-abnormality-tracker.issue-board-enterprise h2 {
+     font-size: 18px;
+     line-height: 1.3;
+     font-weight: 700;
+     margin-bottom: 14px;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .section-subtitle {
++#form-issue-board.issue-board-enterprise .section-subtitle,
++#form-gemba-schedule.issue-board-enterprise .section-subtitle,
++#form-training-schedule.issue-board-enterprise .section-subtitle,
++#form-abnormality-tracker.issue-board-enterprise .section-subtitle {
+     font-size: 13px;
+     font-weight: 600;
+     letter-spacing: 0.02em;
+ }
+ 
+ #form-issue-board.issue-board-enterprise .issue-board-form-card,
+-#form-issue-board.issue-board-enterprise .issue-board-table-card {
++#form-issue-board.issue-board-enterprise .issue-board-table-card,
++#form-gemba-schedule.issue-board-enterprise .issue-board-form-card,
++#form-gemba-schedule.issue-board-enterprise .issue-board-table-card,
++#form-training-schedule.issue-board-enterprise .issue-board-form-card,
++#form-training-schedule.issue-board-enterprise .issue-board-table-card,
++#form-abnormality-tracker.issue-board-enterprise .issue-board-form-card,
++#form-abnormality-tracker.issue-board-enterprise .issue-board-table-card {
+     border: 1px solid #dce6df;
+     border-radius: 10px;
+     box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
+@@ -462,13 +477,19 @@
+     margin-bottom: 14px;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
++#form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid,
++#form-gemba-schedule.issue-board-enterprise .issue-board-meta-grid.form-grid,
++#form-training-schedule.issue-board-enterprise .issue-board-meta-grid.form-grid,
++#form-abnormality-tracker.issue-board-enterprise .issue-board-meta-grid.form-grid {
+     grid-template-columns: repeat(2, minmax(240px, 1fr));
+     gap: 14px;
+     margin-bottom: 0;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .form-group label {
++#form-issue-board.issue-board-enterprise .form-group label,
++#form-gemba-schedule.issue-board-enterprise .form-group label,
++#form-training-schedule.issue-board-enterprise .form-group label,
++#form-abnormality-tracker.issue-board-enterprise .form-group label {
+     display: inline-block;
+     margin-bottom: 6px;
+     font-size: 13px;
+@@ -479,7 +500,19 @@
+ #form-issue-board.issue-board-enterprise .form-group input[type="date"],
+ #form-issue-board.issue-board-enterprise .form-group input[type="text"],
+ #form-issue-board.issue-board-enterprise .form-group input[type="number"],
+-#form-issue-board.issue-board-enterprise .form-group select {
++#form-issue-board.issue-board-enterprise .form-group select,
++#form-gemba-schedule.issue-board-enterprise .form-group input[type="date"],
++#form-gemba-schedule.issue-board-enterprise .form-group input[type="text"],
++#form-gemba-schedule.issue-board-enterprise .form-group input[type="number"],
++#form-gemba-schedule.issue-board-enterprise .form-group select,
++#form-training-schedule.issue-board-enterprise .form-group input[type="date"],
++#form-training-schedule.issue-board-enterprise .form-group input[type="text"],
++#form-training-schedule.issue-board-enterprise .form-group input[type="number"],
++#form-training-schedule.issue-board-enterprise .form-group select,
++#form-abnormality-tracker.issue-board-enterprise .form-group input[type="date"],
++#form-abnormality-tracker.issue-board-enterprise .form-group input[type="text"],
++#form-abnormality-tracker.issue-board-enterprise .form-group input[type="number"],
++#form-abnormality-tracker.issue-board-enterprise .form-group select {
+     border-radius: 8px;
+     border: 1px solid #cfd9d2;
+     min-height: 38px;
+@@ -491,6 +524,12 @@
+ 
+ #form-issue-board.issue-board-enterprise .form-group input:focus,
+ #form-issue-board.issue-board-enterprise .form-group select:focus,
++#form-gemba-schedule.issue-board-enterprise .form-group input:focus,
++#form-gemba-schedule.issue-board-enterprise .form-group select:focus,
++#form-training-schedule.issue-board-enterprise .form-group input:focus,
++#form-training-schedule.issue-board-enterprise .form-group select:focus,
++#form-abnormality-tracker.issue-board-enterprise .form-group input:focus,
++#form-abnormality-tracker.issue-board-enterprise .form-group select:focus,
+ #issueBoardConfigTable input:focus,
+ #issueBoardConfigTable select:focus {
+     border-color: #16a34a;
+@@ -508,7 +547,10 @@
+     overflow-x: auto;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .issue-config-table-wrap {
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap,
++#form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap,
++#form-training-schedule.issue-board-enterprise .issue-config-table-wrap,
++#form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap {
+     max-height: 460px;
+     overflow: auto;
+     max-width: 100%;
+@@ -518,23 +560,35 @@
+     background: #ffffff;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar {
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar,
++#form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar,
++#form-training-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar,
++#form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar {
+     width: 10px;
+     height: 10px;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-track {
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-track,
++#form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-track,
++#form-training-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-track,
++#form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-track {
+     background: #eef2ef;
+     border-radius: 999px;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb {
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb,
++#form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb,
++#form-training-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb,
++#form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb {
+     background: #93c5aa;
+     border-radius: 999px;
+     border: 2px solid #eef2ef;
+ }
+ 
+-#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb:hover {
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb:hover,
++#form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb:hover,
++#form-training-schedule.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb:hover,
++#form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb:hover {
+     background: #74b08f;
+ }
+ 
+@@ -910,11 +964,17 @@
+ }
+ 
+ @media (max-width: 900px) {
+-    #form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
++    #form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid,
++    #form-gemba-schedule.issue-board-enterprise .issue-board-meta-grid.form-grid,
++    #form-training-schedule.issue-board-enterprise .issue-board-meta-grid.form-grid,
++    #form-abnormality-tracker.issue-board-enterprise .issue-board-meta-grid.form-grid {
+         grid-template-columns: 1fr;
+     }
+ 
+-    #form-issue-board.issue-board-enterprise .issue-config-table-wrap {
++    #form-issue-board.issue-board-enterprise .issue-config-table-wrap,
++    #form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap,
++    #form-training-schedule.issue-board-enterprise .issue-config-table-wrap,
++    #form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap {
+         max-height: 360px;
+     }
+ }
+
+commit ecd1ffa794fec18d00871dd11ffe40cb13e658c9
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Tue Apr 21 22:16:38 2026 +0530
+
+    V2.0.0.1
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 7908a1a..60fe951 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -249,6 +249,54 @@
+     animation: fadeIn 0.25s ease;
+ }
+ 
++.metrics-custom-toolbar {
++    display: flex;
++    align-items: center;
++    justify-content: space-between;
++    gap: 12px;
++    flex-wrap: wrap;
++    margin-bottom: 14px;
++    padding: 10px 12px;
++    border: 1px solid rgba(11, 107, 46, 0.16);
++    border-radius: 10px;
++    background: rgba(11, 107, 46, 0.04);
++}
++
++.metrics-custom-toolbar-copy {
++    flex: 1;
++    min-width: 240px;
++    font-size: 13px;
++    color: var(--text-secondary);
++}
++
++.metrics-custom-manager {
++    display: none;
++    margin-bottom: 16px;
++}
++
++.metrics-custom-manager.show {
++    display: block;
++}
++
++.metrics-custom-form {
++    display: grid;
++    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
++    gap: 12px 16px;
++    padding: 14px;
++    border: 1px dashed rgba(11, 107, 46, 0.24);
++    border-radius: 10px;
++    background: #ffffff;
++}
++
++.metrics-custom-actions {
++    align-self: end;
++    justify-content: flex-start;
++}
++
++.metrics-custom-field label {
++    min-height: 36px;
++}
++
+ .metrics-tab-actions {
+     margin-top: 14px;
+ }
+
+commit 27b59c440e0143232979ad0c952a9d4439fd23d9
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Mon Apr 20 17:08:37 2026 +0530
+
+    exe and user management
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index b253de2..7908a1a 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -258,6 +258,61 @@
+     gap: 16px;
+ }
+ 
++.permission-readonly-banner {
++    display: flex;
++    align-items: flex-start;
++    gap: 12px;
++    margin-bottom: 18px;
++    padding: 14px 16px;
++    border: 1px solid rgba(180, 83, 9, 0.24);
++    border-radius: 12px;
++    background: linear-gradient(180deg, rgba(245, 158, 11, 0.14), rgba(255, 251, 235, 0.92));
++    color: #92400e;
++}
++
++.permission-readonly-banner i {
++    margin-top: 2px;
++    color: #b45309;
++}
++
++.permission-readonly-banner strong {
++    display: block;
++    margin-bottom: 2px;
++    font-size: 14px;
++}
++
++.permission-readonly-banner span {
++    font-size: 13px;
++    line-height: 1.5;
++}
++
++.form-section.permission-readonly-mode input:disabled,
++.form-section.permission-readonly-mode textarea:disabled,
++.form-section.permission-readonly-mode select:disabled,
++.email-config-page.permission-readonly-mode input:disabled,
++.email-config-page.permission-readonly-mode textarea:disabled,
++.email-config-page.permission-readonly-mode select:disabled,
++.email-config-page.permission-readonly-mode input[readonly],
++.email-config-page.permission-readonly-mode textarea[readonly] {
++    background: #f8fafc;
++    color: #64748b;
++    cursor: not-allowed;
++    border-color: #d7dde5;
++}
++
++.form-section.permission-readonly-mode button:disabled,
++.email-config-page.permission-readonly-mode button:disabled {
++    opacity: 0.62;
++    cursor: not-allowed;
++    box-shadow: none;
++}
++
++.form-section.permission-readonly-mode .file-upload-trigger.permission-readonly-trigger,
++.email-config-page.permission-readonly-mode .file-upload-trigger.permission-readonly-trigger {
++    pointer-events: none;
++    opacity: 0.62;
++}
++
+ .metrics-entry-group {
+     border: 1px solid var(--border-color);
+     border-radius: 10px;
+
+commit 41c69bdf73e8adca6f16502fd71f09324c35f901
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Mon Apr 20 00:48:09 2026 +0530
+
+    2.0
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 4b14fac..b253de2 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -1,5 +1,85 @@
+ /* Settings Page Styles */
+ 
++
++/* Config Menu */
++.config-menu {
++    padding: 16px;
++}
++
++.config-section {
++    margin-bottom: 20px;
++    transition: all 0.3s ease;
++}
++
++.config-section-title {
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    font-size: 12px;
++    font-weight: 700;
++    text-transform: uppercase;
++    letter-spacing: 0.08em;
++    color: var(--text-secondary);
++    padding: 12px 0 8px 0;
++    margin-bottom: 8px;
++    border-bottom: 2px solid #e5e7eb;
++}
++
++.config-section-title i {
++    color: var(--primary-green);
++}
++
++/* Config Menu Items */
++.config-menu-items {
++    display: flex;
++    flex-direction: column;
++    gap: 6px;
++}
++
++.config-menu-item {
++    display: flex;
++    align-items: center;
++    gap: 12px;
++    padding: 10px 12px;
++    min-height: 40px;
++    border: 1px solid transparent;
++    border-radius: 6px;
++    cursor: pointer;
++    transition: all 0.2s ease;
++    color: var(--text-primary);
++    background: transparent;
++    font-size: 14px;
++    font-weight: 500;
++    text-align: left;
++}
++
++.config-menu-item:hover {
++    background: #f0fdf4;
++    border-color: #d1fae5;
++    color: #047857;
++}
++
++.config-menu-item.active {
++    background: #d1fae5;
++    border-color: #10b981;
++    color: #047857;
++    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
++}
++
++.config-menu-item i {
++    font-size: 16px;
++    width: 20px;
++    min-width: 20px;
++    display: flex;
++    align-items: center;
++    justify-content: center;
++}
++
++/* Hidden Class */
++.hidden {
++    display: none !important;
++}
++
+ .settings-container {
+     display: flex;
+     gap: 20px;
+@@ -7,29 +87,14 @@
+     align-items: stretch;
+ }
+ 
+-.settings-container.issue-board-full-page .settings-sidebar {
+-    display: none;
+-}
+-
+-.settings-container.issue-board-full-page .settings-main {
++.settings-main.full-width {
+     width: 100%;
+-    max-height: none;
+-}
+-
+-.settings-container.issue-board-full-page .form-card {
+-    padding: 28px;
++    max-width: 100%;
+ }
+ 
+-/* Left Panel - Settings Sidebar */
++/* Left Panel - Settings Sidebar (Hidden) */
+ .settings-sidebar {
+-    min-width: 260px;
+-    max-width: 260px;
+-    background: #ffffff;
+-    border-radius: 12px;
+-    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+-    border: 1px solid #e5e7eb;
+-    overflow-y: auto;
+-    align-self: stretch;
++    display: none;
+ }
+ 
+ .config-list {
+
+commit 49a9d086ab1bdc7b129b840cb3f66b75045e252e
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Thu Apr 16 21:27:45 2026 +0530
+
+    V1.0.1
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 4781461..4b14fac 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -341,8 +341,10 @@
+ }
+ 
+ #form-issue-board.issue-board-enterprise .issue-config-table-wrap {
+-    max-height: 420px;
++    max-height: 460px;
+     overflow: auto;
++    max-width: 100%;
++    scrollbar-gutter: stable both-edges;
+     border: 1px solid #dbe5df;
+     border-radius: 10px;
+     background: #ffffff;
+@@ -470,9 +472,10 @@
+ 
+ #issueBoardConfigTable {
+     width: 100%;
+-    min-width: 1460px;
++    min-width: 1800px;
+     border-collapse: collapse;
+     font-size: 13px;
++    table-layout: auto;
+ }
+ 
+ #issueBoardConfigTable thead th {
+@@ -497,6 +500,58 @@
+     vertical-align: middle;
+ }
+ 
++#issueBoardConfigTable thead th:nth-child(1),
++#issueBoardConfigTable tbody td:nth-child(1) {
++    min-width: 200px;
++}
++
++#issueBoardConfigTable thead th:nth-child(2),
++#issueBoardConfigTable tbody td:nth-child(2) {
++    min-width: 160px;
++}
++
++#issueBoardConfigTable thead th:nth-child(3),
++#issueBoardConfigTable tbody td:nth-child(3),
++#issueBoardConfigTable thead th:nth-child(7),
++#issueBoardConfigTable tbody td:nth-child(7),
++#issueBoardConfigTable thead th:nth-child(10),
++#issueBoardConfigTable tbody td:nth-child(10) {
++    min-width: 118px;
++}
++
++#issueBoardConfigTable thead th:nth-child(4),
++#issueBoardConfigTable tbody td:nth-child(4) {
++    min-width: 180px;
++}
++
++#issueBoardConfigTable thead th:nth-child(5),
++#issueBoardConfigTable tbody td:nth-child(5) {
++    min-width: 190px;
++}
++
++#issueBoardConfigTable thead th:nth-child(6),
++#issueBoardConfigTable tbody td:nth-child(6) {
++    min-width: 190px;
++}
++
++#issueBoardConfigTable thead th:nth-child(8),
++#issueBoardConfigTable tbody td:nth-child(8),
++#issueBoardConfigTable thead th:nth-child(12),
++#issueBoardConfigTable tbody td:nth-child(12) {
++    min-width: 92px;
++}
++
++/* STATUS column needs enough room for progress bar + label + select */
++#issueBoardConfigTable thead th:nth-child(9),
++#issueBoardConfigTable tbody td:nth-child(9) {
++    min-width: 150px;
++}
++
++#issueBoardConfigTable thead th:nth-child(11),
++#issueBoardConfigTable tbody td:nth-child(11) {
++    min-width: 170px;
++}
++
+ #issueBoardConfigTable tbody tr:nth-child(even) {
+     background: #f8fbf9;
+ }
+@@ -510,12 +565,13 @@
+ #issueBoardConfigTable input[type="number"],
+ #issueBoardConfigTable select {
+     width: 100%;
+-    min-width: 110px;
++    min-width: 120px;
+     min-height: 36px;
+     padding: 7px 9px;
+     border: 1px solid #ced7d1;
+     border-radius: 8px;
+     font-size: 13px;
++    box-sizing: border-box;
+ }
+ 
+ #issueBoardConfigTable .ib-due-days,
+@@ -529,6 +585,15 @@
+     text-align: left;
+ }
+ 
++#issueBoardConfigTable .ib-problem,
++#issueBoardConfigTable .ib-root-cause,
++#issueBoardConfigTable .ib-actions,
++#issueBoardConfigTable .ib-responsible,
++#issueBoardConfigTable .ib-owner,
++#issueBoardConfigTable .ib-remarks {
++    min-width: 150px;
++}
++
+ #issueBoardConfigTable .ib-due-days {
+     background: #f8fafc;
+     color: #334155;
+@@ -546,15 +611,21 @@
+ }
+ 
+ #issueBoardConfigTable .ib-status-wrap {
+-    display: grid;
+-    grid-template-columns: 1fr;
+-    gap: 6px;
++    display: flex;
++    flex-direction: column;
++    gap: 4px;
++    min-width: 140px;
++}
++
++#issueBoardConfigTable .ib-progress-row {
++    display: flex;
+     align-items: center;
+-    min-width: 110px;
++    gap: 6px;
+ }
+ 
+ #issueBoardConfigTable .ib-progress {
+-    width: 100%;
++    flex: 1;
++    min-width: 0;
+     height: 8px;
+     border-radius: 999px;
+     background: #e5e7eb;
+@@ -572,7 +643,9 @@
+     font-size: 11px;
+     font-weight: 700;
+     color: #4b5563;
++    min-width: 30px;
+     text-align: right;
++    white-space: nowrap;
+ }
+ 
+ #issueBoardConfigTable .ib-progress-bar.low {
+@@ -1752,7 +1825,6 @@ table select {
+ }
+ 
+ .daily-data-table,
+-.issue-config-table-wrap,
+ .hs-cross-table-wrap,
+ .lsr-table-wrap {
+     width: 100%;
+@@ -1760,8 +1832,15 @@ table select {
+     overflow-x: hidden;
+ }
+ 
++/* Issue board table wrapper needs its own overflow so the scrollbar works */
++.issue-config-table-wrap {
++    width: 100%;
++    max-width: 100%;
++    overflow-x: auto;
++    overflow-y: auto;
++}
++
+ .daily-data-table table,
+-.issue-config-table-wrap table,
+ .hs-cross-table-wrap table,
+ .lsr-table-wrap table {
+     width: 100%;
+@@ -1769,10 +1848,13 @@ table select {
+     border-collapse: collapse;
+ }
+ 
++/* Issue board table must NOT use fixed layout — columns have explicit min-widths */
++#issueBoardConfigTable {
++    table-layout: auto;
++}
++
+ .daily-data-table th,
+ .daily-data-table td,
+-.issue-config-table-wrap th,
+-.issue-config-table-wrap td,
+ .hs-cross-table-wrap th,
+ .hs-cross-table-wrap td,
+ .lsr-table-wrap th,
+@@ -1785,7 +1867,6 @@ table select {
+     font-size: 12px;
+ }
+ 
+-#issueBoardConfigTable,
+ #gembaConfigTable,
+ #leadershipGembaConfigTable,
+ #trainingScheduleConfigTable {
+
+commit 40e59d6db7075ee2cb0098bc45cb95371f53ea10
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Tue Apr 14 21:16:54 2026 +0530
+
+    Issue fix
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index e82e5af..4781461 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -114,6 +114,9 @@
+ }
+ 
+ .metrics-date-row {
++    display: grid;
++    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
++    gap: 12px 16px;
+     margin-bottom: 8px;
+ }
+ 
+@@ -185,6 +188,31 @@
+     margin-top: 14px;
+ }
+ 
++.metrics-entry-groups {
++    display: grid;
++    gap: 16px;
++}
++
++.metrics-entry-group {
++    border: 1px solid var(--border-color);
++    border-radius: 10px;
++    padding: 14px;
++    background: #ffffff;
++}
++
++.metrics-entry-group-title {
++    margin-bottom: 12px;
++    font-size: 14px;
++    font-weight: 700;
++    color: var(--primary-green);
++}
++
++.metrics-entry-grid {
++    display: grid;
++    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
++    gap: 12px 16px;
++}
++
+ .metrics-toast {
+     position: fixed;
+     right: 24px;
+@@ -1318,6 +1346,10 @@
+         grid-template-columns: 1fr;
+     }
+ 
++    .metrics-entry-grid {
++        grid-template-columns: 1fr;
++    }
++
+     .form-grid {
+         grid-template-columns: 1fr;
+     }
+
+commit a45cb6da5ca1c5eeb9f3de58486fa8987f8e5ac0
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Tue Apr 14 18:15:54 2026 +0530
+
+    Released Version 1 issue fix
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index d400749..e82e5af 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -1792,3 +1792,207 @@ table select {
+         grid-template-columns: 1fr;
+     }
+ }
++
++.field-inline-error {
++    min-height: 18px;
++    margin-top: 6px;
++    font-size: 12px;
++    font-weight: 600;
++    color: #dc2626;
++}
++
++.field-invalid {
++    border-color: #ef4444 !important;
++    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
++}
++
++.email-config-page {
++    display: flex;
++    flex-direction: column;
++    gap: 20px;
++}
++
++.email-config-hero-body {
++    display: flex;
++    justify-content: space-between;
++    gap: 24px;
++    align-items: center;
++}
++
++.email-config-kicker {
++    display: inline-flex;
++    align-items: center;
++    padding: 6px 12px;
++    margin-bottom: 12px;
++    border-radius: 999px;
++    background: rgba(22, 163, 74, 0.12);
++    color: #166534;
++    font-size: 12px;
++    font-weight: 700;
++    letter-spacing: 0.04em;
++    text-transform: uppercase;
++}
++
++.email-config-hero h2 {
++    margin-bottom: 8px;
++}
++
++.email-config-hero p {
++    margin: 0;
++    color: #64748b;
++    max-width: 760px;
++}
++
++.email-config-grid {
++    display: grid;
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++    gap: 20px;
++}
++
++.email-form-grid {
++    display: grid;
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++    gap: 18px 20px;
++}
++
++.email-form-grid-full {
++    grid-column: 1 / -1;
++}
++
++.email-password-wrap {
++    position: relative;
++}
++
++.email-password-wrap .form-select {
++    padding-right: 52px;
++}
++
++.email-password-toggle {
++    position: absolute;
++    top: 50%;
++    right: 10px;
++    transform: translateY(-50%);
++    width: 36px;
++    height: 36px;
++    border: 0;
++    border-radius: 10px;
++    background: #f1f5f9;
++    color: #0f172a;
++    cursor: pointer;
++    transition: background 0.2s ease, color 0.2s ease;
++}
++
++.email-password-toggle:hover {
++    background: #e2e8f0;
++}
++
++.email-password-meta {
++    min-height: 18px;
++    margin-top: 8px;
++    color: #64748b;
++    font-size: 12px;
++    font-weight: 500;
++}
++
++.email-config-status {
++    display: flex;
++    align-items: center;
++    gap: 14px;
++    padding: 16px 18px;
++    border-radius: 18px;
++    background: linear-gradient(135deg, #f8fafc, #ecfdf5);
++    border: 1px solid #d1fae5;
++}
++
++.email-config-status-label {
++    font-weight: 700;
++    color: #0f172a;
++}
++
++.email-toggle {
++    position: relative;
++    display: inline-flex;
++    width: 56px;
++    height: 32px;
++}
++
++.email-toggle input {
++    opacity: 0;
++    width: 0;
++    height: 0;
++}
++
++.email-toggle-slider {
++    position: absolute;
++    inset: 0;
++    border-radius: 999px;
++    background: #cbd5e1;
++    transition: background 0.2s ease;
++    cursor: pointer;
++}
++
++.email-toggle-slider::before {
++    content: "";
++    position: absolute;
++    width: 24px;
++    height: 24px;
++    left: 4px;
++    top: 4px;
++    border-radius: 50%;
++    background: #ffffff;
++    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.16);
++    transition: transform 0.2s ease;
++}
++
++.email-toggle input:checked + .email-toggle-slider {
++    background: #16a34a;
++}
++
++.email-toggle input:checked + .email-toggle-slider::before {
++    transform: translateX(24px);
++}
++
++.email-config-actions {
++    display: flex;
++    justify-content: space-between;
++    gap: 18px;
++    align-items: center;
++}
++
++.email-config-hints {
++    display: flex;
++    flex-direction: column;
++    gap: 10px;
++}
++
++.email-config-hint {
++    display: flex;
++    align-items: center;
++    gap: 10px;
++    color: #475569;
++    font-size: 14px;
++    font-weight: 500;
++}
++
++.email-config-hint i {
++    color: #16a34a;
++}
++
++.email-action-row {
++    margin-top: 0;
++}
++
++@media (max-width: 1100px) {
++    .email-config-grid,
++    .email-form-grid {
++        grid-template-columns: 1fr;
++    }
++}
++
++@media (max-width: 768px) {
++    .email-config-hero-body,
++    .email-config-actions {
++        flex-direction: column;
++        align-items: stretch;
++    }
++}
+
+commit dda7b470070b669259163092d57060a5f78337d1
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Tue Apr 14 10:37:45 2026 +0530
+
+    feat: update production metrics and settings flows
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 6dbb2d6..d400749 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -121,6 +121,27 @@
+     max-width: 260px;
+ }
+ 
++.metrics-meta-card {
++    display: grid;
++    gap: 8px;
++    margin-bottom: 16px;
++    padding: 12px 14px;
++    border: 1px solid rgba(11, 107, 46, 0.18);
++    border-radius: 10px;
++    background: linear-gradient(180deg, rgba(11, 107, 46, 0.05), rgba(11, 107, 46, 0.02));
++}
++
++.metrics-selected-date {
++    font-size: 13px;
++    font-weight: 700;
++    color: var(--primary-green);
++}
++
++.metrics-dashboard-note {
++    font-size: 13px;
++    color: var(--text-secondary);
++}
++
+ .metrics-tabs {
+     display: flex;
+     gap: 10px;
+@@ -824,6 +845,166 @@
+     margin-bottom: 24px;
+ }
+ 
++/* ===== KPI Footer Buttons Config ===== */
++.footer-btn-card {
++    border: 1.5px solid #d1d5db;
++    border-radius: 10px;
++    padding: 18px 20px;
++    margin-bottom: 18px;
++    background: #f9fafb;
++}
++
++.footer-btn-card-header {
++    font-size: 14px;
++    font-weight: 700;
++    color: var(--primary-green, #0b6b2e);
++    margin-bottom: 14px;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++}
++
++.field-required {
++    color: #dc2626;
++    font-size: 13px;
++}
++
++.type-toggle-group {
++    display: flex;
++    gap: 0;
++    border: 1.5px solid #d1d5db;
++    border-radius: 8px;
++    overflow: hidden;
++}
++
++.type-toggle-option {
++    flex: 1;
++    cursor: pointer;
++}
++
++.type-toggle-option input[type="radio"] {
++    display: none;
++}
++
++.type-toggle-label {
++    display: flex;
++    align-items: center;
++    justify-content: center;
++    gap: 6px;
++    padding: 9px 12px;
++    font-size: 13px;
++    font-weight: 500;
++    color: #6b7280;
++    background: #fff;
++    border-right: 1px solid #d1d5db;
++    transition: background 0.15s, color 0.15s;
++    cursor: pointer;
++}
++
++.type-toggle-option:last-child .type-toggle-label {
++    border-right: none;
++}
++
++.type-toggle-option input[type="radio"]:checked + .type-toggle-label {
++    background: var(--primary-green, #0b6b2e);
++    color: #fff;
++}
++
++.file-upload-area {
++    border: 2px dashed #d1d5db;
++    border-radius: 8px;
++    background: #fff;
++    min-height: 80px;
++    display: flex;
++    flex-direction: column;
++    align-items: center;
++    justify-content: center;
++    padding: 14px;
++    transition: border-color 0.2s;
++}
++
++.file-upload-area:hover {
++    border-color: var(--primary-green, #0b6b2e);
++}
++
++.file-upload-trigger {
++    display: flex;
++    flex-direction: column;
++    align-items: center;
++    gap: 4px;
++    cursor: pointer;
++    color: #6b7280;
++}
++
++.file-upload-trigger i {
++    font-size: 24px;
++    color: var(--primary-green, #0b6b2e);
++}
++
++.file-upload-trigger span {
++    font-size: 13px;
++    font-weight: 500;
++    color: #374151;
++}
++
++.file-upload-trigger small {
++    font-size: 11px;
++    color: #9ca3af;
++}
++
++.current-file-display {
++    display: flex;
++    align-items: center;
++    gap: 10px;
++    background: #f0fdf4;
++    border: 1.5px solid #bbf7d0;
++    border-radius: 8px;
++    padding: 10px 14px;
++    width: 100%;
++    box-sizing: border-box;
++}
++
++.current-file-display i {
++    color: var(--primary-green, #0b6b2e);
++    font-size: 18px;
++    flex-shrink: 0;
++}
++
++.current-file-display span {
++    flex: 1;
++    font-size: 13px;
++    font-weight: 500;
++    color: #065f46;
++    overflow: hidden;
++    text-overflow: ellipsis;
++    white-space: nowrap;
++}
++
++.file-remove-btn {
++    background: none;
++    border: none;
++    cursor: pointer;
++    color: #9ca3af;
++    padding: 2px 4px;
++    border-radius: 4px;
++    font-size: 13px;
++    flex-shrink: 0;
++}
++
++.file-remove-btn:hover {
++    color: #dc2626;
++    background: #fee2e2;
++}
++
++.upload-status-row {
++    font-size: 13px;
++    color: #0b6b2e;
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    padding: 8px 0;
++}
++
+ .dynamic-form {
+     display: flex;
+     flex-direction: column;
+
+commit f161629da9bc3b1efd05001119476d5b7150b00f
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Sun Apr 5 17:12:24 2026 +0530
+
+    Production release V1, Kevin, 05/04/2026
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 8a303b1..6dbb2d6 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -3,7 +3,8 @@
+ .settings-container {
+     display: flex;
+     gap: 20px;
+-    min-height: calc(100vh - 200px);
++    min-height: calc(100vh - 180px);
++    align-items: stretch;
+ }
+ 
+ .settings-container.issue-board-full-page .settings-sidebar {
+@@ -28,6 +29,7 @@
+     box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+     border: 1px solid #e5e7eb;
+     overflow-y: auto;
++    align-self: stretch;
+ }
+ 
+ .config-list {
+@@ -46,39 +48,60 @@
+     background: #f9fafb;
+ }
+ 
+-.config-item {
+-    padding: 16px;
++.config-item,
++.menu-item {
+     display: flex;
+     align-items: center;
+     gap: 12px;
++    padding: 10px 14px;
++    min-height: 44px;
+     border-bottom: 1px solid var(--border-color);
+     cursor: pointer;
+     transition: all 0.2s ease;
+     color: var(--text-primary);
+ }
+ 
+-.config-item:hover {
++.config-item:hover,
++.menu-item:hover {
+     background: #f0fdf4;
+-    border-left: 4px solid #22c55e;
+-    padding-left: 12px;
++    box-shadow: inset 4px 0 0 #22c55e;
+ }
+ 
+-.config-item.active {
++.config-item.active,
++.menu-item.active {
+     background: rgba(34, 197, 94, 0.16);
+     color: #14532d;
+-    border-left: 4px solid #22c55e;
++    box-shadow: inset 4px 0 0 #22c55e;
+ }
+ 
+-.config-item i {
++.config-item i,
++.menu-icon {
++    width: 20px;
++    height: 20px;
++    min-width: 20px;
++    display: flex;
++    align-items: center;
++    justify-content: center;
+     font-size: 18px;
++    line-height: 1;
++    margin: 0;
++    padding: 0;
++    transition: color 0.2s ease;
+ }
+ 
+-.config-item span {
++.config-item span,
++.menu-text {
+     flex: 1;
+     font-size: 14px;
++    line-height: 1;
+     font-weight: 500;
+ }
+ 
++.config-item:hover i,
++.menu-item:hover .menu-icon {
++    color: #15803d;
++}
++
+ .config-sub-child {
+     padding-left: 28px;
+ }
+@@ -194,6 +217,70 @@
+     margin-bottom: 14px;
+ }
+ 
++#form-issue-board.issue-board-enterprise {
++    max-width: 1380px;
++    margin: 0 auto;
++}
++
++#form-issue-board.issue-board-enterprise h2 {
++    font-size: 18px;
++    line-height: 1.3;
++    font-weight: 700;
++    margin-bottom: 14px;
++}
++
++#form-issue-board.issue-board-enterprise .section-subtitle {
++    font-size: 13px;
++    font-weight: 600;
++    letter-spacing: 0.02em;
++}
++
++#form-issue-board.issue-board-enterprise .issue-board-form-card,
++#form-issue-board.issue-board-enterprise .issue-board-table-card {
++    border: 1px solid #dce6df;
++    border-radius: 10px;
++    box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
++    background: #fbfdfb;
++    padding: 14px;
++    margin-bottom: 14px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
++    grid-template-columns: repeat(2, minmax(240px, 1fr));
++    gap: 14px;
++    margin-bottom: 0;
++}
++
++#form-issue-board.issue-board-enterprise .form-group label {
++    display: inline-block;
++    margin-bottom: 6px;
++    font-size: 13px;
++    font-weight: 600;
++    color: #1f2937;
++}
++
++#form-issue-board.issue-board-enterprise .form-group input[type="date"],
++#form-issue-board.issue-board-enterprise .form-group input[type="text"],
++#form-issue-board.issue-board-enterprise .form-group input[type="number"],
++#form-issue-board.issue-board-enterprise .form-group select {
++    border-radius: 8px;
++    border: 1px solid #cfd9d2;
++    min-height: 38px;
++    font-size: 13px;
++    padding: 8px 10px;
++    transition: border-color 0.2s ease, box-shadow 0.2s ease;
++    background: #ffffff;
++}
++
++#form-issue-board.issue-board-enterprise .form-group input:focus,
++#form-issue-board.issue-board-enterprise .form-group select:focus,
++#issueBoardConfigTable input:focus,
++#issueBoardConfigTable select:focus {
++    border-color: #16a34a;
++    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18);
++    outline: none;
++}
++
+ .form-grid {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(220px, 1fr));
+@@ -204,6 +291,34 @@
+     overflow-x: auto;
+ }
+ 
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap {
++    max-height: 420px;
++    overflow: auto;
++    border: 1px solid #dbe5df;
++    border-radius: 10px;
++    background: #ffffff;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar {
++    width: 10px;
++    height: 10px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-track {
++    background: #eef2ef;
++    border-radius: 999px;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb {
++    background: #93c5aa;
++    border-radius: 999px;
++    border: 2px solid #eef2ef;
++}
++
++#form-issue-board.issue-board-enterprise .issue-config-table-wrap::-webkit-scrollbar-thumb:hover {
++    background: #74b08f;
++}
++
+ .pc-config-card {
+     border: 1px solid #dbe5df;
+     border-radius: 10px;
+@@ -306,8 +421,9 @@
+ 
+ #issueBoardConfigTable {
+     width: 100%;
+-    min-width: 1420px;
++    min-width: 1460px;
+     border-collapse: collapse;
++    font-size: 13px;
+ }
+ 
+ #issueBoardConfigTable thead th {
+@@ -320,16 +436,24 @@
+     letter-spacing: 0.03em;
+     text-transform: uppercase;
+     border-bottom: 2px solid #0a5a27;
++    position: sticky;
++    top: 0;
++    z-index: 6;
+ }
+ 
+ #issueBoardConfigTable tbody td {
+-    padding: 6px;
++    padding: 9px 8px;
++    min-height: 52px;
+     border-bottom: 1px solid var(--border-color);
+     vertical-align: middle;
+ }
+ 
++#issueBoardConfigTable tbody tr:nth-child(even) {
++    background: #f8fbf9;
++}
++
+ #issueBoardConfigTable tbody tr:hover {
+-    background: #f5f5f5;
++    background: #ecf7f0;
+ }
+ 
+ #issueBoardConfigTable input[type="text"],
+@@ -338,10 +462,22 @@
+ #issueBoardConfigTable select {
+     width: 100%;
+     min-width: 110px;
+-    padding: 6px 8px;
+-    border: 1px solid var(--border-color);
+-    border-radius: 4px;
+-    font-size: 12px;
++    min-height: 36px;
++    padding: 7px 9px;
++    border: 1px solid #ced7d1;
++    border-radius: 8px;
++    font-size: 13px;
++}
++
++#issueBoardConfigTable .ib-due-days,
++#issueBoardConfigTable .ib-status-cell,
++#issueBoardConfigTable .ib-completed-cell,
++#issueBoardConfigTable .ib-action-cell {
++    text-align: center;
++}
++
++#issueBoardConfigTable .ib-text-cell {
++    text-align: left;
+ }
+ 
+ #issueBoardConfigTable .ib-due-days {
+@@ -350,11 +486,149 @@
+     font-weight: 700;
+ }
+ 
++#issueBoardConfigTable .ib-invalid {
++    border-color: #ef4444 !important;
++    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16) !important;
++}
++
+ #issueBoardConfigTable .ib-completed-date.required {
+     border-color: #ef4444;
+     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+ }
+ 
++#issueBoardConfigTable .ib-status-wrap {
++    display: grid;
++    grid-template-columns: 1fr;
++    gap: 6px;
++    align-items: center;
++    min-width: 110px;
++}
++
++#issueBoardConfigTable .ib-progress {
++    width: 100%;
++    height: 8px;
++    border-radius: 999px;
++    background: #e5e7eb;
++    overflow: hidden;
++}
++
++#issueBoardConfigTable .ib-progress-bar {
++    height: 100%;
++    width: 0;
++    border-radius: 999px;
++    transition: width 0.2s ease, background-color 0.2s ease;
++}
++
++#issueBoardConfigTable .ib-progress-label {
++    font-size: 11px;
++    font-weight: 700;
++    color: #4b5563;
++    text-align: right;
++}
++
++#issueBoardConfigTable .ib-progress-bar.low {
++    background: #dc2626;
++}
++
++#issueBoardConfigTable .ib-progress-bar.medium {
++    background: #ea580c;
++}
++
++#issueBoardConfigTable .ib-progress-bar.high {
++    background: #16a34a;
++}
++
++#issueBoardConfigTable .issue-delete {
++    border: 1px solid #fecaca;
++    background: #ffffff;
++    color: #dc2626;
++    width: 34px;
++    height: 34px;
++    border-radius: 8px;
++    cursor: pointer;
++    transition: all 0.2s ease;
++}
++
++#issueBoardConfigTable .issue-delete:hover {
++    background: #fee2e2;
++    border-color: #fca5a5;
++}
++
++#form-issue-board .issue-add-row-btn {
++    border: 1px solid #86efac;
++    background: #dcfce7;
++    color: #166534;
++    font-weight: 700;
++}
++
++#form-issue-board .issue-add-row-btn:hover {
++    background: #bbf7d0;
++}
++
++#cancelIssueBoardBtn {
++    border: 1px solid #d1d5db;
++    background: #ffffff;
++    color: #374151;
++}
++
++#saveIssueBoardBtn {
++    min-width: 170px;
++    background: #15803d;
++    border-color: #15803d;
++    color: #ffffff;
++    font-weight: 700;
++}
++
++#saveIssueBoardBtn:disabled,
++#cancelIssueBoardBtn:disabled,
++#addIssueBoardRowTableBtn:disabled {
++    opacity: 0.65;
++    cursor: not-allowed;
++}
++
++.issue-board-toast {
++    position: fixed;
++    right: 26px;
++    bottom: 26px;
++    min-width: 220px;
++    max-width: 420px;
++    padding: 12px 14px;
++    border-radius: 10px;
++    color: #ffffff;
++    font-size: 13px;
++    font-weight: 600;
++    opacity: 0;
++    visibility: hidden;
++    transform: translateY(10px);
++    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
++    z-index: 2600;
++    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.22);
++}
++
++.issue-board-toast.show {
++    opacity: 1;
++    visibility: visible;
++    transform: translateY(0);
++}
++
++.issue-board-toast.success {
++    background: #166534;
++}
++
++.issue-board-toast.error {
++    background: #b91c1c;
++}
++
++@media (max-width: 900px) {
++    #form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
++        grid-template-columns: 1fr;
++    }
++
++    #form-issue-board.issue-board-enterprise .issue-config-table-wrap {
++        max-height: 360px;
++    }
++}
++
+ .issue-popup {
+     position: fixed;
+     right: 20px;
+@@ -506,12 +780,16 @@
+     background: var(--card-bg);
+     border-radius: 8px;
+     box-shadow: var(--shadow-md);
+-    overflow-y: auto;
+-    max-height: calc(100vh - 200px);
++    overflow-y: visible;
++    max-height: none;
++    min-height: inherit;
++    display: flex;
++    flex-direction: column;
+ }
+ 
+ .form-card {
+     padding: 32px;
++    flex: 1 1 auto;
+ }
+ 
+ .form-section {
+@@ -657,7 +935,7 @@
+ 
+ #dailyDataTable thead th {
+     background: var(--accent-green);
+-    color: var(--primary-green);
++    color: #ffffff;
+     padding: 10px;
+     text-align: left;
+     font-weight: 600;
+@@ -705,6 +983,77 @@
+     background: #dc2626;
+ }
+ 
++/* Inline Top Priorities Table */
++.priorities-inline-wrap {
++    background: var(--bg-color);
++    border-radius: 6px;
++    padding: 12px;
++    overflow-x: auto;
++}
++
++#prioritiesInlineTable {
++    width: 100%;
++    border-collapse: collapse;
++    min-width: 920px;
++}
++
++#prioritiesInlineTable thead th {
++    background: var(--accent-green);
++    color: #ffffff;
++    padding: 10px;
++    text-align: left;
++    font-weight: 700;
++    font-size: 12px;
++    border-bottom: 2px solid var(--border-color);
++}
++
++#prioritiesInlineTable tbody td {
++    padding: 8px;
++    border-bottom: 1px solid var(--border-color);
++    vertical-align: top;
++}
++
++#prioritiesInlineTable tbody tr:hover {
++    background: #f8fafc;
++}
++
++#prioritiesInlineTable input[type="text"],
++#prioritiesInlineTable textarea {
++    width: 100%;
++    padding: 8px;
++    border: 1px solid var(--border-color);
++    border-radius: 4px;
++    font-size: 13px;
++    background: #ffffff;
++}
++
++#prioritiesInlineTable textarea {
++    min-height: 58px;
++    resize: vertical;
++}
++
++#prioritiesInlineTable input[type="text"]:focus,
++#prioritiesInlineTable textarea:focus {
++    outline: none;
++    border-color: var(--primary-green);
++    box-shadow: 0 0 0 2px rgba(11, 107, 46, 0.1);
++}
++
++.priority-row-delete {
++    background: #ef4444;
++    color: #ffffff;
++    border: none;
++    border-radius: 4px;
++    padding: 7px 10px;
++    cursor: pointer;
++    font-size: 12px;
++    font-weight: 600;
++}
++
++.priority-row-delete:hover {
++    background: #dc2626;
++}
++
+ /* Form Messages */
+ .form-message {
+     margin-top: 16px;
+
+commit 7e621480c25140ea2994a35e70a0176747f0029d
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Sun Apr 5 00:19:23 2026 +0530
+
+    Commit all pending workspace changes (excluding reserved path nul)
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 8c0f858..8a303b1 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -194,6 +194,12 @@
+     margin-bottom: 14px;
+ }
+ 
++.form-grid {
++    display: grid;
++    grid-template-columns: repeat(2, minmax(220px, 1fr));
++    gap: 10px;
++}
++
+ .issue-config-table-wrap {
+     overflow-x: auto;
+ }
+@@ -300,7 +306,7 @@
+ 
+ #issueBoardConfigTable {
+     width: 100%;
+-    min-width: 1300px;
++    min-width: 1420px;
+     border-collapse: collapse;
+ }
+ 
+@@ -317,12 +323,13 @@
+ }
+ 
+ #issueBoardConfigTable tbody td {
+-    padding: 8px;
++    padding: 6px;
+     border-bottom: 1px solid var(--border-color);
++    vertical-align: middle;
+ }
+ 
+ #issueBoardConfigTable tbody tr:hover {
+-    background: var(--accent-green);
++    background: #f5f5f5;
+ }
+ 
+ #issueBoardConfigTable input[type="text"],
+@@ -330,11 +337,47 @@
+ #issueBoardConfigTable input[type="number"],
+ #issueBoardConfigTable select {
+     width: 100%;
+-    min-width: 120px;
+-    padding: 8px;
++    min-width: 110px;
++    padding: 6px 8px;
+     border: 1px solid var(--border-color);
+     border-radius: 4px;
++    font-size: 12px;
++}
++
++#issueBoardConfigTable .ib-due-days {
++    background: #f8fafc;
++    color: #334155;
++    font-weight: 700;
++}
++
++#issueBoardConfigTable .ib-completed-date.required {
++    border-color: #ef4444;
++    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
++}
++
++.issue-popup {
++    position: fixed;
++    right: 20px;
++    bottom: 20px;
++    min-width: 260px;
++    max-width: 440px;
++    padding: 12px 14px;
++    border-radius: 10px;
++    background: rgba(15, 23, 42, 0.92);
++    color: #ffffff;
+     font-size: 13px;
++    font-weight: 600;
++    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.26);
++    opacity: 0;
++    transform: translateY(10px);
++    pointer-events: none;
++    transition: opacity 0.2s ease, transform 0.2s ease;
++    z-index: 2500;
++}
++
++.issue-popup.show {
++    opacity: 1;
++    transform: translateY(0);
+ }
+ 
+ #gembaConfigTable {
+@@ -523,6 +566,8 @@
+ 
+ .form-group textarea,
+ .form-group input[type="text"],
++.form-group input[type="email"],
++.form-group input[type="password"],
+ .form-group input[type="date"],
+ .form-group input[type="number"],
+ .form-group select {
+@@ -538,6 +583,8 @@
+ 
+ .form-group textarea:focus,
+ .form-group input[type="text"]:focus,
++.form-group input[type="email"]:focus,
++.form-group input[type="password"]:focus,
+ .form-group input[type="date"]:focus,
+ .form-group input[type="number"]:focus,
+ .form-group select:focus {
+@@ -684,6 +731,18 @@
+     border-left: 4px solid #ef4444;
+ }
+ 
++.form-message.warning {
++    background: #fef3c7;
++    color: #92400e;
++    border-left: 4px solid #f59e0b;
++}
++
++.form-message.info {
++    background: #dbeafe;
++    color: #1e40af;
++    border-left: 4px solid #3b82f6;
++}
++
+ @keyframes slideIn {
+     from {
+         opacity: 0;
+@@ -729,6 +788,10 @@
+         grid-template-columns: 1fr;
+     }
+ 
++    .form-grid {
++        grid-template-columns: 1fr;
++    }
++
+     .metrics-tabs {
+         gap: 8px;
+     }
+@@ -817,3 +880,385 @@
+     background-color: rgba(255, 255, 255, 0.15) !important;
+     font-weight: 600 !important;
+ }
++
++/* H&S Cross Daily Configuration - compact modern UX */
++.hs-cross-config-shell {
++    max-width: 1200px;
++    margin: 0 auto;
++}
++
++.hs-cross-header-card {
++    display: flex;
++    justify-content: space-between;
++    align-items: flex-end;
++    gap: 14px;
++    flex-wrap: wrap;
++    background: #f8fafc;
++    border: 1px solid #e2e8f0;
++    border-radius: 10px;
++    padding: 10px 12px;
++    margin-bottom: 10px;
++}
++
++#form-hs-cross .form-subtitle {
++    margin-bottom: 0;
++    font-size: 13px;
++}
++
++.hs-config-controls {
++    display: flex;
++    align-items: flex-end;
++    gap: 10px;
++    margin: 0;
++}
++
++.hs-cross-table-wrap {
++    padding: 0;
++    max-height: 520px;
++    overflow: auto;
++    border: 1px solid #e5e7eb;
++    border-radius: 8px;
++    background: #ffffff;
++}
++
++#hsCrossConfigTable {
++    width: 100%;
++    border-collapse: collapse;
++}
++
++#hsCrossConfigTable thead th {
++    position: sticky;
++    top: 0;
++    background: #ffffff;
++    z-index: 2;
++    border-bottom: 2px solid #d1d5db;
++    padding: 6px;
++    font-size: 13px;
++}
++
++#hsCrossConfigTable tbody td {
++    padding: 6px;
++    font-size: 13px;
++    border-bottom: 1px solid #eef2f7;
++}
++
++#hsCrossConfigTable tbody tr:nth-child(even) {
++    background-color: #f9f9f9;
++}
++
++#hsCrossConfigTable tbody tr:hover {
++    background: #eefbf2;
++}
++
++.hs-day-cell {
++    text-align: center;
++    font-weight: 700;
++    width: 64px;
++}
++
++.hs-inline-select {
++    width: 100%;
++    min-width: 160px;
++    height: 34px;
++    padding: 6px 8px;
++    border-radius: 6px;
++    border: 1px solid #d1d5db;
++    font-size: 12px;
++    font-weight: 600;
++}
++
++.hs-inline-select.hs-status-notset {
++    background: #f3f4f6;
++    color: #374151;
++    border-color: #d1d5db;
++}
++
++.hs-inline-select.hs-status-safe {
++    background: #dcfce7;
++    color: #166534;
++    border-color: #86efac;
++}
++
++.hs-inline-select.hs-status-issue {
++    background: #fee2e2;
++    color: #991b1b;
++    border-color: #fca5a5;
++}
++
++.hs-loading-cell {
++    text-align: center;
++    color: #475569;
++    font-weight: 600;
++    padding: 14px 6px !important;
++}
++
++/* ================================================
++   LSR Tracking Config Styles
++   ================================================ */
++
++.lsr-config-shell {
++    max-width: 1200px;
++    margin: 0 auto;
++    padding: 0 8px;
++}
++
++.lsr-header-card {
++    display: flex;
++    justify-content: space-between;
++    align-items: flex-start;
++    flex-wrap: wrap;
++    gap: 10px;
++    background: #f8fafc;
++    border: 1px solid #e2e8f0;
++    border-radius: 10px;
++    padding: 10px 14px;
++    margin-bottom: 14px;
++}
++
++.lsr-header-card h2 {
++    margin: 0 0 4px;
++    font-size: 1.1rem;
++}
++
++.lsr-header-card .form-subtitle {
++    margin: 0;
++    font-size: 0.82rem;
++    color: #64748b;
++}
++
++.lsr-config-controls {
++    display: flex;
++    align-items: flex-end;
++    gap: 10px;
++    flex-wrap: wrap;
++}
++
++.lsr-table-wrap {
++    max-height: 520px;
++    overflow: auto;
++    border-radius: 8px;
++    border: 1px solid #e2e8f0;
++    margin-bottom: 14px;
++}
++
++#lsrConfigTable thead th {
++    position: sticky;
++    top: 0;
++    z-index: 2;
++    background: #f1f5f9;
++    padding: 8px 6px;
++    font-size: 12px;
++    white-space: nowrap;
++}
++
++#lsrConfigTable tbody tr:nth-child(even) {
++    background-color: #f9fafb;
++}
++
++#lsrConfigTable tbody tr:hover {
++    background-color: #f0f4ff;
++}
++
++#lsrConfigTable td {
++    padding: 5px 6px;
++    font-size: 13px;
++    vertical-align: middle;
++}
++
++.lsr-day-cell {
++    font-weight: 600;
++    text-align: center;
++    width: 36px;
++    color: #374151;
++}
++
++.lsr-inline-select {
++    width: 100%;
++    min-width: 90px;
++    height: 34px;
++    padding: 3px 6px;
++    font-size: 12px;
++    border-radius: 5px;
++    border: 1px solid #d1d5db;
++    cursor: pointer;
++    transition: background 0.15s, border-color 0.15s;
++}
++
++.lsr-inline-select.lsr-status-notset {
++    background: #f3f4f6;
++    color: #374151;
++    border-color: #d1d5db;
++}
++
++.lsr-inline-select.lsr-status-safe {
++    background: #dcfce7;
++    color: #166534;
++    border-color: #86efac;
++}
++
++.lsr-inline-select.lsr-status-unsafe {
++    background: #fee2e2;
++    color: #991b1b;
++    border-color: #fca5a5;
++}
++
++.lsr-loading-cell {
++    text-align: center;
++    color: #475569;
++    font-weight: 600;
++    padding: 14px 6px !important;
++}
++
++/* PMS configuration standardization overrides */
++.settings-main,
++.form-card,
++.form-section {
++    overflow-x: hidden;
++}
++
++.form-section {
++    max-width: 1200px;
++    margin: 0 auto;
++    padding: 10px;
++}
++
++.config-form-section,
++.config-table-section {
++    border: 1px solid #dbe5df;
++    border-radius: 10px;
++    background: #f8fbf9;
++    padding: 12px;
++    margin-bottom: 12px;
++}
++
++.section-subtitle {
++    font-size: 12px;
++    font-weight: 700;
++    color: #1f2937;
++    text-transform: uppercase;
++    letter-spacing: 0.04em;
++    margin-bottom: 10px;
++}
++
++.form-grid,
++.issue-board-meta-grid {
++    display: grid;
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++    gap: 12px;
++}
++
++.form-group {
++    display: flex;
++    flex-direction: column;
++    gap: 6px;
++}
++
++.form-group label {
++    font-size: 12px;
++}
++
++.form-group input,
++.form-group select,
++.form-group textarea,
++table input,
++table select,
++.btn {
++    height: 34px;
++    font-size: 12px;
++}
++
++.form-group input,
++.form-group select,
++.form-group textarea,
++table input,
++table select {
++    padding: 4px 8px;
++}
++
++.compact-actions {
++    margin-top: 10px;
++}
++
++.sticky-save-bar {
++    position: sticky;
++    bottom: 0;
++    z-index: 20;
++    background: rgba(248, 251, 249, 0.98);
++    border: 1px solid #dbe5df;
++    border-radius: 10px;
++    padding: 8px 10px;
++}
++
++.daily-data-table,
++.issue-config-table-wrap,
++.hs-cross-table-wrap,
++.lsr-table-wrap {
++    width: 100%;
++    max-width: 100%;
++    overflow-x: hidden;
++}
++
++.daily-data-table table,
++.issue-config-table-wrap table,
++.hs-cross-table-wrap table,
++.lsr-table-wrap table {
++    width: 100%;
++    table-layout: fixed;
++    border-collapse: collapse;
++}
++
++.daily-data-table th,
++.daily-data-table td,
++.issue-config-table-wrap th,
++.issue-config-table-wrap td,
++.hs-cross-table-wrap th,
++.hs-cross-table-wrap td,
++.lsr-table-wrap th,
++.lsr-table-wrap td {
++    text-align: center;
++    padding: 6px;
++    white-space: nowrap;
++    overflow: hidden;
++    text-overflow: ellipsis;
++    font-size: 12px;
++}
++
++#issueBoardConfigTable,
++#gembaConfigTable,
++#leadershipGembaConfigTable,
++#trainingScheduleConfigTable {
++    min-width: 0;
++}
++
++.btn {
++    border-radius: 6px;
++}
++
++.btn-primary,
++.primary-btn {
++    background: #1f7a3f;
++    color: #ffffff;
++}
++
++.btn-secondary,
++.btn-delete {
++    height: 34px;
++}
++
++.issue-edit,
++.gemba-edit {
++    min-width: 64px;
++    padding: 0 10px;
++}
++
++.issue-delete,
++.gemba-delete {
++    min-width: 70px;
++}
++
++@media (max-width: 1024px) {
++    .form-grid,
++    .issue-board-meta-grid {
++        grid-template-columns: 1fr;
++    }
++}
+
+commit ffab844fb3581f30d1e3c503fd415c9a4faea434
+Author: kevinramachandran <kevinramachandran@gmail.com>
+Date:   Thu Apr 2 23:10:31 2026 +0530
+
+    Add PMS process confirmation dashboard and config flow
+
+diff --git a/src/main/resources/static/css/settings.css b/src/main/resources/static/css/settings.css
+index 16bb6f4..8c0f858 100644
+--- a/src/main/resources/static/css/settings.css
++++ b/src/main/resources/static/css/settings.css
+@@ -6,13 +6,27 @@
+     min-height: calc(100vh - 200px);
+ }
+ 
++.settings-container.issue-board-full-page .settings-sidebar {
++    display: none;
++}
++
++.settings-container.issue-board-full-page .settings-main {
++    width: 100%;
++    max-height: none;
++}
++
++.settings-container.issue-board-full-page .form-card {
++    padding: 28px;
++}
++
+ /* Left Panel - Settings Sidebar */
+ .settings-sidebar {
+     min-width: 260px;
+     max-width: 260px;
+-    background: var(--card-bg);
+-    border-radius: 8px;
+-    box-shadow: var(--shadow-md);
++    background: #ffffff;
++    border-radius: 12px;
++    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
++    border: 1px solid #e5e7eb;
+     overflow-y: auto;
+ }
+ 
+@@ -28,8 +42,8 @@
+     letter-spacing: 0.08em;
+     text-transform: uppercase;
+     color: var(--text-secondary);
+-    border-bottom: 1px solid var(--border-color);
+-    background: rgba(11, 107, 46, 0.06);
++    border-bottom: 1px solid #e5e7eb;
++    background: #f9fafb;
+ }
+ 
+ .config-item {
+@@ -44,15 +58,15 @@
+ }
+ 
+ .config-item:hover {
+-    background: var(--accent-green);
+-    border-left: 4px solid var(--primary-green);
++    background: #f0fdf4;
++    border-left: 4px solid #22c55e;
+     padding-left: 12px;
+ }
+ 
+ .config-item.active {
+-    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-light) 100%);
+-    color: white;
+-    border-left: 4px solid #10b981;
++    background: rgba(34, 197, 94, 0.16);
++    color: #14532d;
++    border-left: 4px solid #22c55e;
+ }
+ 
+ .config-item i {
+@@ -173,6 +187,276 @@
+     gap: 12px 16px;
+ }
+ 
++.issue-board-meta-grid {
++    display: grid;
++    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
++    gap: 12px 16px;
++    margin-bottom: 14px;
++}
++
++.issue-config-table-wrap {
++    overflow-x: auto;
++}
++
++.pc-config-card {
++    border: 1px solid #dbe5df;
++    border-radius: 10px;
++    background: #f7faf8;
++    padding: 10px;
++}
++
++.pc-score-input-table,
++.pc-status-editor-table {
++    width: 100%;
++    border-collapse: collapse;
++}
++
++.pc-score-input-table th,
++.pc-status-editor-table th {
++    background: linear-gradient(135deg, #0b6b2e 0%, #0f7f3a 100%);
++    color: #ffffff;
++    padding: 10px 8px;
++    text-align: center;
++    font-weight: 700;
++    font-size: 12px;
++    letter-spacing: 0.03em;
++    text-transform: uppercase;
++    border-bottom: 2px solid #0a5a27;
++}
++
++.pc-score-input-table td,
++.pc-status-editor-table td {
++    border-bottom: 1px solid #dbe5df;
++    padding: 8px;
++    vertical-align: top;
++}
++
++.pc-score-input-table td input[type="number"] {
++    min-width: 70px;
++    width: 100%;
++}
++
++.pc-hidden-status {
++    display: none;
++}
++
++.pc-status-grid {
++    display: grid;
++    grid-template-columns: repeat(8, minmax(74px, 1fr));
++    gap: 6px;
++}
++
++.pc-status-cell {
++    display: flex;
++    flex-direction: column;
++    gap: 4px;
++}
++
++.pc-status-day {
++    font-size: 11px;
++    font-weight: 700;
++    color: #4b5563;
++}
++
++.pc-status-select {
++    height: 30px;
++    border: 1px solid #cbd5e1;
++    border-radius: 6px;
++    font-size: 12px;
++    font-weight: 700;
++    padding: 3px 6px;
++    outline: none;
++}
++
++.pc-status-select.pc-status-good {
++    background: #dcfce7;
++    color: #166534;
++    border-color: #86efac;
++}
++
++.pc-status-select.pc-status-bad {
++    background: #fee2e2;
++    color: #991b1b;
++    border-color: #fca5a5;
++}
++
++.pc-status-select.pc-status-na {
++    background: #f3f4f6;
++    color: #374151;
++    border-color: #d1d5db;
++}
++
++@media (max-width: 1280px) {
++    .pc-status-grid {
++        grid-template-columns: repeat(6, minmax(72px, 1fr));
++    }
++}
++
++@media (max-width: 900px) {
++    .pc-status-grid {
++        grid-template-columns: repeat(4, minmax(68px, 1fr));
++    }
++}
++
++#issueBoardConfigTable {
++    width: 100%;
++    min-width: 1300px;
++    border-collapse: collapse;
++}
++
++#issueBoardConfigTable thead th {
++    background: linear-gradient(135deg, #0b6b2e 0%, #0f7f3a 100%);
++    color: #ffffff;
++    padding: 12px 10px;
++    text-align: left;
++    font-weight: 700;
++    font-size: 12px;
++    letter-spacing: 0.03em;
++    text-transform: uppercase;
++    border-bottom: 2px solid #0a5a27;
++}
++
++#issueBoardConfigTable tbody td {
++    padding: 8px;
++    border-bottom: 1px solid var(--border-color);
++}
++
++#issueBoardConfigTable tbody tr:hover {
++    background: var(--accent-green);
++}
++
++#issueBoardConfigTable input[type="text"],
++#issueBoardConfigTable input[type="date"],
++#issueBoardConfigTable input[type="number"],
++#issueBoardConfigTable select {
++    width: 100%;
++    min-width: 120px;
++    padding: 8px;
++    border: 1px solid var(--border-color);
++    border-radius: 4px;
++    font-size: 13px;
++}
++
++#gembaConfigTable {
++    width: 100%;
++    min-width: 1250px;
++    border-collapse: collapse;
++}
++
++#gembaConfigTable thead th {
++    background: linear-gradient(135deg, #0b6b2e 0%, #0f7f3a 100%);
++    color: #ffffff;
++    padding: 12px 10px;
++    text-align: left;
++    font-weight: 700;
++    font-size: 12px;
++    letter-spacing: 0.03em;
++    text-transform: uppercase;
++    border-bottom: 2px solid #0a5a27;
++}
++
++#gembaConfigTable tbody td {
++    padding: 8px;
++    border-bottom: 1px solid var(--border-color);
++}
++
++#gembaConfigTable tbody tr:hover {
++    background: var(--accent-green);
++}
++
++#gembaConfigTable input[type="text"],
++#gembaConfigTable select {
++    width: 100%;
++    min-width: 130px;
++    padding: 8px;
++    border: 1px solid var(--border-color);
++    border-radius: 4px;
++    font-size: 13px;
++}
++
++#leadershipGembaConfigTable {
++    width: 100%;
++    min-width: 2500px;
++    border-collapse: collapse;
++}
++
++#leadershipGembaConfigTable thead th {
++    background: linear-gradient(135deg, #0b6b2e 0%, #0f7f3a 100%);
++    color: #ffffff;
++    padding: 12px 10px;
++    text-align: left;
++    font-weight: 700;
++    font-size: 12px;
++    letter-spacing: 0.03em;
++    text-transform: uppercase;
++    border-bottom: 2px solid #0a5a27;
++    white-space: nowrap;
++}
++
++#leadershipGembaConfigTable tbody td {
++    padding: 8px;
++    border-bottom: 1px solid var(--border-color);
++}
++
++#leadershipGembaConfigTable tbody tr:hover {
++    background: #f0fdf4;
++}
++
++#leadershipGembaConfigTable input[type="text"],
++#leadershipGembaConfigTable input[type="number"] {
++    width: 100%;
++    min-width: 120px;
++    padding: 8px;
++    border: 1px solid var(--border-color);
++    border-radius: 4px;
++    font-size: 13px;
++}
++
++#leadershipGembaConfigTable input[type="checkbox"] {
++    width: 18px;
++    height: 18px;
++}
++
++#trainingScheduleConfigTable {
++    width: 100%;
++    min-width: 1500px;
++    border-collapse: collapse;
++}
++
++#trainingScheduleConfigTable thead th {
++    background: linear-gradient(135deg, #0b6b2e 0%, #0f7f3a 100%);
++    color: #ffffff;
++    padding: 12px 10px;
++    text-align: left;
++    font-weight: 700;
++    font-size: 12px;
++    letter-spacing: 0.03em;
++    text-transform: uppercase;
++    border-bottom: 2px solid #0a5a27;
++    white-space: nowrap;
++}
++
++#trainingScheduleConfigTable tbody td {
++    padding: 8px;
++    border-bottom: 1px solid var(--border-color);
++}
++
++#trainingScheduleConfigTable tbody tr:hover {
++    background: #f0fdf4;
++}
++
++#trainingScheduleConfigTable input[type="text"],
++#trainingScheduleConfigTable input[type="date"],
++#trainingScheduleConfigTable input[type="number"],
++#trainingScheduleConfigTable select {
++    width: 100%;
++    min-width: 120px;
++    padding: 8px;
++    border: 1px solid var(--border-color);
++    border-radius: 4px;
++    font-size: 13px;
++}
++
+ /* Right Panel - Main Settings */
+ .settings-main {
+     flex: 1;

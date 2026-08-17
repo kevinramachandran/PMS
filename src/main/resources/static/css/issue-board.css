@@ -49,6 +49,26 @@
     font-weight: 700;
 }
 
+.issue-drawer-target-group {
+    grid-column: span 2;
+}
+
+.issue-drawer-target-stack {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.drawer-target-date-input:disabled {
+    background: #f3f4f6;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.drawer-target-date-input.issue-date-struck {
+    text-decoration: line-through;
+}
+
 .issue-search {
     width: min(360px, 44vw);
     height: 36px;
@@ -558,6 +578,27 @@
     min-width: 148px;
 }
 
+.issue-drawer-history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+}
+
+.issue-drawer-history-header {
+    padding: 14px 22px;
+    border-bottom: 1px solid #eef2f7;
+    background: #f9fafb;
+}
+
+.issue-drawer-history-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+}
+
 .issue-history-list {
     flex: 1;
     overflow-y: auto;
@@ -599,6 +640,17 @@
 
 .issue-history-change b {
     font-weight: 700;
+}
+
+.issue-history-description {
+    margin: 8px 0 0 0;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.issue-history-description p {
+    margin: 0;
 }
 
 .issue-history-empty {
@@ -718,6 +770,14 @@ body.issue-board-page .issue-drawer-backdrop {
     }
 
     .issue-drawer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .issue-drawer-target-group {
+        grid-column: span 1;
+    }
+
+    .issue-drawer-target-stack {
         grid-template-columns: 1fr;
     }
 }

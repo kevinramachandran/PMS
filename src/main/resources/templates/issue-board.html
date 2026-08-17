@@ -154,9 +154,13 @@
         <input type="hidden" id="drawerIssueId">
         <div class="issue-drawer-summary" id="drawerIssueSummary"></div>
         <div class="issue-drawer-grid">
-            <div class="form-group">
+            <div class="form-group issue-drawer-target-group">
                 <label for="drawerIssueTargetDate">Target Date <span>*</span></label>
-                <input type="date" id="drawerIssueTargetDate" required>
+                <div class="issue-drawer-target-stack">
+                    <input type="date" id="drawerIssueTargetDate" class="drawer-target-date-input" required aria-label="Original target date">
+                    <input type="date" id="drawerIssueTargetExt1" class="drawer-target-date-input" aria-label="Target date extension 1">
+                    <input type="date" id="drawerIssueTargetExt2" class="drawer-target-date-input" aria-label="Target date extension 2">
+                </div>
             </div>
             <div class="form-group">
                 <label for="drawerIssueStatus">Status <span>*</span></label>

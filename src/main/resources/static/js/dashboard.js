@@ -93,13 +93,13 @@ $(document).ready(function() {
         initializeKpiMonthFilter();
     });
     setInterval(function() {
-        loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+        loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
     }, 300000);
 
     window.addEventListener('storage', function(event) {
         if (event.key === 'kpi-dashboard-update') {
             loadCustomMetricDefinitions().always(function() {
-                loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+                loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
             });
         }
     });
@@ -1142,6 +1142,7 @@ window.openHsOverview = function () {
 
 let selectedKpiMonth = new Date().getMonth() + 1;
 let selectedKpiYear = new Date().getFullYear();
+let selectedKpiDate = toLocalDateKey(new Date());
 let kpiDashboardMetaLoaded = false;
 
 function setElementText(id, value) {
@@ -1563,9 +1564,10 @@ function loadCustomMetricDefinitions() {
     return customMetricDefinitionsRequest;
 }
 
-function loadProductionCharts(month, year) {
+function loadProductionCharts(month, year, dateValue) {
     const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
     const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
+    const resolvedDate = dateValue || toLocalDateKey(new Date(safeYear, safeMonth - 1, 1));
 
     loadKpiDashboardMeta();
     updateSyncStatus('Syncing...');
@@ -1577,8 +1579,7 @@ function loadProductionCharts(month, year) {
         type: 'GET',
         success: function(metrics) {
             const safeMetrics = Array.isArray(metrics) ? metrics : [];
-            
-            // Filter metrics for charts to only include the requested month's days
+
             const chartMetrics = safeMetrics.filter(function(m) {
                 if (!m.date) return false;
                 const dt = new Date(m.date);
@@ -1586,12 +1587,12 @@ function loadProductionCharts(month, year) {
             });
 
             renderAllCharts(chartMetrics);
-            renderDailyPerformanceTable(safeMetrics, safeMonth, safeYear);
+            renderDailyPerformanceTable(safeMetrics, safeMonth, safeYear, resolvedDate);
             updateSyncStatus('Last synced: ' + formatTime(new Date()));
         },
         error: function() {
             renderNoDataForAllCharts('API unavailable');
-            renderDailyPerformanceTable([], safeMonth, safeYear);
+            renderDailyPerformanceTable([], safeMonth, safeYear, resolvedDate);
             showToast('Unable to load KPI dashboard data', 'kpi-load-error');
             updateSyncStatus('Sync failed');
         }
@@ -1606,28 +1607,44 @@ function formatTime(date) {
     ].join(':');
 }
 
+function updateKpiHeaderDateDisplay(dateValue) {
+    if (typeof window.setPmsHeaderDate === 'function') {
+        window.setPmsHeaderDate(dateValue);
+    } else {
+        window.__pmsHeaderDateOverride = dateValue || '';
+    }
+}
+
 function initializeKpiMonthFilter() {
     const $filter = $('#kpiMonthFilter');
     if (!$filter.length) {
-        loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+        updateKpiHeaderDateDisplay(selectedKpiDate);
+        loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
         return;
     }
 
-    const currentValue = selectedKpiYear + '-' + String(selectedKpiMonth).padStart(2, '0');
-    $filter.val(currentValue);
+    $filter.val(selectedKpiDate);
+    updateKpiHeaderDateDisplay(selectedKpiDate);
 
     $filter.on('change', function() {
-        const parts = ($(this).val() || '').split('-');
-        if (parts.length !== 2) {
+        const selectedDateValue = $(this).val();
+        if (!selectedDateValue) {
             return;
         }
 
-        selectedKpiYear = Number(parts[0]);
-        selectedKpiMonth = Number(parts[1]);
-        loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+        const selectedDate = new Date(selectedDateValue + 'T00:00:00');
+        if (Number.isNaN(selectedDate.getTime())) {
+            return;
+        }
+
+        selectedKpiDate = selectedDateValue;
+        selectedKpiYear = selectedDate.getFullYear();
+        selectedKpiMonth = selectedDate.getMonth() + 1;
+        updateKpiHeaderDateDisplay(selectedKpiDate);
+        loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
     });
 
-    loadProductionCharts(selectedKpiMonth, selectedKpiYear);
+    loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
 }
 
 function buildKpiMonthOptions(monthCount) {
@@ -2146,7 +2163,7 @@ function buildKpiTargetDataset(label, data, baseColor, compareWithFtdData, canva
     };
 }
 
-function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear) {
+function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear, selectedDateValue) {
     const tbody = document.querySelector('.main-kpi-table tbody');
     if (!tbody) return;
 
@@ -2160,18 +2177,14 @@ function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear) {
         return;
     }
 
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    
-    let today;
-    if (selectedYear === currentYear && selectedMonth === currentMonth) {
-        today = now;
-    } else {
-        // If viewing a different month, use the last day of that month as "today"
-        today = new Date(selectedYear, selectedMonth, 0);
+    let today = new Date(selectedYear, selectedMonth, 0);
+    if (selectedDateValue) {
+        const parsedSelectedDate = new Date(selectedDateValue + 'T00:00:00');
+        if (!Number.isNaN(parsedSelectedDate.getTime()) && parsedSelectedDate.getFullYear() === selectedYear && (parsedSelectedDate.getMonth() + 1) === selectedMonth) {
+            today = parsedSelectedDate;
+        }
     }
-    
+
     const currentDateKey = toLocalDateKey(today);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);

@@ -16,4 +16,6 @@ public class CustomMetricDefinitionPayload {
     private String unit;
     private Integer decimals;
     private Integer displayOrder;
+    private Boolean graphVisible;
+    private Boolean tableVisible;
 }

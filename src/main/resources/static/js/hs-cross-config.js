@@ -54,6 +54,27 @@
         return { year, month, day };
     }
 
+    function formatRecordDate(year, month, day) {
+        return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    }
+
+    function csvCell(value) {
+        const text = value == null ? '' : String(value);
+        return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    }
+
+    function downloadCsv(csv, filename) {
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
     function getMessageElement() {
         return document.getElementById('hsCrossMessage');
     }
@@ -92,9 +113,11 @@
 
     function setLoading(isLoading) {
         const saveBtn = document.getElementById('saveHsCrossBtn');
+        const downloadBtn = document.getElementById('downloadHsCrossCsvBtn');
         const dateInput = document.getElementById('hsCrossDateInput');
 
         if (saveBtn) saveBtn.disabled = isLoading;
+        if (downloadBtn) downloadBtn.disabled = isLoading;
         if (dateInput) dateInput.disabled = isLoading;
 
         if (isLoading) {
@@ -261,6 +284,29 @@
         });
     }
 
+    function downloadHsCrossCsv() {
+        const rows = [
+            ['date', 'year', 'month', 'day', 'accidentStatus', 'nearMissStatus', 'safetyConcernStatus']
+        ];
+
+        for (let day = 1; day <= maxDays; day++) {
+            const entry = hsState[day] || {};
+            rows.push([
+                formatRecordDate(currentYear, currentMonth, day),
+                currentYear,
+                currentMonth,
+                day,
+                entry.accidentStatus || '',
+                entry.nearMissStatus || '',
+                entry.safetyConcernStatus || ''
+            ]);
+        }
+
+        const csv = rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+        downloadCsv(csv, 'hs-cross-daily-' + currentYear + '-' + String(currentMonth).padStart(2, '0') + '.csv');
+        showMessage('H&S Cross CSV downloaded.', 'success');
+    }
+
     function init() {
         const dateInput = document.getElementById('hsCrossDateInput');
         if (dateInput) {
@@ -272,6 +318,9 @@
 
         const saveBtn = document.getElementById('saveHsCrossBtn');
         if (saveBtn) saveBtn.addEventListener('click', saveHsCrossData);
+
+        const downloadBtn = document.getElementById('downloadHsCrossCsvBtn');
+        if (downloadBtn) downloadBtn.addEventListener('click', downloadHsCrossCsv);
 
         window.addEventListener('hs-cross-open', function () {
             setTimeout(loadHsCrossData, 50);

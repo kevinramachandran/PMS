@@ -4,8 +4,14 @@
         return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     }
 
-    function formatTodayDate() {
-        const now = new Date();
+    function formatTodayDate(dateValue) {
+        let now = new Date();
+        if (dateValue) {
+            const parsed = new Date(String(dateValue).substring(0, 10) + 'T00:00:00');
+            if (!Number.isNaN(parsed.getTime())) {
+                now = parsed;
+            }
+        }
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
                            'July', 'August', 'September', 'October', 'November', 'December'];
@@ -15,6 +21,13 @@
         const year = now.getFullYear();
         return day + ', ' + month + ' ' + date + ', ' + year;
     }
+
+    window.setPmsHeaderDate = function (dateValue) {
+        window.__pmsHeaderDateOverride = dateValue || '';
+        document.querySelectorAll('.pms-today-date').forEach(function (dateDisplay) {
+            dateDisplay.textContent = formatTodayDate(window.__pmsHeaderDateOverride);
+        });
+    };
 
     function createToastIfNeeded() {
         let toast = document.getElementById('pmsGlobalToast');
@@ -250,7 +263,7 @@
             // Add today's date display
             const dateDisplay = document.createElement('div');
             dateDisplay.className = 'pms-today-date';
-            dateDisplay.textContent = formatTodayDate();
+            dateDisplay.textContent = formatTodayDate(window.__pmsHeaderDateOverride);
             headerRight.appendChild(dateDisplay);
             
             headerRight.appendChild(profile);

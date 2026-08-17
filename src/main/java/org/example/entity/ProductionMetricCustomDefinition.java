@@ -48,6 +48,12 @@ public class ProductionMetricCustomDefinition {
     @Column(name = "active_flag", nullable = false)
     private Boolean active;
 
+    @Column(name = "graph_visible", nullable = false)
+    private Boolean graphVisible;
+
+    @Column(name = "table_visible", nullable = false)
+    private Boolean tableVisible;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -61,6 +67,12 @@ public class ProductionMetricCustomDefinition {
         updatedAt = now;
         if (active == null) {
             active = Boolean.TRUE;
+        }
+        if (graphVisible == null) {
+            graphVisible = Boolean.TRUE;
+        }
+        if (tableVisible == null) {
+            tableVisible = Boolean.TRUE;
         }
         if (decimals == null) {
             decimals = 2;

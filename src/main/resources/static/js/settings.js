@@ -152,7 +152,6 @@ $(document).ready(function() {
         '.kpi-rename-cancel-edit-btn',
         '.kpi-rename-delete-btn',
         '.kpi-rename-remove-draft-btn',
-        '.metrics-add-custom-btn',
         '.metrics-custom-save-btn',
         '.metrics-custom-cancel-btn'
     ].join(', ');
@@ -773,20 +772,70 @@ $(document).ready(function() {
         window.location.href = '/api/production-metrics/template/csv';
     });
 
-    $('#exportMetricsCsvBtn').on('click', function() {
-        const selectedDate = $('#metricsDateInput').val();
-        const exportDate = selectedDate || getYesterdayDateString();
-        const parsed = new Date(exportDate + 'T00:00:00');
-        if (Number.isNaN(parsed.getTime())) {
-            window.location.href = '/api/production-metrics/export/csv';
+    function populateMetricsExportSelectors() {
+        const $month = $('#metricsExportMonth');
+        const $year = $('#metricsExportYear');
+        if (!$month.length || !$year.length || $month.children().length) {
             return;
         }
 
-        const params = new URLSearchParams({
-            month: String(parsed.getMonth() + 1),
-            year: String(parsed.getFullYear())
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        monthNames.forEach(function(label, index) {
+            $month.append('<option value="' + (index + 1) + '">' + label + '</option>');
         });
-        window.location.href = '/api/production-metrics/export/csv?' + params.toString();
+
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear + 1; year >= currentYear - 10; year--) {
+            $year.append('<option value="' + year + '">' + year + '</option>');
+        }
+    }
+
+    function openMetricsExportModal() {
+        populateMetricsExportSelectors();
+        const selectedDate = $('#metricsDateInput').val();
+        const initialDate = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date();
+        const safeDate = Number.isNaN(initialDate.getTime()) ? new Date() : initialDate;
+        $('#metricsExportMonth').val(String(safeDate.getMonth() + 1));
+        $('#metricsExportYear').val(String(safeDate.getFullYear()));
+        $('#metricsExportModal').addClass('show').attr('aria-hidden', 'false');
+        $('#metricsExportMonth').trigger('focus');
+    }
+
+    function closeMetricsExportModal() {
+        $('#metricsExportModal').removeClass('show').attr('aria-hidden', 'true');
+    }
+
+    $('#exportMetricsCsvBtn').on('click', function() {
+        openMetricsExportModal();
+    });
+
+    $('#closeMetricsExportModal, #cancelMetricsExportBtn').on('click', function() {
+        closeMetricsExportModal();
+    });
+
+    $('#metricsExportModal').on('click', function(e) {
+        if (e.target === this) {
+            closeMetricsExportModal();
+        }
+    });
+
+    $(document).on('keydown.metricsExport', function(event) {
+        if (event.key === 'Escape' && $('#metricsExportModal').hasClass('show')) {
+            closeMetricsExportModal();
+        }
+    });
+
+    $('#downloadMetricsExportBtn').on('click', function() {
+        const month = Number($('#metricsExportMonth').val());
+        const year = Number($('#metricsExportYear').val());
+        if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year)) {
+            showMessage('metricsDataMessage', 'Please select a valid month and year.', 'error');
+            showMetricsToast('Please select a valid month and year.', 'error');
+            return;
+        }
+
+        window.location.href = '/api/production-metrics/export/csv?month=' + month + '&year=' + year;
+        closeMetricsExportModal();
     });
 
     $('#uploadMetricsCsvBtn').on('click', function() {
@@ -1168,7 +1217,9 @@ $(document).ready(function() {
                 };
             }
 
-            targetSection[field] = isCustomMetric ? textValue : parsed;
+            // Check if this is a custom metric by checking if field ID starts with 'customMetric'
+            const isCustomMetricField = field.startsWith('customMetric');
+            targetSection[field] = isCustomMetricField ? textValue : parsed;
         }
 
         return {
@@ -1598,15 +1649,6 @@ $(document).ready(function() {
             return;
         }
 
-        if ($group.children('.metrics-custom-toolbar').length === 0) {
-            const toolbarHtml = '' +
-                '<div class="metrics-custom-toolbar" data-section="' + section + '">' +
-                    '<div class="metrics-custom-toolbar-copy">Add custom KPI rows for ' + escapeHtml(getMetricSectionTitle(section)) + ' and capture them with the same FTD, MTD, and YTD pattern.</div>' +
-                    '<button type="button" class="btn btn-secondary metrics-add-custom-btn" data-section="' + section + '"><i class="fas fa-plus"></i> Add Custom Metric</button>' +
-                '</div>';
-            $group.children('h3').first().after(toolbarHtml);
-        }
-
         if ($group.children('.metrics-custom-manager').length === 0) {
             const managerHtml = '' +
                 '<div class="metrics-custom-manager" data-section="' + section + '">' +
@@ -1770,14 +1812,6 @@ function regroupRows($container){
     }
 
     function bindCustomMetricDefinitionEvents() {
-        $('.metrics-add-custom-btn').off('click').on('click', function() {
-            const section = $(this).data('section');
-            $('.metrics-custom-manager').removeClass('show');
-            const $manager = $('.metrics-custom-manager[data-section="' + section + '"]');
-            $manager.addClass('show');
-            $manager.find('.metrics-custom-label').trigger('focus');
-        });
-
         $('.metrics-custom-cancel-btn').off('click').on('click', function() {
             resetCustomMetricManager($(this).data('section'));
         });
@@ -1884,22 +1918,28 @@ function regroupRows($container){
         return 'kpiChartVisibility_' + chartId;
     }
 
+    function getKpiTableVisibilityKey(rowKey) {
+        return 'kpiTableVisibility_' + rowKey;
+    }
+
     function isKpiChartVisible(chartId) {
         return !chartId || localStorage.getItem(getKpiChartVisibilityKey(chartId)) !== 'hidden';
     }
 
-    function buildKpiRenameStatusHtml(chartId, isDraft) {
-        const visible = isDraft || isKpiChartVisible(chartId);
-        return '<span class="kpi-rename-status' + (visible ? '' : ' kpi-rename-status-hidden') + '">' + (visible ? 'Visible' : 'Hidden') + '</span>';
+    function isKpiTableVisible(rowKey) {
+        return !rowKey || localStorage.getItem(getKpiTableVisibilityKey(rowKey)) !== 'hidden';
     }
 
-    function buildKpiRenameVisibilityAction(chartId) {
-        if (!chartId) {
-            return '<span class="kpi-rename-muted">No graph</span>';
+    function normalizeVisibilityFlag(value) {
+        return value === undefined || value === null || value === true || String(value).toLowerCase() === 'true';
+    }
+
+    function buildKpiRenameVisibilityControl(type, visible, rowKey, metricId, disabledText) {
+        if (disabledText) {
+            return '<span class="kpi-rename-muted">' + escapeHtml(disabledText) + '</span>';
         }
 
-        const visible = isKpiChartVisible(chartId);
-        return '<button type="button" class="kpi-rename-visibility-btn' + (visible ? '' : ' is-hidden') + '" data-chart-id="' + escapeAttributeValue(chartId) + '" title="' + (visible ? 'Hide graph' : 'Show graph') + '">' +
+        return '<button type="button" class="kpi-rename-visibility-btn' + (visible ? '' : ' is-hidden') + '" data-visibility-type="' + escapeAttributeValue(type) + '" data-row-key="' + escapeAttributeValue(rowKey || '') + '" data-id="' + escapeAttributeValue(metricId || '') + '" data-visible="' + (visible ? 'true' : 'false') + '" title="' + (visible ? 'Hide ' + type : 'Show ' + type) + '">' +
             '<i class="fas ' + (visible ? 'fa-eye-slash' : 'fa-eye') + '"></i>' +
             '<span>' + (visible ? 'Hide' : 'Show') + '</span>' +
             '</button>';
@@ -1928,13 +1968,16 @@ function regroupRows($container){
 
     function buildKpiRenameDefaultRow(metric, section) {
         const rowKey = 'default_' + section + '_' + (metric.chartId || metric.label).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const graphVisible = metric.chartId ? isKpiChartVisible(metric.chartId) : false;
+        const tableVisible = isKpiTableVisible(rowKey);
         return '' +
             '<tr class="kpi-rename-row kpi-rename-row-default" data-row-key="' + escapeAttributeValue(rowKey) + '">' +
                 '<td><input type="text" value="' + escapeAttributeValue(metric.label) + '" readonly></td>' +
                 '<td><input type="text" value="' + escapeAttributeValue(metric.unit || '-') + '" readonly></td>' +
                 '<td>' + (metric.chartId ? buildKpiCrossColorInlineHtml(metric.chartId, rowKey) : '<span class="kpi-rename-muted">No chart</span>') + '</td>' +
-                '<td>' + buildKpiRenameStatusHtml(metric.chartId, false) + '</td>' +
-                '<td><div class="kpi-rename-actions">' + buildKpiRenameVisibilityAction(metric.chartId) + '</div></td>' +
+                '<td>' + buildKpiRenameVisibilityControl('graph', graphVisible, rowKey, '', metric.chartId ? '' : 'No graph') + '</td>' +
+                '<td>' + buildKpiRenameVisibilityControl('table', tableVisible, rowKey, '', '') + '</td>' +
+                '<td><span class="kpi-rename-muted">System KPI</span></td>' +
             '</tr>';
     }
 
@@ -1946,13 +1989,16 @@ function regroupRows($container){
             : ' data-id="' + escapeAttributeValue(metric.id) + '"';
         const chartId = isDraft ? '' : 'customMetricChart' + metric.id;
         const rowKey = isDraft ? metric.draftId : 'custom_' + metric.id;
+        const graphVisible = normalizeVisibilityFlag(metric.graphVisible);
+        const tableVisible = normalizeVisibilityFlag(metric.tableVisible);
 
         return '' +
             '<tr class="kpi-rename-row kpi-rename-row-custom' + (isDraft ? ' kpi-rename-row-draft' : '') + '"' + rowIdAttr + ' data-row-key="' + escapeAttributeValue(rowKey) + '">' +
-                '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label || '') + '"' + (isDraft ? '' : ' readonly') + '></td>' +
-                '<td><input type="text" class="kpi-rename-unit" maxlength="64" value="' + escapeAttributeValue(metric.unit || '-') + '"' + (isDraft ? '' : ' readonly') + '></td>' +
+                '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label || '') + '"></td>' +
+                '<td><input type="text" class="kpi-rename-unit" maxlength="64" value="' + escapeAttributeValue(metric.unit || '-') + '"></td>' +
                 '<td><input type="hidden" class="kpi-rename-decimals" value="' + escapeAttributeValue(decimals) + '">' + (chartId ? buildKpiCrossColorInlineHtml(chartId, rowKey) : '<span class="kpi-rename-muted">Available after save</span>') + '</td>' +
-                '<td>' + (isDraft ? '<span class="kpi-rename-status">Pending</span>' : buildKpiRenameStatusHtml(chartId, false)) + '</td>' +
+                '<td><input type="hidden" class="kpi-rename-graph-visible" value="' + (graphVisible ? 'true' : 'false') + '">' + buildKpiRenameVisibilityControl('graph', graphVisible, rowKey, metric.id || '', '') + '</td>' +
+                '<td><input type="hidden" class="kpi-rename-table-visible" value="' + (tableVisible ? 'true' : 'false') + '">' + buildKpiRenameVisibilityControl('table', tableVisible, rowKey, metric.id || '', '') + '</td>' +
                 '<td>' + buildKpiRenameCustomActions(metric) + '</td>' +
             '</tr>';
     }
@@ -1967,9 +2013,6 @@ function regroupRows($container){
 
         return '' +
             '<div class="kpi-rename-actions">' +
-                buildKpiRenameVisibilityAction('customMetricChart' + metric.id) +
-                '<button type="button" class="kpi-rename-edit-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Edit KPI"><i class="fas fa-pen-to-square"></i></button>' +
-                '<button type="button" class="kpi-rename-cancel-edit-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Cancel edit" hidden><i class="fas fa-xmark"></i></button>' +
                 '<button type="button" class="kpi-rename-delete-btn" data-id="' + escapeAttributeValue(metric.id) + '" title="Delete KPI"><i class="fas fa-trash-alt"></i></button>' +
             '</div>';
     }
@@ -2001,7 +2044,8 @@ function regroupRows($container){
                             '<th>KPI Label</th>' +
                             '<th>Unit</th>' +
                             '<th>Alert Color</th>' +
-                            '<th>Status</th>' +
+                            '<th>Graph</th>' +
+                            '<th>Table</th>' +
                             '<th>Action</th>' +
                         '</tr>' +
                     '</thead>' +
@@ -2102,6 +2146,8 @@ function regroupRows($container){
             const unit = ($row.find('.kpi-rename-unit').val() || '').trim();
             const decimals = Number($row.find('.kpi-rename-decimals').val() || '2');
             const id = $row.data('id');
+            const graphVisible = normalizeVisibilityFlag($row.find('.kpi-rename-graph-visible').val());
+            const tableVisible = normalizeVisibilityFlag($row.find('.kpi-rename-table-visible').val());
 
             if (!label) {
                 hasValidationError = true;
@@ -2122,7 +2168,9 @@ function regroupRows($container){
                         section: metric.section,
                         label: label,
                         unit: unit,
-                        decimals: decimals
+                        decimals: decimals,
+                        graphVisible: graphVisible,
+                        tableVisible: tableVisible
                     })
                 }));
                 return;
@@ -2136,7 +2184,9 @@ function regroupRows($container){
                     section: section.toUpperCase(),
                     label: label,
                     unit: unit,
-                    decimals: decimals
+                    decimals: decimals,
+                    graphVisible: graphVisible,
+                    tableVisible: tableVisible
                 })
             }));
         });
@@ -2198,7 +2248,9 @@ function regroupRows($container){
             section: section.toUpperCase(),
             label: label,
             unit: unit || '-',
-            decimals: decimals
+            decimals: decimals,
+            graphVisible: true,
+            tableVisible: true
         });
         resetKpiRenameAddForm();
         setKpiRenameAddFormVisible(false);
@@ -2212,16 +2264,44 @@ function regroupRows($container){
     });
 
     $('#kpiRenameMetricList').on('click', '.kpi-rename-visibility-btn', function() {
-        const chartId = $(this).data('chart-id');
-        if (!chartId) {
+        const $btn = $(this);
+        const type = String($btn.data('visibility-type') || '');
+        const $row = $btn.closest('.kpi-rename-row');
+        const rowKey = String($btn.data('row-key') || $row.data('row-key') || '');
+        const wasVisible = String($btn.attr('data-visible')) !== 'false';
+        const nowVisible = !wasVisible;
+
+        if (!type || !rowKey) {
             return;
         }
 
-        const nextHidden = isKpiChartVisible(chartId);
-        localStorage.setItem(getKpiChartVisibilityKey(chartId), nextHidden ? 'hidden' : 'visible');
-        localStorage.setItem('kpi-dashboard-update', Date.now());
+        if ($row.hasClass('kpi-rename-row-custom')) {
+            $row.find(type === 'graph' ? '.kpi-rename-graph-visible' : '.kpi-rename-table-visible').val(nowVisible ? 'true' : 'false');
+            $btn.attr('data-visible', nowVisible ? 'true' : 'false')
+                .toggleClass('is-hidden', !nowVisible)
+                .attr('title', (nowVisible ? 'Hide ' : 'Show ') + type)
+                .html('<i class="fas ' + (nowVisible ? 'fa-eye-slash' : 'fa-eye') + '"></i><span>' + (nowVisible ? 'Hide' : 'Show') + '</span>');
+            $('#kpiRenameMessage')
+                .removeClass('error success')
+                .text('Changes pending. Click Save to apply.')
+                .show();
+            return;
+        }
+
+        if (type === 'graph') {
+            const metric = (kpiRenameDefaultMetrics[getActiveKpiRenameSection()] || []).find(function(item) {
+                const defaultRowKey = 'default_' + getActiveKpiRenameSection() + '_' + (item.chartId || item.label).replace(/[^a-zA-Z0-9_-]/g, '_');
+                return defaultRowKey === rowKey;
+            });
+            if (metric && metric.chartId) {
+                localStorage.setItem(getKpiChartVisibilityKey(metric.chartId), nowVisible ? 'visible' : 'hidden');
+            }
+        } else {
+            localStorage.setItem(getKpiTableVisibilityKey(rowKey), nowVisible ? 'visible' : 'hidden');
+        }
+        updateKPIDashboard();
         renderKpiRenameDashboard();
-        showMessage('kpiRenameMessage', nextHidden ? 'Dashboard graph visibility updated: hidden.' : 'Dashboard graph visibility updated: shown.', 'success');
+        showMessage('kpiRenameMessage', 'Dashboard ' + type + ' visibility updated.', 'success');
     });
 
     $('#kpiRenameMetricList').on('click', '.kpi-rename-edit-btn', function() {
@@ -2504,7 +2584,7 @@ function regroupRows($container){
         });
 
         if (term && tbody.find('tr').not('.placeholder-row, .loading-row').length > 0 && visibleRows === 0) {
-            tbody.append('<tr class="issue-config-search-empty"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No matching issue rows found.</td></tr>');
+            tbody.append('<tr class="issue-config-search-empty"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No matching issue rows found.</td></tr>');
         }
     }
 
@@ -2798,7 +2878,7 @@ function regroupRows($container){
             return;
         }
 
-        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="12" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading issue board data...</td></tr>');
+        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="13" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading issue board data...</td></tr>');
         setIssueBoardSaveState();
 
         $.ajax({
@@ -2816,7 +2896,7 @@ function regroupRows($container){
     }
 
     function loadLatestIssueBoardConfig() {
-        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="12" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading latest issue board data...</td></tr>');
+        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="13" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading latest issue board data...</td></tr>');
         setIssueBoardSaveState();
 
         $.ajax({
@@ -2847,7 +2927,7 @@ function regroupRows($container){
         if (!items || items.length === 0) {
             $('#issueBoardLastReviewDate').val('');
             $('#issueBoardNextReviewDate').val('');
-            tbody.html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
+            tbody.html('<tr class="placeholder-row"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
             applyIssueBoardConfigSearch();
             setIssueBoardSaveState();
             return;
@@ -2892,15 +2972,17 @@ function regroupRows($container){
             textCell('ib-actions', safeItem.actions, 'Action plan') +
             textCell('ib-responsible', safeItem.responsible, 'Responsible') +
             '<td class="ib-target-date-cell">' +
-            '<span class="ib-cell-text ib-target-date-display">' + escapeHtml(effectiveTargetDate || '-') + '</span>' +
-            '<input type="hidden" class="ib-target-date ib-target-date-base" value="' + escapeAttributeValue(targetDate) + '">' +
-            '<input type="hidden" class="ib-target-date-extension ib-target-date-extension-1" value="' + escapeAttributeValue(targetDateExtension1) + '">' +
-            '<input type="hidden" class="ib-target-date-extension ib-target-date-extension-2" value="' + escapeAttributeValue(targetDateExtension2) + '">' +
+            '<div class="ib-target-date-stack">' +
+            '<input type="date" class="ib-target-date ib-target-date-base" value="' + escapeAttributeValue(targetDate) + '" aria-label="Original target date">' +
+            '<input type="date" class="ib-target-date-extension ib-target-date-extension-1" value="' + escapeAttributeValue(targetDateExtension1) + '" aria-label="Target date extension 1">' +
+            '<input type="date" class="ib-target-date-extension ib-target-date-extension-2" value="' + escapeAttributeValue(targetDateExtension2) + '" aria-label="Target date extension 2">' +
+            '</div>' +
             '</td>' +
             '<td><span class="ib-cell-text ib-due-days-display">' + escapeHtml(dueDays === '' ? '-' : dueDays) + '</span><input type="hidden" class="ib-due-days" value="' + escapeAttributeValue(dueDays) + '"></td>' +
             '<td class="ib-status-cell"><div class="ib-status-wrap"><div class="ib-progress-row"><div class="ib-pdca-circle" aria-hidden="true" style="--pdca-progress:0" data-stage="-"><span class="ib-pdca-quarter ib-pdca-p">P</span><span class="ib-pdca-quarter ib-pdca-d">D</span><span class="ib-pdca-quarter ib-pdca-c">C</span><span class="ib-pdca-quarter ib-pdca-a">A</span></div></div>' +
             '<select class="ib-status" aria-label="Issue progress status" hidden><option value="0%" ' + (status === '0%' ? 'selected' : '') + '>-</option><option value="25%" ' + (status === '25%' ? 'selected' : '') + '>P</option><option value="50%" ' + (status === '50%' ? 'selected' : '') + '>D</option><option value="75%" ' + (status === '75%' ? 'selected' : '') + '>C</option><option value="100%" ' + (status === '100%' ? 'selected' : '') + '>A</option></select></div></td>' +
             '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(completedDate || '-') + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
+            '<td class="ib-history-cell"><button type="button" class="issue-config-history" ' + (safeItem.id ? '' : 'disabled ') + 'title="' + (safeItem.id ? 'View history' : 'History available after save') + '" aria-label="View issue history"><i class="fas fa-clock-rotate-left"></i></button></td>' +
             '<td class="ib-action-cell"><div class="ib-action-stack"><button type="button" class="issue-edit" title="Edit issue" aria-label="Edit issue"><i class="fas fa-pen-to-square"></i></button><button type="button" class="issue-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></div></td>' +
             '</tr>';
     }
@@ -2923,6 +3005,7 @@ function regroupRows($container){
 
     function readIssueConfigRow($row) {
         return {
+            id: $row.attr('data-id') || '',
             problem: $row.find('.ib-problem').val() || '',
             priority: $row.find('.ib-priority').val() || '',
             ownerName: $row.find('.ib-owner').val() || '',
@@ -2995,6 +3078,101 @@ function regroupRows($container){
         $('#issueConfigDrawerStatus').val(normalizeIssueStatus(safe.status || '0%'));
         $('#issueConfigDrawerCompletedDate').val(safe.completedDate || '');
         updateIssueConfigDrawerDueDays();
+        
+        // Load history if editing an existing issue
+        if (safe.id && rowIndex !== null && rowIndex !== undefined) {
+            loadIssueConfigHistory(safe.id);
+        } else {
+            $('#issueConfigDrawerHistorySection').hide();
+        }
+    }
+
+    function formatIssueConfigHistoryDate(value) {
+        if (!value) {
+            return '-';
+        }
+        const normalized = String(value).replace(' ', 'T');
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return date.toLocaleString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function formatIssueConfigHistoryValueForDisplay(value) {
+        if (!value || value === '') {
+            return '-';
+        }
+        // Check if it looks like a date (YYYY-MM-DD format)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            const date = new Date(value + 'T00:00:00');
+            if (!Number.isNaN(date.getTime())) {
+                return date.toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+        }
+        return value;
+    }
+
+    function buildIssueConfigHistoryDescription(entry) {
+        const editor = entry.editedBy || 'User';
+        const field = entry.fieldName || 'Field';
+        const oldVal = formatIssueConfigHistoryValueForDisplay(entry.oldValue);
+        const newVal = formatIssueConfigHistoryValueForDisplay(entry.newValue);
+        return editor + ' changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
+    }
+
+    function renderIssueConfigHistory(entries) {
+        const list = $('#issueConfigHistoryList');
+        list.empty();
+        if (!entries || entries.length === 0) {
+            list.html('<div class="issue-history-empty">No history yet.</div>');
+            return;
+        }
+        entries.forEach(function(entry) {
+            const description = buildIssueConfigHistoryDescription(entry);
+            list.append(
+                '<div class="issue-history-item">' +
+                '<div class="issue-history-meta">' +
+                '<strong>' + escapeHtml(entry.editedBy || '-') + '</strong>' +
+                '<span>' + escapeHtml(formatIssueConfigHistoryDate(entry.editedAt)) + '</span>' +
+                '</div>' +
+                '<div class="issue-history-description">' +
+                '<p>' + escapeHtml(description) + '</p>' +
+                '</div>' +
+                '</div>'
+            );
+        });
+    }
+
+    function loadIssueConfigHistory(issueId) {
+        if (!issueId) {
+            $('#issueConfigDrawerHistorySection').hide();
+            return;
+        }
+
+        $('#issueConfigHistoryList').html('<div class="issue-history-empty">Loading history...</div>');
+        $('#issueConfigDrawerHistorySection').show();
+        
+        $.ajax({
+            url: '/api/issue-board/' + issueId + '/history',
+            type: 'GET',
+            success: function(data) {
+                renderIssueConfigHistory(Array.isArray(data) ? data : []);
+            },
+            error: function() {
+                $('#issueConfigHistoryList').html('<div class="issue-history-empty">Failed to load history.</div>');
+            }
+        });
     }
 
     function setIssueConfigDrawerOpen(open) {
@@ -3016,6 +3194,17 @@ function regroupRows($container){
 
     $('#issueBoardConfigTableBody').on('click', '.issue-edit', function() {
         openIssueConfigDrawer($(this).closest('tr'));
+    });
+
+    $('#issueBoardConfigTableBody').on('click', '.issue-config-history', function() {
+        const $row = $(this).closest('tr');
+        openIssueConfigDrawer($row);
+        window.setTimeout(function() {
+            const historySection = document.getElementById('issueConfigDrawerHistorySection');
+            if (historySection) {
+                historySection.scrollIntoView({ block: 'nearest' });
+            }
+        }, 120);
     });
 
     $('#issueConfigDrawerClose, #issueConfigDrawerCancel, #issueConfigDrawerBackdrop').on('click', function() {
@@ -3084,7 +3273,7 @@ function regroupRows($container){
             }
             $(this).closest('tr').remove();
             if ($('#issueBoardConfigTableBody tr').length === 0) {
-                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="12" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
+                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
             }
             applyIssueBoardConfigSearch();
             setIssueBoardSaveState();

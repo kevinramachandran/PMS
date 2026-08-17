@@ -58,6 +58,20 @@ public class MetricsEntryController {
         return ResponseEntity.ok(productionMetricsService.getCustomMetricDefinitions());
     }
 
+    @GetMapping("/system-definitions")
+    public ResponseEntity<List<CustomMetricDefinitionPayload>> getSystemMetricDefinitions() {
+        return ResponseEntity.ok(productionMetricsService.getSystemMetricDefinitions());
+    }
+
+    @PutMapping("/system-definitions")
+    public ResponseEntity<?> saveSystemMetricDefinitions(@RequestBody List<CustomMetricDefinitionPayload> payloads) {
+        try {
+            return ResponseEntity.ok(productionMetricsService.saveSystemMetricDefinitions(payloads));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/custom-definitions")
     public ResponseEntity<?> createCustomMetricDefinition(@RequestBody CustomMetricDefinitionPayload payload) {
         try {

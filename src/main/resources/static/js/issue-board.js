@@ -193,32 +193,30 @@ $(document).ready(function() {
     }
 
     function renderTargetDateCell(row) {
-        const baseDate = row.targetDate || '';
-        const extension1 = row.targetDateExtension1 || '';
-        const extension2 = row.targetDateExtension2 || '';
-        const effective = getEffectiveTargetDate(row);
-        const dates = [];
+        const slots = [
+            row.targetDate || '',
+            row.targetDateExtension1 || '',
+            row.targetDateExtension2 || ''
+        ];
+        const dates = slots.map(function(value, index) {
+            const hasLaterValue = slots.slice(index + 1).some(function(laterValue) {
+                return !!laterValue;
+            });
+            return {
+                value: value,
+                superseded: !!value && hasLaterValue
+            };
+        }).filter(function(slot) {
+            return !!slot.value;
+        });
 
-        if (baseDate) {
-            dates.push({ value: baseDate, revised: !!extension1 || !!extension2 });
-        }
-        if (extension1) {
-            dates.push({ value: extension1, revised: !!extension2 });
-        }
-        if (extension2) {
-            dates.push({ value: extension2, revised: false });
-        }
-
-        if (dates.length === 0 && effective) {
-            dates.push({ value: effective, revised: false });
-        }
         if (dates.length === 0) {
             return '-';
         }
 
-        return '<div class="issue-target-date-stack">' + dates.map(function(item) {
-            const cls = item.revised ? 'issue-target-date-old' : 'issue-target-date-current';
-            return '<span class="' + cls + '">' + safeText(formatDisplayDate(item.value)) + '</span>';
+        return '<div class="issue-target-date-stack">' + dates.map(function(slot) {
+            const cls = slot.superseded ? 'issue-target-date-old' : 'issue-target-date-current';
+            return '<span class="' + cls + '">' + safeText(formatDisplayDate(slot.value)) + '</span>';
         }).join('') + '</div>';
     }
 
@@ -403,12 +401,45 @@ $(document).ready(function() {
     }
 
     function getIssueDrawerPayload() {
-        const targetDate = $('#drawerIssueTargetDate').val();
         return {
-            targetDate: targetDate || null,
+            targetDate: $('#drawerIssueTargetDate').val() || null,
+            targetDateExtension1: $('#drawerIssueTargetExt1').val() || null,
+            targetDateExtension2: $('#drawerIssueTargetExt2').val() || null,
             status: $('#drawerIssueStatus').val() || '0%',
             completedDate: $('#drawerIssueCompletedDate').val() || null
         };
+    }
+
+    function getDrawerEffectiveTargetDate(row) {
+        return row.targetDateExtension2 || row.targetDateExtension1 || row.targetDate || '';
+    }
+
+    function applyIssueDrawerTargetLocks() {
+        const fields = [
+            $('#drawerIssueTargetDate'),
+            $('#drawerIssueTargetExt1'),
+            $('#drawerIssueTargetExt2')
+        ];
+        const values = fields.map(function($field) {
+            return $field.val() || '';
+        });
+        const firstEmptyIndex = values.findIndex(function(value) {
+            return !value;
+        });
+
+        fields.forEach(function($field, index) {
+            const hasValue = !!values[index];
+            const hasLaterValue = values.slice(index + 1).some(function(value) {
+                return !!value;
+            });
+            const priorMissing = index > 0 && !values[index - 1];
+            const afterFirstEmpty = firstEmptyIndex !== -1 && index > firstEmptyIndex;
+            const locked = hasValue || priorMissing || afterFirstEmpty;
+            $field
+                .prop('disabled', locked)
+                .toggleClass('issue-date-struck', hasValue && hasLaterValue)
+                .attr('title', hasValue ? 'This target date is already recorded' : 'Enter the next target date');
+        });
     }
 
     function fillIssueDrawer(row, index) {
@@ -421,9 +452,14 @@ $(document).ready(function() {
             '<span>' + safeText(row.responsible || '-') + '</span>'
         );
         $('#drawerIssueTargetDate').val(row.targetDate || '');
+        $('#drawerIssueTargetExt1').val(row.targetDateExtension1 || '');
+        $('#drawerIssueTargetExt2').val(row.targetDateExtension2 || '');
         $('#drawerIssueStatus').val(row.status || '0%');
         $('#drawerIssueCompletedDate').val(row.completedDate || '');
+        applyIssueDrawerTargetLocks();
     }
+
+    $('#drawerIssueTargetDate, #drawerIssueTargetExt1, #drawerIssueTargetExt2').on('change', applyIssueDrawerTargetLocks);
 
     $('#issueBoardBody').on('click', '.issue-edit-link', function() {
         const index = Number($(this).data('index'));
@@ -453,6 +489,32 @@ $(document).ready(function() {
         });
     }
 
+    function formatHistoryValueForDisplay(value) {
+        if (!value || value === '') {
+            return '-';
+        }
+        // Check if it looks like a date (YYYY-MM-DD format)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            const date = new Date(value + 'T00:00:00');
+            if (!Number.isNaN(date.getTime())) {
+                return date.toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+        }
+        return value;
+    }
+
+    function buildHistoryDescription(entry) {
+        const editor = entry.editedBy || 'User';
+        const field = entry.fieldName || 'Field';
+        const oldVal = formatHistoryValueForDisplay(entry.oldValue);
+        const newVal = formatHistoryValueForDisplay(entry.newValue);
+        return editor + ' changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
+    }
+
     function renderHistoryEntries(entries) {
         const list = $('#issueHistoryList');
         list.empty();
@@ -461,17 +523,15 @@ $(document).ready(function() {
             return;
         }
         entries.forEach(function(entry) {
+            const description = buildHistoryDescription(entry);
             list.append(
                 '<div class="issue-history-item">' +
                 '<div class="issue-history-meta">' +
                 '<strong>' + safeText(entry.editedBy || '-') + '</strong>' +
                 '<span>' + safeText(formatHistoryDate(entry.editedAt)) + '</span>' +
                 '</div>' +
-                '<div class="issue-history-change">' +
-                '<span>' + safeText(entry.fieldName || 'Field') + '</span>' +
-                '<b>' + safeText(entry.oldValue || '-') + '</b>' +
-                '<i class="fas fa-arrow-right" aria-hidden="true"></i>' +
-                '<b>' + safeText(entry.newValue || '-') + '</b>' +
+                '<div class="issue-history-description">' +
+                '<p>' + safeText(description) + '</p>' +
                 '</div>' +
                 '</div>'
             );
@@ -510,7 +570,7 @@ $(document).ready(function() {
         const row = getIssueDrawerPayload();
         const id = $('#drawerIssueId').val();
         const indexValue = $('#drawerIssueIndex').val();
-        if (!id || !row.targetDate) {
+        if (!id || !getDrawerEffectiveTargetDate(row)) {
             return;
         }
         if (row.status === '100%' && !row.completedDate) {
@@ -590,7 +650,7 @@ function exportIssueBoardPdf() {
     var filterLabel = 'Last Updated: ' + updatedDate + '   |   Last Reviewed: ' + lastDate + '   |   Next Review: ' + nextDate;
 
     var rows  = window.__issueBoardRows || [];
-    var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date', 'Due days', 'Status', 'Completed date'];
+    var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date', 'Due days', 'Status', 'Completed date', 'Remarks'];
     var tableRows = rows.map(function(row, index) {
         var targetDate = getIssueBoardEffectiveTargetDate(row);
         var dueDays = getIssueBoardDueDays(row);
@@ -607,7 +667,8 @@ function exportIssueBoardPdf() {
             targetDate,
             dueDays,
             status,
-            row.completedDate || ''
+            row.completedDate || '',
+            row.remarks || ''
         ];
     });
 
@@ -616,21 +677,19 @@ function exportIssueBoardPdf() {
     var mm = String(today.getMonth() + 1).padStart(2, '0');
     var yyyy = today.getFullYear();
 
-    buildIssueHistoryParagraphs().done(function(paragraphs) {
-        PmsReport.generate({
-            title:       'Issue Board',
-            filterLabel: filterLabel,
-            orientation: 'landscape',
-            columns:     columns,
-            rows:        tableRows,
-            paragraphs:  paragraphs,
-            filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
-        });
-
-        setTimeout(function() {
-            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
-        }, 2000);
+    PmsReport.generate({
+        title:       'Issue Board',
+        filterLabel: filterLabel,
+        orientation: 'landscape',
+        columns:     columns,
+        rows:        tableRows,
+        paragraphs:  [],
+        filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
     });
+
+    setTimeout(function() {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+    }, 2000);
 }
 
 function buildIssueHistoryParagraphs() {

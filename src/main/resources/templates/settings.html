@@ -76,7 +76,7 @@
                 </div>
                 <div class="header-center metrics-header-actions" th:if="${activePage == 'metrics-data'}">
                     <button type="button" class="btn btn-secondary" id="exportMetricsCsvBtn">
-                        <i class="fas fa-file-export"></i> Export CSV
+                        <i class="fas fa-file-export"></i> Export Data
                     </button>
                     <button type="button" class="btn btn-secondary" id="downloadMetricsCsvTemplateBtn">
                         <i class="fas fa-file-download"></i> Download CSV Template
@@ -85,6 +85,35 @@
                         <i class="fas fa-file-upload"></i> Upload CSV (All 4 Types)
                     </button>
                     <input type="file" id="metricsCsvFileInput" accept=".csv,text/csv" style="display:none;">
+                </div>
+                <div id="metricsExportModal" class="metrics-export-modal" aria-hidden="true">
+                    <div class="metrics-export-dialog" role="dialog" aria-modal="true" aria-labelledby="metricsExportTitle">
+                        <div class="metrics-export-header">
+                            <h3 id="metricsExportTitle">Export Production Metrics</h3>
+                            <button type="button" class="metrics-export-close" id="closeMetricsExportModal" aria-label="Close export dialog">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <p class="metrics-export-copy">Select the month and year to export only that period's Production KPI data.</p>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="metricsExportMonth">Month</label>
+                                <select id="metricsExportMonth"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="metricsExportYear">Year</label>
+                                <select id="metricsExportYear"></select>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelMetricsExportBtn">
+                                <i class="fas fa-ban"></i> Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="downloadMetricsExportBtn">
+                                <i class="fas fa-file-csv"></i> Download
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="header-right">
                     <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
@@ -599,6 +628,7 @@
                                                 <th>Due days</th>
                                                 <th>Status</th>
                                                 <th>Completed date</th>
+                                                <th>History</th>
                                                 <th>Action</th>
                                             </tr>
                                             </thead>
@@ -710,6 +740,12 @@
                                             <button type="submit" class="btn btn-primary" id="issueConfigDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
                                         </div>
                                     </form>
+                                    <div class="issue-drawer-history-section" id="issueConfigDrawerHistorySection" style="display:none; border-top: 1px solid #e5e7eb;">
+                                        <div class="issue-drawer-history-header">
+                                            <h3>History</h3>
+                                        </div>
+                                        <div class="issue-history-list" id="issueConfigHistoryList"></div>
+                                    </div>
                                 </aside>
                             </div>
 
@@ -1240,6 +1276,9 @@
                                     </div>
 
                                     <div class="form-actions">
+                                        <button type="button" id="downloadHsCrossCsvBtn" class="btn btn-secondary">
+                                            <i class="fas fa-file-csv"></i> Download CSV
+                                        </button>
                                         <button type="button" id="saveHsCrossBtn" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
@@ -1277,6 +1316,9 @@
                                     </div>
 
                                     <div class="form-actions">
+                                        <button type="button" id="downloadLsrCsvBtn" class="btn btn-secondary">
+                                            <i class="fas fa-file-csv"></i> Download CSV
+                                        </button>
                                         <button type="button" id="saveLsrBtn" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
@@ -1611,8 +1653,8 @@
     </script>
     <script src="/js/dashboard.js?v=kpi-visibility-20260816"></script>
     <script src="/js/settings.js?v=kpi-config-message-20260816"></script>
-    <script src="/js/hs-cross-config.js?v=hs-grey-accident-20260813"></script>
-    <script src="/js/lsr-tracking-config.js?v=lsr-date-20260813"></script>
+    <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
+    <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=username-global-20260814"></script>
 </body>

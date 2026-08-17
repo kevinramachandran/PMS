@@ -1,0 +1,181 @@
+diff --git a/src/main/resources/static/js/settings.js b/src/main/resources/static/js/settings.js
+index 25caa1d..bb1a8fb 100644
+--- a/src/main/resources/static/js/settings.js
++++ b/src/main/resources/static/js/settings.js
+@@ -152,7 +152,6 @@ $(document).ready(function() {
+         '.kpi-rename-cancel-edit-btn',
+         '.kpi-rename-delete-btn',
+         '.kpi-rename-remove-draft-btn',
+-        '.metrics-add-custom-btn',
+         '.metrics-custom-save-btn',
+         '.metrics-custom-cancel-btn'
+     ].join(', ');
+@@ -1168,7 +1167,9 @@ $(document).ready(function() {
+                 };
+             }
+ 
+-            targetSection[field] = isCustomMetric ? textValue : parsed;
++            // Check if this is a custom metric by checking if field ID starts with 'customMetric'
++            const isCustomMetricField = field.startsWith('customMetric');
++            targetSection[field] = isCustomMetricField ? textValue : parsed;
+         }
+ 
+         return {
+@@ -1598,15 +1599,6 @@ $(document).ready(function() {
+             return;
+         }
+ 
+-        if ($group.children('.metrics-custom-toolbar').length === 0) {
+-            const toolbarHtml = '' +
+-                '<div class="metrics-custom-toolbar" data-section="' + section + '">' +
+-                    '<div class="metrics-custom-toolbar-copy">Add custom KPI rows for ' + escapeHtml(getMetricSectionTitle(section)) + ' and capture them with the same FTD, MTD, and YTD pattern.</div>' +
+-                    '<button type="button" class="btn btn-secondary metrics-add-custom-btn" data-section="' + section + '"><i class="fas fa-plus"></i> Add Custom Metric</button>' +
+-                '</div>';
+-            $group.children('h3').first().after(toolbarHtml);
+-        }
+-
+         if ($group.children('.metrics-custom-manager').length === 0) {
+             const managerHtml = '' +
+                 '<div class="metrics-custom-manager" data-section="' + section + '">' +
+@@ -1770,14 +1762,6 @@ function regroupRows($container){
+     }
+ 
+     function bindCustomMetricDefinitionEvents() {
+-        $('.metrics-add-custom-btn').off('click').on('click', function() {
+-            const section = $(this).data('section');
+-            $('.metrics-custom-manager').removeClass('show');
+-            const $manager = $('.metrics-custom-manager[data-section="' + section + '"]');
+-            $manager.addClass('show');
+-            $manager.find('.metrics-custom-label').trigger('focus');
+-        });
+-
+         $('.metrics-custom-cancel-btn').off('click').on('click', function() {
+             resetCustomMetricManager($(this).data('section'));
+         });
+@@ -2892,10 +2876,11 @@ function regroupRows($container){
+             textCell('ib-actions', safeItem.actions, 'Action plan') +
+             textCell('ib-responsible', safeItem.responsible, 'Responsible') +
+             '<td class="ib-target-date-cell">' +
+-            '<span class="ib-cell-text ib-target-date-display">' + escapeHtml(effectiveTargetDate || '-') + '</span>' +
+-            '<input type="hidden" class="ib-target-date ib-target-date-base" value="' + escapeAttributeValue(targetDate) + '">' +
+-            '<input type="hidden" class="ib-target-date-extension ib-target-date-extension-1" value="' + escapeAttributeValue(targetDateExtension1) + '">' +
+-            '<input type="hidden" class="ib-target-date-extension ib-target-date-extension-2" value="' + escapeAttributeValue(targetDateExtension2) + '">' +
++            '<div class="ib-target-date-stack">' +
++            '<input type="date" class="ib-target-date ib-target-date-base" value="' + escapeAttributeValue(targetDate) + '" aria-label="Original target date">' +
++            '<input type="date" class="ib-target-date-extension ib-target-date-extension-1" value="' + escapeAttributeValue(targetDateExtension1) + '" aria-label="Target date extension 1">' +
++            '<input type="date" class="ib-target-date-extension ib-target-date-extension-2" value="' + escapeAttributeValue(targetDateExtension2) + '" aria-label="Target date extension 2">' +
++            '</div>' +
+             '</td>' +
+             '<td><span class="ib-cell-text ib-due-days-display">' + escapeHtml(dueDays === '' ? '-' : dueDays) + '</span><input type="hidden" class="ib-due-days" value="' + escapeAttributeValue(dueDays) + '"></td>' +
+             '<td class="ib-status-cell"><div class="ib-status-wrap"><div class="ib-progress-row"><div class="ib-pdca-circle" aria-hidden="true" style="--pdca-progress:0" data-stage="-"><span class="ib-pdca-quarter ib-pdca-p">P</span><span class="ib-pdca-quarter ib-pdca-d">D</span><span class="ib-pdca-quarter ib-pdca-c">C</span><span class="ib-pdca-quarter ib-pdca-a">A</span></div></div>' +
+@@ -2995,6 +2980,101 @@ function regroupRows($container){
+         $('#issueConfigDrawerStatus').val(normalizeIssueStatus(safe.status || '0%'));
+         $('#issueConfigDrawerCompletedDate').val(safe.completedDate || '');
+         updateIssueConfigDrawerDueDays();
++        
++        // Load history if editing an existing issue
++        if (safe.id && rowIndex !== null && rowIndex !== undefined) {
++            loadIssueConfigHistory(safe.id);
++        } else {
++            $('#issueConfigDrawerHistorySection').hide();
++        }
++    }
++
++    function formatIssueConfigHistoryDate(value) {
++        if (!value) {
++            return '-';
++        }
++        const normalized = String(value).replace(' ', 'T');
++        const date = new Date(normalized);
++        if (Number.isNaN(date.getTime())) {
++            return value;
++        }
++        return date.toLocaleString('en-GB', {
++            day: '2-digit',
++            month: 'short',
++            year: 'numeric',
++            hour: '2-digit',
++            minute: '2-digit'
++        });
++    }
++
++    function formatIssueConfigHistoryValueForDisplay(value) {
++        if (!value || value === '') {
++            return '-';
++        }
++        // Check if it looks like a date (YYYY-MM-DD format)
++        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
++            const date = new Date(value + 'T00:00:00');
++            if (!Number.isNaN(date.getTime())) {
++                return date.toLocaleString('en-GB', {
++                    day: '2-digit',
++                    month: 'short',
++                    year: 'numeric'
++                });
++            }
++        }
++        return value;
++    }
++
++    function buildIssueConfigHistoryDescription(entry) {
++        const editor = entry.editedBy || 'User';
++        const field = entry.fieldName || 'Field';
++        const oldVal = formatIssueConfigHistoryValueForDisplay(entry.oldValue);
++        const newVal = formatIssueConfigHistoryValueForDisplay(entry.newValue);
++        return editor + ' changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
++    }
++
++    function renderIssueConfigHistory(entries) {
++        const list = $('#issueConfigHistoryList');
++        list.empty();
++        if (!entries || entries.length === 0) {
++            list.html('<div class="issue-history-empty">No history yet.</div>');
++            return;
++        }
++        entries.forEach(function(entry) {
++            const description = buildIssueConfigHistoryDescription(entry);
++            list.append(
++                '<div class="issue-history-item">' +
++                '<div class="issue-history-meta">' +
++                '<strong>' + escapeHtml(entry.editedBy || '-') + '</strong>' +
++                '<span>' + escapeHtml(formatIssueConfigHistoryDate(entry.editedAt)) + '</span>' +
++                '</div>' +
++                '<div class="issue-history-description">' +
++                '<p>' + escapeHtml(description) + '</p>' +
++                '</div>' +
++                '</div>'
++            );
++        });
++    }
++
++    function loadIssueConfigHistory(issueId) {
++        if (!issueId) {
++            $('#issueConfigDrawerHistorySection').hide();
++            return;
++        }
++
++        $('#issueConfigHistoryList').html('<div class="issue-history-empty">Loading history...</div>');
++        $('#issueConfigDrawerHistorySection').show();
++        
++        $.ajax({
++            url: '/api/issue-board/' + issueId + '/history',
++            type: 'GET',
++            success: function(data) {
++                renderIssueConfigHistory(Array.isArray(data) ? data : []);
++            },
++            error: function() {
++                $('#issueConfigHistoryList').html('<div class="issue-history-empty">Failed to load history.</div>');
++            }
++        });
+     }
+ 
+     function setIssueConfigDrawerOpen(open) {
+@@ -4950,7 +5030,7 @@ function regroupRows($container){
+     const KPI_CROSS_CHARTS = [
+         'peopleProductivityChart',
+         'qualitySensoryChart',
+-        'qualityProcessConfirmationChart',
++        'serviceProcessConfirmationChart',
+         'qualityComplaintChart',
+         'serviceOeeChart',
+         'serviceBeerLossChart',

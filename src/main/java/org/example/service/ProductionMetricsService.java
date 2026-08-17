@@ -9,6 +9,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.example.entity.ProductionMetricCustomDefinition;
 import org.example.entity.ProductionMetricCustomValue;
+import org.example.entity.ProductionMetricSystemDefinition;
 import org.example.entity.ProductionMetrics;
 import org.example.model.CustomMetricDefinitionPayload;
 import org.example.model.CustomMetricValueSnapshot;
@@ -16,6 +17,7 @@ import org.example.model.MetricsEntryBundlePayload;
 import org.example.model.MetricsEntryPayload;
 import org.example.repository.ProductionMetricCustomDefinitionRepository;
 import org.example.repository.ProductionMetricCustomValueRepository;
+import org.example.repository.ProductionMetricSystemDefinitionRepository;
 import org.example.repository.ProductionMetricsRepository;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.beans.BeanWrapperImpl;
@@ -53,12 +55,14 @@ public class ProductionMetricsService {
     private final ProductionMetricsRepository repository;
     private final ProductionMetricCustomDefinitionRepository customDefinitionRepository;
     private final ProductionMetricCustomValueRepository customValueRepository;
+    private final ProductionMetricSystemDefinitionRepository systemDefinitionRepository;
     private final JdbcTemplate jdbcTemplate;
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String ENTRY_TYPE_ACTUAL = "ACTUAL";
     private static final String ENTRY_TYPE_TARGET = "TARGET";
     private static final Set<String> SUPPORTED_SECTIONS = Set.of("PEOPLE", "QUALITY", "SERVICE", "COST");
     private static final Pattern CUSTOM_FIELD_PATTERN = Pattern.compile("^customMetric(\\d+)(FtdActual|FtdTarget|MtdActual|MtdTarget|YtdActual|YtdTarget)$");
+    private static final Map<String, SystemMetricDefault> SYSTEM_METRIC_DEFAULTS = buildSystemMetricDefaults();
     private static final List<String> PEOPLE_FIELDS = List.of(
         "productionProductivityFtdActual", "productionProductivityFtdTarget", "productionProductivityMtdActual", "productionProductivityMtdTarget", "productionProductivityYtdActual", "productionProductivityYtdTarget",
         "logisticsProductivityFtdActual", "logisticsProductivityFtdTarget", "logisticsProductivityMtdActual", "logisticsProductivityMtdTarget", "logisticsProductivityYtdActual", "logisticsProductivityYtdTarget"
@@ -216,6 +220,55 @@ public class ProductionMetricsService {
                 .toList();
     }
 
+    public List<CustomMetricDefinitionPayload> getSystemMetricDefinitions() {
+        Map<String, ProductionMetricSystemDefinition> overrides = systemDefinitionRepository.findAllByOrderBySectionAscDisplayOrderAscMetricKeyAsc()
+                .stream()
+                .collect(Collectors.toMap(
+                        definition -> definition.getMetricKey().toLowerCase(Locale.ROOT),
+                        definition -> definition,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+
+        return SYSTEM_METRIC_DEFAULTS.values().stream()
+                .map(defaultDefinition -> toSystemMetricDefinitionPayload(defaultDefinition, overrides.get(defaultDefinition.metricKey().toLowerCase(Locale.ROOT))))
+                .toList();
+    }
+
+    @Transactional
+    public List<CustomMetricDefinitionPayload> saveSystemMetricDefinitions(List<CustomMetricDefinitionPayload> payloads) {
+        if (payloads == null || payloads.isEmpty()) {
+            throw new IllegalArgumentException("System metric definitions are required");
+        }
+
+        for (CustomMetricDefinitionPayload payload : payloads) {
+            if (payload == null || payload.getMetricKey() == null || payload.getMetricKey().isBlank()) {
+                throw new IllegalArgumentException("System metric key is required");
+            }
+            String metricKey = payload.getMetricKey().trim();
+            SystemMetricDefault defaultDefinition = SYSTEM_METRIC_DEFAULTS.get(metricKey);
+            if (defaultDefinition == null) {
+                throw new IllegalArgumentException("Unknown system metric: " + metricKey);
+            }
+
+            String label = payload.getLabel() == null ? defaultDefinition.label() : normalizeLabel(payload.getLabel());
+            String unit = payload.getUnit() == null ? defaultDefinition.unit() : normalizeUnit(payload.getUnit());
+            Integer decimals = payload.getDecimals() == null ? defaultDefinition.decimals() : normalizeDecimals(payload.getDecimals());
+
+            ProductionMetricSystemDefinition definition = systemDefinitionRepository.findById(metricKey)
+                    .orElseGet(ProductionMetricSystemDefinition::new);
+            definition.setMetricKey(metricKey);
+            definition.setSection(defaultDefinition.section());
+            definition.setLabel(label);
+            definition.setUnit(unit);
+            definition.setDecimals(decimals);
+            definition.setDisplayOrder(defaultDefinition.displayOrder());
+            systemDefinitionRepository.save(definition);
+        }
+
+        return getSystemMetricDefinitions();
+    }
+
     @Transactional
     public CustomMetricDefinitionPayload createCustomMetricDefinition(CustomMetricDefinitionPayload payload) {
         if (payload == null) {
@@ -238,6 +291,8 @@ public class ProductionMetricsService {
         definition.setDecimals(decimals);
         definition.setDisplayOrder(displayOrder);
         definition.setActive(Boolean.TRUE);
+        definition.setGraphVisible(payload.getGraphVisible() == null || Boolean.TRUE.equals(payload.getGraphVisible()));
+        definition.setTableVisible(payload.getTableVisible() == null || Boolean.TRUE.equals(payload.getTableVisible()));
         definition.setMetricKey(createUniqueMetricKey(payload.getMetricKey(), label));
 
         return toCustomMetricDefinitionPayload(customDefinitionRepository.save(definition));
@@ -258,6 +313,12 @@ public class ProductionMetricsService {
         }
         if (payload.getDecimals() != null) {
             definition.setDecimals(normalizeDecimals(payload.getDecimals()));
+        }
+        if (payload.getGraphVisible() != null) {
+            definition.setGraphVisible(Boolean.TRUE.equals(payload.getGraphVisible()));
+        }
+        if (payload.getTableVisible() != null) {
+            definition.setTableVisible(Boolean.TRUE.equals(payload.getTableVisible()));
         }
         return toCustomMetricDefinitionPayload(customDefinitionRepository.save(definition));
     }
@@ -1055,7 +1116,26 @@ public class ProductionMetricsService {
                 definition.getLabel(),
                 definition.getUnit(),
                 definition.getDecimals(),
-                definition.getDisplayOrder()
+                definition.getDisplayOrder(),
+                definition.getGraphVisible() == null || Boolean.TRUE.equals(definition.getGraphVisible()),
+                definition.getTableVisible() == null || Boolean.TRUE.equals(definition.getTableVisible())
+        );
+    }
+
+    private CustomMetricDefinitionPayload toSystemMetricDefinitionPayload(
+            SystemMetricDefault defaultDefinition,
+            ProductionMetricSystemDefinition override
+    ) {
+        return new CustomMetricDefinitionPayload(
+                null,
+                defaultDefinition.metricKey(),
+                defaultDefinition.section(),
+                override == null ? defaultDefinition.label() : override.getLabel(),
+                override == null ? defaultDefinition.unit() : override.getUnit(),
+                override == null ? defaultDefinition.decimals() : override.getDecimals(),
+                defaultDefinition.displayOrder(),
+                true,
+                true
         );
     }
 
@@ -1106,7 +1186,49 @@ public class ProductionMetricsService {
         return normalized.isBlank() ? "custom-metric" : normalized;
     }
 
+    private static Map<String, SystemMetricDefault> buildSystemMetricDefaults() {
+        Map<String, SystemMetricDefault> defaults = new LinkedHashMap<>();
+        addSystemMetricDefault(defaults, "productionProductivity", "PEOPLE", "Production Productivity", "HL/FTE", 0, 0);
+        addSystemMetricDefault(defaults, "logisticsProductivity", "PEOPLE", "Logistics Productivity", "HL/FTE", 0, 1);
+        addSystemMetricDefault(defaults, "kpiSensoryScore", "QUALITY", "Internal Sensory Score", "HL/HI", 1, 0);
+        addSystemMetricDefault(defaults, "kpiConsumerComplaintUnitsMhl", "QUALITY", "Consumer Complaint", "Units/MHL", 0, 1);
+        addSystemMetricDefault(defaults, "kpiCustomerComplaintUnitsMhl", "QUALITY", "Customer Complaint", "Units/MHL", 0, 2);
+        addSystemMetricDefault(defaults, "noOfBrews", "SERVICE", "No. of Brews & Volume", "Nos & HL", 0, 0);
+        addSystemMetricDefault(defaults, "dispatch", "SERVICE", "Dispatch", "No. of Cases & HL", 0, 1);
+        addSystemMetricDefault(defaults, "processConfirmationBp", "SERVICE", "Process Confirmation - BP", "%", 0, 2);
+        addSystemMetricDefault(defaults, "processConfirmationPack", "SERVICE", "Process Confirmation - Pack", "%", 0, 3);
+        addSystemMetricDefault(defaults, "kpiOee", "SERVICE", "OEE", "%", 1, 4);
+        addSystemMetricDefault(defaults, "kpiBeerLoss", "SERVICE", "Beer Loss", "HL", 2, 5);
+        addSystemMetricDefault(defaults, "kpiWurHlHl", "SERVICE", "WUR", "HL/HI", 2, 6);
+        addSystemMetricDefault(defaults, "kpiElectricityKwhHl", "COST", "Electricity", "Kwh/HI", 1, 0);
+        addSystemMetricDefault(defaults, "kpiEnergyKwhHl", "COST", "Energy", "Kwh/HI", 2, 1);
+        addSystemMetricDefault(defaults, "kpiRgbRatio", "COST", "RGB Ratio", "-", 0, 2);
+        return defaults;
+    }
+
+    private static void addSystemMetricDefault(
+            Map<String, SystemMetricDefault> defaults,
+            String metricKey,
+            String section,
+            String label,
+            String unit,
+            Integer decimals,
+            Integer displayOrder
+    ) {
+        defaults.put(metricKey, new SystemMetricDefault(metricKey, section, label, unit, decimals, displayOrder));
+    }
+
     private record CustomFieldDescriptor(Long definitionId, String valueKey) {
+    }
+
+    private record SystemMetricDefault(
+            String metricKey,
+            String section,
+            String label,
+            String unit,
+            Integer decimals,
+            Integer displayOrder
+    ) {
     }
 
     // CSV Template Export (single-file format with all 4 sections)

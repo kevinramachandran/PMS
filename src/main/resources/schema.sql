@@ -63,6 +63,10 @@ UPDATE production_metric_custom_definitions SET decimal_places = NULL WHERE deci
 UPDATE production_metric_custom_definitions SET display_order = NULL WHERE display_order IS NOT NULL AND (TRIM(display_order) = '' OR TRIM(display_order) NOT REGEXP '^-?[0-9]+$');
 UPDATE production_metric_custom_definitions SET active_flag = 1 WHERE active_flag IS NOT NULL AND UPPER(TRIM(active_flag)) IN ('TRUE', 'YES', 'Y');
 UPDATE production_metric_custom_definitions SET active_flag = 0 WHERE active_flag IS NOT NULL AND TRIM(active_flag) <> '' AND UPPER(TRIM(active_flag)) NOT IN ('1', 'TRUE', 'YES', 'Y');
+ALTER TABLE production_metric_custom_definitions ADD COLUMN graph_visible BIT NOT NULL DEFAULT 1;
+ALTER TABLE production_metric_custom_definitions ADD COLUMN table_visible BIT NOT NULL DEFAULT 1;
+UPDATE production_metric_custom_definitions SET graph_visible = 1 WHERE graph_visible IS NULL;
+UPDATE production_metric_custom_definitions SET table_visible = 1 WHERE table_visible IS NULL;
 
 UPDATE training_schedule_items SET row_order = NULL WHERE row_order IS NOT NULL AND (TRIM(row_order) = '' OR TRIM(row_order) NOT REGEXP '^-?[0-9]+$');
 UPDATE training_schedule_items SET target_percent = NULL WHERE target_percent IS NOT NULL AND (TRIM(target_percent) = '' OR TRIM(target_percent) NOT REGEXP '^-?[0-9]+$');

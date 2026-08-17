@@ -75,10 +75,24 @@ public class IssueBoardItemService {
         String user = editedBy == null || editedBy.isBlank() ? "system" : editedBy.trim();
         List<IssueBoardItemHistory> history = new ArrayList<>();
 
+        boolean targetChanged = false;
         if (!sameDate(item.getTargetDate(), update.getTargetDate())) {
             history.add(historyEntry(id, "Target Date", item.getTargetDate(), update.getTargetDate(), user));
             item.setTargetDate(update.getTargetDate());
-            item.setDueDays(calculateDueDays(update.getTargetDate()));
+            targetChanged = true;
+        }
+        if (!sameDate(item.getTargetDateExtension1(), update.getTargetDateExtension1())) {
+            history.add(historyEntry(id, "Target Date Extension 1", item.getTargetDateExtension1(), update.getTargetDateExtension1(), user));
+            item.setTargetDateExtension1(update.getTargetDateExtension1());
+            targetChanged = true;
+        }
+        if (!sameDate(item.getTargetDateExtension2(), update.getTargetDateExtension2())) {
+            history.add(historyEntry(id, "Target Date Extension 2", item.getTargetDateExtension2(), update.getTargetDateExtension2(), user));
+            item.setTargetDateExtension2(update.getTargetDateExtension2());
+            targetChanged = true;
+        }
+        if (targetChanged) {
+            item.setDueDays(calculateDueDays(effectiveTargetDate(item)));
         }
 
         String nextStatus = update.getStatus() == null || update.getStatus().isBlank()
@@ -162,6 +176,16 @@ public class IssueBoardItemService {
         String normalizedFirst = first == null ? "" : first.trim();
         String normalizedSecond = second == null ? "" : second.trim();
         return normalizedFirst.equals(normalizedSecond);
+    }
+
+    private LocalDate effectiveTargetDate(IssueBoardItem item) {
+        if (item.getTargetDateExtension2() != null) {
+            return item.getTargetDateExtension2();
+        }
+        if (item.getTargetDateExtension1() != null) {
+            return item.getTargetDateExtension1();
+        }
+        return item.getTargetDate();
     }
 
     private Integer calculateDueDays(LocalDate targetDate) {
