@@ -962,6 +962,7 @@
     background: #fbfdfb;
     padding: 12px;
     margin-bottom: 12px;
+    overflow: visible;
 }
 
 #form-issue-board.issue-board-enterprise .issue-board-meta-card {
@@ -1701,7 +1702,10 @@ padding:4px 8px;
 }
 
 #form-issue-board.issue-board-enterprise .compact-actions {
-    margin-top: 8px !important;
+    margin-top: 10px !important;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
 }
 
 #form-issue-board.issue-board-enterprise .sticky-save-bar {
@@ -1903,7 +1907,7 @@ padding:4px 8px;
 #form-issue-board .issue-drawer-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 1200;
+    z-index: 1400;
     background: rgba(15, 23, 42, 0.24);
     opacity: 0;
     pointer-events: none;
@@ -1919,9 +1923,11 @@ padding:4px 8px;
     position: fixed;
     top: 0;
     right: 0;
-    z-index: 1201;
+    bottom: 0;
+    z-index: 1401;
     width: min(390px, 100vw);
     height: 100vh;
+    height: 100dvh;
     background: #ffffff;
     border-left: 1px solid #e5e7eb;
     box-shadow: -16px 0 34px rgba(15, 23, 42, 0.14);
@@ -3392,7 +3398,7 @@ table select {
 
 .sticky-save-bar {
     position: sticky;
-    bottom: 42px;
+    bottom: 90px;
     z-index: 1200;
     background: rgba(248, 251, 249, 0.98);
     border: 1px solid #dbe5df;

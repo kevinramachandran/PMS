@@ -2721,9 +2721,7 @@ function regroupRows($container){
 
     function setIssueBoardSaveState() {
         const isLoading = $('#issueBoardConfigTableBody .loading-row').length > 0;
-        const hasRows = hasAtLeastOneIssueRow();
-        const isValid = validateIssueBoardRows(false);
-        $('#saveIssueBoardBtn').prop('disabled', isLoading || !(hasRows && isValid));
+        $('#saveIssueBoardBtn').prop('disabled', isLoading);
     }
 
     function setIssueBoardSaveLoading(isLoading) {
@@ -3135,8 +3133,8 @@ function regroupRows($container){
         return editor + ' changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
     }
 
-    function renderIssueConfigHistory(entries) {
-        const list = $('#issueConfigHistoryList');
+    function renderIssueConfigHistory(entries, targetSelector) {
+        const list = $(targetSelector || '#issueConfigHistoryList');
         list.empty();
         if (!entries || entries.length === 0) {
             list.html('<div class="issue-history-empty">No history yet.</div>');
@@ -3185,6 +3183,12 @@ function regroupRows($container){
         $('body').toggleClass('drawer-open', open);
     }
 
+    function setIssueConfigHistoryDrawerOpen(open) {
+        $('#issueConfigHistoryDrawer').toggleClass('open', open).attr('aria-hidden', open ? 'false' : 'true');
+        $('#issueConfigHistoryDrawerBackdrop').toggleClass('open', open);
+        $('body').toggleClass('drawer-open', open);
+    }
+
     function openIssueConfigDrawer($row) {
         const rowIndex = $row && $row.length ? $('#issueBoardConfigTableBody tr').index($row) : null;
         fillIssueConfigDrawer($row && $row.length ? readIssueConfigRow($row) : { status: '0%' }, rowIndex);
@@ -3202,17 +3206,31 @@ function regroupRows($container){
 
     $('#issueBoardConfigTableBody').on('click', '.issue-config-history', function() {
         const $row = $(this).closest('tr');
-        openIssueConfigDrawer($row);
-        window.setTimeout(function() {
-            const historySection = document.getElementById('issueConfigDrawerHistorySection');
-            if (historySection) {
-                historySection.scrollIntoView({ block: 'nearest' });
+        const id = $row.attr('data-id') || '';
+        if (!id) {
+            showIssueBoardPopup('History available after save.', 'error');
+            return;
+        }
+        $('#issueConfigHistoryDrawerList').html('<div class="issue-history-empty">Loading...</div>');
+        setIssueConfigHistoryDrawerOpen(true);
+        $.ajax({
+            url: '/api/issue-board/' + id + '/history',
+            type: 'GET',
+            success: function(data) {
+                renderIssueConfigHistory(Array.isArray(data) ? data : [], '#issueConfigHistoryDrawerList');
+            },
+            error: function() {
+                $('#issueConfigHistoryDrawerList').html('<div class="issue-history-empty">Failed to load history.</div>');
             }
-        }, 120);
+        });
     });
 
     $('#issueConfigDrawerClose, #issueConfigDrawerCancel, #issueConfigDrawerBackdrop').on('click', function() {
         setIssueConfigDrawerOpen(false);
+    });
+
+    $('#issueConfigHistoryDrawerClose, #issueConfigHistoryDrawerBackdrop').on('click', function() {
+        setIssueConfigHistoryDrawerOpen(false);
     });
 
     $('#issueConfigDrawerTargetDate, #issueConfigDrawerTargetExt1, #issueConfigDrawerTargetExt2').on('change input', updateIssueConfigDrawerDueDays);
@@ -3333,12 +3351,7 @@ function regroupRows($container){
             return $(this).find('.ib-problem').length > 0;
         });
 
-        if (rows.length === 0) {
-            showIssueBoardPopup('Please add at least one issue row before saving.');
-            return;
-        }
-
-        if (!validateIssueBoardRows(true)) {
+        if (rows.length > 0 && !validateIssueBoardRows(true)) {
             showIssueBoardPopup('Problem, Actions, Responsible, and completion date for 100% are required.');
             setIssueBoardSaveState();
             return;

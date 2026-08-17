@@ -635,14 +635,14 @@
                                             <tbody id="issueBoardConfigTableBody"></tbody>
                                         </table>
                                     </div>
-                                    <div class="form-actions compact-actions" style="margin-top: 12px; display: flex; gap: 10px;">
-                                        <button type="button" class="btn btn-secondary issue-add-row-btn" id="addIssueBoardRowTableBtn">
-                                            <i class="fas fa-plus"></i> Add New Issue
-                                        </button>
-                                    </div>
+                                    
                                 </div>
 
                                 <div class="form-actions sticky-save-bar">
+                                    <button type="button" class="btn btn-secondary issue-add-row-btn" id="addIssueBoardRowTableBtn">
+                                            <i class="fas fa-plus"></i> Add New Issue
+                                        </button>
+                                        
                                     <button id="cancelIssueBoardBtn" type="button" class="btn btn-secondary">
                                         <i class="fas fa-ban"></i> Cancel
                                     </button>
@@ -746,6 +746,16 @@
                                         </div>
                                         <div class="issue-history-list" id="issueConfigHistoryList"></div>
                                     </div>
+                                </aside>
+                                <div class="issue-drawer-backdrop" id="issueConfigHistoryDrawerBackdrop"></div>
+                                <aside class="issue-drawer issue-history-drawer" id="issueConfigHistoryDrawer" aria-hidden="true" aria-labelledby="issueConfigHistoryDrawerTitle">
+                                    <div class="issue-drawer-header">
+                                        <h2 id="issueConfigHistoryDrawerTitle">History</h2>
+                                        <button type="button" class="issue-drawer-close" id="issueConfigHistoryDrawerClose" aria-label="Close issue history">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="issue-history-list" id="issueConfigHistoryDrawerList"></div>
                                 </aside>
                             </div>
 

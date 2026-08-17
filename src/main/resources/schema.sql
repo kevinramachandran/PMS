@@ -1,3 +1,41 @@
+CREATE TABLE IF NOT EXISTS issue_board_items (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    row_order INT NULL,
+    problem VARCHAR(500) NULL,
+    priority VARCHAR(120) NULL,
+    owner_name VARCHAR(255) NULL,
+    issue_date VARCHAR(40) NULL,
+    root_cause VARCHAR(500) NULL,
+    actions VARCHAR(1500) NULL,
+    responsible VARCHAR(255) NULL,
+    target_date DATE NULL,
+    target_date_extension1 DATE NULL,
+    target_date_extension2 DATE NULL,
+    due_days INT NULL,
+    status VARCHAR(80) NULL,
+    completed_date DATE NULL,
+    remarks VARCHAR(500) NULL,
+    last_review_date DATE NULL,
+    next_review_date DATE NULL,
+    board_date DATE NULL,
+    updated_at DATETIME(6) NULL,
+    PRIMARY KEY (id),
+    INDEX idx_issue_board_items_board_date (board_date),
+    INDEX idx_issue_board_items_updated_at (updated_at)
+);
+
+CREATE TABLE IF NOT EXISTS issue_board_item_history (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    issue_board_item_id BIGINT NULL,
+    field_name VARCHAR(120) NULL,
+    old_value VARCHAR(255) NULL,
+    new_value VARCHAR(255) NULL,
+    edited_by VARCHAR(255) NULL,
+    edited_at DATETIME(6) NULL,
+    PRIMARY KEY (id),
+    INDEX idx_issue_board_item_history_item (issue_board_item_id)
+);
+
 UPDATE abnormality_tracker SET row_order = NULL WHERE row_order IS NOT NULL AND (TRIM(row_order) = '' OR TRIM(row_order) NOT REGEXP '^-?[0-9]+$');
 UPDATE abnormality_tracker SET yellow_tags = NULL WHERE yellow_tags IS NOT NULL AND (TRIM(yellow_tags) = '' OR TRIM(yellow_tags) NOT REGEXP '^-?[0-9]+$');
 UPDATE abnormality_tracker SET red_tags = NULL WHERE red_tags IS NOT NULL AND (TRIM(red_tags) = '' OR TRIM(red_tags) NOT REGEXP '^-?[0-9]+$');
