@@ -2410,8 +2410,10 @@ function regroupRows($container){
         if (pendingIssueDate) {
             sessionStorage.removeItem('issue-board-open-date');
         }
-        dateInput.val(pendingIssueDate || today);
-        dateInput.attr('data-load-latest-on-open', pendingIssueDate ? '0' : '1');
+        const rememberedIssueDate = localStorage.getItem('issue-board-config-date') || '';
+        const initialIssueDate = pendingIssueDate || rememberedIssueDate || today;
+        dateInput.val(initialIssueDate);
+        dateInput.attr('data-load-latest-on-open', pendingIssueDate || rememberedIssueDate ? '0' : '1');
 
         applyIssueBoardDateLimits();
 
@@ -2420,6 +2422,7 @@ function regroupRows($container){
             if (!selectedDate) {
                 return;
             }
+            localStorage.setItem('issue-board-config-date', selectedDate);
             loadIssueBoardByDate(selectedDate);
         });
 
@@ -2907,6 +2910,7 @@ function regroupRows($container){
                 const latestDate = items.length > 0 ? (items[0].boardDate || '') : '';
                 if (latestDate) {
                     $('#issueBoardConfigDate').val(latestDate);
+                    localStorage.setItem('issue-board-config-date', latestDate);
                 }
                 populateIssueBoardConfigTable(items);
             },
@@ -3382,7 +3386,8 @@ function regroupRows($container){
                 return false;
             }
 
-            payload.push({
+            const rowId = ($(this).attr('data-id') || '').trim();
+            const payloadItem = {
                 rowOrder: index + 1,
                 problem: problem,
                 priority: $(this).find('.ib-priority').val().trim(),
@@ -3400,7 +3405,13 @@ function regroupRows($container){
                 lastReviewDate: lastReviewDate,
                 nextReviewDate: nextReviewDate,
                 boardDate: saveDate
-            });
+            };
+
+            if (rowId) {
+                payloadItem.id = Number(rowId);
+            }
+
+            payload.push(payloadItem);
         });
 
         if (invalid) {
@@ -3419,9 +3430,11 @@ function regroupRows($container){
             success: function(response) {
                 const count = Array.isArray(response) ? response.length : payload.length;
                 showMessage('issueBoardMessage', 'Saved ' + count + ' issue rows successfully!', 'success');
+                localStorage.setItem('issue-board-config-date', saveDate);
+                populateIssueBoardConfigTable(Array.isArray(response) ? response : payload);
                 localStorage.setItem('issue-board-update', Date.now());
                 updateKPIDashboard();
-                lockIssueBoardRowsForStatusUpdates();
+                showIssueBoardToast('Issue Board saved successfully.', 'success');
             },
             error: function() {
                 showIssueBoardPopup('Error saving Issue Board data. Please try again.');

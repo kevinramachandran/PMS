@@ -381,6 +381,36 @@
         });
     }
 
+    function keepActiveNavigationVisible() {
+        const sidebar = document.getElementById('sidebar');
+        const activeItem = sidebar ? sidebar.querySelector('.sidebar-nav .nav-item.active') : null;
+        if (!sidebar || !activeItem || sidebar.classList.contains('collapsed')) {
+            return;
+        }
+
+        window.requestAnimationFrame(function () {
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const itemRect = activeItem.getBoundingClientRect();
+            const topPadding = 18;
+            const bottomPadding = 24;
+            const isAboveView = itemRect.top < sidebarRect.top + topPadding;
+            const isBelowView = itemRect.bottom > sidebarRect.bottom - bottomPadding;
+
+            if (!isAboveView && !isBelowView) {
+                return;
+            }
+
+            const targetScrollTop = sidebar.scrollTop
+                + (itemRect.top - sidebarRect.top)
+                - ((sidebar.clientHeight - activeItem.offsetHeight) / 2);
+
+            sidebar.scrollTo({
+                top: Math.max(0, targetScrollTop),
+                behavior: 'auto'
+            });
+        });
+    }
+
     function formatShortDate(dateValue) {
         if (!dateValue) {
             return '';
@@ -495,7 +525,9 @@
         document.querySelectorAll('.top-header').forEach(enhanceHeader);
         normalizeSidebarLabels();
         setupSidebarDropdowns();
+        keepActiveNavigationVisible();
         loadPmsDeckNavDates();
+        window.setTimeout(keepActiveNavigationVisible, 150);
         fixFooterBranding();
         standardizeTableAlignment(document);
         bindTableAlignmentObserver();

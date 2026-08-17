@@ -16,6 +16,8 @@ public interface IssueBoardItemRepository extends JpaRepository<IssueBoardItem, 
 
     Optional<IssueBoardItem> findTopByOrderByBoardDateDescIdDesc();
 
+    Optional<IssueBoardItem> findTopByOrderByUpdatedAtDescIdDesc();
+
     void deleteByBoardDate(LocalDate boardDate);
 
     /**

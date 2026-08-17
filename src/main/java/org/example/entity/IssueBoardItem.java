@@ -3,6 +3,7 @@ package org.example.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "issue_board_items")
@@ -57,11 +58,19 @@ public class IssueBoardItem {
 
     private LocalDate boardDate;
 
+    private LocalDateTime updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (boardDate == null) {
             boardDate = LocalDate.now();
         }
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -214,5 +223,13 @@ public class IssueBoardItem {
 
     public void setBoardDate(LocalDate boardDate) {
         this.boardDate = boardDate;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

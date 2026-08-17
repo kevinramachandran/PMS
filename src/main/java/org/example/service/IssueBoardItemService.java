@@ -16,10 +16,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class IssueBoardItemService {
@@ -43,7 +46,8 @@ public class IssueBoardItemService {
     }
 
     public List<IssueBoardItem> getLatestBoard() {
-        Optional<IssueBoardItem> latest = repository.findTopByOrderByBoardDateDescIdDesc();
+        Optional<IssueBoardItem> latest = repository.findTopByOrderByUpdatedAtDescIdDesc()
+                .or(repository::findTopByOrderByBoardDateDescIdDesc);
         if (latest.isEmpty() || latest.get().getBoardDate() == null) {
             return Collections.emptyList();
         }
@@ -118,25 +122,70 @@ public class IssueBoardItemService {
     @Transactional
     public List<IssueBoardItem> replaceByBoardDate(LocalDate boardDate, List<IssueBoardItem> items) {
         List<IssueBoardItem> existingItems = repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
-        repository.deleteByBoardDate(boardDate);
+        Map<Long, IssueBoardItem> existingById = new HashMap<>();
+        for (IssueBoardItem existing : existingItems) {
+            if (existing.getId() != null) {
+                existingById.put(existing.getId(), existing);
+            }
+        }
 
         int row = 1;
+        Set<Long> retainedIds = new HashSet<>();
+        List<IssueBoardItem> itemsToSave = new ArrayList<>();
         for (IssueBoardItem item : items) {
-            item.setId(null);
-            item.setBoardDate(boardDate);
-            if (item.getRowOrder() == null || item.getRowOrder() < 1) {
-                item.setRowOrder(row);
+            IssueBoardItem itemToSave = null;
+            if (item.getId() != null) {
+                itemToSave = existingById.get(item.getId());
+            }
+            if (itemToSave == null) {
+                itemToSave = new IssueBoardItem();
+            }
+
+            copyIssueBoardFields(item, itemToSave);
+            itemToSave.setBoardDate(boardDate);
+            itemToSave.setRowOrder(item.getRowOrder() == null || item.getRowOrder() < 1 ? row : item.getRowOrder());
+            itemToSave.setDueDays(calculateDueDays(effectiveTargetDate(itemToSave)));
+            itemsToSave.add(itemToSave);
+
+            if (itemToSave.getId() != null) {
+                retainedIds.add(itemToSave.getId());
             }
             row++;
         }
 
-        List<IssueBoardItem> savedItems = new ArrayList<>(repository.saveAll(items));
+        repository.saveAll(itemsToSave);
+        List<IssueBoardItem> removedItems = existingItems.stream()
+                .filter(existing -> existing.getId() != null && !retainedIds.contains(existing.getId()))
+                .toList();
+        if (!removedItems.isEmpty()) {
+            repository.deleteAll(removedItems);
+        }
+        List<IssueBoardItem> savedItems = repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
+
         try {
             notificationService.sendAssignmentNotifications(boardDate, mapByRowOrder(existingItems), mapByRowOrder(savedItems));
         } catch (Exception ex) {
             log.error("Failed to send assignment notifications for boardDate={} — save was still successful", boardDate, ex);
         }
         return savedItems;
+    }
+
+    private void copyIssueBoardFields(IssueBoardItem source, IssueBoardItem target) {
+        target.setProblem(source.getProblem());
+        target.setPriority(source.getPriority());
+        target.setOwnerName(source.getOwnerName());
+        target.setIssueDate(source.getIssueDate());
+        target.setRootCause(source.getRootCause());
+        target.setActions(source.getActions());
+        target.setResponsible(source.getResponsible());
+        target.setTargetDate(source.getTargetDate());
+        target.setTargetDateExtension1(source.getTargetDateExtension1());
+        target.setTargetDateExtension2(source.getTargetDateExtension2());
+        target.setStatus(source.getStatus());
+        target.setCompletedDate(source.getCompletedDate());
+        target.setRemarks(source.getRemarks());
+        target.setLastReviewDate(source.getLastReviewDate());
+        target.setNextReviewDate(source.getNextReviewDate());
     }
 
     private Map<Integer, IssueBoardItem> mapByRowOrder(List<IssueBoardItem> items) {

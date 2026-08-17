@@ -132,12 +132,13 @@
                 startY: startY,
                 head: [config.columns],
                 body: config.rows,
-                styles:           { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-                headStyles:       { fillColor: HEADER_COLOR, textColor: 255, fontStyle: 'bold', fontSize: 9 },
+                styles:           Object.assign({ fontSize: 8, cellPadding: 2, overflow: 'linebreak' }, config.styles || {}),
+                headStyles:       Object.assign({ fillColor: HEADER_COLOR, textColor: 255, fontStyle: 'bold', fontSize: 9 }, config.headStyles || {}),
                 alternateRowStyles: { fillColor: ALT_ROW_COLOR },
                 margin:           { left: 10, right: 10 },
                 tableLineColor:   [200, 215, 200],
-                tableLineWidth:   0.2
+                tableLineWidth:   0.2,
+                columnStyles:     config.columnStyles || {}
             });
 
             // Optional text paragraphs appended after the table (e.g. issue history)

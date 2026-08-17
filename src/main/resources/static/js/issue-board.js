@@ -650,46 +650,135 @@ function exportIssueBoardPdf() {
     var filterLabel = 'Last Updated: ' + updatedDate + '   |   Last Reviewed: ' + lastDate + '   |   Next Review: ' + nextDate;
 
     var rows  = window.__issueBoardRows || [];
-    var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date', 'Due days', 'Status', 'Completed date', 'Remarks'];
-    var tableRows = rows.map(function(row, index) {
-        var targetDate = getIssueBoardEffectiveTargetDate(row);
-        var dueDays = getIssueBoardDueDays(row);
-        var status = getIssueBoardStatusLabel(row.status);
-        return [
-            (index + 1),
-            row.problem || '',
-            row.priority || '',
-            row.ownerName || '',
-            row.issueDate || '',
-            row.rootCause || '',
-            row.actions || '',
-            row.responsible || '',
-            targetDate,
-            dueDays,
-            status,
-            row.completedDate || '',
-            row.remarks || ''
-        ];
-    });
-
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0');
     var yyyy = today.getFullYear();
 
-    PmsReport.generate({
-        title:       'Issue Board',
-        filterLabel: filterLabel,
-        orientation: 'landscape',
-        columns:     columns,
-        rows:        tableRows,
-        paragraphs:  [],
-        filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+    buildIssueHistorySummaryMap().always(function(historySummaryById) {
+        historySummaryById = historySummaryById || {};
+        var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date', 'Due days', 'Status', 'Completed date', 'History Summary'];
+        var tableRows = rows.map(function(row, index) {
+            var targetDate = getIssueBoardEffectiveTargetDate(row);
+            var dueDays = getIssueBoardDueDays(row);
+            var status = getIssueBoardStatusLabel(row.status);
+            var historySummary = row.id == null ? 'History available after save.' : (historySummaryById[row.id] || 'No history recorded.');
+            return [
+                (index + 1),
+                row.problem || '',
+                row.priority || '',
+                row.ownerName || '',
+                row.issueDate || '',
+                row.rootCause || '',
+                row.actions || '',
+                row.responsible || '',
+                targetDate,
+                dueDays,
+                status,
+                row.completedDate || '',
+                historySummary
+            ];
+        });
+
+        PmsReport.generate({
+            title:       'Issue Board',
+            filterLabel: filterLabel,
+            orientation: 'landscape',
+            columns:     columns,
+            rows:        tableRows,
+            paragraphs:  [],
+            styles:      { fontSize: 6.4, cellPadding: 1.3, overflow: 'linebreak', valign: 'top' },
+            headStyles:  { fontSize: 7.1, cellPadding: 1.4, valign: 'middle' },
+            columnStyles: {
+                0:  { cellWidth: 7, halign: 'center' },
+                1:  { cellWidth: 24 },
+                2:  { cellWidth: 13 },
+                3:  { cellWidth: 17 },
+                4:  { cellWidth: 16 },
+                5:  { cellWidth: 25 },
+                6:  { cellWidth: 30 },
+                7:  { cellWidth: 18 },
+                8:  { cellWidth: 17 },
+                9:  { cellWidth: 10, halign: 'center' },
+                10: { cellWidth: 10, halign: 'center' },
+                11: { cellWidth: 17 },
+                12: { cellWidth: 56 }
+            },
+            filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
+        });
+
+        setTimeout(function() {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
+        }, 1200);
+    });
+}
+
+function buildIssueHistorySummaryMap() {
+    var rows = window.__issueBoardRows || [];
+    var deferred = $.Deferred();
+    var summaries = {};
+    var pending = 0;
+
+    if (!rows || rows.length === 0) {
+        return deferred.resolve(summaries).promise();
+    }
+
+    rows.forEach(function(row) {
+        if (!row || row.id == null) {
+            return;
+        }
+
+        pending++;
+        $.ajax({
+            url: '/api/issue-board/' + row.id + '/history',
+            type: 'GET',
+            success: function(data) {
+                summaries[row.id] = buildIssueHistorySummary(Array.isArray(data) ? data : []);
+            },
+            error: function() {
+                summaries[row.id] = 'History could not be loaded.';
+            },
+            complete: function() {
+                pending--;
+                if (pending === 0) {
+                    deferred.resolve(summaries);
+                }
+            }
+        });
     });
 
-    setTimeout(function() {
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
-    }, 2000);
+    if (pending === 0) {
+        deferred.resolve(summaries);
+    }
+
+    return deferred.promise();
+}
+
+function buildIssueHistorySummary(entries) {
+    if (!entries || entries.length === 0) {
+        return 'No history recorded.';
+    }
+
+    return entries.slice(0, 4).map(function(entry) {
+        var at = formatIssueHistoryDate(entry.editedAt);
+        var editor = entry.editedBy || 'User';
+        var fieldName = entry.fieldName || 'Field';
+        var oldValue = formatIssueHistorySummaryValue(entry.oldValue);
+        var newValue = formatIssueHistorySummaryValue(entry.newValue);
+        return (at ? at + ' - ' : '') + editor + ': ' + fieldName + ' changed from ' + oldValue + ' to ' + newValue;
+    }).join('\n');
+}
+
+function formatIssueHistorySummaryValue(value) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+
+    var text = String(value).replace(/\s+/g, ' ').trim();
+    if (text.length > 60) {
+        text = text.substring(0, 57) + '...';
+    }
+    return '"' + text + '"';
 }
 
 function buildIssueHistoryParagraphs() {
