@@ -6,7 +6,7 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
-    <link rel="stylesheet" href="/css/settings.css?v=issue-save-footer-20260817">
+    <link rel="stylesheet" href="/css/settings.css?v=kpi-save-summary-20260821">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
 </head>
@@ -664,41 +664,59 @@
                                     </div>
                                     <form id="issueConfigDrawerForm" class="issue-drawer-form">
                                         <input type="hidden" id="issueConfigDrawerRowIndex">
-                                        <div class="form-group">
-                                            <label for="issueConfigDrawerProblem">Problem <span>*</span></label>
-                                            <input type="text" id="issueConfigDrawerProblem" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="issueConfigDrawerPriority">Priority <span>*</span></label>
-                                            <select id="issueConfigDrawerPriority" required>
-                                                <option value="">Select priority</option>
-                                                <option value="High">High</option>
-                                                <option value="Medium">Medium</option>
-                                                <option value="Low">Low</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="issueConfigDrawerOwner">Name <span>*</span></label>
-                                            <input type="text" id="issueConfigDrawerOwner" required>
+                                        <div class="issue-drawer-grid">
+                                            <div class="form-group issue-drawer-wide">
+                                                <label for="issueConfigDrawerProblem">Problem <span>*</span></label>
+                                                <input type="text" id="issueConfigDrawerProblem" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerPriority">Priority <span>*</span></label>
+                                                <select id="issueConfigDrawerPriority" required>
+                                                    <option value="">Select priority</option>
+                                                    <option value="High">High</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="Low">Low</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerOwner">Name <span>*</span></label>
+                                                <input type="text" id="issueConfigDrawerOwner" required>
+                                            </div>
                                         </div>
                                         <div class="issue-drawer-grid">
                                             <div class="form-group">
                                                 <label for="issueConfigDrawerIssueDate">Date <span>*</span></label>
                                                 <input type="date" id="issueConfigDrawerIssueDate" required>
                                             </div>
+                                        </div>
+                                        <div class="issue-target-pair-row">
                                             <div class="form-group">
                                                 <label for="issueConfigDrawerTargetDate">Target Date <span>*</span></label>
                                                 <input type="date" id="issueConfigDrawerTargetDate" required>
                                             </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerTargetDateRemark">Remarks <span>*</span></label>
+                                                <input type="text" id="issueConfigDrawerTargetDateRemark" class="issue-target-remark-input" placeholder="Remarks" maxlength="500" required>
+                                            </div>
                                         </div>
-                                        <div class="issue-drawer-grid">
+                                        <div class="issue-target-pair-row">
                                             <div class="form-group">
                                                 <label for="issueConfigDrawerTargetExt1">Target Date Ext. 1</label>
                                                 <input type="date" id="issueConfigDrawerTargetExt1">
                                             </div>
                                             <div class="form-group">
+                                                <label for="issueConfigDrawerTargetExt1Remark">Remarks</label>
+                                                <input type="text" id="issueConfigDrawerTargetExt1Remark" class="issue-target-remark-input" placeholder="Remarks" maxlength="500">
+                                            </div>
+                                        </div>
+                                        <div class="issue-target-pair-row">
+                                            <div class="form-group">
                                                 <label for="issueConfigDrawerTargetExt2">Target Date Ext. 2</label>
                                                 <input type="date" id="issueConfigDrawerTargetExt2">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="issueConfigDrawerTargetExt2Remark">Remarks</label>
+                                                <input type="text" id="issueConfigDrawerTargetExt2Remark" class="issue-target-remark-input" placeholder="Remarks" maxlength="500">
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -735,17 +753,17 @@
                                                 <input type="date" id="issueConfigDrawerCompletedDate">
                                             </div>
                                         </div>
+                                        <div class="issue-drawer-history-section" id="issueConfigDrawerHistorySection" style="display:none; border-top: 1px solid #e5e7eb;">
+                                            <div class="issue-drawer-history-header">
+                                                <h3>History</h3>
+                                            </div>
+                                            <div class="issue-history-list issue-history-timeline" id="issueConfigHistoryList"></div>
+                                        </div>
                                         <div class="issue-drawer-actions">
                                             <button type="button" class="btn btn-secondary" id="issueConfigDrawerCancel"><i class="fas fa-times"></i> Cancel</button>
                                             <button type="submit" class="btn btn-primary" id="issueConfigDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
                                         </div>
                                     </form>
-                                    <div class="issue-drawer-history-section" id="issueConfigDrawerHistorySection" style="display:none; border-top: 1px solid #e5e7eb;">
-                                        <div class="issue-drawer-history-header">
-                                            <h3>History</h3>
-                                        </div>
-                                        <div class="issue-history-list" id="issueConfigHistoryList"></div>
-                                    </div>
                                 </aside>
                                 <div class="issue-drawer-backdrop" id="issueConfigHistoryDrawerBackdrop"></div>
                                 <aside class="issue-drawer issue-history-drawer" id="issueConfigHistoryDrawer" aria-hidden="true" aria-labelledby="issueConfigHistoryDrawerTitle">
@@ -755,7 +773,7 @@
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
-                                    <div class="issue-history-list" id="issueConfigHistoryDrawerList"></div>
+                                    <div class="issue-history-list issue-history-timeline" id="issueConfigHistoryDrawerList"></div>
                                 </aside>
                             </div>
 
@@ -1662,7 +1680,7 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=kpi-visibility-20260816"></script>
-    <script src="/js/settings.js?v=issue-board-save-20260817"></script>
+    <script src="/js/settings.js?v=issue-save-locks-20260821"></script>
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">

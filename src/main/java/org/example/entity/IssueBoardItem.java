@@ -38,9 +38,18 @@ public class IssueBoardItem {
 
     private LocalDate targetDate;
 
+    @Column(name = "target_date_remark", length = 500)
+    private String targetDateRemark;
+
     private LocalDate targetDateExtension1;
 
+    @Column(name = "target_date_extension1_remark", length = 500)
+    private String targetDateExtension1Remark;
+
     private LocalDate targetDateExtension2;
+
+    @Column(name = "target_date_extension2_remark", length = 500)
+    private String targetDateExtension2Remark;
 
     private Integer dueDays;
 
@@ -153,6 +162,14 @@ public class IssueBoardItem {
         this.targetDate = targetDate;
     }
 
+    public String getTargetDateRemark() {
+        return targetDateRemark;
+    }
+
+    public void setTargetDateRemark(String targetDateRemark) {
+        this.targetDateRemark = targetDateRemark;
+    }
+
     public LocalDate getTargetDateExtension1() {
         return targetDateExtension1;
     }
@@ -161,12 +178,28 @@ public class IssueBoardItem {
         this.targetDateExtension1 = targetDateExtension1;
     }
 
+    public String getTargetDateExtension1Remark() {
+        return targetDateExtension1Remark;
+    }
+
+    public void setTargetDateExtension1Remark(String targetDateExtension1Remark) {
+        this.targetDateExtension1Remark = targetDateExtension1Remark;
+    }
+
     public LocalDate getTargetDateExtension2() {
         return targetDateExtension2;
     }
 
     public void setTargetDateExtension2(LocalDate targetDateExtension2) {
         this.targetDateExtension2 = targetDateExtension2;
+    }
+
+    public String getTargetDateExtension2Remark() {
+        return targetDateExtension2Remark;
+    }
+
+    public void setTargetDateExtension2Remark(String targetDateExtension2Remark) {
+        this.targetDateExtension2Remark = targetDateExtension2Remark;
     }
 
     public Integer getDueDays() {

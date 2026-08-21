@@ -49,7 +49,33 @@ $(document).ready(function() {
         ]
     };
     const metricSectionOrder = ['people', 'quality', 'service', 'cost'];
+    const systemMetricKeyByFieldBase = {
+        productionProductivity: 'productionProductivity',
+        logisticsProductivity: 'logisticsProductivity',
+        kpiSensoryScore: 'kpiSensoryScore',
+        kpiConsumerComplaintUnitsMhl: 'kpiConsumerComplaintUnitsMhl',
+        kpiCustomerComplaintUnitsMhl: 'kpiCustomerComplaintUnitsMhl',
+        noOfBrews: 'noOfBrews',
+        dispatch: 'dispatch',
+        processConfirmationBp: 'processConfirmationBp',
+        processConfirmationPack: 'processConfirmationPack',
+        kpiOee: 'kpiOee',
+        kpiBeerLoss: 'kpiBeerLoss',
+        kpiWurHlHl: 'kpiWurHlHl',
+        kpiElectricityKwhHl: 'kpiElectricityKwhHl',
+        kpiEnergyKwhHl: 'kpiEnergyKwhHl',
+        kpiRgbRatio: 'kpiRgbRatio'
+    };
+    const metricFieldSuffixLabels = {
+        FtdActual: 'FTD Actual',
+        FtdTarget: 'FTD Target',
+        MtdActual: 'MTD Actual',
+        MtdTarget: 'MTD Target',
+        YtdActual: 'YTD Actual',
+        YtdTarget: 'YTD Target'
+    };
     let customMetricDefinitions = [];
+    let systemMetricDefinitions = [];
     let kpiRenameDraftItems = [];
     let kpiRenameDraftCounter = 0;
     let metricSections = {};
@@ -1110,10 +1136,10 @@ $(document).ready(function() {
         const actualSectionData = {};
         const targetSectionData = {};
 
-        const actualBuild = buildMetricsSectionValues(groups.actual || [], actualSectionData, sectionLabel);
+        const actualBuild = buildMetricsSectionValues(groups.actual || [], actualSectionData, sectionLabel, true);
         if (!actualBuild.ok) return actualBuild;
 
-        const targetBuild = buildMetricsSectionValues(groups.target || [], targetSectionData, sectionLabel);
+        const targetBuild = buildMetricsSectionValues(groups.target || [], targetSectionData, sectionLabel, false);
         if (!targetBuild.ok) return targetBuild;
 
         if (Object.keys(actualSectionData).length === 0 && Object.keys(targetSectionData).length === 0) {
@@ -1161,12 +1187,12 @@ $(document).ready(function() {
             payload.actual[section] = {};
             payload.target[section] = {};
 
-            const actualBuild = buildMetricsSectionValues(metricFieldGroups[section].actual || [], payload.actual[section], sectionLabel);
+            const actualBuild = buildMetricsSectionValues(metricFieldGroups[section].actual || [], payload.actual[section], sectionLabel, true);
             if (!actualBuild.ok) {
                 return actualBuild;
             }
 
-            const targetBuild = buildMetricsSectionValues(metricFieldGroups[section].target || [], payload.target[section], sectionLabel);
+            const targetBuild = buildMetricsSectionValues(metricFieldGroups[section].target || [], payload.target[section], sectionLabel, false);
             if (!targetBuild.ok) {
                 return targetBuild;
             }
@@ -1189,10 +1215,13 @@ $(document).ready(function() {
         };
     }
 
-    function buildMetricsSectionValues(fields, targetSection, sectionLabel) {
+    function buildMetricsSectionValues(fields, targetSection, sectionLabel, includeBlankValues) {
         for (const field of fields) {
             const rawValue = $('#' + field).val();
             if (rawValue === null || rawValue === undefined || rawValue === '') {
+                if (includeBlankValues) {
+                    targetSection[field] = '';
+                }
                 continue;
             }
 
@@ -1886,27 +1915,27 @@ function regroupRows($container){
 
     const kpiRenameDefaultMetrics = {
         people: [
-            { label: 'Production Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'productionProductivityChart' },
-            { label: 'Logistics Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'logisticsProductivityChart' }
+            { metricKey: 'productionProductivity', label: 'Production Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'productionProductivityChart' },
+            { metricKey: 'logisticsProductivity', label: 'Logistics Productivity', unit: 'HL/FTE', decimals: 0, chartId: 'logisticsProductivityChart' }
         ],
         quality: [
-            { label: 'Internal Sensory Score', unit: 'HL/HI', decimals: 1, chartId: 'qualitySensoryChart' },
-            { label: 'Consumer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'consumerComplaintChart' },
-            { label: 'Customer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'customerComplaintChart' }
+            { metricKey: 'kpiSensoryScore', label: 'Internal Sensory Score', unit: 'HL/HI', decimals: 1, chartId: 'qualitySensoryChart' },
+            { metricKey: 'kpiConsumerComplaintUnitsMhl', label: 'Consumer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'consumerComplaintChart' },
+            { metricKey: 'kpiCustomerComplaintUnitsMhl', label: 'Customer Complaint', unit: 'Units/MHL', decimals: 0, chartId: 'customerComplaintChart' }
         ],
         service: [
-            { label: 'No. of Brews & Volume', unit: 'Nos & HL', decimals: 0 },
-            { label: 'Dispatch', unit: 'No. of Cases & HL', decimals: 0 },
-            { label: 'Process Confirmation - BP', unit: '%', decimals: 0, chartId: 'processConfirmationBpChart' },
-            { label: 'Process Confirmation - Pack', unit: '%', decimals: 0, chartId: 'processConfirmationPackChart' },
-            { label: 'OEE', unit: '%', decimals: 1, chartId: 'serviceOeeChart' },
-            { label: 'Beer Loss', unit: 'HL', decimals: 2, chartId: 'serviceBeerLossChart' },
-            { label: 'WUR', unit: 'HL/HI', decimals: 2, chartId: 'serviceWurChart' }
+            { metricKey: 'noOfBrews', label: 'No. of Brews & Volume', unit: 'Nos & HL', decimals: 0, chartId: 'noOfBrewsChart' },
+            { metricKey: 'dispatch', label: 'Dispatch', unit: 'No. of Cases & HL', decimals: 0, chartId: 'dispatchChart' },
+            { metricKey: 'processConfirmationBp', label: 'Process Confirmation - BP', unit: '%', decimals: 0, chartId: 'processConfirmationBpChart' },
+            { metricKey: 'processConfirmationPack', label: 'Process Confirmation - Pack', unit: '%', decimals: 0, chartId: 'processConfirmationPackChart' },
+            { metricKey: 'kpiOee', label: 'OEE', unit: '%', decimals: 1, chartId: 'serviceOeeChart' },
+            { metricKey: 'kpiBeerLoss', label: 'Beer Loss', unit: 'HL', decimals: 2, chartId: 'serviceBeerLossChart' },
+            { metricKey: 'kpiWurHlHl', label: 'WUR', unit: 'HL/HI', decimals: 2, chartId: 'serviceWurChart' }
         ],
         cost: [
-            { label: 'Electricity', unit: 'Kwh/HI', decimals: 1, chartId: 'costElectricityChart' },
-            { label: 'Energy', unit: 'Kwh/HI', decimals: 2, chartId: 'costEnergyChart' },
-            { label: 'RGB Ratio', unit: '-', decimals: 0, chartId: 'costRgbChart' }
+            { metricKey: 'kpiElectricityKwhHl', label: 'Electricity', unit: 'Kwh/HI', decimals: 1, chartId: 'costElectricityChart' },
+            { metricKey: 'kpiEnergyKwhHl', label: 'Energy', unit: 'Kwh/HI', decimals: 2, chartId: 'costEnergyChart' },
+            { metricKey: 'kpiRgbRatio', label: 'RGB Ratio', unit: '-', decimals: 0, chartId: 'costRgbChart' }
         ]
     };
 
@@ -1966,14 +1995,49 @@ function regroupRows($container){
             '</div>';
     }
 
+    function getSystemMetricDefinition(metricKey) {
+        return systemMetricDefinitions.find(function(definition) {
+            return String(definition.metricKey || '').toLowerCase() === String(metricKey || '').toLowerCase();
+        }) || null;
+    }
+
+    function getConfiguredSystemMetrics(section) {
+        return (kpiRenameDefaultMetrics[section] || []).map(function(metric) {
+            const savedDefinition = getSystemMetricDefinition(metric.metricKey);
+            return Object.assign({}, metric, {
+                label: savedDefinition && savedDefinition.label ? savedDefinition.label : metric.label,
+                unit: savedDefinition && savedDefinition.unit ? savedDefinition.unit : metric.unit,
+                decimals: Number.isFinite(Number(savedDefinition && savedDefinition.decimals)) ? Number(savedDefinition.decimals) : metric.decimals
+            });
+        });
+    }
+
+    function applySystemMetricLabelsToMetricsForm() {
+        Object.keys(systemMetricKeyByFieldBase).forEach(function(fieldBase) {
+            const savedDefinition = getSystemMetricDefinition(systemMetricKeyByFieldBase[fieldBase]);
+            const label = savedDefinition && savedDefinition.label ? savedDefinition.label : '';
+            if (!label) {
+                return;
+            }
+
+            Object.keys(metricFieldSuffixLabels).forEach(function(suffix) {
+                const fieldId = fieldBase + suffix;
+                const labelEl = document.querySelector('label[for="' + fieldId + '"]');
+                if (labelEl) {
+                    labelEl.textContent = label + ' - ' + metricFieldSuffixLabels[suffix];
+                }
+            });
+        });
+    }
+
     function buildKpiRenameDefaultRow(metric, section) {
         const rowKey = 'default_' + section + '_' + (metric.chartId || metric.label).replace(/[^a-zA-Z0-9_-]/g, '_');
         const graphVisible = metric.chartId ? isKpiChartVisible(metric.chartId) : false;
         const tableVisible = isKpiTableVisible(rowKey);
         return '' +
-            '<tr class="kpi-rename-row kpi-rename-row-default" data-row-key="' + escapeAttributeValue(rowKey) + '">' +
-                '<td><input type="text" value="' + escapeAttributeValue(metric.label) + '" readonly></td>' +
-                '<td><input type="text" value="' + escapeAttributeValue(metric.unit || '-') + '" readonly></td>' +
+            '<tr class="kpi-rename-row kpi-rename-row-default" data-row-key="' + escapeAttributeValue(rowKey) + '" data-metric-key="' + escapeAttributeValue(metric.metricKey || '') + '" data-section="' + escapeAttributeValue(section.toUpperCase()) + '">' +
+                '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label) + '"></td>' +
+                '<td><input type="text" class="kpi-rename-unit" value="' + escapeAttributeValue(metric.unit || '-') + '" readonly><input type="hidden" class="kpi-rename-decimals" value="' + escapeAttributeValue(metric.decimals) + '"></td>' +
                 '<td>' + (metric.chartId ? buildKpiCrossColorInlineHtml(metric.chartId, rowKey) : '<span class="kpi-rename-muted">No chart</span>') + '</td>' +
                 '<td>' + buildKpiRenameVisibilityControl('graph', graphVisible, rowKey, '', metric.chartId ? '' : 'No graph') + '</td>' +
                 '<td>' + buildKpiRenameVisibilityControl('table', tableVisible, rowKey, '', '') + '</td>' +
@@ -2024,7 +2088,7 @@ function regroupRows($container){
         }
 
         const section = getActiveKpiRenameSection();
-        const defaults = kpiRenameDefaultMetrics[section] || [];
+        const defaults = getConfiguredSystemMetrics(section);
         const customRows = customMetricDefinitions.filter(function(definition) {
             return normalizeMetricSection(definition.section) === section;
         });
@@ -2079,7 +2143,7 @@ function regroupRows($container){
     }
 
     function loadKpiRenameDashboard() {
-        loadCustomMetricDefinitions().always(renderKpiRenameDashboard);
+        $.when(loadSystemMetricDefinitions(), loadCustomMetricDefinitions()).always(renderKpiRenameDashboard);
     }
 
     $('#kpiRenameTabs').on('click', '.metrics-tab', function() {
@@ -2139,6 +2203,48 @@ function regroupRows($container){
         let savedColorCount = 0;
         let hasValidationError = false;
         const $btn = $(this);
+
+        const systemPayloads = [];
+        let systemChangeCount = 0;
+        $('#kpiRenameMetricList .kpi-rename-row-default').each(function() {
+            const $row = $(this);
+            const label = ($row.find('.kpi-rename-label').val() || '').trim();
+            const metricKey = String($row.data('metric-key') || '');
+            const unit = ($row.find('.kpi-rename-unit').val() || '-').trim();
+            const decimals = Number($row.find('.kpi-rename-decimals').val() || '0');
+
+            if (!label) {
+                hasValidationError = true;
+                $row.find('.kpi-rename-label').addClass('field-invalid').focus();
+                return false;
+            }
+
+            if (metricKey) {
+                const savedDefinition = getSystemMetricDefinition(metricKey);
+                const savedLabel = savedDefinition && savedDefinition.label ? savedDefinition.label : '';
+                const savedUnit = savedDefinition && savedDefinition.unit ? savedDefinition.unit : '';
+                const savedDecimals = savedDefinition && Number.isFinite(Number(savedDefinition.decimals)) ? Number(savedDefinition.decimals) : decimals;
+                if (label !== savedLabel || (unit || '-') !== (savedUnit || '-') || decimals !== savedDecimals) {
+                    systemChangeCount += 1;
+                }
+                systemPayloads.push({
+                    metricKey: metricKey,
+                    section: section.toUpperCase(),
+                    label: label,
+                    unit: unit || '-',
+                    decimals: decimals
+                });
+            }
+        });
+
+        if (systemPayloads.length > 0) {
+            requests.push($.ajax({
+                url: '/api/metrics/system-definitions',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(systemPayloads)
+            }));
+        }
 
         $('#kpiRenameMetricList .kpi-rename-row-custom').each(function() {
             const $row = $(this);
@@ -2219,10 +2325,7 @@ function regroupRows($container){
             kpiRenameDraftItems = [];
             localStorage.setItem('kpi-dashboard-update', Date.now());
             loadKpiRenameDashboard();
-            const itemPart = requests.length ? requests.length + ' KPI item change(s)' : '';
-            const colorPart = savedColorCount ? savedColorCount + ' alert color setting(s)' : '';
-            const detail = [itemPart, colorPart].filter(Boolean).join(' and ');
-            showMessage('kpiRenameMessage', detail ? detail + ' saved.' : 'KPI dashboard configuration saved.', 'success');
+            showKpiRenameSaveSummary(systemChangeCount, savedColorCount);
         }).fail(function(xhr) {
             showMessage('kpiRenameMessage', (xhr && xhr.responseText) || 'Unable to save KPI Configuration changes.', 'error');
         }).always(function() {
@@ -2277,10 +2380,19 @@ function regroupRows($container){
 
         if ($row.hasClass('kpi-rename-row-custom')) {
             $row.find(type === 'graph' ? '.kpi-rename-graph-visible' : '.kpi-rename-table-visible').val(nowVisible ? 'true' : 'false');
+            if (type === 'graph') {
+                const customChartId = $row.find('.kpi-rename-color-radio').first().data('chart-id');
+                if (customChartId) {
+                    localStorage.setItem(getKpiChartVisibilityKey(customChartId), nowVisible ? 'visible' : 'hidden');
+                }
+            } else {
+                localStorage.setItem(getKpiTableVisibilityKey(rowKey), nowVisible ? 'visible' : 'hidden');
+            }
             $btn.attr('data-visible', nowVisible ? 'true' : 'false')
                 .toggleClass('is-hidden', !nowVisible)
                 .attr('title', (nowVisible ? 'Hide ' : 'Show ') + type)
                 .html('<i class="fas ' + (nowVisible ? 'fa-eye-slash' : 'fa-eye') + '"></i><span>' + (nowVisible ? 'Hide' : 'Show') + '</span>');
+            updateKPIDashboard();
             $('#kpiRenameMessage')
                 .removeClass('error success')
                 .text('Changes pending. Click Save to apply.')
@@ -2365,6 +2477,20 @@ function regroupRows($container){
         });
     }
 
+    function loadSystemMetricDefinitions() {
+        return $.ajax({
+            url: '/api/metrics/system-definitions',
+            type: 'GET'
+        }).done(function(data) {
+            systemMetricDefinitions = Array.isArray(data) ? data : [];
+            applySystemMetricLabelsToMetricsForm();
+            renderKpiRenameDashboard();
+        }).fail(function() {
+            systemMetricDefinitions = [];
+            renderKpiRenameDashboard();
+        });
+    }
+
     function setMetricsSaveLoading($btn, isLoading) {
         if (isLoading) {
             $btn.prop('disabled', true);
@@ -2410,10 +2536,9 @@ function regroupRows($container){
         if (pendingIssueDate) {
             sessionStorage.removeItem('issue-board-open-date');
         }
-        const rememberedIssueDate = localStorage.getItem('issue-board-config-date') || '';
-        const initialIssueDate = pendingIssueDate || rememberedIssueDate || today;
+        const initialIssueDate = pendingIssueDate || today;
         dateInput.val(initialIssueDate);
-        dateInput.attr('data-load-latest-on-open', pendingIssueDate || rememberedIssueDate ? '0' : '1');
+        dateInput.attr('data-load-latest-on-open', pendingIssueDate ? '0' : '1');
 
         applyIssueBoardDateLimits();
 
@@ -2801,15 +2926,26 @@ function regroupRows($container){
             .toggleClass('ib-date-struck', baseLocked)
             .prop('disabled', rowLocked || readonlySection || baseLocked)
             .attr('title', baseLocked ? 'Original target date is locked because a revised target date is set' : 'Original target date');
+        $row.find('.ib-target-date-base-remark')
+            .removeClass('ib-date-struck')
+            .prop('disabled', rowLocked || readonlySection)
+            .attr('title', baseLocked ? 'Original target date remarks' : 'Original target date remarks');
 
         $row.find('.ib-target-date-extension-1')
             .toggleClass('ib-date-struck', firstExtensionLocked)
             .prop('disabled', rowLocked || readonlySection || firstExtensionLocked)
             .attr('title', firstExtensionLocked ? 'First revised target date is locked because a second revision is set' : 'Extended target date 1');
+        $row.find('.ib-target-date-extension-1-remark')
+            .removeClass('ib-date-struck')
+            .prop('disabled', rowLocked || readonlySection)
+            .attr('title', firstExtensionLocked ? 'First revised target date remarks' : 'Extended target date 1 remarks');
 
         $row.find('.ib-target-date-extension-2')
             .prop('disabled', rowLocked || readonlySection)
             .attr('title', 'Extended target date 2');
+        $row.find('.ib-target-date-extension-2-remark')
+            .prop('disabled', rowLocked || readonlySection)
+            .attr('title', 'Extended target date 2 remarks');
     }
 
     function updateRowDueDays($row) {
@@ -2949,13 +3085,95 @@ function regroupRows($container){
         setIssueBoardSaveState();
     }
 
+    function createIssueTargetDateHiddenFields(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark) {
+        return '' +
+            '<input type="hidden" class="ib-target-date ib-target-date-base" value="' + escapeAttributeValue(targetDate || '') + '">' +
+            '<input type="hidden" class="ib-target-date-remark ib-target-date-base-remark" value="' + escapeAttributeValue(targetDateRemark || '') + '">' +
+            '<input type="hidden" class="ib-target-date-extension ib-target-date-extension-1" value="' + escapeAttributeValue(targetDateExtension1 || '') + '">' +
+            '<input type="hidden" class="ib-target-date-remark ib-target-date-extension-1-remark" value="' + escapeAttributeValue(targetDateExtension1Remark || '') + '">' +
+            '<input type="hidden" class="ib-target-date-extension ib-target-date-extension-2" value="' + escapeAttributeValue(targetDateExtension2 || '') + '">' +
+            '<input type="hidden" class="ib-target-date-remark ib-target-date-extension-2-remark" value="' + escapeAttributeValue(targetDateExtension2Remark || '') + '">';
+    }
+
+    function formatIssueTableDateForDisplay(value) {
+        if (!value) {
+            return '-';
+        }
+        const date = new Date(value + 'T00:00:00');
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return date.toLocaleDateString('en-GB');
+    }
+
+    function createIssueTargetDateDisplaySlot(label, dateValue, remarkValue, superseded) {
+        const dateText = dateValue ? formatIssueTableDateForDisplay(dateValue) : '-';
+        const remarkText = remarkValue ? remarkValue : 'No remarks';
+        return '' +
+            '<div class="ib-target-date-entry ' + (superseded ? 'ib-target-date-old' : 'ib-target-date-current') + '">' +
+            '<div class="ib-target-date-mainline">' +
+            '<span class="ib-target-date-label">' + escapeHtml(label) + '</span>' +
+            '<span class="ib-target-date-value">' + escapeHtml(dateText) + '</span>' +
+            '</div>' +
+            '<div class="ib-target-date-display-remark"><strong>Remarks:</strong> ' + escapeHtml(remarkText) + '</div>' +
+            '</div>';
+    }
+
+    function createIssueTargetDateDisplay(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark) {
+        const slots = [
+            { label: 'Target', date: targetDate, remark: targetDateRemark },
+            { label: 'Ext. 1', date: targetDateExtension1, remark: targetDateExtension1Remark },
+            { label: 'Ext. 2', date: targetDateExtension2, remark: targetDateExtension2Remark }
+        ];
+        const visibleSlots = slots.map(function(slot, index) {
+            return Object.assign({ originalIndex: index }, slot);
+        }).filter(function(slot) {
+            return slot.originalIndex === 0 || !!slot.date;
+        });
+        return '<div class="ib-target-date-stack ib-target-date-display-stack">' + visibleSlots.map(function(slot) {
+            const superseded = !!slot.date && slots.slice(slot.originalIndex + 1).some(function(later) { return !!later.date; });
+            return createIssueTargetDateDisplaySlot(slot.label, slot.date, slot.remark, superseded);
+        }).join('') + '</div>';
+    }
+
+    function createIssueTargetDateEditorSlot(label, dateClass, dateValue, remarkClass, remarkValue, remarkPlaceholder, dateAria, remarkAria) {
+        return '' +
+            '<div class="ib-target-date-entry">' +
+            '<div class="ib-target-date-mainline">' +
+            '<span class="ib-target-date-label">' + escapeHtml(label) + '</span>' +
+            '<input type="date" class="' + dateClass + '" value="' + escapeAttributeValue(dateValue || '') + '" aria-label="' + escapeAttributeValue(dateAria) + '">' +
+            '</div>' +
+            '<div class="ib-target-date-remark-line">' +
+            '<span class="ib-target-date-remark-prefix">Remarks:</span>' +
+            '<input type="text" class="' + remarkClass + '" value="' + escapeAttributeValue(remarkValue || '') + '" maxlength="500" placeholder="' + escapeAttributeValue(remarkPlaceholder) + '" aria-label="' + escapeAttributeValue(remarkAria) + '">' +
+            '</div>' +
+            '</div>';
+    }
+
+    function createIssueTargetDateEditor(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark) {
+        return '' +
+            '<div class="ib-target-date-stack">' +
+            createIssueTargetDateEditorSlot('Target', 'ib-target-date ib-target-date-base', targetDate, 'ib-target-date-remark ib-target-date-base-remark', targetDateRemark, 'No remarks', 'Original target date', 'Original target date remarks') +
+            createIssueTargetDateEditorSlot('Ext. 1', 'ib-target-date-extension ib-target-date-extension-1', targetDateExtension1, 'ib-target-date-remark ib-target-date-extension-1-remark', targetDateExtension1Remark, 'No remarks', 'Target date extension 1', 'Target date extension 1 remarks') +
+            createIssueTargetDateEditorSlot('Ext. 2', 'ib-target-date-extension ib-target-date-extension-2', targetDateExtension2, 'ib-target-date-remark ib-target-date-extension-2-remark', targetDateExtension2Remark, 'No remarks', 'Target date extension 2', 'Target date extension 2 remarks') +
+            '</div>';
+    }
+
+    function createIssueTargetDateTableCell(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark) {
+        return createIssueTargetDateHiddenFields(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark) +
+            createIssueTargetDateDisplay(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark);
+    }
+
     function createIssueBoardConfigRow(item) {
         const safeItem = item || {};
         const status = normalizeIssueStatus(safeItem.status);
         const completedDate = safeItem.completedDate || '';
         const targetDate = safeItem.targetDate || '';
+        const targetDateRemark = safeItem.targetDateRemark || '';
         const targetDateExtension1 = safeItem.targetDateExtension1 || '';
+        const targetDateExtension1Remark = safeItem.targetDateExtension1Remark || '';
         const targetDateExtension2 = safeItem.targetDateExtension2 || '';
+        const targetDateExtension2Remark = safeItem.targetDateExtension2Remark || '';
         const effectiveTargetDate = targetDateExtension2 || targetDateExtension1 || targetDate;
         const dueDays = calculateDueDaysFromTarget(effectiveTargetDate);
         const textCell = function(className, value, placeholder) {
@@ -2973,13 +3191,7 @@ function regroupRows($container){
             textCell('ib-root-cause', safeItem.rootCause, 'Root cause') +
             textCell('ib-actions', safeItem.actions, 'Action plan') +
             textCell('ib-responsible', safeItem.responsible, 'Responsible') +
-            '<td class="ib-target-date-cell">' +
-            '<div class="ib-target-date-stack">' +
-            '<input type="date" class="ib-target-date ib-target-date-base" value="' + escapeAttributeValue(targetDate) + '" aria-label="Original target date">' +
-            '<input type="date" class="ib-target-date-extension ib-target-date-extension-1" value="' + escapeAttributeValue(targetDateExtension1) + '" aria-label="Target date extension 1">' +
-            '<input type="date" class="ib-target-date-extension ib-target-date-extension-2" value="' + escapeAttributeValue(targetDateExtension2) + '" aria-label="Target date extension 2">' +
-            '</div>' +
-            '</td>' +
+            '<td class="ib-target-date-cell">' + createIssueTargetDateTableCell(targetDate, targetDateRemark, targetDateExtension1, targetDateExtension1Remark, targetDateExtension2, targetDateExtension2Remark) + '</td>' +
             '<td><span class="ib-cell-text ib-due-days-display">' + escapeHtml(dueDays === '' ? '-' : dueDays) + '</span><input type="hidden" class="ib-due-days" value="' + escapeAttributeValue(dueDays) + '"></td>' +
             '<td class="ib-status-cell"><div class="ib-status-wrap"><div class="ib-progress-row"><div class="ib-pdca-circle" aria-hidden="true" style="--pdca-progress:0" data-stage="-"><span class="ib-pdca-quarter ib-pdca-p">P</span><span class="ib-pdca-quarter ib-pdca-d">D</span><span class="ib-pdca-quarter ib-pdca-c">C</span><span class="ib-pdca-quarter ib-pdca-a">A</span></div></div>' +
             '<select class="ib-status" aria-label="Issue progress status" hidden><option value="0%" ' + (status === '0%' ? 'selected' : '') + '>-</option><option value="25%" ' + (status === '25%' ? 'selected' : '') + '>P</option><option value="50%" ' + (status === '50%' ? 'selected' : '') + '>D</option><option value="75%" ' + (status === '75%' ? 'selected' : '') + '>C</option><option value="100%" ' + (status === '100%' ? 'selected' : '') + '>A</option></select></div></td>' +
@@ -3016,8 +3228,11 @@ function regroupRows($container){
             actions: $row.find('.ib-actions').val() || '',
             responsible: $row.find('.ib-responsible').val() || '',
             targetDate: $row.find('.ib-target-date-base').val() || '',
+            targetDateRemark: $row.find('.ib-target-date-base-remark').val() || '',
             targetDateExtension1: $row.find('.ib-target-date-extension-1').val() || '',
+            targetDateExtension1Remark: $row.find('.ib-target-date-extension-1-remark').val() || '',
             targetDateExtension2: $row.find('.ib-target-date-extension-2').val() || '',
+            targetDateExtension2Remark: $row.find('.ib-target-date-extension-2-remark').val() || '',
             status: $row.find('.ib-status').val() || '0%',
             completedDate: $row.find('.ib-completed-date').val() || ''
         };
@@ -3046,10 +3261,14 @@ function regroupRows($container){
         $row.find('.ib-actions-display').text(safe.actions || '-');
         $row.find('.ib-responsible').val(safe.responsible || '');
         $row.find('.ib-responsible-display').text(safe.responsible || '-');
-        $row.find('.ib-target-date-base').val(safe.targetDate || '');
-        $row.find('.ib-target-date-extension-1').val(safe.targetDateExtension1 || '');
-        $row.find('.ib-target-date-extension-2').val(safe.targetDateExtension2 || '');
-        $row.find('.ib-target-date-display').text(effectiveTarget || '-');
+        $row.find('.ib-target-date-cell').html(createIssueTargetDateTableCell(
+            safe.targetDate || '',
+            safe.targetDateRemark || '',
+            safe.targetDateExtension1 || '',
+            safe.targetDateExtension1Remark || '',
+            safe.targetDateExtension2 || '',
+            safe.targetDateExtension2Remark || ''
+        ));
         $row.find('.ib-due-days').val(dueDays);
         $row.find('.ib-due-days-display').text(dueDays === '' ? '-' : dueDays);
         $row.find('.ib-status').val(status);
@@ -3064,6 +3283,7 @@ function regroupRows($container){
 
     function fillIssueConfigDrawer(data, rowIndex) {
         const safe = data || {};
+        const isExistingIssue = !!safe.id;
         $('#issueConfigDrawerRowIndex').val(rowIndex === null || rowIndex === undefined ? '' : rowIndex);
         $('#issueConfigDrawerTitle').text(rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Edit Issue');
         $('#issueConfigDrawerSave').html('<i class="fas fa-check"></i> ' + (rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Update Issue'));
@@ -3072,8 +3292,24 @@ function regroupRows($container){
         $('#issueConfigDrawerOwner').val(safe.ownerName || '');
         $('#issueConfigDrawerIssueDate').val(safe.issueDate || $('#issueBoardConfigDate').val() || getTodayDateString());
         $('#issueConfigDrawerTargetDate').val(safe.targetDate || '');
+        $('#issueConfigDrawerTargetDateRemark').val(safe.targetDateRemark || '');
         $('#issueConfigDrawerTargetExt1').val(safe.targetDateExtension1 || '');
+        $('#issueConfigDrawerTargetExt1Remark').val(safe.targetDateExtension1Remark || '');
         $('#issueConfigDrawerTargetExt2').val(safe.targetDateExtension2 || '');
+        $('#issueConfigDrawerTargetExt2Remark').val(safe.targetDateExtension2Remark || '');
+        [
+            { date: '#issueConfigDrawerTargetDate', remark: '#issueConfigDrawerTargetDateRemark', dateValue: safe.targetDate },
+            { date: '#issueConfigDrawerTargetExt1', remark: '#issueConfigDrawerTargetExt1Remark', dateValue: safe.targetDateExtension1 },
+            { date: '#issueConfigDrawerTargetExt2', remark: '#issueConfigDrawerTargetExt2Remark', dateValue: safe.targetDateExtension2 }
+        ].forEach(function(pair) {
+            const locked = isExistingIssue && !!pair.dateValue;
+            $(pair.date)
+                .prop('disabled', locked)
+                .attr('title', locked ? 'Saved target date' : 'Enter target date');
+            $(pair.remark)
+                .prop('disabled', locked)
+                .attr('title', locked ? 'Saved target date remarks' : 'Enter remarks for this target date');
+        });
         $('#issueConfigDrawerRootCause').val(safe.rootCause || '');
         $('#issueConfigDrawerActions').val(safe.actions || '');
         $('#issueConfigDrawerResponsible').val(safe.responsible || '');
@@ -3126,11 +3362,10 @@ function regroupRows($container){
     }
 
     function buildIssueConfigHistoryDescription(entry) {
-        const editor = entry.editedBy || 'User';
         const field = entry.fieldName || 'Field';
         const oldVal = formatIssueConfigHistoryValueForDisplay(entry.oldValue);
         const newVal = formatIssueConfigHistoryValueForDisplay(entry.newValue);
-        return editor + ' changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
+        return 'Changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
     }
 
     function renderIssueConfigHistory(entries, targetSelector) {
@@ -3200,6 +3435,26 @@ function regroupRows($container){
         $('#issueConfigDrawerDueDays').val(calculateDueDaysFromTarget(effectiveTarget));
     }
 
+    function validateIssueTargetRemarks(pairs) {
+        let valid = true;
+        pairs.forEach(function(pair) {
+            const $date = $(pair.date);
+            const $remark = $(pair.remark);
+            if ($date.prop('disabled')) {
+                $remark.removeClass('ib-invalid');
+                return;
+            }
+            const hasDate = !!($date.val() || '').trim();
+            const hasRemark = !!($remark.val() || '').trim();
+            $remark.toggleClass('ib-invalid', hasDate && !hasRemark);
+            if (hasDate && !hasRemark && valid) {
+                $remark.trigger('focus');
+                valid = false;
+            }
+        });
+        return valid;
+    }
+
     $('#issueBoardConfigTableBody').on('click', '.issue-edit', function() {
         openIssueConfigDrawer($(this).closest('tr'));
     });
@@ -3234,6 +3489,9 @@ function regroupRows($container){
     });
 
     $('#issueConfigDrawerTargetDate, #issueConfigDrawerTargetExt1, #issueConfigDrawerTargetExt2').on('change input', updateIssueConfigDrawerDueDays);
+    $('#issueConfigDrawerTargetDateRemark, #issueConfigDrawerTargetExt1Remark, #issueConfigDrawerTargetExt2Remark').on('input', function() {
+        $(this).removeClass('ib-invalid ib-date-struck');
+    });
 
     $('#issueConfigDrawerForm').on('submit', function(event) {
         event.preventDefault();
@@ -3254,6 +3512,14 @@ function regroupRows($container){
             return;
         }
 
+        if (!validateIssueTargetRemarks([
+            { date: '#issueConfigDrawerTargetExt1', remark: '#issueConfigDrawerTargetExt1Remark' },
+            { date: '#issueConfigDrawerTargetExt2', remark: '#issueConfigDrawerTargetExt2Remark' }
+        ])) {
+            showIssueBoardPopup('Remarks are required only for the extension target date entered.');
+            return;
+        }
+
         const payload = {
             problem: ($('#issueConfigDrawerProblem').val() || '').trim(),
             priority: $('#issueConfigDrawerPriority').val() || '',
@@ -3263,14 +3529,60 @@ function regroupRows($container){
             actions: ($('#issueConfigDrawerActions').val() || '').trim(),
             responsible: match && match.username ? match.username : responsibleValue,
             targetDate: $('#issueConfigDrawerTargetDate').val() || '',
+            targetDateRemark: ($('#issueConfigDrawerTargetDateRemark').val() || '').trim(),
             targetDateExtension1: $('#issueConfigDrawerTargetExt1').val() || '',
+            targetDateExtension1Remark: $('#issueConfigDrawerTargetExt1').val() ? (($('#issueConfigDrawerTargetExt1Remark').val() || '').trim()) : '',
             targetDateExtension2: $('#issueConfigDrawerTargetExt2').val() || '',
+            targetDateExtension2Remark: $('#issueConfigDrawerTargetExt2').val() ? (($('#issueConfigDrawerTargetExt2Remark').val() || '').trim()) : '',
             status: statusValue,
             completedDate: $('#issueConfigDrawerCompletedDate').val() || ''
         };
 
         const rowIndexValue = $('#issueConfigDrawerRowIndex').val();
         let $row = rowIndexValue === '' ? $() : $('#issueBoardConfigTableBody tr').eq(Number(rowIndexValue));
+        const existingId = $row.length ? String($row.data('id') || '').trim() : '';
+
+        if (existingId) {
+            const apiPayload = Object.assign({}, payload, {
+                issueDate: payload.issueDate || null,
+                targetDate: payload.targetDate || null,
+                targetDateRemark: payload.targetDateRemark || null,
+                targetDateExtension1: payload.targetDateExtension1 || null,
+                targetDateExtension1Remark: payload.targetDateExtension1Remark || null,
+                targetDateExtension2: payload.targetDateExtension2 || null,
+                targetDateExtension2Remark: payload.targetDateExtension2Remark || null,
+                completedDate: payload.completedDate || null
+            });
+            const $saveBtn = $('#issueConfigDrawerSave');
+            $saveBtn.prop('disabled', true).data('original-html', $saveBtn.html()).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+            $.ajax({
+                url: '/api/issue-board/' + existingId + '/progress',
+                type: 'PATCH',
+                contentType: 'application/json',
+                data: JSON.stringify(apiPayload),
+                success: function(savedItem) {
+                    setIssueConfigRowData($row, savedItem || payload);
+                    bindIssueBoardDeleteButtons();
+                    bindIssueBoardRowEvents();
+                    applyIssueBoardConfigSearch();
+                    setIssueBoardSaveState();
+                    setIssueConfigDrawerOpen(false);
+                    localStorage.setItem('issue-board-update', Date.now());
+                    showIssueBoardToast('Issue updated.', 'success');
+                    loadIssueBoardByDate($('#issueBoardConfigDate').val());
+                },
+                error: function() {
+                    showIssueBoardPopup('Failed to update issue. Please try again.');
+                    showIssueBoardToast('Update failed.', 'error');
+                },
+                complete: function() {
+                    $saveBtn.prop('disabled', false).html($saveBtn.data('original-html') || '<i class="fas fa-check"></i> Update Issue');
+                }
+            });
+            return;
+        }
+
         $('#issueBoardConfigTableBody .placeholder-row').remove();
         if (!$row.length) {
             $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow(payload));
@@ -3284,7 +3596,7 @@ function regroupRows($container){
         applyIssueBoardConfigSearch();
         setIssueBoardSaveState();
         setIssueConfigDrawerOpen(false);
-        showIssueBoardToast('Issue row updated. Click Save Issue Board to persist.', 'success');
+        showIssueBoardToast('New issue added. Click Save Issue Board to persist.', 'success');
     });
 
     function bindIssueBoardDeleteButtons() {
@@ -3410,8 +3722,11 @@ function regroupRows($container){
                 actions: actions,
                 responsible: responsible,
                 targetDate: $(this).find('.ib-target-date-base').val() || null,
+                targetDateRemark: ($(this).find('.ib-target-date-base-remark').val() || '').trim() || null,
                 targetDateExtension1: $(this).find('.ib-target-date-extension-1').val() || null,
+                targetDateExtension1Remark: $(this).find('.ib-target-date-extension-1').val() ? (($(this).find('.ib-target-date-extension-1-remark').val() || '').trim() || null) : null,
                 targetDateExtension2: $(this).find('.ib-target-date-extension-2').val() || null,
+                targetDateExtension2Remark: $(this).find('.ib-target-date-extension-2').val() ? (($(this).find('.ib-target-date-extension-2-remark').val() || '').trim() || null) : null,
                 dueDays: dueParsed === '' ? null : dueParsed,
                 status: statusValue,
                 completedDate: completedDate,
@@ -3428,7 +3743,7 @@ function regroupRows($container){
         });
 
         if (invalid) {
-            showIssueBoardPopup('Problem, Actions, and a valid Responsible user are required for each row.');
+            showIssueBoardPopup('Problem, Actions, and valid Responsible user are required for each row.');
             setIssueBoardSaveState();
             return;
         }
@@ -5163,10 +5478,15 @@ function regroupRows($container){
 
     // ==================== KPI CROSS COLOR ====================
     const KPI_CROSS_CHARTS = [
-        'peopleProductivityChart',
+        'productionProductivityChart',
+        'logisticsProductivityChart',
         'qualitySensoryChart',
-        'serviceProcessConfirmationChart',
-        'qualityComplaintChart',
+        'consumerComplaintChart',
+        'customerComplaintChart',
+        'noOfBrewsChart',
+        'dispatchChart',
+        'processConfirmationBpChart',
+        'processConfirmationPackChart',
         'serviceOeeChart',
         'serviceBeerLossChart',
         'serviceWurChart',
@@ -5558,13 +5878,51 @@ $('#licenseForm').on('submit', function(e) {
     });
 
     // ==================== UTILITY FUNCTIONS ====================
+    function pluralizeKpiSummary(count, singular, plural) {
+        return count + ' ' + (count === 1 ? singular : plural);
+    }
+
+    function showKpiRenameSaveSummary(itemCount, colorCount) {
+        const $msg = $('#kpiRenameMessage');
+        const details = [];
+        if (itemCount > 0) {
+            details.push(pluralizeKpiSummary(itemCount, 'KPI item updated', 'KPI items updated'));
+        }
+        if (colorCount > 0) {
+            details.push(pluralizeKpiSummary(colorCount, 'alert color saved', 'alert colors saved'));
+        }
+        if (details.length === 0) {
+            details.push('Configuration saved');
+        }
+
+        $msg.removeClass('error warning info').addClass('success kpi-save-summary-message');
+        $msg.html(
+            '<div class="message-summary-content">' +
+                '<div class="message-summary-icon"><i class="fas fa-check"></i></div>' +
+                '<div class="message-summary-copy">' +
+                    '<strong>KPI configuration saved</strong>' +
+                    '<span>Dashboard and table labels will refresh automatically.</span>' +
+                    '<div class="message-summary-tags">' +
+                        details.map(function(detail) {
+                            return '<span>' + escapeHtml(detail) + '</span>';
+                        }).join('') +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        );
+        $msg.addClass('show');
+        setTimeout(function() {
+            $msg.removeClass('show');
+        }, 6000);
+    }
+
     function showMessage(elementId, message, type) {
         const $msg = $('#' + elementId);
         if (!message) {
-            $msg.removeClass('show success error').text('');
+            $msg.removeClass('show success error kpi-save-summary-message').text('');
             return;
         }
-        $msg.removeClass('success error').addClass(type);
+        $msg.removeClass('success error kpi-save-summary-message').addClass(type);
         $msg.text(message);
         $msg.addClass('show');
 
@@ -5606,7 +5964,18 @@ $('#licenseForm').on('submit', function(e) {
     }
 
     installReadonlyObserver();
-    loadCustomMetricDefinitions().always(function() {
-        initializeSettingsView();
-    });
+    initializeSettingsView();
+    try {
+        $.when(loadSystemMetricDefinitions(), loadCustomMetricDefinitions()).always(function() {
+            if ($('.form-section.active').length === 0) {
+                initializeSettingsView();
+            }
+            applyReadonlyStateToActiveSection();
+        });
+    } catch (error) {
+        console.error('Metric definition preload failed:', error);
+        if ($('.form-section.active').length === 0) {
+            initializeSettingsView();
+        }
+    }
     });

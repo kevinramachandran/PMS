@@ -1565,18 +1565,69 @@ padding:4px 8px;
 }
 
 #issueBoardConfigTable .ib-target-date-cell {
-    min-width: 170px;
+    min-width: 260px;
+    text-align: left;
 }
 
 #issueBoardConfigTable .ib-target-date-stack {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-width: 150px;
+    gap: 0;
+    min-width: 240px;
+}
+
+#issueBoardConfigTable .ib-target-date-entry {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 0;
+}
+
+#issueBoardConfigTable .ib-target-date-entry:first-child {
+    padding-top: 0;
+}
+
+#issueBoardConfigTable .ib-target-date-entry:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+#issueBoardConfigTable .ib-target-date-mainline,
+#issueBoardConfigTable .ib-target-date-remark-line {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+}
+
+#issueBoardConfigTable .ib-target-date-remark-line {
+    margin-top: 5px;
+}
+
+#issueBoardConfigTable .ib-target-date-label {
+    color: #07883a;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+#issueBoardConfigTable .ib-target-date-remark-prefix {
+    color: #111827;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
 }
 
 #issueBoardConfigTable .ib-target-date-stack input {
     width: 100%;
+    min-width: 0;
+}
+
+#issueBoardConfigTable .ib-target-date-remark,
+.issue-target-remark-input {
+    font-size: 12px;
+}
+
+.issue-target-remark-input {
+    margin-top: 6px;
 }
 
 #issueBoardConfigTable .ib-date-struck {
@@ -1709,12 +1760,15 @@ padding:4px 8px;
 }
 
 #form-issue-board.issue-board-enterprise .sticky-save-bar {
-    margin-top: 0;
+    margin-top: 10px;
+    position: static !important;
+    bottom: auto !important;
+    z-index: 1;
 }
 
 #form-issue-board #issueBoardConfigTable {
-    width: max(100%, 1580px);
-    min-width: 1580px;
+    width: max(100%, 1700px);
+    min-width: 1700px;
     table-layout: fixed;
 }
 
@@ -1761,7 +1815,7 @@ padding:4px 8px;
 
 #form-issue-board #issueBoardConfigTable thead th:nth-child(8),
 #form-issue-board #issueBoardConfigTable tbody td:nth-child(8) {
-    width: 180px;
+    width: 300px;
 }
 
 #form-issue-board #issueBoardConfigTable thead th:nth-child(9),
@@ -1804,7 +1858,7 @@ padding:4px 8px;
 }
 
 #form-issue-board #issueBoardConfigTable .ib-target-date-stack {
-    gap: 5px;
+    gap: 0;
 }
 
 #form-issue-board #issueBoardConfigTable .ib-status-wrap {
@@ -1925,7 +1979,7 @@ padding:4px 8px;
     right: 0;
     bottom: 0;
     z-index: 1401;
-    width: min(390px, 100vw);
+    width: min(520px, 100vw);
     height: 100vh;
     height: 100dvh;
     background: #ffffff;
@@ -2015,17 +2069,42 @@ padding:4px 8px;
     gap: 14px;
 }
 
+#form-issue-board .issue-drawer-wide {
+    grid-column: 1 / -1;
+}
+
+#form-issue-board .issue-target-pair-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: end;
+}
+
+#form-issue-board .issue-drawer-form input:disabled,
+#form-issue-board .issue-drawer-form select:disabled,
+#form-issue-board .issue-drawer-form textarea:disabled {
+    background: #f8fafc;
+    color: #64748b;
+}
+
+#form-issue-board .issue-target-remark-input.ib-date-struck {
+    text-decoration: none;
+}
+
 #form-issue-board .issue-drawer-actions {
     position: sticky;
     bottom: 0;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 12px;
     margin-top: auto;
-    padding: 16px 0 0;
+    padding: 16px 22px;
+    margin-left: -22px;
+    margin-right: -22px;
     background: #ffffff;
     border-top: 1px solid #eef2f7;
+    box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
 }
 
 #form-issue-board .issue-drawer-actions .btn {
@@ -2046,6 +2125,108 @@ padding:4px 8px;
 
 #form-issue-board .issue-drawer-actions .btn-primary {
     min-width: 148px;
+}
+
+#form-issue-board .issue-drawer-history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 0 0;
+}
+
+#form-issue-board .issue-drawer-history-header {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+#form-issue-board .issue-drawer-history-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #111827;
+}
+
+#form-issue-board .issue-history-list {
+    overflow-y: auto;
+}
+
+#form-issue-board .issue-history-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 230px;
+    padding: 0 0 0 18px;
+}
+
+#form-issue-board .issue-history-timeline::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: #dbeafe;
+}
+
+#form-issue-board .issue-history-item {
+    position: relative;
+    padding: 11px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+#form-issue-board .issue-history-timeline .issue-history-item::before {
+    content: "";
+    position: absolute;
+    left: -18px;
+    top: 13px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 0 3px #dcfce7;
+}
+
+#form-issue-board .issue-history-meta {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+#form-issue-board .issue-history-meta strong {
+    color: #111827;
+}
+
+#form-issue-board .issue-history-meta span::before {
+    content: "\00b7";
+    margin-right: 6px;
+    color: #9ca3af;
+}
+
+#form-issue-board .issue-history-description {
+    margin: 0;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#form-issue-board .issue-history-description p {
+    margin: 0;
+}
+
+#form-issue-board .issue-history-empty {
+    padding: 20px 0;
+    color: #64748b;
+    font-size: 13px;
+    text-align: center;
 }
 
 #form-issue-board .issue-add-row-btn {
@@ -2126,6 +2307,10 @@ padding:4px 8px;
     #form-training-schedule.issue-board-enterprise .issue-config-table-wrap,
     #form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap {
         max-height: 360px;
+    }
+
+    #form-issue-board .issue-target-pair-row {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -2916,6 +3101,70 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     border-left: 4px solid #3b82f6;
 }
 
+#kpiRenameMessage.kpi-save-summary-message {
+    margin: 18px 0 0;
+    padding: 14px 16px;
+    border: 1px solid #86efac;
+    border-left: 4px solid #16a34a;
+    border-radius: 8px;
+    background: #dcfce7;
+    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.08);
+}
+
+#kpiRenameMessage .message-summary-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+#kpiRenameMessage .message-summary-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 12px;
+}
+
+#kpiRenameMessage .message-summary-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+#kpiRenameMessage .message-summary-copy strong {
+    color: #065f46;
+    font-size: 14px;
+    line-height: 1.25;
+}
+
+#kpiRenameMessage .message-summary-copy > span {
+    color: #047857;
+    font-size: 12px;
+}
+
+#kpiRenameMessage .message-summary-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+#kpiRenameMessage .message-summary-tags span {
+    border: 1px solid #86efac;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #047857;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -3434,6 +3683,65 @@ table select {
 /* Issue board table must NOT use fixed layout — columns have explicit min-widths */
 #issueBoardConfigTable {
     table-layout: auto;
+}
+
+#form-issue-board #issueBoardConfigTable th,
+#form-issue-board #issueBoardConfigTable td {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+#form-issue-board #issueBoardConfigTable tbody td {
+    height: auto;
+    min-height: 0;
+    line-height: 1.35;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-display-cell {
+    vertical-align: middle;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-cell {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-display-stack {
+    min-width: 0;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-entry {
+    padding: 6px 0;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-mainline {
+    grid-template-columns: 52px minmax(0, 1fr);
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-value {
+    color: #111827;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-old .ib-target-date-value {
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-display-remark {
+    margin-left: 60px;
+    margin-top: 3px;
+    color: #4b5563;
+    font-size: 10px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-target-date-display-remark strong {
+    color: #111827;
+    font-weight: 800;
 }
 
 .daily-data-table th,

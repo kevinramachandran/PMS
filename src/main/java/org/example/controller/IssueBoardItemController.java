@@ -63,8 +63,10 @@ public class IssueBoardItemController {
     @PostMapping("/replace/date/{date}")
     public List<IssueBoardItem> replaceByDate(
             @PathVariable String date,
-            @RequestBody List<IssueBoardItem> items) {
-        return service.replaceByBoardDate(LocalDate.parse(date), items);
+            @RequestBody List<IssueBoardItem> items,
+            HttpSession session) {
+        String username = session == null ? null : (String) session.getAttribute("username");
+        return service.replaceByBoardDate(LocalDate.parse(date), items, username);
     }
 
     @PatchMapping("/{id}/progress")

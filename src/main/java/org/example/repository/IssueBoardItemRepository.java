@@ -14,6 +14,8 @@ public interface IssueBoardItemRepository extends JpaRepository<IssueBoardItem, 
 
     List<IssueBoardItem> findByBoardDateOrderByRowOrderAscIdAsc(LocalDate boardDate);
 
+    List<IssueBoardItem> findByBoardDateOrderByUpdatedAtDescIdDesc(LocalDate boardDate);
+
     Optional<IssueBoardItem> findTopByOrderByBoardDateDescIdDesc();
 
     Optional<IssueBoardItem> findTopByOrderByUpdatedAtDescIdDesc();
@@ -29,7 +31,7 @@ public interface IssueBoardItemRepository extends JpaRepository<IssueBoardItem, 
            "WHERE i.targetDate IS NOT NULL " +
            "  AND i.completedDate IS NULL " +
            "  AND LOWER(i.status) NOT IN ('100%', 'closed') " +
-           "ORDER BY i.boardDate DESC, i.rowOrder ASC, i.id ASC")
+           "ORDER BY i.boardDate DESC, i.updatedAt DESC, i.id DESC")
     List<IssueBoardItem> findAllOpenItemsWithTargetDate();
 
     @Query("SELECT i FROM IssueBoardItem i " +
@@ -40,6 +42,6 @@ public interface IssueBoardItemRepository extends JpaRepository<IssueBoardItem, 
            "   OR LOWER(COALESCE(i.ownerName, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
            "   OR LOWER(COALESCE(i.priority, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
            "   OR LOWER(COALESCE(i.status, '')) LIKE LOWER(CONCAT('%', :term, '%')) " +
-           "ORDER BY i.boardDate DESC, i.rowOrder ASC, i.id ASC")
+           "ORDER BY i.boardDate DESC, i.updatedAt DESC, i.id DESC")
     List<IssueBoardItem> searchIssues(@Param("term") String term, Pageable pageable);
 }

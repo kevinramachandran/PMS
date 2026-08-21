@@ -31,22 +31,74 @@
 }
 
 .issue-target-date-stack {
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    line-height: 1.25;
+    align-items: stretch;
+    gap: 0;
+    line-height: 1.3;
+    min-width: 0;
+    text-align: left;
 }
 
 .issue-target-date-old {
-    color: #94a3b8;
-    text-decoration: line-through;
-    font-size: 12px;
+    color: #64748b;
 }
 
 .issue-target-date-current {
     color: #111827;
+}
+
+.issue-target-date-entry {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 0;
+}
+
+.issue-target-date-entry:first-child {
+    padding-top: 0;
+}
+
+.issue-target-date-entry:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.issue-target-date-mainline {
+    display: grid;
+    grid-template-columns: 50px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.issue-target-date-label {
+    color: #07883a;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.issue-target-date-value {
+    color: #111827;
+    font-size: 13px;
     font-weight: 700;
+}
+
+.issue-target-date-old .issue-target-date-value {
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+.issue-target-date-remark {
+    margin-left: 60px;
+    margin-top: 4px;
+    color: #4b5563;
+    font-size: 11px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.issue-target-date-remark strong {
+    color: #111827;
+    font-size: 10px;
 }
 
 .issue-drawer-target-group {
@@ -59,6 +111,12 @@
     gap: 10px;
 }
 
+.issue-drawer-target-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 .drawer-target-date-input:disabled {
     background: #f3f4f6;
     color: #64748b;
@@ -67,6 +125,21 @@
 
 .drawer-target-date-input.issue-date-struck {
     text-decoration: line-through;
+}
+
+.drawer-target-remark-input {
+    font-size: 12px;
+}
+
+.drawer-target-remark-input:disabled {
+    background: #f3f4f6;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.issue-invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16) !important;
 }
 
 .issue-search {
@@ -154,7 +227,7 @@
 .issue-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1240px;
+    min-width: 1580px;
     font-size: 12px;
     table-layout: fixed;
 }
@@ -211,6 +284,12 @@
 .issue-table td:nth-child(3) {
     width: 88px;
     text-align: center;
+}
+
+.issue-table th:nth-child(9),
+.issue-table td:nth-child(9) {
+    width: 230px;
+    min-width: 230px;
 }
 
 .issue-table th:nth-child(10),
@@ -446,7 +525,7 @@
     top: 0;
     right: 0;
     z-index: 1201;
-    width: min(390px, 100vw);
+    width: min(520px, 100vw);
     height: 100vh;
     background: #ffffff;
     border-left: 1px solid #e5e7eb;
@@ -496,7 +575,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    padding: 18px 22px 22px;
+    padding: 18px 22px 0;
 }
 
 .issue-drawer-form .form-group {
@@ -509,6 +588,13 @@
     font-size: 12px;
     font-weight: 800;
     color: #1f2937;
+}
+
+.issue-drawer-form .issue-field-sub-label {
+    color: #4b5563;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 2px;
 }
 
 .issue-drawer-form label span {
@@ -528,6 +614,13 @@
     outline: none;
 }
 
+.issue-drawer-form input:disabled,
+.issue-drawer-form select:disabled,
+.issue-drawer-form textarea:disabled {
+    background: #f8fafc;
+    color: #64748b;
+}
+
 .issue-drawer-form textarea {
     resize: vertical;
 }
@@ -545,17 +638,32 @@
     gap: 14px;
 }
 
+.issue-target-pair-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: end;
+}
+
+.issue-drawer-wide {
+    grid-column: 1 / -1;
+}
+
 .issue-drawer-actions {
     position: sticky;
     bottom: 0;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 12px;
     margin-top: auto;
-    padding: 16px 0 0;
+    padding: 16px 22px;
+    margin-left: -22px;
+    margin-right: -22px;
     background: #ffffff;
     border-top: 1px solid #eef2f7;
+    box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .issue-drawer-actions .btn {
@@ -581,21 +689,15 @@
 .issue-drawer-history-section {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    flex: 1;
-    min-height: 0;
+    gap: 10px;
+    margin-top: 2px;
 }
 
-.issue-drawer-history-header {
-    padding: 14px 22px;
-    border-bottom: 1px solid #eef2f7;
-    background: #f9fafb;
-}
-
+.issue-drawer-history-section h3,
 .issue-drawer-history-header h3 {
     margin: 0;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 800;
     color: #111827;
 }
 
@@ -606,17 +708,28 @@
 }
 
 .issue-history-item {
-    padding: 12px 0;
-    border-bottom: 1px solid #eef2f7;
+    position: relative;
+    padding: 11px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .issue-history-meta {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
     font-size: 12px;
     color: #64748b;
+}
+
+.issue-history-meta span::before {
+    content: "\00b7";
+    margin-right: 6px;
+    color: #9ca3af;
 }
 
 .issue-history-meta strong {
@@ -643,10 +756,10 @@
 }
 
 .issue-history-description {
-    margin: 8px 0 0 0;
+    margin: 0;
     font-size: 13px;
     color: #475569;
-    line-height: 1.5;
+    line-height: 1.45;
 }
 
 .issue-history-description p {
@@ -658,6 +771,38 @@
     text-align: center;
     color: #64748b;
     font-size: 13px;
+}
+
+.issue-history-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 230px;
+    padding: 0 0 0 18px;
+    overflow-y: auto;
+}
+
+.issue-history-timeline::before {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: #dbeafe;
+}
+
+.issue-history-timeline .issue-history-item::before {
+    content: "";
+    position: absolute;
+    left: -18px;
+    top: 13px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 0 3px #dcfce7;
 }
 
 .status-pill {
@@ -770,6 +915,10 @@ body.issue-board-page .issue-drawer-backdrop {
     }
 
     .issue-drawer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .issue-target-pair-row {
         grid-template-columns: 1fr;
     }
 

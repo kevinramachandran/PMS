@@ -6,7 +6,7 @@
     <title>Issue Board - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/issue-board.css?v=icon-align-20260816">
+    <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -78,6 +78,9 @@
             <div class="header-right">
                 <div class="sync-status" id="issueBoardSyncStatus">Last synced: --:--:--</div>
                 <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
+                <button class="pdf-export-btn" id="issueBoardCsvBtn" title="Export CSV" onclick="exportIssueBoardCsv()">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
                 <button class="pdf-export-btn" id="issueBoardPdfBtn" title="Export PDF" onclick="exportIssueBoardPdf()">
                     <i class="fas fa-file-pdf"></i> Export PDF
                 </button>
@@ -154,13 +157,72 @@
         <input type="hidden" id="drawerIssueId">
         <div class="issue-drawer-summary" id="drawerIssueSummary"></div>
         <div class="issue-drawer-grid">
-            <div class="form-group issue-drawer-target-group">
-                <label for="drawerIssueTargetDate">Target Date <span>*</span></label>
-                <div class="issue-drawer-target-stack">
+            <div class="form-group issue-drawer-wide">
+                <label for="drawerIssueProblem">Problem <span>*</span></label>
+                <input type="text" id="drawerIssueProblem" required>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssuePriority">Priority <span>*</span></label>
+                <select id="drawerIssuePriority" required>
+                    <option value="">Select priority</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssueOwner">Name <span>*</span></label>
+                <input type="text" id="drawerIssueOwner" required>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssueDate">Date <span>*</span></label>
+                <input type="date" id="drawerIssueDate" required>
+            </div>
+            <div class="issue-target-pair-row">
+                <div class="form-group">
+                    <label for="drawerIssueTargetDate">Target Date <span>*</span></label>
                     <input type="date" id="drawerIssueTargetDate" class="drawer-target-date-input" required aria-label="Original target date">
+                </div>
+                <div class="form-group">
+                    <label for="drawerIssueTargetDateRemark">Remarks <span>*</span></label>
+                    <input type="text" id="drawerIssueTargetDateRemark" class="drawer-target-remark-input" placeholder="Remarks" maxlength="500" required aria-label="Original target date remarks">
+                </div>
+            </div>
+            <div class="issue-target-pair-row">
+                <div class="form-group">
+                    <label for="drawerIssueTargetExt1">Target Date Ext. 1</label>
                     <input type="date" id="drawerIssueTargetExt1" class="drawer-target-date-input" aria-label="Target date extension 1">
+                </div>
+                <div class="form-group">
+                    <label for="drawerIssueTargetExt1Remark">Remarks</label>
+                    <input type="text" id="drawerIssueTargetExt1Remark" class="drawer-target-remark-input" placeholder="Remarks" maxlength="500" aria-label="Target date extension 1 remarks">
+                </div>
+            </div>
+            <div class="issue-target-pair-row">
+                <div class="form-group">
+                    <label for="drawerIssueTargetExt2">Target Date Ext. 2</label>
                     <input type="date" id="drawerIssueTargetExt2" class="drawer-target-date-input" aria-label="Target date extension 2">
                 </div>
+                <div class="form-group">
+                    <label for="drawerIssueTargetExt2Remark">Remarks</label>
+                    <input type="text" id="drawerIssueTargetExt2Remark" class="drawer-target-remark-input" placeholder="Remarks" maxlength="500" aria-label="Target date extension 2 remarks">
+                </div>
+            </div>
+            <div class="form-group issue-drawer-wide">
+                <label for="drawerIssueRootCause">Root Cause <span>*</span></label>
+                <input type="text" id="drawerIssueRootCause" required>
+            </div>
+            <div class="form-group issue-drawer-wide">
+                <label for="drawerIssueActions">Actions <span>*</span></label>
+                <textarea id="drawerIssueActions" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssueResponsible">Responsible <span>*</span></label>
+                <input type="text" id="drawerIssueResponsible" list="issueBoardResponsibleList" autocomplete="off" required>
+            </div>
+            <div class="form-group">
+                <label for="drawerIssueDueDays">Due Days</label>
+                <input type="number" id="drawerIssueDueDays" readonly>
             </div>
             <div class="form-group">
                 <label for="drawerIssueStatus">Status <span>*</span></label>
@@ -177,10 +239,15 @@
                 <input type="date" id="drawerIssueCompletedDate">
             </div>
         </div>
+        <div class="issue-drawer-history-section" id="issueDrawerHistorySection">
+            <h3>History</h3>
+            <div class="issue-history-list issue-history-timeline" id="issueDrawerHistoryList"></div>
+        </div>
         <div class="issue-drawer-actions">
             <button type="button" class="btn btn-secondary" id="issueBoardDrawerCancel"><i class="fas fa-times"></i> Cancel</button>
             <button type="submit" class="btn btn-primary" id="issueBoardDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
         </div>
+        <datalist id="issueBoardResponsibleList"></datalist>
     </form>
 </aside>
 
@@ -196,7 +263,7 @@
 </aside>
 
 <script src="/js/pdf-report.js?v=history-column-20260817"></script>
-<script src="/js/issue-board.js?v=history-column-20260817"></script>
+<script src="/js/issue-board.js?v=issue-save-locks-20260821"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=active-nav-20260817"></script>
 </body>

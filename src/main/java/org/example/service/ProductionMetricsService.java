@@ -350,10 +350,10 @@ public class ProductionMetricsService {
         metrics.setEntryType(null);
 
         boolean updated = false;
-        updated |= applySectionValuesIfPresent(metrics, payload.getPeople(), PEOPLE_FIELDS, "People");
-        updated |= applySectionValuesIfPresent(metrics, payload.getQuality(), QUALITY_FIELDS, "Quality");
-        updated |= applySectionValuesIfPresent(metrics, payload.getService(), SERVICE_FIELDS, "Service");
-        updated |= applySectionValuesIfPresent(metrics, payload.getCost(), COST_FIELDS, "Cost");
+        updated |= applySectionValuesIfPresent(metrics, payload.getPeople(), PEOPLE_FIELDS, "People", true);
+        updated |= applySectionValuesIfPresent(metrics, payload.getQuality(), QUALITY_FIELDS, "Quality", true);
+        updated |= applySectionValuesIfPresent(metrics, payload.getService(), SERVICE_FIELDS, "Service", true);
+        updated |= applySectionValuesIfPresent(metrics, payload.getCost(), COST_FIELDS, "Cost", true);
 
         if (!updated) {
             throw new IllegalArgumentException("At least one metrics category is required");
@@ -415,22 +415,22 @@ public class ProductionMetricsService {
         Map<Long, ProductionMetricCustomValue> customValuesToSave = new LinkedHashMap<>();
 
         boolean updated = false;
-        updated |= applySectionValuesIfPresent(metrics, actualPayload.getPeople(), PEOPLE_FIELDS, "People");
-        updated |= applySectionValuesIfPresent(metrics, actualPayload.getQuality(), QUALITY_FIELDS, "Quality");
-        updated |= applySectionValuesIfPresent(metrics, actualPayload.getService(), SERVICE_FIELDS, "Service");
-        updated |= applySectionValuesIfPresent(metrics, actualPayload.getCost(), COST_FIELDS, "Cost");
-        updated |= applySectionValuesIfPresent(metrics, targetPayload.getPeople(), PEOPLE_FIELDS, "People");
-        updated |= applySectionValuesIfPresent(metrics, targetPayload.getQuality(), QUALITY_FIELDS, "Quality");
-        updated |= applySectionValuesIfPresent(metrics, targetPayload.getService(), SERVICE_FIELDS, "Service");
-        updated |= applySectionValuesIfPresent(metrics, targetPayload.getCost(), COST_FIELDS, "Cost");
-        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getPeople(), "PEOPLE", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getQuality(), "QUALITY", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getService(), "SERVICE", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getCost(), "COST", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getPeople(), "PEOPLE", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getQuality(), "QUALITY", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getService(), "SERVICE", customValuesToSave, definitionCache);
-        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getCost(), "COST", customValuesToSave, definitionCache);
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getPeople(), PEOPLE_FIELDS, "People", true);
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getQuality(), QUALITY_FIELDS, "Quality", true);
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getService(), SERVICE_FIELDS, "Service", true);
+        updated |= applySectionValuesIfPresent(metrics, actualPayload.getCost(), COST_FIELDS, "Cost", true);
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getPeople(), PEOPLE_FIELDS, "People", false);
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getQuality(), QUALITY_FIELDS, "Quality", false);
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getService(), SERVICE_FIELDS, "Service", false);
+        updated |= applySectionValuesIfPresent(metrics, targetPayload.getCost(), COST_FIELDS, "Cost", false);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getPeople(), "PEOPLE", customValuesToSave, definitionCache, true);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getQuality(), "QUALITY", customValuesToSave, definitionCache, true);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getService(), "SERVICE", customValuesToSave, definitionCache, true);
+        updated |= applyCustomSectionValuesIfPresent(metrics, actualPayload.getCost(), "COST", customValuesToSave, definitionCache, true);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getPeople(), "PEOPLE", customValuesToSave, definitionCache, false);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getQuality(), "QUALITY", customValuesToSave, definitionCache, false);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getService(), "SERVICE", customValuesToSave, definitionCache, false);
+        updated |= applyCustomSectionValuesIfPresent(metrics, targetPayload.getCost(), "COST", customValuesToSave, definitionCache, false);
 
         if (!updated) {
             throw new IllegalArgumentException("At least one metrics category is required");
@@ -654,21 +654,30 @@ public class ProductionMetricsService {
         return sectionValues;
     }
 
-    private boolean applySectionValuesIfPresent(ProductionMetrics target, Map<String, Object> values, List<String> fields, String sectionName) {
+    private boolean applySectionValuesIfPresent(ProductionMetrics target, Map<String, Object> values, List<String> fields, String sectionName, boolean clearBlankValues) {
         if (values == null || values.isEmpty()) {
             return false;
         }
 
         BeanWrapperImpl wrapper = new BeanWrapperImpl(target);
+        boolean updated = false;
         for (String field : fields) {
+            if (!values.containsKey(field)) {
+                continue;
+            }
             String value = normalizeMetricValue(field, values.get(field));
             if (value == null) {
+                if (clearBlankValues) {
+                    wrapper.setPropertyValue(field, null);
+                    updated = true;
+                }
                 continue;
             }
             wrapper.setPropertyValue(field, value);
+            updated = true;
         }
 
-        return true;
+        return updated;
     }
 
     private boolean applyCustomSectionValuesIfPresent(
@@ -676,7 +685,8 @@ public class ProductionMetricsService {
             Map<String, Object> values,
             String expectedSection,
             Map<Long, ProductionMetricCustomValue> customValuesToSave,
-            Map<Long, ProductionMetricCustomDefinition> definitionCache
+            Map<Long, ProductionMetricCustomDefinition> definitionCache,
+            boolean clearBlankValues
     ) {
         if (values == null || values.isEmpty()) {
             return false;
@@ -685,8 +695,11 @@ public class ProductionMetricsService {
         boolean updated = false;
         for (Map.Entry<String, Object> entry : values.entrySet()) {
             CustomFieldDescriptor descriptor = parseCustomField(entry.getKey());
+            if (descriptor == null) {
+                continue;
+            }
             String value = normalizeMetricValue(entry.getKey(), entry.getValue());
-            if (descriptor == null || value == null) {
+            if (value == null && !clearBlankValues) {
                 continue;
             }
 

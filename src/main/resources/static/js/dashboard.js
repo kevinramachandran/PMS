@@ -82,6 +82,7 @@ $(document).ready(function() {
     });
     initializeKpiTvFit();
     initializeDailyTopRowSync();
+    renderSystemChartContainers();
 
     $(document).on('click', '.chart-box canvas, .chart-card canvas', function() {
         if (this.id) {
@@ -89,7 +90,7 @@ $(document).ready(function() {
         }
     });
 
-    loadCustomMetricDefinitions().always(function() {
+    loadKpiMetricDefinitions().always(function() {
         initializeKpiMonthFilter();
     });
     setInterval(function() {
@@ -98,7 +99,7 @@ $(document).ready(function() {
 
     window.addEventListener('storage', function(event) {
         if (event.key === 'kpi-dashboard-update') {
-            loadCustomMetricDefinitions().always(function() {
+            loadKpiMetricDefinitions().always(function() {
                 loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
             });
         }
@@ -291,6 +292,14 @@ const chartThemes = {
     serviceWurChart: {
         primary: '#00695C',
         targetA: '#4DB6AC'
+    },
+    noOfBrewsChart: {
+        primary: '#0F766E',
+        targetA: '#5EEAD4'
+    },
+    dispatchChart: {
+        primary: '#166534',
+        targetA: '#86EFAC'
     },
     costElectricityChart: {
         primary: '#558B2F',
@@ -1262,8 +1271,17 @@ const customChartContainerIds = {
     COST: 'costCustomCharts'
 };
 
+const systemChartContainerIds = {
+    PEOPLE: 'peopleSystemCharts',
+    QUALITY: 'qualitySystemCharts',
+    SERVICE: 'serviceSystemCharts',
+    COST: 'costSystemCharts'
+};
+
 let customKpiDefinitions = [];
 let customMetricDefinitionsRequest = null;
+let systemMetricDefinitions = [];
+let systemMetricDefinitionsRequest = null;
 
 const fixedKpiTableConfig = [
     {
@@ -1448,6 +1466,42 @@ const fixedKpiTableConfig = [
     }
 ];
 
+const systemKpiChartDefinitions = [
+    { section: 'PEOPLE', chartId: 'productionProductivityChart', title: 'Production Productivity', actualField: 'productionProductivityFtdActual', targetField: 'productionProductivityFtdTarget', targetMtdField: 'productionProductivityMtdTarget' },
+    { section: 'PEOPLE', chartId: 'logisticsProductivityChart', title: 'Logistics Productivity', actualField: 'logisticsProductivityFtdActual', targetField: 'logisticsProductivityFtdTarget', targetMtdField: 'logisticsProductivityMtdTarget' },
+    { section: 'QUALITY', chartId: 'qualitySensoryChart', title: 'Internal Sensory Score', actualField: 'kpiSensoryScoreFtdActual', targetField: 'kpiSensoryScoreFtdTarget', targetMtdField: 'kpiSensoryScoreMtdTarget' },
+    { section: 'QUALITY', chartId: 'consumerComplaintChart', title: 'Consumer Complaint', actualField: 'kpiConsumerComplaintUnitsMhlFtdActual', targetField: 'kpiConsumerComplaintUnitsMhlFtdTarget', targetMtdField: 'kpiConsumerComplaintUnitsMhlMtdTarget' },
+    { section: 'QUALITY', chartId: 'customerComplaintChart', title: 'Customer Complaint', actualField: 'kpiCustomerComplaintUnitsMhlFtdActual', targetField: 'kpiCustomerComplaintUnitsMhlFtdTarget', targetMtdField: 'kpiCustomerComplaintUnitsMhlMtdTarget' },
+    { section: 'SERVICE', chartId: 'noOfBrewsChart', title: 'No. of Brews & Volume', actualField: 'noOfBrewsFtdActual', targetField: 'noOfBrewsFtdTarget', targetMtdField: 'noOfBrewsMtdTarget' },
+    { section: 'SERVICE', chartId: 'dispatchChart', title: 'Dispatch', actualField: 'dispatchFtdActual', targetField: 'dispatchFtdTarget', targetMtdField: 'dispatchMtdTarget' },
+    { section: 'SERVICE', chartId: 'processConfirmationBpChart', title: 'Process Confirmation - BP', actualField: 'processConfirmationBpFtdActual', targetField: 'processConfirmationBpFtdTarget', targetMtdField: 'processConfirmationBpMtdTarget' },
+    { section: 'SERVICE', chartId: 'processConfirmationPackChart', title: 'Process Confirmation - Pack', actualField: 'processConfirmationPackFtdActual', targetField: 'processConfirmationPackFtdTarget', targetMtdField: 'processConfirmationPackMtdTarget' },
+    { section: 'SERVICE', chartId: 'serviceOeeChart', title: 'OEE', actualField: 'kpiOeeFtdActual', targetField: 'kpiOeeFtdTarget', targetMtdField: 'kpiOeeMtdTarget' },
+    { section: 'SERVICE', chartId: 'serviceBeerLossChart', title: 'Beer Loss', actualField: 'kpiBeerLossFtdActual', targetField: 'kpiBeerLossFtdTarget', targetMtdField: 'kpiBeerLossMtdTarget' },
+    { section: 'SERVICE', chartId: 'serviceWurChart', title: 'WUR', actualField: 'kpiWurHlHlFtdActual', targetField: 'kpiWurHlHlFtdTarget', targetMtdField: 'kpiWurHlHlMtdTarget' },
+    { section: 'COST', chartId: 'costElectricityChart', title: 'Electricity', actualField: 'kpiElectricityKwhHlFtdActual', targetField: 'kpiElectricityKwhHlFtdTarget', targetMtdField: 'kpiElectricityKwhHlMtdTarget' },
+    { section: 'COST', chartId: 'costEnergyChart', title: 'Energy', actualField: 'kpiEnergyKwhHlFtdActual', targetField: 'kpiEnergyKwhHlFtdTarget', targetMtdField: 'kpiEnergyKwhHlMtdTarget' },
+    { section: 'COST', chartId: 'costRgbChart', title: 'RGB Ratio', actualField: 'kpiRgbRatioFtdActual', targetField: 'kpiRgbRatioFtdTarget', targetMtdField: 'kpiRgbRatioMtdTarget' }
+];
+
+const systemMetricKeyByActualField = {
+    productionProductivityFtdActual: 'productionProductivity',
+    logisticsProductivityFtdActual: 'logisticsProductivity',
+    kpiSensoryScoreFtdActual: 'kpiSensoryScore',
+    kpiConsumerComplaintUnitsMhlFtdActual: 'kpiConsumerComplaintUnitsMhl',
+    kpiCustomerComplaintUnitsMhlFtdActual: 'kpiCustomerComplaintUnitsMhl',
+    noOfBrewsFtdActual: 'noOfBrews',
+    dispatchFtdActual: 'dispatch',
+    processConfirmationBpFtdActual: 'processConfirmationBp',
+    processConfirmationPackFtdActual: 'processConfirmationPack',
+    kpiOeeFtdActual: 'kpiOee',
+    kpiBeerLossFtdActual: 'kpiBeerLoss',
+    kpiWurHlHlFtdActual: 'kpiWurHlHl',
+    kpiElectricityKwhHlFtdActual: 'kpiElectricityKwhHl',
+    kpiEnergyKwhHlFtdActual: 'kpiEnergyKwhHl',
+    kpiRgbRatioFtdActual: 'kpiRgbRatio'
+};
+
 function normalizeDashboardSection(section) {
     return String(section || '').trim().toUpperCase();
 }
@@ -1469,6 +1523,39 @@ function sortDashboardCustomDefinitions(definitions) {
     });
 }
 
+function getDashboardSystemDefinition(metricKey) {
+    return systemMetricDefinitions.find(function(definition) {
+        return String(definition.metricKey || '').toLowerCase() === String(metricKey || '').toLowerCase();
+    }) || null;
+}
+
+function applySystemMetricDefinitionLabels() {
+    fixedKpiTableConfig.forEach(function(kpi) {
+        const metricKey = systemMetricKeyByActualField[kpi.actualField];
+        const savedDefinition = getDashboardSystemDefinition(metricKey);
+        if (!savedDefinition) {
+            return;
+        }
+        if (savedDefinition.label) {
+            kpi.name = savedDefinition.label;
+        }
+        if (savedDefinition.unit) {
+            kpi.unit = savedDefinition.unit;
+        }
+        if (Number.isFinite(Number(savedDefinition.decimals))) {
+            kpi.decimals = Number(savedDefinition.decimals);
+        }
+    });
+
+    systemKpiChartDefinitions.forEach(function(chartDefinition) {
+        const metricKey = systemMetricKeyByActualField[chartDefinition.actualField];
+        const savedDefinition = getDashboardSystemDefinition(metricKey);
+        if (savedDefinition && savedDefinition.label) {
+            chartDefinition.title = savedDefinition.label;
+        }
+    });
+}
+
 function buildCustomMetricFieldRef(definitionId, valueKey) {
     return 'custom:' + definitionId + ':' + valueKey;
 }
@@ -1477,8 +1564,31 @@ function getCustomChartCanvasId(definitionId) {
     return 'customMetricChart' + definitionId;
 }
 
+function normalizeKpiVisibilityFlag(value) {
+    return value === undefined || value === null || value === true || String(value).toLowerCase() === 'true';
+}
+
+function getKpiTableVisibilityKey(rowKey) {
+    return 'kpiTableVisibility_' + rowKey;
+}
+
+function isKpiTableVisible(rowKey) {
+    return !rowKey || localStorage.getItem(getKpiTableVisibilityKey(rowKey)) !== 'hidden';
+}
+
+function getDefaultKpiTableRowKey(kpi) {
+    const chartDefinition = systemKpiChartDefinitions.find(function(definition) {
+        return definition.actualField === kpi.actualField;
+    });
+    const section = chartDefinition ? normalizeDashboardSection(chartDefinition.section).toLowerCase() : 'default';
+    const rowId = chartDefinition && chartDefinition.chartId ? chartDefinition.chartId : kpi.name;
+    return 'default_' + section + '_' + String(rowId || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
 function buildCustomKpiTableConfig() {
-    return customKpiDefinitions.map(function(definition) {
+    return customKpiDefinitions.filter(function(definition) {
+        return normalizeKpiVisibilityFlag(definition.tableVisible) && isKpiTableVisible('custom_' + definition.id);
+    }).map(function(definition) {
         const decimals = Number.isFinite(Number(definition.decimals)) ? Number(definition.decimals) : 2;
         return {
             name: definition.label || 'Custom Metric',
@@ -1496,7 +1606,9 @@ function buildCustomKpiTableConfig() {
 }
 
 function getCombinedKpiTableConfig() {
-    return fixedKpiTableConfig.concat(buildCustomKpiTableConfig());
+    return fixedKpiTableConfig.filter(function(kpi) {
+        return isKpiTableVisible(getDefaultKpiTableRowKey(kpi));
+    }).concat(buildCustomKpiTableConfig());
 }
 
 function getCustomChartPalette(section) {
@@ -1514,6 +1626,35 @@ function getCustomChartPalette(section) {
     }
 }
 
+function buildKpiChartBoxHtml(canvasId, title, cssClass, dataAttribute) {
+    return '' +
+        '<div class="chart-box ' + (cssClass || '') + '"' + (dataAttribute || '') + '>' +
+            '<div class="chart-title">' +
+                '<span class="chart-title-text">' + escapeHtmlText(title || 'KPI Metric') + '</span>' +
+                '<span class="expand-icon" title="Expand" onclick="openChart(\'' + canvasId + '\')"><i class="fas fa-expand-alt"></i></span>' +
+            '</div>' +
+            '<div class="chart-container"><canvas id="' + canvasId + '"></canvas></div>' +
+        '</div>';
+}
+
+function renderSystemChartContainers() {
+    Object.keys(systemChartContainerIds).forEach(function(sectionKey) {
+        const container = document.getElementById(systemChartContainerIds[sectionKey]);
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = systemKpiChartDefinitions
+            .filter(function(definition) {
+                return normalizeDashboardSection(definition.section) === sectionKey;
+            })
+            .map(function(definition) {
+                return buildKpiChartBoxHtml(definition.chartId, definition.title, 'system-kpi-chart-box', ' data-chart-id="' + definition.chartId + '"');
+            })
+            .join('');
+    });
+}
+
 function renderCustomChartContainers() {
     Object.keys(customChartContainerIds).forEach(function(sectionKey) {
         const container = document.getElementById(customChartContainerIds[sectionKey]);
@@ -1527,15 +1668,7 @@ function renderCustomChartContainers() {
             })
             .map(function(definition) {
                 const canvasId = getCustomChartCanvasId(definition.id);
-                const title = escapeHtmlText(definition.label || 'Custom Metric');
-                return '' +
-                    '<div class="chart-box custom-kpi-chart-box" data-definition-id="' + definition.id + '">' +
-                        '<div class="chart-title">' +
-                            '<span class="chart-title-text">' + title + '</span>' +
-                            '<span class="expand-icon" title="Expand" onclick="openChart(\'' + canvasId + '\')"><i class="fas fa-expand-alt"></i></span>' +
-                        '</div>' +
-                        '<div class="chart-container"><canvas id="' + canvasId + '"></canvas></div>' +
-                    '</div>';
+                return buildKpiChartBoxHtml(canvasId, definition.label || 'Custom Metric', 'custom-kpi-chart-box', ' data-definition-id="' + definition.id + '"');
             })
             .join('');
 
@@ -1562,6 +1695,32 @@ function loadCustomMetricDefinitions() {
     });
 
     return customMetricDefinitionsRequest;
+}
+
+function loadSystemMetricDefinitions() {
+    if (systemMetricDefinitionsRequest) {
+        return systemMetricDefinitionsRequest;
+    }
+
+    systemMetricDefinitionsRequest = $.ajax({
+        url: '/api/metrics/system-definitions',
+        type: 'GET'
+    }).done(function(data) {
+        systemMetricDefinitions = Array.isArray(data) ? data : [];
+        applySystemMetricDefinitionLabels();
+        renderSystemChartContainers();
+    }).fail(function() {
+        systemMetricDefinitions = [];
+        renderSystemChartContainers();
+    }).always(function() {
+        systemMetricDefinitionsRequest = null;
+    });
+
+    return systemMetricDefinitionsRequest;
+}
+
+function loadKpiMetricDefinitions() {
+    return $.when(loadSystemMetricDefinitions(), loadCustomMetricDefinitions());
 }
 
 function loadProductionCharts(month, year, dateValue) {
@@ -1695,177 +1854,37 @@ function renderAllCharts(metrics) {
         return;
     }
 
-    // 1) PEOPLE - Productivity (Production + Logistics)
-    renderKpiMixedChart('peopleProductivityChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Production Actual', key: 'productionProductivityFtdActual', metricChartId: 'productionProductivityChart' },
-            { label: 'Logistics Actual', key: 'logisticsProductivityFtdActual', metricChartId: 'logisticsProductivityChart' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: 'Production',
-                ftdKey: 'productionProductivityFtdTarget',
-                mtdKey: 'productionProductivityMtdTarget',
-                metricChartId: 'productionProductivityChart'
-            },
-            {
-                labelPrefix: 'Logistics',
-                ftdKey: 'logisticsProductivityFtdTarget',
-                mtdKey: 'logisticsProductivityMtdTarget',
-                metricChartId: 'logisticsProductivityChart'
-            }
-        ]
-    });
-
-    // 2) QUALITY - Sensory
-    renderKpiMixedChart('qualitySensoryChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiSensoryScoreFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiSensoryScoreFtdTarget',
-                mtdKey: 'kpiSensoryScoreMtdTarget'
-            }
-        ]
-    });
-
-    // 4) SERVICE - Process Confirmation (B&P and Pack)
-    renderKpiMixedChart('serviceProcessConfirmationChart', labels, metrics, {
-        actualSeries: [
-            { label: 'B&P Actual', key: 'processConfirmationBpFtdActual', metricChartId: 'processConfirmationBpChart' },
-            { label: 'Pack Actual', key: 'processConfirmationPackFtdActual', metricChartId: 'processConfirmationPackChart' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: 'B&P',
-                ftdKey: 'processConfirmationBpFtdTarget',
-                mtdKey: 'processConfirmationBpMtdTarget',
-                metricChartId: 'processConfirmationBpChart'
-            },
-            {
-                labelPrefix: 'Pack',
-                ftdKey: 'processConfirmationPackFtdTarget',
-                mtdKey: 'processConfirmationPackMtdTarget',
-                metricChartId: 'processConfirmationPackChart'
-            }
-        ]
-    });
-
-    // 5) QUALITY - Complaint (Customer & Consumer)
-    renderKpiMixedChart('qualityComplaintChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Consumer Actual', key: 'kpiConsumerComplaintUnitsMhlFtdActual', metricChartId: 'consumerComplaintChart' },
-            { label: 'Customer Actual', key: 'kpiCustomerComplaintUnitsMhlFtdActual', metricChartId: 'customerComplaintChart' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: 'Consumer',
-                ftdKey: 'kpiConsumerComplaintUnitsMhlFtdTarget',
-                mtdKey: 'kpiConsumerComplaintUnitsMhlMtdTarget',
-                metricChartId: 'consumerComplaintChart'
-            },
-            {
-                labelPrefix: 'Customer',
-                ftdKey: 'kpiCustomerComplaintUnitsMhlFtdTarget',
-                mtdKey: 'kpiCustomerComplaintUnitsMhlMtdTarget',
-                metricChartId: 'customerComplaintChart'
-            }
-        ]
-    });
-
-    // 5) SERVICE - OEE
-    renderKpiMixedChart('serviceOeeChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiOeeFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiOeeFtdTarget',
-                mtdKey: 'kpiOeeMtdTarget'
-            }
-        ]
-    });
-
-    // 6) SERVICE - Beer Loss
-    renderKpiMixedChart('serviceBeerLossChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiBeerLossFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiBeerLossFtdTarget',
-                mtdKey: 'kpiBeerLossMtdTarget'
-            }
-        ]
-    });
-
-    // 7) SERVICE - WUR
-    renderKpiMixedChart('serviceWurChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiWurHlHlFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiWurHlHlFtdTarget',
-                mtdKey: 'kpiWurHlHlMtdTarget'
-            }
-        ]
-    });
-
-    // 8) COST - Electricity
-    renderKpiMixedChart('costElectricityChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiElectricityKwhHlFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiElectricityKwhHlFtdTarget',
-                mtdKey: 'kpiElectricityKwhHlMtdTarget'
-            }
-        ]
-    });
-
-    // 9) COST - Energy
-    renderKpiMixedChart('costEnergyChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiEnergyKwhHlFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiEnergyKwhHlFtdTarget',
-                mtdKey: 'kpiEnergyKwhHlMtdTarget'
-            }
-        ]
-    });
-
-    // 10) COST - RGB Ratio
-    renderKpiMixedChart('costRgbChart', labels, metrics, {
-        actualSeries: [
-            { label: 'Actual', key: 'kpiRgbRatioFtdActual' }
-        ],
-        targetSeries: [
-            {
-                labelPrefix: '',
-                ftdKey: 'kpiRgbRatioFtdTarget',
-                mtdKey: 'kpiRgbRatioMtdTarget'
-            }
-        ]
-    });
-
+    renderSystemMetricCharts(labels, metrics);
     renderCustomMetricCharts(labels, metrics);
     refreshKpiDashboardLayout();
 }
 
+function renderSystemMetricCharts(labels, metrics) {
+    systemKpiChartDefinitions.forEach(function(definition) {
+        renderKpiMixedChart(definition.chartId, labels, metrics, {
+            actualSeries: [
+                { label: 'Actual', key: definition.actualField }
+            ],
+            targetSeries: [
+                {
+                    labelPrefix: '',
+                    ftdKey: definition.targetField,
+                    mtdKey: definition.targetMtdField
+                }
+            ]
+        });
+    });
+}
+
 function renderCustomMetricCharts(labels, metrics) {
     customKpiDefinitions.forEach(function(definition) {
-        renderKpiMixedChart(getCustomChartCanvasId(definition.id), labels, metrics, {
+        const canvasId = getCustomChartCanvasId(definition.id);
+        if (!normalizeKpiVisibilityFlag(definition.graphVisible)) {
+            setKpiChartCardVisible(canvasId, false);
+            return;
+        }
+
+        renderKpiMixedChart(canvasId, labels, metrics, {
             actualSeries: [
                 { label: 'Actual', key: buildCustomMetricFieldRef(definition.id, 'ftdActual') }
             ],
@@ -1932,6 +1951,14 @@ const kpiChartPalettes = {
     serviceWurChart: {
         bars: ['#33691E', '#7CB342', '#558B2F'],
         lines: ['#1B3300', '#2E7D32', '#33691E']
+    },
+    noOfBrewsChart: {
+        bars: ['#0F766E', '#2DD4BF', '#115E59'],
+        lines: ['#134E4A', '#14B8A6', '#0F766E']
+    },
+    dispatchChart: {
+        bars: ['#166534', '#4ADE80', '#15803D'],
+        lines: ['#14532D', '#22C55E', '#166534']
     },
     costElectricityChart: {
         bars: ['#558B2F', '#AED581', '#33691E'],
@@ -2501,26 +2528,26 @@ function renderChart(canvasId, config) {
 }
 
 function renderNoDataForAllCharts(message) {
-    const ids = [
-        'peopleProductivityChart',
-        'qualitySensoryChart',
-        'serviceProcessConfirmationChart',
-        'qualityComplaintChart',
-        'serviceOeeChart',
-        'serviceBeerLossChart',
-        'serviceWurChart',
-        'costElectricityChart',
-        'costEnergyChart',
-        'costRgbChart'
-    ].concat(customKpiDefinitions.map(function(definition) {
-        return getCustomChartCanvasId(definition.id);
+    const ids = systemKpiChartDefinitions.map(function(definition) {
+        return {
+            id: definition.chartId,
+            visible: isKpiMetricGraphVisible(definition.chartId)
+        };
+    }).concat(customKpiDefinitions.map(function(definition) {
+        return {
+            id: getCustomChartCanvasId(definition.id),
+            visible: normalizeKpiVisibilityFlag(definition.graphVisible)
+        };
     }));
 
-    ids.forEach(id => {
-        renderNoData(id, message);
-        if (chartInstances[id]) {
-            chartInstances[id].destroy();
-            delete chartInstances[id];
+    ids.forEach(function(item) {
+        setKpiChartCardVisible(item.id, item.visible);
+        if (item.visible) {
+            renderNoData(item.id, message);
+        }
+        if (chartInstances[item.id]) {
+            chartInstances[item.id].destroy();
+            delete chartInstances[item.id];
         }
     });
 }

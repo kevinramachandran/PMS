@@ -194,29 +194,38 @@ $(document).ready(function() {
 
     function renderTargetDateCell(row) {
         const slots = [
-            row.targetDate || '',
-            row.targetDateExtension1 || '',
-            row.targetDateExtension2 || ''
+            { label: 'Target', value: row.targetDate || '', remark: row.targetDateRemark || '' },
+            { label: 'Ext. 1', value: row.targetDateExtension1 || '', remark: row.targetDateExtension1Remark || '' },
+            { label: 'Ext. 2', value: row.targetDateExtension2 || '', remark: row.targetDateExtension2Remark || '' }
         ];
-        const dates = slots.map(function(value, index) {
-            const hasLaterValue = slots.slice(index + 1).some(function(laterValue) {
-                return !!laterValue;
+        const dates = slots.map(function(slot, index) {
+            return Object.assign({ originalIndex: index }, slot);
+        }).filter(function(slot) {
+            return slot.originalIndex === 0 || !!slot.value;
+        }).map(function(slot) {
+            const hasLaterValue = slots.slice(slot.originalIndex + 1).some(function(laterValue) {
+                return !!laterValue.value;
             });
             return {
-                value: value,
-                superseded: !!value && hasLaterValue
+                label: slot.label,
+                value: slot.value,
+                remark: slot.remark,
+                superseded: !!slot.value && hasLaterValue
             };
-        }).filter(function(slot) {
-            return !!slot.value;
         });
-
-        if (dates.length === 0) {
-            return '-';
-        }
 
         return '<div class="issue-target-date-stack">' + dates.map(function(slot) {
             const cls = slot.superseded ? 'issue-target-date-old' : 'issue-target-date-current';
-            return '<span class="' + cls + '">' + safeText(formatDisplayDate(slot.value)) + '</span>';
+            const dateText = slot.value ? formatDisplayDate(slot.value) : '-';
+            const remarkText = slot.remark ? slot.remark : 'No remarks';
+            return '' +
+                '<div class="issue-target-date-entry ' + cls + '">' +
+                '<div class="issue-target-date-mainline">' +
+                '<span class="issue-target-date-label">' + safeText(slot.label) + '</span>' +
+                '<span class="issue-target-date-value">' + safeText(dateText) + '</span>' +
+                '</div>' +
+                '<div class="issue-target-date-remark"><strong>Remarks:</strong> ' + safeText(remarkText) + '</div>' +
+                '</div>';
         }).join('') + '</div>';
     }
 
@@ -255,6 +264,7 @@ $(document).ready(function() {
     let issueBoardSortKey = null;
     let issueBoardSortAsc = true;
     let issueBoardSearchTerm = '';
+    let issueBoardAssignableUsers = [];
 
     function initializeIssueBoardSorting() {
         $('#issueBoardTable thead .sortable').off('click.issueSort').on('click.issueSort', function() {
@@ -283,7 +293,12 @@ $(document).ready(function() {
 
     function sortIssueRows(rows) {
         if (!issueBoardSortKey || !rows.length) {
-            return rows;
+            return [...rows].sort(function(a, b) {
+                const aVal = a.updatedAt || '';
+                const bVal = b.updatedAt || '';
+                const cmp = String(bVal).localeCompare(String(aVal));
+                return cmp !== 0 ? cmp : (Number(b.id || 0) - Number(a.id || 0));
+            });
         }
 
         return [...rows].sort(function(a, b) {
@@ -330,8 +345,11 @@ $(document).ready(function() {
             row.actions,
             row.responsible,
             row.targetDate,
+            row.targetDateRemark,
             row.targetDateExtension1,
+            row.targetDateExtension1Remark,
             row.targetDateExtension2,
+            row.targetDateExtension2Remark,
             effectiveTargetDate,
             formatDisplayDate(row.targetDate),
             formatDisplayDate(row.targetDateExtension1),
@@ -401,13 +419,82 @@ $(document).ready(function() {
     }
 
     function getIssueDrawerPayload() {
+        const extension1Date = $('#drawerIssueTargetExt1').val() || null;
+        const extension2Date = $('#drawerIssueTargetExt2').val() || null;
         return {
+            problem: ($('#drawerIssueProblem').val() || '').trim(),
+            priority: $('#drawerIssuePriority').val() || '',
+            ownerName: ($('#drawerIssueOwner').val() || '').trim(),
+            issueDate: $('#drawerIssueDate').val() || null,
+            rootCause: ($('#drawerIssueRootCause').val() || '').trim(),
+            actions: ($('#drawerIssueActions').val() || '').trim(),
+            responsible: ($('#drawerIssueResponsible').val() || '').trim(),
             targetDate: $('#drawerIssueTargetDate').val() || null,
-            targetDateExtension1: $('#drawerIssueTargetExt1').val() || null,
-            targetDateExtension2: $('#drawerIssueTargetExt2').val() || null,
+            targetDateRemark: ($('#drawerIssueTargetDateRemark').val() || '').trim() || null,
+            targetDateExtension1: extension1Date,
+            targetDateExtension1Remark: extension1Date ? (($('#drawerIssueTargetExt1Remark').val() || '').trim() || null) : null,
+            targetDateExtension2: extension2Date,
+            targetDateExtension2Remark: extension2Date ? (($('#drawerIssueTargetExt2Remark').val() || '').trim() || null) : null,
             status: $('#drawerIssueStatus').val() || '0%',
             completedDate: $('#drawerIssueCompletedDate').val() || null
         };
+    }
+
+    function updateIssueDrawerDueDays() {
+        const effectiveTarget = $('#drawerIssueTargetExt2').val() || $('#drawerIssueTargetExt1').val() || $('#drawerIssueTargetDate').val();
+        $('#drawerIssueDueDays').val(effectiveTarget ? normalizeDueDays({ targetDate: $('#drawerIssueTargetDate').val(), targetDateExtension1: $('#drawerIssueTargetExt1').val(), targetDateExtension2: $('#drawerIssueTargetExt2').val() }) : '');
+    }
+
+    function loadIssueBoardAssignableUsers() {
+        $.ajax({
+            url: '/api/issue-board/assignable-users',
+            type: 'GET',
+            success: function(response) {
+                issueBoardAssignableUsers = response && Array.isArray(response.users) ? response.users : [];
+                const options = issueBoardAssignableUsers.map(function(user) {
+                    return '<option value="' + safeText(user.username || '') + '">' + safeText(user.label || user.username || '') + '</option>';
+                }).join('');
+                $('#issueBoardResponsibleList').html(options);
+            },
+            error: function() {
+                issueBoardAssignableUsers = [];
+                $('#issueBoardResponsibleList').empty();
+            }
+        });
+    }
+
+    function isIssueResponsibleValid(value) {
+        const normalized = (value || '').trim().toLowerCase();
+        if (!normalized || issueBoardAssignableUsers.length === 0) {
+            return !!normalized;
+        }
+        return issueBoardAssignableUsers.some(function(user) {
+            return String(user.username || '').toLowerCase() === normalized || String(user.label || '').toLowerCase() === normalized;
+        });
+    }
+
+    function validateIssueDrawerTargetRemarks() {
+        const pairs = [
+            { date: '#drawerIssueTargetExt1', remark: '#drawerIssueTargetExt1Remark' },
+            { date: '#drawerIssueTargetExt2', remark: '#drawerIssueTargetExt2Remark' }
+        ];
+        let valid = true;
+        pairs.forEach(function(pair) {
+            const $date = $(pair.date);
+            const $remark = $(pair.remark);
+            if ($date.prop('disabled')) {
+                $remark.removeClass('issue-invalid');
+                return;
+            }
+            const hasDate = !!($date.val() || '').trim();
+            const hasRemark = !!($remark.val() || '').trim();
+            $remark.toggleClass('issue-invalid', hasDate && !hasRemark);
+            if (hasDate && !hasRemark && valid) {
+                $remark.trigger('focus');
+                valid = false;
+            }
+        });
+        return valid;
     }
 
     function getDrawerEffectiveTargetDate(row) {
@@ -420,46 +507,73 @@ $(document).ready(function() {
             $('#drawerIssueTargetExt1'),
             $('#drawerIssueTargetExt2')
         ];
-        const values = fields.map(function($field) {
-            return $field.val() || '';
-        });
-        const firstEmptyIndex = values.findIndex(function(value) {
-            return !value;
+        const remarkFields = [
+            $('#drawerIssueTargetDateRemark'),
+            $('#drawerIssueTargetExt1Remark'),
+            $('#drawerIssueTargetExt2Remark')
+        ];
+        const savedValues = fields.map(function($field) {
+            return $field.data('saved-value') || '';
         });
 
         fields.forEach(function($field, index) {
-            const hasValue = !!values[index];
-            const hasLaterValue = values.slice(index + 1).some(function(value) {
+            const hasSavedValue = !!savedValues[index];
+            const hasLaterSavedValue = savedValues.slice(index + 1).some(function(value) {
                 return !!value;
             });
-            const priorMissing = index > 0 && !values[index - 1];
-            const afterFirstEmpty = firstEmptyIndex !== -1 && index > firstEmptyIndex;
-            const locked = hasValue || priorMissing || afterFirstEmpty;
+            const locked = hasSavedValue;
             $field
                 .prop('disabled', locked)
-                .toggleClass('issue-date-struck', hasValue && hasLaterValue)
-                .attr('title', hasValue ? 'This target date is already recorded' : 'Enter the next target date');
+                .toggleClass('issue-date-struck', hasSavedValue && hasLaterSavedValue)
+                .attr('title', hasSavedValue ? 'This target date is already saved' : 'Enter the next target date');
+            remarkFields[index]
+                .prop('disabled', locked)
+                .removeClass('issue-date-struck')
+                .attr('title', hasSavedValue ? 'Saved target date remarks' : 'Enter remarks for this target date');
         });
     }
 
     function fillIssueDrawer(row, index) {
         $('#drawerIssueIndex').val(index === null || index === undefined ? '' : index);
         $('#drawerIssueId').val(row.id || '');
-        $('#issueBoardDrawerTitle').text('Update Issue');
+        $('#issueBoardDrawerTitle').text('Edit Issue');
         $('#issueBoardDrawerSave').html('<i class="fas fa-check"></i> Update Issue');
         $('#drawerIssueSummary').html(
             '<strong>' + safeText(row.problem || 'Issue') + '</strong>' +
             '<span>' + safeText(row.responsible || '-') + '</span>'
         );
+        $('#drawerIssueProblem').val(row.problem || '');
+        $('#drawerIssuePriority').val(row.priority || '');
+        $('#drawerIssueOwner').val(row.ownerName || '');
+        $('#drawerIssueDate').val(row.issueDate || '');
+        $('#drawerIssueRootCause').val(row.rootCause || '');
+        $('#drawerIssueActions').val(row.actions || '');
+        $('#drawerIssueResponsible').val(row.responsible || '');
         $('#drawerIssueTargetDate').val(row.targetDate || '');
+        $('#drawerIssueTargetDateRemark').val(row.targetDateRemark || '');
         $('#drawerIssueTargetExt1').val(row.targetDateExtension1 || '');
+        $('#drawerIssueTargetExt1Remark').val(row.targetDateExtension1Remark || '');
         $('#drawerIssueTargetExt2').val(row.targetDateExtension2 || '');
+        $('#drawerIssueTargetExt2Remark').val(row.targetDateExtension2Remark || '');
+        $('#drawerIssueTargetDate').data('saved-value', row.targetDate || '');
+        $('#drawerIssueTargetDateRemark').data('saved-value', row.targetDateRemark || '');
+        $('#drawerIssueTargetExt1').data('saved-value', row.targetDateExtension1 || '');
+        $('#drawerIssueTargetExt1Remark').data('saved-value', row.targetDateExtension1Remark || '');
+        $('#drawerIssueTargetExt2').data('saved-value', row.targetDateExtension2 || '');
+        $('#drawerIssueTargetExt2Remark').data('saved-value', row.targetDateExtension2Remark || '');
         $('#drawerIssueStatus').val(row.status || '0%');
         $('#drawerIssueCompletedDate').val(row.completedDate || '');
+        $('#drawerIssueDueDays').val(normalizeDueDays(row));
         applyIssueDrawerTargetLocks();
+        loadIssueDrawerHistory(row.id);
     }
 
-    $('#drawerIssueTargetDate, #drawerIssueTargetExt1, #drawerIssueTargetExt2').on('change', applyIssueDrawerTargetLocks);
+    $('#drawerIssueTargetDate, #drawerIssueTargetExt1, #drawerIssueTargetExt2').on('change input', function() {
+        updateIssueDrawerDueDays();
+    });
+    $('#drawerIssueTargetDateRemark, #drawerIssueTargetExt1Remark, #drawerIssueTargetExt2Remark').on('input', function() {
+        $(this).removeClass('issue-invalid issue-date-struck');
+    });
 
     $('#issueBoardBody').on('click', '.issue-edit-link', function() {
         const index = Number($(this).data('index'));
@@ -508,15 +622,18 @@ $(document).ready(function() {
     }
 
     function buildHistoryDescription(entry) {
-        const editor = entry.editedBy || 'User';
         const field = entry.fieldName || 'Field';
         const oldVal = formatHistoryValueForDisplay(entry.oldValue);
         const newVal = formatHistoryValueForDisplay(entry.newValue);
-        return editor + ' changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
+        return 'Changed ' + field + ' from ' + oldVal + ' to ' + newVal + '.';
     }
 
     function renderHistoryEntries(entries) {
         const list = $('#issueHistoryList');
+        renderHistoryTimeline(entries, list);
+    }
+
+    function renderHistoryTimeline(entries, list) {
         list.empty();
         if (!entries || entries.length === 0) {
             list.html('<div class="issue-history-empty">No history yet.</div>');
@@ -535,6 +652,25 @@ $(document).ready(function() {
                 '</div>' +
                 '</div>'
             );
+        });
+    }
+
+    function loadIssueDrawerHistory(id) {
+        const list = $('#issueDrawerHistoryList');
+        if (!id) {
+            list.html('<div class="issue-history-empty">History available after save.</div>');
+            return;
+        }
+        list.html('<div class="issue-history-empty">Loading history...</div>');
+        $.ajax({
+            url: '/api/issue-board/' + id + '/history',
+            type: 'GET',
+            success: function(data) {
+                renderHistoryTimeline(Array.isArray(data) ? data : [], list);
+            },
+            error: function() {
+                list.html('<div class="issue-history-empty">Failed to load history.</div>');
+            }
         });
     }
 
@@ -571,6 +707,20 @@ $(document).ready(function() {
         const id = $('#drawerIssueId').val();
         const indexValue = $('#drawerIssueIndex').val();
         if (!id || !getDrawerEffectiveTargetDate(row)) {
+            return;
+        }
+        if (!row.problem || !row.priority || !row.ownerName || !row.issueDate || !row.rootCause || !row.actions || !isIssueResponsibleValid(row.responsible)) {
+            $('#drawerIssueProblem').toggleClass('issue-invalid', !row.problem);
+            $('#drawerIssuePriority').toggleClass('issue-invalid', !row.priority);
+            $('#drawerIssueOwner').toggleClass('issue-invalid', !row.ownerName);
+            $('#drawerIssueDate').toggleClass('issue-invalid', !row.issueDate);
+            $('#drawerIssueRootCause').toggleClass('issue-invalid', !row.rootCause);
+            $('#drawerIssueActions').toggleClass('issue-invalid', !row.actions);
+            $('#drawerIssueResponsible').toggleClass('issue-invalid', !isIssueResponsibleValid(row.responsible));
+            return;
+        }
+        if (!validateIssueDrawerTargetRemarks()) {
+            alert('Remarks are required only for the extension target date entered.');
             return;
         }
         if (row.status === '100%' && !row.completedDate) {
@@ -635,6 +785,7 @@ $(document).ready(function() {
 
     initializeIssueSearch();
     $('body').toggleClass('issue-board-readonly', !canEditIssueBoard);
+    loadIssueBoardAssignableUsers();
     loadIssueBoardData();
     setInterval(loadIssueBoardData, 30000);
 });
@@ -657,9 +808,9 @@ function exportIssueBoardPdf() {
 
     buildIssueHistorySummaryMap().always(function(historySummaryById) {
         historySummaryById = historySummaryById || {};
-        var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date', 'Due days', 'Status', 'Completed date', 'History Summary'];
+        var columns = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target date / remarks', 'Due days', 'Status', 'Completed date', 'History Summary'];
         var tableRows = rows.map(function(row, index) {
-            var targetDate = getIssueBoardEffectiveTargetDate(row);
+            var targetDate = getIssueBoardTargetDateRemarks(row);
             var dueDays = getIssueBoardDueDays(row);
             var status = getIssueBoardStatusLabel(row.status);
             var historySummary = row.id == null ? 'History available after save.' : (historySummaryById[row.id] || 'No history recorded.');
@@ -698,11 +849,11 @@ function exportIssueBoardPdf() {
                 5:  { cellWidth: 25 },
                 6:  { cellWidth: 30 },
                 7:  { cellWidth: 18 },
-                8:  { cellWidth: 17 },
+                8:  { cellWidth: 38 },
                 9:  { cellWidth: 10, halign: 'center' },
                 10: { cellWidth: 10, halign: 'center' },
                 11: { cellWidth: 17 },
-                12: { cellWidth: 56 }
+                12: { cellWidth: 35 }
             },
             filename:    'Issue-Board_' + yyyy + '-' + mm + '-' + dd + '.pdf'
         });
@@ -711,6 +862,64 @@ function exportIssueBoardPdf() {
             if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF'; }
         }, 1200);
     });
+}
+
+function exportIssueBoardCsv() {
+    var btn = document.getElementById('issueBoardCsvBtn');
+    if (btn) { btn.disabled = true; }
+
+    try {
+        var rows = window.__issueBoardRows || [];
+        var headers = ['#', 'Problem', 'Priority', 'Name', 'Date', 'Root Cause', 'Actions', 'Resp.', 'Target Date', 'Target Date Remarks', 'Target Date Extension 1', 'Target Date Extension 1 Remarks', 'Target Date Extension 2', 'Target Date Extension 2 Remarks', 'Effective Target Date', 'Due Days', 'Status', 'Completed Date'];
+        var csvRows = [headers].concat(rows.map(function(row, index) {
+            return [
+                index + 1,
+                row.problem || '',
+                row.priority || '',
+                row.ownerName || '',
+                row.issueDate || '',
+                row.rootCause || '',
+                row.actions || '',
+                row.responsible || '',
+                row.targetDate || '',
+                row.targetDateRemark || '',
+                row.targetDateExtension1 || '',
+                row.targetDateExtension1Remark || '',
+                row.targetDateExtension2 || '',
+                row.targetDateExtension2Remark || '',
+                getIssueBoardEffectiveTargetDate(row),
+                getIssueBoardDueDays(row),
+                getIssueBoardStatusLabel(row.status),
+                row.completedDate || ''
+            ];
+        }));
+
+        var csv = csvRows.map(function(row) {
+            return row.map(issueBoardCsvCell).join(',');
+        }).join('\r\n') + '\r\n';
+        var today = new Date();
+        var filename = 'issue-board-' + today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0') + '.csv';
+        downloadIssueBoardCsv(csv, filename);
+    } finally {
+        if (btn) { btn.disabled = false; }
+    }
+}
+
+function issueBoardCsvCell(value) {
+    var text = value === null || value === undefined ? '' : String(value);
+    return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function downloadIssueBoardCsv(csv, filename) {
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 function buildIssueHistorySummaryMap() {
@@ -851,6 +1060,22 @@ function getIssueBoardEffectiveTargetDate(row) {
     }
 
     return row.targetDateExtension2 || row.targetDateExtension1 || row.targetDate || '';
+}
+
+function getIssueBoardTargetDateRemarks(row) {
+    if (!row) {
+        return '';
+    }
+
+    return [
+        { label: 'Target', date: row.targetDate, remark: row.targetDateRemark },
+        { label: 'Ext. 1', date: row.targetDateExtension1, remark: row.targetDateExtension1Remark },
+        { label: 'Ext. 2', date: row.targetDateExtension2, remark: row.targetDateExtension2Remark }
+    ].filter(function(slot) {
+        return !!slot.date;
+    }).map(function(slot) {
+        return slot.label + ': ' + slot.date + (slot.remark ? ' (' + slot.remark + ')' : '');
+    }).join('\n');
 }
 
 function getIssueBoardDueDays(row) {
