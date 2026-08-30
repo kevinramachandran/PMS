@@ -28,6 +28,8 @@ public class AuthService {
     private static final String INTERNAL_ADMIN_EMAIL = "system.admin.a@internal.local";
     private static final String INTERNAL_ADMIN_PASSWORD_HASH = "$2b$10$HUc1HZRfTGFj4aLM7zqv1u6m32KTtHIGrxAadj8rX9HXOcuugaGs.";
     private static final String KEVIN_PASSWORD_SHA256 = "85f5e10431f69bc2a14046a13aabaefc660103b6de7a84f75c4b96181d03f0b5";
+    private static final String STATUS_ACTIVE = "ACTIVE";
+    private static final String STATUS_INACTIVE = "INACTIVE";
     private static final Set<String> INTERNAL_ADMIN_USERNAMES = Set.of(
             "siva",
             "kevin",
@@ -50,6 +52,9 @@ public class AuthService {
 
     @Autowired
     private LicenseService licenseService;
+
+    @Autowired
+    private PlantMasterDataService plantMasterDataService;
 
     public boolean isInternalStaticUser(String username) {
         if (username == null) {
@@ -82,6 +87,7 @@ public class AuthService {
         }
 
         return appUserRepository.findByUsernameIgnoreCase(username.trim())
+            .filter(this::isActiveUser)
             .filter(u -> matchesAndMigrateIfLegacy(u, password))
                 .map(this::toUserInfo);
     }
@@ -97,19 +103,30 @@ public class AuthService {
     }
 
     public synchronized Optional<String> addUser(String username,
+                                                 String name,
+                                                 String employeeId,
+                                                 String department,
+                                                 String area,
+                                                 String plant,
+                                                 String designation,
+                                                 String reportingManager,
                                                  String email,
                                                  String password,
                                                  String role,
+                                                 String status,
                                                  Set<String> viewPermissions,
                                                  Set<String> editPermissions) {
         if (username == null || username.trim().isEmpty()) return Optional.of("Username is required");
+        if (name == null || name.trim().isEmpty()) return Optional.of("Name is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
         if (password == null || password.trim().isEmpty()) return Optional.of("Password is required");
         if (!RoleAccess.isSupported(role)) return Optional.of("Role must be Admin or User");
 
         String normalizedUsername = username.trim();
+        String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedEmail = email.trim();
         String normalizedRole = RoleAccess.normalize(role);
+        String normalizedStatus = normalizeStatus(status);
 
         Optional<String> licenseValidation = licenseService.validateManagedUserCreation();
         if (licenseValidation.isPresent()) {
@@ -126,9 +143,13 @@ public class AuthService {
         if (appUserRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             return Optional.of("Email already exists");
         }
+        if (normalizedEmployeeId != null && appUserRepository.existsByEmployeeIdIgnoreCase(normalizedEmployeeId)) {
+            return Optional.of("Employee ID already exists");
+        }
 
         AppUser user = new AppUser();
         user.setUsername(normalizedUsername);
+        applyEmployeeProfile(user, name, normalizedEmployeeId, department, area, plant, designation, reportingManager, normalizedStatus);
         user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(normalizedRole);
@@ -147,12 +168,21 @@ public class AuthService {
     }
 
     public synchronized Optional<String> updateUser(Long id,
+                                                    String name,
+                                                    String employeeId,
+                                                    String department,
+                                                    String area,
+                                                    String plant,
+                                                    String designation,
+                                                    String reportingManager,
                                                     String email,
                                                     String password,
                                                     String role,
+                                                    String status,
                                                     Set<String> viewPermissions,
                                                     Set<String> editPermissions) {
         if (id == null) return Optional.of("User id is required");
+        if (name == null || name.trim().isEmpty()) return Optional.of("Name is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
         if (!RoleAccess.isSupported(role)) return Optional.of("Role must be Admin or User");
 
@@ -165,12 +195,18 @@ public class AuthService {
         }
 
         String normalizedEmail = email.trim();
+        String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedRole = RoleAccess.normalize(role);
+        String normalizedStatus = normalizeStatus(status);
 
         if (appUserRepository.existsByEmailIgnoreCaseAndIdNot(normalizedEmail, id)) {
             return Optional.of("Email already exists");
         }
+        if (normalizedEmployeeId != null && appUserRepository.existsByEmployeeIdIgnoreCaseAndIdNot(normalizedEmployeeId, id)) {
+            return Optional.of("Employee ID already exists");
+        }
 
+        applyEmployeeProfile(user, name, normalizedEmployeeId, department, area, plant, designation, reportingManager, normalizedStatus);
         user.setEmail(normalizedEmail);
         user.setRole(normalizedRole);
         Set<String> sanitizedViews = sanitizePermissionsForRole(normalizedRole, viewPermissions);
@@ -201,6 +237,15 @@ public class AuthService {
         return Optional.empty();
     }
 
+    public Map<String, List<String>> getUserMasterOptions() {
+        return Map.of(
+                "departments", mergeOptions(plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), appUserRepository.findDistinctDepartments()),
+                "areas", mergeOptions(plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), appUserRepository.findDistinctAreas()),
+                "plants", appUserRepository.findDistinctPlants(),
+                "designations", appUserRepository.findDistinctDesignations()
+        );
+    }
+
     private UserInfo toUserInfo(AppUser user) {
         String role = RoleAccess.normalize(user.getRole());
         Set<String> viewPermissions = parsePermissionCsv(user.getPageViewPermissions());
@@ -213,6 +258,60 @@ public class AuthService {
             editPermissions = sanitizeEditPermissionsForRole(role, viewPermissions, editPermissions);
         }
         return new UserInfo(user.getUsername(), user.getEmail(), user.getPassword(), role, viewPermissions, editPermissions);
+    }
+
+    private boolean isActiveUser(AppUser user) {
+        return STATUS_ACTIVE.equals(normalizeStatus(user.getStatus()));
+    }
+
+    private void applyEmployeeProfile(AppUser user,
+                                      String name,
+                                      String employeeId,
+                                      String department,
+                                      String area,
+                                      String plant,
+                                      String designation,
+                                      String reportingManager,
+                                      String status) {
+        user.setName(trimToEmpty(name));
+        user.setEmployeeId(employeeId);
+        user.setDepartment(trimToEmpty(department));
+        user.setArea(trimToEmpty(area));
+        user.setPlant(trimToEmpty(plant));
+        user.setDesignation(trimToEmpty(designation));
+        user.setReportingManager(trimToEmpty(reportingManager));
+        user.setStatus(normalizeStatus(status));
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return STATUS_ACTIVE;
+        }
+        String normalized = status.trim().toUpperCase(Locale.ROOT).replace(' ', '_');
+        return STATUS_INACTIVE.equals(normalized) ? STATUS_INACTIVE : STATUS_ACTIVE;
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String trimToEmpty(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private List<String> mergeOptions(List<String> stored, List<String> defaults) {
+        TreeSet<String> values = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        if (defaults != null) {
+            defaults.stream().filter(v -> v != null && !v.isBlank()).map(String::trim).forEach(values::add);
+        }
+        if (stored != null) {
+            stored.stream().filter(v -> v != null && !v.isBlank()).map(String::trim).forEach(values::add);
+        }
+        return List.copyOf(values);
     }
 
     private boolean isReservedUsername(String username) {

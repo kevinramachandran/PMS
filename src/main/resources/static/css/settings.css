@@ -2641,6 +2641,113 @@ padding:4px 8px;
     margin-left: auto;
 }
 
+.master-plant-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 14px;
+}
+
+.master-abnormality-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 14px;
+}
+
+.master-gemba-walk-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 14px;
+}
+
+.master-gemba-kaizen-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 14px;
+}
+
+.master-process-entry {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 14px;
+}
+
+.master-plant-table {
+    margin-top: 8px;
+}
+
+.master-abnormality-table {
+    margin-top: 8px;
+}
+
+.master-gemba-walk-table {
+    margin-top: 8px;
+}
+
+.master-gemba-kaizen-table {
+    margin-top: 8px;
+}
+
+.master-process-table {
+    margin-top: 8px;
+}
+
+.master-plant-table th:last-child,
+.master-plant-table td:last-child {
+    width: 110px;
+}
+
+.master-abnormality-table th:last-child,
+.master-abnormality-table td:last-child {
+    width: 110px;
+}
+
+.master-gemba-walk-table th:last-child,
+.master-gemba-walk-table td:last-child {
+    width: 110px;
+}
+
+.master-gemba-kaizen-table th:last-child,
+.master-gemba-kaizen-table td:last-child {
+    width: 110px;
+}
+
+.master-process-table th:last-child,
+.master-process-table td:last-child {
+    width: 110px;
+}
+
+@media (max-width: 700px) {
+    .master-plant-entry {
+        grid-template-columns: 1fr;
+    }
+
+    .master-abnormality-entry {
+        grid-template-columns: 1fr;
+    }
+
+    .master-gemba-walk-entry {
+        grid-template-columns: 1fr;
+    }
+
+    .master-gemba-kaizen-entry {
+        grid-template-columns: 1fr;
+    }
+
+    .master-process-entry {
+        grid-template-columns: 1fr;
+    }
+}
+
 .info-portal-config-toolbar {
     display: flex;
     justify-content: flex-end;

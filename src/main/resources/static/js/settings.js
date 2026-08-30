@@ -154,8 +154,8 @@ $(document).ready(function() {
     initializeProcessConfirmationStatusEditors();
 
     // ==================== DIRECT NAV CONFIGS ====================
-    const directNavConfigs = ['issue-board', 'gemba-schedule', 'abnormality-tracker', 'leadership-gemba-tracker', 
-                             'training-schedule', 'meeting-agenda', 'process-confirmation', 'hs-cross', 
+    const directNavConfigs = ['issue-board', 'gemba-schedule', 'master-gemba-walk', 'abnormality-tracker', 'master-abnormality', 'leadership-gemba-tracker', 'master-gemba-kaizen',
+                             'training-schedule', 'meeting-agenda', 'process-confirmation', 'master-process', 'hs-cross',
                              'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color', 'kpi-rename-dashboard', 'kpi-plant-name'];
     const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
     const readOnlyActionSelectors = [
@@ -171,6 +171,31 @@ $(document).ready(function() {
         '#saveKpiCrossColor',
         '#saveKpiPlantNameBtn',
         '#resetKpiPlantNameBtn',
+        '.master-plant-add-btn',
+        '.master-plant-edit-btn',
+        '.master-plant-save-btn',
+        '.master-plant-cancel-btn',
+        '.master-plant-delete-btn',
+        '.master-abnormality-add-btn',
+        '.master-abnormality-edit-btn',
+        '.master-abnormality-save-btn',
+        '.master-abnormality-cancel-btn',
+        '.master-abnormality-delete-btn',
+        '.master-gemba-walk-add-btn',
+        '.master-gemba-walk-edit-btn',
+        '.master-gemba-walk-save-btn',
+        '.master-gemba-walk-cancel-btn',
+        '.master-gemba-walk-delete-btn',
+        '.master-gemba-kaizen-add-btn',
+        '.master-gemba-kaizen-edit-btn',
+        '.master-gemba-kaizen-save-btn',
+        '.master-gemba-kaizen-cancel-btn',
+        '.master-gemba-kaizen-delete-btn',
+        '.master-process-add-btn',
+        '.master-process-edit-btn',
+        '.master-process-save-btn',
+        '.master-process-cancel-btn',
+        '.master-process-delete-btn',
         '#addKpiRenameMetricBtn',
         '#saveKpiRenameAlertColorsBtn',
         '.kpi-rename-visibility-btn',
@@ -308,12 +333,21 @@ $(document).ready(function() {
             } else {
                 loadGembaScheduleByDate($('#gembaScheduleDate').val());
             }
+        } else if (config === 'master-gemba-walk') {
+            $('#form-master-gemba-walk').addClass('active');
+            loadMasterGembaWalkConfig();
         } else if (config === 'abnormality-tracker') {
             $('#form-abnormality-tracker').addClass('active');
             loadLatestAtConfig();
+        } else if (config === 'master-abnormality') {
+            $('#form-master-abnormality').addClass('active');
+            loadMasterAbnormalityConfig();
         } else if (config === 'leadership-gemba-tracker') {
             $('#form-leadership-gemba-tracker').addClass('active');
             loadLatestLgtConfig();
+        } else if (config === 'master-gemba-kaizen') {
+            $('#form-master-gemba-kaizen').addClass('active');
+            loadMasterGembaKaizenConfig();
         } else if (config === 'training-schedule') {
             $('#form-training-schedule').addClass('active');
             if ($('#trainingConfigDate').attr('data-load-latest-on-open') === '1') {
@@ -328,6 +362,9 @@ $(document).ready(function() {
         } else if (config === 'process-confirmation') {
             $('#form-process-confirmation').addClass('active');
             loadLatestProcessConfirmationConfig();
+        } else if (config === 'master-process') {
+            $('#form-master-process').addClass('active');
+            loadMasterProcessConfig();
         } else if (config === 'hs-cross') {
             $('#form-hs-cross').addClass('active');
             window.dispatchEvent(new Event('hs-cross-open'));
@@ -345,9 +382,8 @@ $(document).ready(function() {
             loadKpiPlantNameConfig();
             loadKpiRenameDashboard();
         } else if (config === 'kpi-plant-name') {
-            $('#form-kpi-rename-dashboard').addClass('active');
-            loadKpiPlantNameConfig();
-            loadKpiRenameDashboard();
+            $('#form-master-plant').addClass('active');
+            loadMasterPlantConfig();
         } else if (config === 'license') {
             $('#form-license').addClass('active');
             loadLicenseConfig();
@@ -4028,6 +4064,212 @@ function regroupRows($container){
             .replace(/>/g, '&gt;');
     }
 
+    const MASTER_GEMBA_WALK_CONFIG = {
+        GEMBA_CATEGORY: {
+            input: '#masterGembaCategoryInput',
+            body: '#masterGembaCategoryTableBody',
+            label: 'Gemba Category'
+        },
+        LIFE_SAVER_RULE: {
+            input: '#masterLifeSaverRuleInput',
+            body: '#masterLifeSaverRuleTableBody',
+            label: 'Life Saver Rule (LSR)'
+        }
+    };
+
+    function setMasterGembaWalkMessage(message, type) {
+        const $message = $('#masterGembaWalkMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
+    function masterGembaWalkUrl(category) {
+        return '/api/dashboard-config/gemba-walk-master-data/' + encodeURIComponent(category);
+    }
+
+    function masterGembaWalkRowHtml(category, item) {
+        const safeItem = item || {};
+        const name = safeItem.name || '';
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><span class="master-gemba-walk-name">' + escapeHtml(name) + '</span></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-gemba-walk-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
+                        '<button type="button" class="master-gemba-walk-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function masterGembaWalkEditRowHtml(category, item) {
+        const safeItem = item || {};
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><input type="text" class="master-gemba-walk-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '"></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-gemba-walk-save-btn" title="Save"><i class="fas fa-save"></i></button>' +
+                        '<button type="button" class="master-gemba-walk-cancel-btn" title="Cancel"><i class="fas fa-ban"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function renderMasterGembaWalkCategory(category, items) {
+        const config = MASTER_GEMBA_WALK_CONFIG[category];
+        if (!config) return;
+        const $body = $(config.body);
+        if (!$body.length) return;
+        if (!Array.isArray(items) || !items.length) {
+            $body.html('<tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">No data found.</td></tr>');
+            return;
+        }
+        $body.html(items.map(function(item) {
+            return masterGembaWalkRowHtml(category, item);
+        }).join(''));
+    }
+
+    function loadMasterGembaWalkCategory(category) {
+        const config = MASTER_GEMBA_WALK_CONFIG[category];
+        if (!config) return;
+        $.ajax({
+            url: masterGembaWalkUrl(category),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    renderMasterGembaWalkCategory(category, data.items || []);
+                } else {
+                    renderMasterGembaWalkCategory(category, []);
+                    setMasterGembaWalkMessage((data && data.message) || 'Unable to load ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                renderMasterGembaWalkCategory(category, []);
+                setMasterGembaWalkMessage('Unable to load ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function loadMasterGembaWalkConfig() {
+        Object.keys(MASTER_GEMBA_WALK_CONFIG).forEach(loadMasterGembaWalkCategory);
+    }
+
+    function saveMasterGembaWalkCategory(category) {
+        const config = MASTER_GEMBA_WALK_CONFIG[category];
+        if (!config) return;
+        const value = ($(config.input).val() || '').trim();
+        if (!value) {
+            setMasterGembaWalkMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterGembaWalkUrl(category),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    $(config.input).val('');
+                    setMasterGembaWalkMessage(config.label + ' added.', 'success');
+                    loadMasterGembaWalkCategory(category);
+                } else {
+                    setMasterGembaWalkMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterGembaWalkMessage('Unable to add ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function updateMasterGembaWalkRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_GEMBA_WALK_CONFIG[category];
+        const value = ($row.find('.master-gemba-walk-edit-input').val() || '').trim();
+        if (!id || !config) return;
+        if (!value) {
+            setMasterGembaWalkMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterGembaWalkUrl(id),
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterGembaWalkMessage(config.label + ' updated.', 'success');
+                    loadMasterGembaWalkCategory(category);
+                } else {
+                    setMasterGembaWalkMessage((data && data.message) || 'Unable to update ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterGembaWalkMessage('Unable to update ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function deleteMasterGembaWalkRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_GEMBA_WALK_CONFIG[category];
+        if (!id || !config) return;
+        $.ajax({
+            url: masterGembaWalkUrl(id),
+            type: 'DELETE',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterGembaWalkMessage(config.label + ' deleted.', 'success');
+                    loadMasterGembaWalkCategory(category);
+                } else {
+                    setMasterGembaWalkMessage((data && data.message) || 'Unable to delete ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterGembaWalkMessage('Unable to delete ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    $('.master-gemba-walk-add-btn').on('click', function() {
+        saveMasterGembaWalkCategory($(this).data('category'));
+    });
+
+    $('.master-gemba-walk-input').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterGembaWalkCategory($(this).closest('.master-gemba-walk-card').data('category'));
+        }
+    });
+
+    $(document).on('click', '.master-gemba-walk-edit-btn', function() {
+        const $row = $(this).closest('tr');
+        const category = $row.data('category');
+        const item = {
+            id: $row.data('id'),
+            name: $row.find('.master-gemba-walk-name').text()
+        };
+        $row.replaceWith(masterGembaWalkEditRowHtml(category, item));
+    });
+
+    $(document).on('click', '.master-gemba-walk-cancel-btn', function() {
+        loadMasterGembaWalkCategory($(this).closest('tr').data('category'));
+    });
+
+    $(document).on('click', '.master-gemba-walk-save-btn', function() {
+        updateMasterGembaWalkRow($(this).closest('tr'));
+    });
+
+    $(document).on('click', '.master-gemba-walk-delete-btn', function() {
+        deleteMasterGembaWalkRow($(this).closest('tr'));
+    });
+
     // ==================== ABNORMALITY TRACKER CONFIG ====================
 
     const AT_DEPARTMENTS = [
@@ -4244,6 +4486,212 @@ function regroupRows($container){
         });
     });
 
+    const MASTER_ABNORMALITY_CONFIG = {
+        ABT_TAG_TYPE: {
+            input: '#masterAbtTagTypeInput',
+            body: '#masterAbtTagTypeTableBody',
+            label: 'ABT Tag Type'
+        },
+        ABNORMALITY_DEFECT_TYPE: {
+            input: '#masterAbnormalityDefectTypeInput',
+            body: '#masterAbnormalityDefectTypeTableBody',
+            label: 'Abnormality / Defect Type'
+        }
+    };
+
+    function setMasterAbnormalityMessage(message, type) {
+        const $message = $('#masterAbnormalityMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
+    function masterAbnormalityUrl(category) {
+        return '/api/dashboard-config/abnormality-master-data/' + encodeURIComponent(category);
+    }
+
+    function masterAbnormalityRowHtml(category, item) {
+        const safeItem = item || {};
+        const name = safeItem.name || '';
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><span class="master-abnormality-name">' + escapeHtml(name) + '</span></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-abnormality-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
+                        '<button type="button" class="master-abnormality-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function masterAbnormalityEditRowHtml(category, item) {
+        const safeItem = item || {};
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><input type="text" class="master-abnormality-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '"></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-abnormality-save-btn" title="Save"><i class="fas fa-save"></i></button>' +
+                        '<button type="button" class="master-abnormality-cancel-btn" title="Cancel"><i class="fas fa-ban"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function renderMasterAbnormalityCategory(category, items) {
+        const config = MASTER_ABNORMALITY_CONFIG[category];
+        if (!config) return;
+        const $body = $(config.body);
+        if (!$body.length) return;
+        if (!Array.isArray(items) || !items.length) {
+            $body.html('<tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">No data found.</td></tr>');
+            return;
+        }
+        $body.html(items.map(function(item) {
+            return masterAbnormalityRowHtml(category, item);
+        }).join(''));
+    }
+
+    function loadMasterAbnormalityCategory(category) {
+        const config = MASTER_ABNORMALITY_CONFIG[category];
+        if (!config) return;
+        $.ajax({
+            url: masterAbnormalityUrl(category),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    renderMasterAbnormalityCategory(category, data.items || []);
+                } else {
+                    renderMasterAbnormalityCategory(category, []);
+                    setMasterAbnormalityMessage((data && data.message) || 'Unable to load ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                renderMasterAbnormalityCategory(category, []);
+                setMasterAbnormalityMessage('Unable to load ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function loadMasterAbnormalityConfig() {
+        Object.keys(MASTER_ABNORMALITY_CONFIG).forEach(loadMasterAbnormalityCategory);
+    }
+
+    function saveMasterAbnormalityCategory(category) {
+        const config = MASTER_ABNORMALITY_CONFIG[category];
+        if (!config) return;
+        const value = ($(config.input).val() || '').trim();
+        if (!value) {
+            setMasterAbnormalityMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterAbnormalityUrl(category),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    $(config.input).val('');
+                    setMasterAbnormalityMessage(config.label + ' added.', 'success');
+                    loadMasterAbnormalityCategory(category);
+                } else {
+                    setMasterAbnormalityMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterAbnormalityMessage('Unable to add ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function updateMasterAbnormalityRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_ABNORMALITY_CONFIG[category];
+        const value = ($row.find('.master-abnormality-edit-input').val() || '').trim();
+        if (!id || !config) return;
+        if (!value) {
+            setMasterAbnormalityMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterAbnormalityUrl(id),
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterAbnormalityMessage(config.label + ' updated.', 'success');
+                    loadMasterAbnormalityCategory(category);
+                } else {
+                    setMasterAbnormalityMessage((data && data.message) || 'Unable to update ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterAbnormalityMessage('Unable to update ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function deleteMasterAbnormalityRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_ABNORMALITY_CONFIG[category];
+        if (!id || !config) return;
+        $.ajax({
+            url: masterAbnormalityUrl(id),
+            type: 'DELETE',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterAbnormalityMessage(config.label + ' deleted.', 'success');
+                    loadMasterAbnormalityCategory(category);
+                } else {
+                    setMasterAbnormalityMessage((data && data.message) || 'Unable to delete ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterAbnormalityMessage('Unable to delete ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    $('.master-abnormality-add-btn').on('click', function() {
+        saveMasterAbnormalityCategory($(this).data('category'));
+    });
+
+    $('.master-abnormality-input').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterAbnormalityCategory($(this).closest('.master-abnormality-card').data('category'));
+        }
+    });
+
+    $(document).on('click', '.master-abnormality-edit-btn', function() {
+        const $row = $(this).closest('tr');
+        const category = $row.data('category');
+        const item = {
+            id: $row.data('id'),
+            name: $row.find('.master-abnormality-name').text()
+        };
+        $row.replaceWith(masterAbnormalityEditRowHtml(category, item));
+    });
+
+    $(document).on('click', '.master-abnormality-cancel-btn', function() {
+        loadMasterAbnormalityCategory($(this).closest('tr').data('category'));
+    });
+
+    $(document).on('click', '.master-abnormality-save-btn', function() {
+        updateMasterAbnormalityRow($(this).closest('tr'));
+    });
+
+    $(document).on('click', '.master-abnormality-delete-btn', function() {
+        deleteMasterAbnormalityRow($(this).closest('tr'));
+    });
+
     // ==================== LEADERSHIP GEMBA TRACKER CONFIG ====================
 
     function formatShortPeriodFromDate(dateStr) {
@@ -4457,6 +4905,185 @@ function regroupRows($container){
                 showMessage('lgtConfigMessage', 'Error saving leadership gemba tracker. Please try again.', 'error');
             }
         });
+    });
+
+    const MASTER_GEMBA_KAIZEN_CATEGORY = 'CLASSIFICATION_OF_KAIZEN';
+    const MASTER_GEMBA_KAIZEN_CONFIG = {
+        input: '#masterClassificationOfKaizenInput',
+        body: '#masterClassificationOfKaizenTableBody',
+        label: 'Classification of Kaizen'
+    };
+
+    function setMasterGembaKaizenMessage(message, type) {
+        const $message = $('#masterGembaKaizenMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
+    function masterGembaKaizenUrl(value) {
+        return '/api/dashboard-config/gemba-kaizen-master-data/' + encodeURIComponent(value);
+    }
+
+    function masterGembaKaizenRowHtml(item) {
+        const safeItem = item || {};
+        const name = safeItem.name || '';
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '">' +
+                '<td><span class="master-gemba-kaizen-name">' + escapeHtml(name) + '</span></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-gemba-kaizen-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
+                        '<button type="button" class="master-gemba-kaizen-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function masterGembaKaizenEditRowHtml(item) {
+        const safeItem = item || {};
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '">' +
+                '<td><input type="text" class="master-gemba-kaizen-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '"></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-gemba-kaizen-save-btn" title="Save"><i class="fas fa-save"></i></button>' +
+                        '<button type="button" class="master-gemba-kaizen-cancel-btn" title="Cancel"><i class="fas fa-ban"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function renderMasterGembaKaizen(items) {
+        const $body = $(MASTER_GEMBA_KAIZEN_CONFIG.body);
+        if (!$body.length) return;
+        if (!Array.isArray(items) || !items.length) {
+            $body.html('<tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">No data found.</td></tr>');
+            return;
+        }
+        $body.html(items.map(masterGembaKaizenRowHtml).join(''));
+    }
+
+    function loadMasterGembaKaizenConfig() {
+        $.ajax({
+            url: masterGembaKaizenUrl(MASTER_GEMBA_KAIZEN_CATEGORY),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    renderMasterGembaKaizen(data.items || []);
+                } else {
+                    renderMasterGembaKaizen([]);
+                    setMasterGembaKaizenMessage((data && data.message) || 'Unable to load ' + MASTER_GEMBA_KAIZEN_CONFIG.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                renderMasterGembaKaizen([]);
+                setMasterGembaKaizenMessage('Unable to load ' + MASTER_GEMBA_KAIZEN_CONFIG.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function saveMasterGembaKaizen() {
+        const value = ($(MASTER_GEMBA_KAIZEN_CONFIG.input).val() || '').trim();
+        if (!value) {
+            setMasterGembaKaizenMessage(MASTER_GEMBA_KAIZEN_CONFIG.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterGembaKaizenUrl(MASTER_GEMBA_KAIZEN_CATEGORY),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    $(MASTER_GEMBA_KAIZEN_CONFIG.input).val('');
+                    setMasterGembaKaizenMessage(MASTER_GEMBA_KAIZEN_CONFIG.label + ' added.', 'success');
+                    loadMasterGembaKaizenConfig();
+                } else {
+                    setMasterGembaKaizenMessage((data && data.message) || 'Unable to add ' + MASTER_GEMBA_KAIZEN_CONFIG.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterGembaKaizenMessage('Unable to add ' + MASTER_GEMBA_KAIZEN_CONFIG.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function updateMasterGembaKaizenRow($row) {
+        const id = $row.data('id');
+        const value = ($row.find('.master-gemba-kaizen-edit-input').val() || '').trim();
+        if (!id) return;
+        if (!value) {
+            setMasterGembaKaizenMessage(MASTER_GEMBA_KAIZEN_CONFIG.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterGembaKaizenUrl(id),
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterGembaKaizenMessage(MASTER_GEMBA_KAIZEN_CONFIG.label + ' updated.', 'success');
+                    loadMasterGembaKaizenConfig();
+                } else {
+                    setMasterGembaKaizenMessage((data && data.message) || 'Unable to update ' + MASTER_GEMBA_KAIZEN_CONFIG.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterGembaKaizenMessage('Unable to update ' + MASTER_GEMBA_KAIZEN_CONFIG.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function deleteMasterGembaKaizenRow($row) {
+        const id = $row.data('id');
+        if (!id) return;
+        $.ajax({
+            url: masterGembaKaizenUrl(id),
+            type: 'DELETE',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterGembaKaizenMessage(MASTER_GEMBA_KAIZEN_CONFIG.label + ' deleted.', 'success');
+                    loadMasterGembaKaizenConfig();
+                } else {
+                    setMasterGembaKaizenMessage((data && data.message) || 'Unable to delete ' + MASTER_GEMBA_KAIZEN_CONFIG.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterGembaKaizenMessage('Unable to delete ' + MASTER_GEMBA_KAIZEN_CONFIG.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    $('.master-gemba-kaizen-add-btn').on('click', saveMasterGembaKaizen);
+
+    $('.master-gemba-kaizen-input').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterGembaKaizen();
+        }
+    });
+
+    $(document).on('click', '.master-gemba-kaizen-edit-btn', function() {
+        const $row = $(this).closest('tr');
+        const item = {
+            id: $row.data('id'),
+            name: $row.find('.master-gemba-kaizen-name').text()
+        };
+        $row.replaceWith(masterGembaKaizenEditRowHtml(item));
+    });
+
+    $(document).on('click', '.master-gemba-kaizen-cancel-btn', loadMasterGembaKaizenConfig);
+
+    $(document).on('click', '.master-gemba-kaizen-save-btn', function() {
+        updateMasterGembaKaizenRow($(this).closest('tr'));
+    });
+
+    $(document).on('click', '.master-gemba-kaizen-delete-btn', function() {
+        deleteMasterGembaKaizenRow($(this).closest('tr'));
     });
 
     // ==================== TRAINING SCHEDULE CONFIG ====================
@@ -5327,6 +5954,217 @@ function regroupRows($container){
         });
     });
 
+    const MASTER_PROCESS_CONFIG = {
+        ZM_OBSERVATION: {
+            input: '#masterZmObservationInput',
+            body: '#masterZmObservationTableBody',
+            label: 'ZM Describe Your Observation'
+        },
+        PM_OBSERVATION: {
+            input: '#masterPmObservationInput',
+            body: '#masterPmObservationTableBody',
+            label: 'PM Describe Your Observation'
+        },
+        QM_OBSERVATION: {
+            input: '#masterQmObservationInput',
+            body: '#masterQmObservationTableBody',
+            label: 'QM Describe Your Observation'
+        }
+    };
+
+    function setMasterProcessMessage(message, type) {
+        const $message = $('#masterProcessMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
+    function masterProcessUrl(category) {
+        return '/api/dashboard-config/process-master-data/' + encodeURIComponent(category);
+    }
+
+    function masterProcessRowHtml(category, item) {
+        const safeItem = item || {};
+        const name = safeItem.name || '';
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><span class="master-process-name">' + escapeHtml(name) + '</span></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-process-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
+                        '<button type="button" class="master-process-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function masterProcessEditRowHtml(category, item) {
+        const safeItem = item || {};
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><input type="text" class="master-process-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '"></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-process-save-btn" title="Save"><i class="fas fa-save"></i></button>' +
+                        '<button type="button" class="master-process-cancel-btn" title="Cancel"><i class="fas fa-ban"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function renderMasterProcessCategory(category, items) {
+        const config = MASTER_PROCESS_CONFIG[category];
+        if (!config) return;
+        const $body = $(config.body);
+        if (!$body.length) return;
+        if (!Array.isArray(items) || !items.length) {
+            $body.html('<tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">No data found.</td></tr>');
+            return;
+        }
+        $body.html(items.map(function(item) {
+            return masterProcessRowHtml(category, item);
+        }).join(''));
+    }
+
+    function loadMasterProcessCategory(category) {
+        const config = MASTER_PROCESS_CONFIG[category];
+        if (!config) return;
+        $.ajax({
+            url: masterProcessUrl(category),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    renderMasterProcessCategory(category, data.items || []);
+                } else {
+                    renderMasterProcessCategory(category, []);
+                    setMasterProcessMessage((data && data.message) || 'Unable to load ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                renderMasterProcessCategory(category, []);
+                setMasterProcessMessage('Unable to load ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function loadMasterProcessConfig() {
+        Object.keys(MASTER_PROCESS_CONFIG).forEach(loadMasterProcessCategory);
+    }
+
+    function saveMasterProcessCategory(category) {
+        const config = MASTER_PROCESS_CONFIG[category];
+        if (!config) return;
+        const value = ($(config.input).val() || '').trim();
+        if (!value) {
+            setMasterProcessMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterProcessUrl(category),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    $(config.input).val('');
+                    setMasterProcessMessage(config.label + ' added.', 'success');
+                    loadMasterProcessCategory(category);
+                } else {
+                    setMasterProcessMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterProcessMessage('Unable to add ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function updateMasterProcessRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_PROCESS_CONFIG[category];
+        const value = ($row.find('.master-process-edit-input').val() || '').trim();
+        if (!id || !config) return;
+        if (!value) {
+            setMasterProcessMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterProcessUrl(id),
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterProcessMessage(config.label + ' updated.', 'success');
+                    loadMasterProcessCategory(category);
+                } else {
+                    setMasterProcessMessage((data && data.message) || 'Unable to update ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterProcessMessage('Unable to update ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function deleteMasterProcessRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_PROCESS_CONFIG[category];
+        if (!id || !config) return;
+        $.ajax({
+            url: masterProcessUrl(id),
+            type: 'DELETE',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterProcessMessage(config.label + ' deleted.', 'success');
+                    loadMasterProcessCategory(category);
+                } else {
+                    setMasterProcessMessage((data && data.message) || 'Unable to delete ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterProcessMessage('Unable to delete ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    $('.master-process-add-btn').on('click', function() {
+        saveMasterProcessCategory($(this).data('category'));
+    });
+
+    $('.master-process-input').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterProcessCategory($(this).closest('.master-process-card').data('category'));
+        }
+    });
+
+    $(document).on('click', '.master-process-edit-btn', function() {
+        const $row = $(this).closest('tr');
+        const category = $row.data('category');
+        const item = {
+            id: $row.data('id'),
+            name: $row.find('.master-process-name').text()
+        };
+        $row.replaceWith(masterProcessEditRowHtml(category, item));
+    });
+
+    $(document).on('click', '.master-process-cancel-btn', function() {
+        loadMasterProcessCategory($(this).closest('tr').data('category'));
+    });
+
+    $(document).on('click', '.master-process-save-btn', function() {
+        updateMasterProcessRow($(this).closest('tr'));
+    });
+
+    $(document).on('click', '.master-process-delete-btn', function() {
+        deleteMasterProcessRow($(this).closest('tr'));
+    });
+
     // ==================== INFO PORTAL ====================
 
     let nextInfoPortalButtonId = 1;
@@ -5550,6 +6388,212 @@ function regroupRows($container){
         });
         $('#kpiCrossColorMessage').removeClass('error').addClass('success').text('Colors saved! Changes will reflect on next chart load.').show();
         setTimeout(function() { $('#kpiCrossColorMessage').fadeOut(); }, 3000);
+    });
+
+    const MASTER_PLANT_CONFIG = {
+        DEPARTMENT: {
+            input: '#masterDepartmentInput',
+            body: '#masterDepartmentTableBody',
+            label: 'Department'
+        },
+        PROCESS_AREA: {
+            input: '#masterProcessAreaInput',
+            body: '#masterProcessAreaTableBody',
+            label: 'Process Area'
+        }
+    };
+
+    function setMasterPlantMessage(message, type) {
+        const $message = $('#masterPlantMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
+    function masterPlantUrl(category) {
+        return '/api/dashboard-config/master-data/' + encodeURIComponent(category);
+    }
+
+    function masterPlantRowHtml(category, item) {
+        const safeItem = item || {};
+        const name = safeItem.name || '';
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><span class="master-plant-name">' + escapeHtml(name) + '</span></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-plant-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
+                        '<button type="button" class="master-plant-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function masterPlantEditRowHtml(category, item) {
+        const safeItem = item || {};
+        return '' +
+            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<td><input type="text" class="master-plant-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '"></td>' +
+                '<td>' +
+                    '<div class="kpi-rename-actions">' +
+                        '<button type="button" class="master-plant-save-btn" title="Save"><i class="fas fa-save"></i></button>' +
+                        '<button type="button" class="master-plant-cancel-btn" title="Cancel"><i class="fas fa-ban"></i></button>' +
+                    '</div>' +
+                '</td>' +
+            '</tr>';
+    }
+
+    function renderMasterPlantCategory(category, items) {
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!config) return;
+        const $body = $(config.body);
+        if (!$body.length) return;
+        if (!Array.isArray(items) || !items.length) {
+            $body.html('<tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">No data found.</td></tr>');
+            return;
+        }
+        $body.html(items.map(function(item) {
+            return masterPlantRowHtml(category, item);
+        }).join(''));
+    }
+
+    function loadMasterPlantCategory(category) {
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!config) return;
+        $.ajax({
+            url: masterPlantUrl(category),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    renderMasterPlantCategory(category, data.items || []);
+                } else {
+                    renderMasterPlantCategory(category, []);
+                    setMasterPlantMessage((data && data.message) || 'Unable to load ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                renderMasterPlantCategory(category, []);
+                setMasterPlantMessage('Unable to load ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function loadMasterPlantConfig() {
+        Object.keys(MASTER_PLANT_CONFIG).forEach(loadMasterPlantCategory);
+    }
+
+    function saveMasterPlantCategory(category) {
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!config) return;
+        const value = ($(config.input).val() || '').trim();
+        if (!value) {
+            setMasterPlantMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterPlantUrl(category),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    $(config.input).val('');
+                    setMasterPlantMessage(config.label + ' added.', 'success');
+                    loadMasterPlantCategory(category);
+                } else {
+                    setMasterPlantMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterPlantMessage('Unable to add ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function updateMasterPlantRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_PLANT_CONFIG[category];
+        const value = ($row.find('.master-plant-edit-input').val() || '').trim();
+        if (!id || !config) return;
+        if (!value) {
+            setMasterPlantMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        $.ajax({
+            url: masterPlantUrl(id),
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterPlantMessage(config.label + ' updated.', 'success');
+                    loadMasterPlantCategory(category);
+                } else {
+                    setMasterPlantMessage((data && data.message) || 'Unable to update ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterPlantMessage('Unable to update ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    function deleteMasterPlantRow($row) {
+        const id = $row.data('id');
+        const category = $row.data('category');
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!id || !config) return;
+        $.ajax({
+            url: masterPlantUrl(id),
+            type: 'DELETE',
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    setMasterPlantMessage(config.label + ' deleted.', 'success');
+                    loadMasterPlantCategory(category);
+                } else {
+                    setMasterPlantMessage((data && data.message) || 'Unable to delete ' + config.label + '.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterPlantMessage('Unable to delete ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
+    $('.master-plant-add-btn').on('click', function() {
+        saveMasterPlantCategory($(this).data('category'));
+    });
+
+    $('.master-plant-input').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterPlantCategory($(this).closest('.master-plant-card').data('category'));
+        }
+    });
+
+    $(document).on('click', '.master-plant-edit-btn', function() {
+        const $row = $(this).closest('tr');
+        const category = $row.data('category');
+        const item = {
+            id: $row.data('id'),
+            name: $row.find('.master-plant-name').text()
+        };
+        $row.replaceWith(masterPlantEditRowHtml(category, item));
+    });
+
+    $(document).on('click', '.master-plant-cancel-btn', function() {
+        loadMasterPlantCategory($(this).closest('tr').data('category'));
+    });
+
+    $(document).on('click', '.master-plant-save-btn', function() {
+        updateMasterPlantRow($(this).closest('tr'));
+    });
+
+    $(document).on('click', '.master-plant-delete-btn', function() {
+        deleteMasterPlantRow($(this).closest('tr'));
     });
 
     function setKpiPlantNameMessage(message, type) {

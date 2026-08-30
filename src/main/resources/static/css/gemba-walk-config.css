@@ -1,0 +1,104 @@
+.gemba-walk-config-page .gw-form-card {
+    overflow: visible;
+}
+
+.gemba-walk-config-page .gw-form-grid,
+.gemba-walk-config-page .gw-observation-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 16px;
+}
+
+.gemba-walk-config-page .gw-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gemba-walk-config-page .gw-form-group label {
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.gemba-walk-config-page .gw-form-group input,
+.gemba-walk-config-page .gw-form-group select,
+.gemba-walk-config-page .gw-form-group textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.gemba-walk-config-page .gw-form-group input:focus,
+.gemba-walk-config-page .gw-form-group select:focus,
+.gemba-walk-config-page .gw-form-group textarea:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.gemba-walk-config-page .gw-form-group input[readonly] {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.gemba-walk-config-page .gw-wide {
+    grid-column: 1 / -1;
+}
+
+.gemba-walk-config-page .gw-observation {
+    border-top: 1px solid #e5e7eb;
+}
+
+.gemba-walk-config-page .gw-observation-title {
+    margin: 0;
+    padding: 14px 16px 0;
+    color: #047434;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.gemba-walk-config-page .gw-add-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 16px 16px;
+}
+
+.gemba-walk-config-page .gw-message {
+    display: none;
+    margin: 0 16px 16px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.gemba-walk-config-page .gw-message.show {
+    display: block;
+}
+
+.gemba-walk-config-page .gw-message.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.gemba-walk-config-page .gw-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.gemba-selectable-cell {
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .gemba-walk-config-page .gw-form-grid,
+    .gemba-walk-config-page .gw-observation-grid {
+        grid-template-columns: 1fr;
+    }
+}

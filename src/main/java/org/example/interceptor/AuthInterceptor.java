@@ -135,6 +135,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewProductionMetricsData = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PRODUCTION_METRICS_DATA);
         boolean canViewIssueBoardConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
         boolean canViewGembaWalkConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION);
+        boolean canViewGembaWalkFindings = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_FINDINGS);
+        boolean canViewGembaWalkReporting = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_REPORTING);
+        boolean canViewUserDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_DASHBOARD);
         boolean canViewLeadershipGembaTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION);
         boolean canViewTrainingScheduleConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION);
         boolean canViewMeetingAgendaConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION);
@@ -149,6 +152,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
         boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+        boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewKpiPlantName
+                || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
+                || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
 
         session.setAttribute("canViewSettings", RoleAccess.canViewAnyConfigurationPage(role, viewPermissions));
@@ -158,6 +164,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         session.setAttribute("canViewIssueBoardConfiguration", canViewIssueBoardConfiguration);
         session.setAttribute("canEditIssueBoardConfiguration", canEditIssueBoardConfiguration);
         session.setAttribute("canViewGembaWalkConfiguration", canViewGembaWalkConfiguration);
+        session.setAttribute("canViewGembaWalkFindings", canViewGembaWalkFindings);
+        session.setAttribute("canViewGembaWalkReporting", canViewGembaWalkReporting);
+        session.setAttribute("canViewUserDashboard", canViewUserDashboard);
         session.setAttribute("canViewLeadershipGembaTrackerConfiguration", canViewLeadershipGembaTrackerConfiguration);
         session.setAttribute("canViewTrainingScheduleConfiguration", canViewTrainingScheduleConfiguration);
         session.setAttribute("canViewMeetingAgendaConfiguration", canViewMeetingAgendaConfiguration);
@@ -175,13 +184,15 @@ public class AuthInterceptor implements HandlerInterceptor {
         session.setAttribute("canEditLicenseManagement", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT));
         session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
         session.setAttribute("canEditEmailConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION));
+        session.setAttribute("canViewMasterDataGroup", canViewMasterDataGroup);
         session.setAttribute("canViewConfigurationSettingsGroup",
                 canViewIssueBoardConfiguration || canViewGembaWalkConfiguration || canViewLeadershipGembaTrackerConfiguration
+                        || canViewGembaWalkFindings || canViewGembaWalkReporting
                         || canViewTrainingScheduleConfiguration || canViewMeetingAgendaConfiguration
                         || canViewProcessConfirmationConfiguration || canViewAbnormalityTrackerConfiguration);
         session.setAttribute("canViewProductionSettingsGroup",
                 canViewProductionMetricsData || canViewHsCrossDailyConfiguration || canViewLsrTrackingConfiguration);
-        session.setAttribute("canViewKpiConfigurationGroup", canViewKpiTargetCrossColor || canViewKpiRenameDashboard || canViewKpiPlantName);
+        session.setAttribute("canViewKpiConfigurationGroup", canViewKpiTargetCrossColor || canViewKpiRenameDashboard);
         session.setAttribute("canViewKpiDashboard",
                 RoleAccess.isAdmin(role) || canViewPmsDataEntry || canViewProductionMetricsData);
     }
@@ -223,8 +234,29 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_LICENSE_MANAGEMENT;
         }
 
-        if (path.startsWith("/api/dashboard-config/plant-name")) {
+        if (path.startsWith("/api/dashboard-config/plant-name") || path.startsWith("/api/dashboard-config/master-data")) {
             return RoleAccess.PAGE_KPI_PLANT_NAME;
+        }
+
+        if (path.startsWith("/api/dashboard-config/abnormality-master-data")) {
+            return RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
+        }
+
+        if (path.startsWith("/api/dashboard-config/gemba-walk-master-data")) {
+            return RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION;
+        }
+
+        if (path.startsWith("/api/dashboard-config/gemba-kaizen-master-data")) {
+            return RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
+        }
+
+        if (path.startsWith("/api/dashboard-config/process-master-data")) {
+            return RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
+        }
+
+        if (path.startsWith("/abnormality-reporting") || path.startsWith("/abnormality-reporting-config")
+                || path.startsWith("/api/abnormality-reporting-config")) {
+            return RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
         }
 
         if (path.startsWith("/settings")) {
@@ -245,8 +277,21 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION;
         }
 
-        if (path.startsWith("/config/gemba-walk") || path.startsWith("/api/gemba-schedule")) {
+        if (path.startsWith("/gemba-walk-config") || path.startsWith("/config/gemba-walk")
+                || path.startsWith("/api/gemba-walk-config") || path.startsWith("/api/gemba-schedule")) {
             return RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION;
+        }
+
+        if (path.startsWith("/gemba-findings")) {
+            return RoleAccess.PAGE_GEMBA_WALK_FINDINGS;
+        }
+
+        if (path.startsWith("/gemba-reporting")) {
+            return RoleAccess.PAGE_GEMBA_WALK_REPORTING;
+        }
+
+        if (path.startsWith("/user-dashboard")) {
+            return RoleAccess.PAGE_USER_DASHBOARD;
         }
 
         if (path.startsWith("/config/safety-gemba") || path.startsWith("/api/leadership-gemba-tracker") || path.startsWith("/api/lgt-")) {

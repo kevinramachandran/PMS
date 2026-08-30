@@ -21,14 +21,17 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="/kpi-dashboard" class="nav-item" th:if="${session.canViewKpiDashboard}" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+                <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
-                <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk tracker"><i class="fas fa-clipboard-list"></i><span>Gemba Walk tracker</span></a>
+                <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+                <a href="/gemba-findings" class="nav-item" th:if="${session.canViewGembaWalkFindings}" data-tooltip="Gemba Walk Findings"><i class="fas fa-magnifying-glass-chart"></i><span>Gemba Walk Findings</span></a>
+                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
                 <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
-                <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
@@ -50,17 +53,23 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Scheduler</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
-                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-bug"></i><span>Abnormality Reporting</span></a>
-                <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-square"></i><span>Info Portal</span></a>
-                <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}" data-tooltip="KPI Dashboard Configuration"><i class="fas fa-sliders"></i><span>KPI Dashboard Configuration</span></a>
-                <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
-                <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
-                <a href="/pms-configuration" class="nav-item active" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
+                <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}" data-tooltip="KPI Configuration"><i class="fas fa-sliders"></i><span>KPI Configuration</span></a>
+                <div class="nav-parent" th:if="${session.canViewMasterDataGroup}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                        <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
+                        <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
+                        <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
+                        <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
+                        <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
+                        <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
+                    </div>
+                </div>
                 <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
-                <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email"><i class="fas fa-envelope"></i><span>Email</span></a>
             </nav>
             <div class="sidebar-footer">
                 <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -118,7 +127,13 @@
                                 <table class="pms-users-table">
                                     <thead>
                                         <tr>
-                                            <th>Username</th>
+                                            <th>Name</th>
+                                            <th>Employee ID</th>
+                                            <th>Department</th>
+                                            <th>Area</th>
+                                            <th>Plant</th>
+                                            <th>Designation</th>
+                                            <th>Reporting Manager</th>
                                             <th>Email</th>
                                             <th>Role</th>
                                             <th>Permissions</th>
@@ -128,7 +143,7 @@
                                     </thead>
                                     <tbody id="adminUsersTableBody">
                                         <tr>
-                                            <td colspan="6" style="text-align:center;color:#64748b;padding:14px;">Loading users...</td>
+                                            <td colspan="12" style="text-align:center;color:#64748b;padding:14px;">Loading users...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -146,8 +161,36 @@
                                 <form class="pms-add-user-form" id="addUserForm" onsubmit="return false;">
                                     <div class="pms-form-grid-single">
                                         <div class="form-group">
+                                            <label class="form-label">Name</label>
+                                            <input type="text" id="newName" class="form-select" placeholder="Enter employee name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Employee ID</label>
+                                            <input type="text" id="newEmployeeId" class="form-select" placeholder="Enter employee ID">
+                                        </div>
+                                        <div class="form-group">
                                             <label class="form-label">Username</label>
                                             <input type="text" id="newUsername" class="form-select" placeholder="Enter username">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Department</label>
+                                            <input type="text" id="newDepartment" class="form-select" list="departmentOptions" placeholder="Select department">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Area</label>
+                                            <input type="text" id="newArea" class="form-select" list="areaOptions" placeholder="Select area">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Plant</label>
+                                            <input type="text" id="newPlant" class="form-select" list="plantOptions" placeholder="Select plant">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Designation</label>
+                                            <input type="text" id="newDesignation" class="form-select" list="designationOptions" placeholder="Select designation">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Reporting Manager</label>
+                                            <input type="text" id="newReportingManager" class="form-select" placeholder="Enter reporting manager">
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">Email</label>
@@ -162,6 +205,13 @@
                                             <select id="newRole" class="form-select">
                                                 <option value="ADMIN">Admin</option>
                                                 <option value="USER" selected>User</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Status</label>
+                                            <select id="newStatus" class="form-select">
+                                                <option value="ACTIVE" selected>Active</option>
+                                                <option value="INACTIVE">Inactive</option>
                                             </select>
                                         </div>
                                         <div class="form-group" id="newPermissionsSection">
@@ -224,6 +274,34 @@
                 <form id="editUserForm" onsubmit="return false;">
                     <input type="hidden" id="editUserId">
                     <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" id="editName" class="form-select" placeholder="Enter employee name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Employee ID</label>
+                        <input type="text" id="editEmployeeId" class="form-select" placeholder="Enter employee ID">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Department</label>
+                        <input type="text" id="editDepartment" class="form-select" list="departmentOptions" placeholder="Select department">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Area</label>
+                        <input type="text" id="editArea" class="form-select" list="areaOptions" placeholder="Select area">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plant</label>
+                        <input type="text" id="editPlant" class="form-select" list="plantOptions" placeholder="Select plant">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Designation</label>
+                        <input type="text" id="editDesignation" class="form-select" list="designationOptions" placeholder="Select designation">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reporting Manager</label>
+                        <input type="text" id="editReportingManager" class="form-select" placeholder="Enter reporting manager">
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Email</label>
                         <input type="email" id="editEmail" class="form-select" placeholder="Enter email">
                     </div>
@@ -232,6 +310,13 @@
                         <select id="editRole" class="form-select">
                             <option value="ADMIN">Admin</option>
                             <option value="USER">User</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="editStatus" class="form-select">
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
                         </select>
                     </div>
                     <div class="form-group" id="editPermissionsSection">
@@ -287,6 +372,11 @@
             </div>
         </div>
     </div>
+
+    <datalist id="departmentOptions"></datalist>
+    <datalist id="areaOptions"></datalist>
+    <datalist id="plantOptions"></datalist>
+    <datalist id="designationOptions"></datalist>
 
     <script src="/js/dashboard.js"></script>
     <script src="/js/pms-configuration.js?v=user-nav-permissions-20260814"></script>

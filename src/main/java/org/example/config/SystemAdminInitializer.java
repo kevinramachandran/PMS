@@ -56,6 +56,10 @@ public class SystemAdminInitializer {
             user.setPassword(passwordEncoder.encode(password));
         }
 
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName("System Admin");
+        }
+        user.setStatus("ACTIVE");
         user.setRole(RoleAccess.ADMIN);
         user.setPageViewPermissions(String.join(",", RoleAccess.CONFIG_PAGES));
         user.setPageEditPermissions(String.join(",", RoleAccess.CONFIG_PAGES));

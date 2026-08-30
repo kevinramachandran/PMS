@@ -3,10 +3,18 @@
     const addBtn = document.getElementById('addUserBtn');
     const form = document.getElementById('addUserForm');
 
+    const nameEl = document.getElementById('newName');
+    const employeeIdEl = document.getElementById('newEmployeeId');
     const usernameEl = document.getElementById('newUsername');
+    const departmentEl = document.getElementById('newDepartment');
+    const areaEl = document.getElementById('newArea');
+    const plantEl = document.getElementById('newPlant');
+    const designationEl = document.getElementById('newDesignation');
+    const reportingManagerEl = document.getElementById('newReportingManager');
     const emailEl = document.getElementById('newEmail');
     const passwordEl = document.getElementById('newPassword');
     const roleEl = document.getElementById('newRole');
+    const statusEl = document.getElementById('newStatus');
     const newPermissionsSectionEl = document.getElementById('newPermissionsSection');
     const newPermissionsMatrixEl = document.getElementById('newPermissionsMatrix');
     const messageEl = document.getElementById('addUserMessage');
@@ -14,8 +22,16 @@
 
     const modalEl = document.getElementById('editUserModal');
     const editUserIdEl = document.getElementById('editUserId');
+    const editNameEl = document.getElementById('editName');
+    const editEmployeeIdEl = document.getElementById('editEmployeeId');
+    const editDepartmentEl = document.getElementById('editDepartment');
+    const editAreaEl = document.getElementById('editArea');
+    const editPlantEl = document.getElementById('editPlant');
+    const editDesignationEl = document.getElementById('editDesignation');
+    const editReportingManagerEl = document.getElementById('editReportingManager');
     const editEmailEl = document.getElementById('editEmail');
     const editRoleEl = document.getElementById('editRole');
+    const editStatusEl = document.getElementById('editStatus');
     const editPermissionsSectionEl = document.getElementById('editPermissionsSection');
     const editPermissionsMatrixEl = document.getElementById('editPermissionsMatrix');
     const editPasswordEl = document.getElementById('editPassword');
@@ -76,7 +92,10 @@
             description: 'Setup screens that control daily boards, trackers, and KPI modules.',
             items: [
                 { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board', description: 'Issue board templates and assignment setup.' },
-                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Scheduler', description: 'Schedules and settings for gemba walk planning.' },
+                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Schedule', description: 'Schedules and settings for gemba walk planning.' },
+                { key: 'GEMBA_WALK_FINDINGS', label: 'Gemba Walk Findings', description: 'Findings captured from gemba walk activity.' },
+                { key: 'GEMBA_WALK_REPORTING', label: 'Gemba Walk Reporting', description: 'Reporting pages for gemba walk activity.' },
+                { key: 'USER_DASHBOARD', label: 'User Dashboard', description: 'User dashboard overview page.' },
                 { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Scheduler', description: 'Training schedule periods and configuration data.' },
                 { key: 'MEETING_AGENDA_CONFIGURATION', label: 'PMS Agenda', description: 'PMS agenda configuration and save actions.' },
                 { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality Reporting', description: 'Abnormality tracker lists and save actions.' },
@@ -188,12 +207,54 @@
         return PERMISSION_LABELS[permissionKey] || permissionKey;
     }
 
+    function normalizeStatus(status) {
+        const value = String(status || 'ACTIVE').trim().toUpperCase().replace(/\s+/g, '_');
+        return value === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    }
+
+    function statusLabel(status) {
+        return normalizeStatus(status) === 'INACTIVE' ? 'Inactive' : 'Active';
+    }
+
+    function statusClass(status) {
+        return normalizeStatus(status) === 'INACTIVE' ? 'inactive' : 'active';
+    }
+
+    function userDisplayName(user) {
+        return (user && (user.name || user.username)) || '-';
+    }
+
     function escapeAttribute(value) {
         return String(value || '')
             .replace(/&/g, '&amp;')
             .replace(/"/g, '&quot;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+    }
+
+    function setDatalistOptions(id, values) {
+        const list = document.getElementById(id);
+        if (!list || !Array.isArray(values)) {
+            return;
+        }
+        list.innerHTML = values.map(function (value) {
+            return '<option value="' + escapeAttribute(value) + '"></option>';
+        }).join('');
+    }
+
+    function loadMasterOptions() {
+        fetch('/api/users/master-options')
+            .then(parseJsonResponse)
+            .then(function (data) {
+                const options = data.options || {};
+                setDatalistOptions('departmentOptions', options.departments || []);
+                setDatalistOptions('areaOptions', options.areas || []);
+                setDatalistOptions('plantOptions', options.plants || []);
+                setDatalistOptions('designationOptions', options.designations || []);
+            })
+            .catch(function () {
+                // Dropdown suggestions are helpful, but the form can still save typed values.
+            });
     }
 
     function buildPermissionTooltip(title, items) {
@@ -386,21 +447,27 @@
         if (!tableBody) return;
 
         if (!Array.isArray(users) || users.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:14px;">No users found.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#64748b;padding:14px;">No users found.</td></tr>';
             return;
         }
 
         tableBody.innerHTML = users.map(function (u) {
             return '' +
                 '<tr>' +
-                '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i>' + escapeHtml(u.username) + '</td>' +
+                '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i><strong>' + escapeHtml(userDisplayName(u)) + '</strong><div class="um-muted">@' + escapeHtml(u.username) + '</div></td>' +
+                '<td>' + escapeHtml(u.employeeId || '-') + '</td>' +
+                '<td>' + escapeHtml(u.department || '-') + '</td>' +
+                '<td>' + escapeHtml(u.area || '-') + '</td>' +
+                '<td>' + escapeHtml(u.plant || '-') + '</td>' +
+                '<td>' + escapeHtml(u.designation || '-') + '</td>' +
+                '<td>' + escapeHtml(u.reportingManager || '-') + '</td>' +
                 '<td>' + escapeHtml(u.email || '-') + '</td>' +
                 '<td><span class="pms-role-badge ' + roleClass(u.role) + '">' + escapeHtml(u.roleLabel || roleLabel(u.role)) + '</span></td>' +
                                 '<td>' + formatPermissionSummary(u) + '</td>' +
-                '<td><span class="pms-status-badge active">' + escapeHtml(u.status || 'Active') + '</span></td>' +
+                '<td><span class="pms-status-badge ' + statusClass(u.status) + '">' + escapeHtml(statusLabel(u.status)) + '</span></td>' +
                                 '<td class="pms-user-actions">' +
                                 (canEditUserManagement
-                                        ? '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-email="' + escapeHtml(u.email || '') + '" data-role="' + escapeHtml(u.role) + '" data-view-permissions="' + escapeHtml(readArray(u.viewPermissions).join(',')) + '" data-edit-permissions="' + escapeHtml(readArray(u.editPermissions).join(',')) + '"><i class="fas fa-pen"></i> Edit</button>' +
+                                        ? '<button type="button" class="pms-action-btn edit" data-id="' + u.id + '" data-name="' + escapeAttribute(u.name || '') + '" data-employee-id="' + escapeAttribute(u.employeeId || '') + '" data-department="' + escapeAttribute(u.department || '') + '" data-area="' + escapeAttribute(u.area || '') + '" data-plant="' + escapeAttribute(u.plant || '') + '" data-designation="' + escapeAttribute(u.designation || '') + '" data-reporting-manager="' + escapeAttribute(u.reportingManager || '') + '" data-email="' + escapeAttribute(u.email || '') + '" data-role="' + escapeAttribute(u.role) + '" data-status="' + escapeAttribute(normalizeStatus(u.status)) + '" data-view-permissions="' + escapeAttribute(readArray(u.viewPermissions).join(',')) + '" data-edit-permissions="' + escapeAttribute(readArray(u.editPermissions).join(',')) + '"><i class="fas fa-pen"></i> Edit</button>' +
                                             '<button type="button" class="pms-action-btn delete" data-id="' + u.id + '"><i class="fas fa-trash"></i> Delete</button>'
                                         : '<span class="permission-view-only"><i class="fas fa-eye"></i> View only</span>') +
                                 '</td>' +
@@ -426,13 +493,13 @@
             .then(parseJsonResponse)
             .then(function (data) {
                 if (data.status !== 'success') {
-                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:14px;">' + escapeHtml(data.message || 'Failed to load users.') + '</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#b91c1c;padding:14px;">' + escapeHtml(data.message || 'Failed to load users.') + '</td></tr>';
                     return;
                 }
                 renderUsers(data.users);
             })
             .catch(function () {
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#b91c1c;padding:14px;">Error loading users.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#b91c1c;padding:14px;">Error loading users.</td></tr>';
             });
     }
 
@@ -441,16 +508,24 @@
             showMessage(tableMessageEl, 'You have view-only access for User Management.', 'warning');
             return;
         }
+        const name = (nameEl.value || '').trim();
+        const employeeId = (employeeIdEl.value || '').trim();
         const username = (usernameEl.value || '').trim();
+        const department = (departmentEl.value || '').trim();
+        const area = (areaEl.value || '').trim();
+        const plant = (plantEl.value || '').trim();
+        const designation = (designationEl.value || '').trim();
+        const reportingManager = (reportingManagerEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
         const role = normalizeRole(roleEl.value || 'USER');
+        const status = normalizeStatus(statusEl.value || 'ACTIVE');
         const permissions = role === 'ADMIN'
             ? buildDefaultAdminPermissions()
             : collectPermissions('new');
 
-        if (!username || !email || !password) {
-            showMessage(messageEl, 'Please fill username, email, and password.', 'warning');
+        if (!name || !username || !email || !password) {
+            showMessage(messageEl, 'Please fill name, username, email, and password.', 'warning');
             return;
         }
 
@@ -462,9 +537,17 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: username,
+                name: name,
+                employeeId: employeeId,
+                department: department,
+                area: area,
+                plant: plant,
+                designation: designation,
+                reportingManager: reportingManager,
                 email: email,
                 password: password,
                 role: role,
+                status: status,
                 viewPermissions: permissions.viewPermissions,
                 editPermissions: permissions.editPermissions
             })
@@ -476,8 +559,10 @@
                     showMessage(tableMessageEl, 'User created successfully.', 'success');
                     form.reset();
                     roleEl.value = 'USER';
+                    if (statusEl) statusEl.value = 'ACTIVE';
                     resetPermissions('new');
                     togglePermissionSection(roleEl, newPermissionsSectionEl);
+                    loadMasterOptions();
                     loadUsers();
                 } else {
                     showMessage(messageEl, data.message || 'Failed to add user.', 'error');
@@ -492,14 +577,22 @@
             });
     }
 
-    function openEditModal(id, email, role, viewPermissions, editPermissions) {
+    function openEditModal(user) {
         if (!modalEl) return;
         if (!canEditUserManagement) return;
-        editUserIdEl.value = id;
-        editEmailEl.value = email || '';
-        editRoleEl.value = normalizeRole(role || 'USER');
-        setPermissionInputs('edit', viewPermissions, 'view');
-        setPermissionInputs('edit', editPermissions, 'edit');
+        editUserIdEl.value = user.id;
+        editNameEl.value = user.name || '';
+        editEmployeeIdEl.value = user.employeeId || '';
+        editDepartmentEl.value = user.department || '';
+        editAreaEl.value = user.area || '';
+        editPlantEl.value = user.plant || '';
+        editDesignationEl.value = user.designation || '';
+        editReportingManagerEl.value = user.reportingManager || '';
+        editEmailEl.value = user.email || '';
+        editRoleEl.value = normalizeRole(user.role || 'USER');
+        editStatusEl.value = normalizeStatus(user.status || 'ACTIVE');
+        setPermissionInputs('edit', user.viewPermissions, 'view');
+        setPermissionInputs('edit', user.editPermissions, 'edit');
         togglePermissionSection(editRoleEl, editPermissionsSectionEl);
         editPasswordEl.value = '';
         editMessageEl.className = 'form-message';
@@ -532,15 +625,23 @@
             return;
         }
         const id = editUserIdEl.value;
+        const name = (editNameEl.value || '').trim();
+        const employeeId = (editEmployeeIdEl.value || '').trim();
+        const department = (editDepartmentEl.value || '').trim();
+        const area = (editAreaEl.value || '').trim();
+        const plant = (editPlantEl.value || '').trim();
+        const designation = (editDesignationEl.value || '').trim();
+        const reportingManager = (editReportingManagerEl.value || '').trim();
         const email = (editEmailEl.value || '').trim();
         const role = normalizeRole(editRoleEl.value || 'USER');
+        const status = normalizeStatus(editStatusEl.value || 'ACTIVE');
         const password = editPasswordEl.value || '';
         const permissions = role === 'ADMIN'
             ? buildDefaultAdminPermissions()
             : collectPermissions('edit');
 
-        if (!id || !email) {
-            showMessage(editMessageEl, 'Email is required.', 'warning');
+        if (!id || !name || !email) {
+            showMessage(editMessageEl, 'Name and email are required.', 'warning');
             return;
         }
 
@@ -551,8 +652,16 @@
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                name: name,
+                employeeId: employeeId,
+                department: department,
+                area: area,
+                plant: plant,
+                designation: designation,
+                reportingManager: reportingManager,
                 email: email,
                 role: role,
+                status: status,
                 password: password,
                 viewPermissions: permissions.viewPermissions,
                 editPermissions: permissions.editPermissions
@@ -563,6 +672,7 @@
                 if (data.status === 'success') {
                     showMessage(tableMessageEl, 'User updated successfully.', 'success');
                     closeEditModal();
+                    loadMasterOptions();
                     loadUsers();
                 } else {
                     showMessage(editMessageEl, data.message || 'Failed to update user.', 'error');
@@ -617,13 +727,21 @@
 
         editButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                openEditModal(
-                    btn.dataset.id,
-                    btn.dataset.email,
-                    btn.dataset.role,
-                    btn.dataset.viewPermissions,
-                    btn.dataset.editPermissions
-                );
+                openEditModal({
+                    id: btn.dataset.id,
+                    name: btn.dataset.name,
+                    employeeId: btn.dataset.employeeId,
+                    department: btn.dataset.department,
+                    area: btn.dataset.area,
+                    plant: btn.dataset.plant,
+                    designation: btn.dataset.designation,
+                    reportingManager: btn.dataset.reportingManager,
+                    email: btn.dataset.email,
+                    role: btn.dataset.role,
+                    status: btn.dataset.status,
+                    viewPermissions: btn.dataset.viewPermissions,
+                    editPermissions: btn.dataset.editPermissions
+                });
             });
         });
 
@@ -765,7 +883,7 @@
         }
     });
 
-    [usernameEl, emailEl, passwordEl].forEach(function (el) {
+    [nameEl, employeeIdEl, usernameEl, departmentEl, areaEl, plantEl, designationEl, reportingManagerEl, emailEl, passwordEl].forEach(function (el) {
         if (!el) return;
         el.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') addUser();
@@ -774,5 +892,6 @@
 
     togglePermissionSection(roleEl, newPermissionsSectionEl);
 
+    loadMasterOptions();
     loadUsers();
 })();

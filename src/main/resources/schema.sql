@@ -39,6 +39,95 @@ CREATE TABLE IF NOT EXISTS issue_board_item_history (
     INDEX idx_issue_board_item_history_item (issue_board_item_id)
 );
 
+CREATE TABLE IF NOT EXISTS plant_master_data_items (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    category VARCHAR(40) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_plant_master_category_name (category, name)
+);
+
+CREATE TABLE IF NOT EXISTS abnormality_master_data_items (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    category VARCHAR(40) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_abnormality_master_category_name (category, name)
+);
+
+CREATE TABLE IF NOT EXISTS gemba_walk_master_data_items (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    category VARCHAR(40) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_gemba_walk_master_category_name (category, name)
+);
+
+CREATE TABLE IF NOT EXISTS gemba_kaizen_master_data_items (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    category VARCHAR(40) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_gemba_kaizen_master_category_name (category, name)
+);
+
+CREATE TABLE IF NOT EXISTS process_master_data_items (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    category VARCHAR(40) NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_process_master_category_name (category, name)
+);
+
+CREATE TABLE IF NOT EXISTS abnormality_reporting_records (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    type_of_tag VARCHAR(160) NULL,
+    priority VARCHAR(80) NULL,
+    abnormality_tag_number VARCHAR(160) NULL,
+    tag_raised_by VARCHAR(160) NULL,
+    date_raised DATE NULL,
+    shift VARCHAR(80) NULL,
+    abnormality_related_to VARCHAR(160) NULL,
+    department VARCHAR(160) NULL,
+    area_machine VARCHAR(160) NULL,
+    component VARCHAR(160) NULL,
+    description VARCHAR(1000) NULL,
+    proposed_action VARCHAR(1000) NULL,
+    picture_image VARCHAR(255) NULL,
+    abnormality_defect_type VARCHAR(160) NULL,
+    assign_to VARCHAR(160) NULL,
+    date_closed DATE NULL,
+    tag_status VARCHAR(80) NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS gemba_walk_records (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    schedule_item_id BIGINT NULL,
+    start_time VARCHAR(20) NULL,
+    completion_time VARCHAR(20) NULL,
+    email VARCHAR(160) NULL,
+    manager_name VARCHAR(160) NULL,
+    date_of_leadership_safety_walk_conducted DATE NULL,
+    management_safety_walk_week VARCHAR(160) NULL,
+    location_of_msw_conducted VARCHAR(160) NULL,
+    responsibility VARCHAR(160) NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS gemba_walk_observations (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    record_id BIGINT NULL,
+    observation_order INT NULL,
+    observation_description VARCHAR(1000) NULL,
+    picture_image VARCHAR(255) NULL,
+    gemba_category VARCHAR(160) NULL,
+    life_saver_rule VARCHAR(160) NULL,
+    status VARCHAR(40) NULL,
+    PRIMARY KEY (id),
+    INDEX idx_gemba_walk_observations_record (record_id)
+);
+
 UPDATE abnormality_tracker SET row_order = NULL WHERE row_order IS NOT NULL AND (TRIM(row_order) = '' OR TRIM(row_order) NOT REGEXP '^-?[0-9]+$');
 UPDATE abnormality_tracker SET yellow_tags = NULL WHERE yellow_tags IS NOT NULL AND (TRIM(yellow_tags) = '' OR TRIM(yellow_tags) NOT REGEXP '^-?[0-9]+$');
 UPDATE abnormality_tracker SET red_tags = NULL WHERE red_tags IS NOT NULL AND (TRIM(red_tags) = '' OR TRIM(red_tags) NOT REGEXP '^-?[0-9]+$');
@@ -115,6 +204,16 @@ UPDATE training_schedule_items SET duration_hours = NULL WHERE duration_hours IS
 
 ALTER TABLE app_users MODIFY COLUMN page_view_permissions TEXT NULL;
 ALTER TABLE app_users MODIFY COLUMN page_edit_permissions TEXT NULL;
+ALTER TABLE app_users ADD COLUMN name VARCHAR(160) NULL;
+ALTER TABLE app_users ADD COLUMN employee_id VARCHAR(80) NULL;
+ALTER TABLE app_users ADD COLUMN department VARCHAR(120) NULL;
+ALTER TABLE app_users ADD COLUMN area VARCHAR(120) NULL;
+ALTER TABLE app_users ADD COLUMN plant VARCHAR(120) NULL;
+ALTER TABLE app_users ADD COLUMN designation VARCHAR(120) NULL;
+ALTER TABLE app_users ADD COLUMN reporting_manager VARCHAR(160) NULL;
+ALTER TABLE app_users ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
+UPDATE app_users SET name = username WHERE (name IS NULL OR TRIM(name) = '') AND username IS NOT NULL;
+UPDATE app_users SET status = 'ACTIVE' WHERE status IS NULL OR TRIM(status) = '';
 ALTER TABLE production_metric_custom_values MODIFY COLUMN `ftd_actual` VARCHAR(64) NULL;
 ALTER TABLE production_metric_custom_values MODIFY COLUMN `ftd_target` VARCHAR(64) NULL;
 ALTER TABLE production_metric_custom_values MODIFY COLUMN `mtd_actual` VARCHAR(64) NULL;

@@ -22,14 +22,17 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="/kpi-dashboard" class="nav-item" th:if="${session.canViewKpiDashboard}" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+                <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
-                <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk tracker"><i class="fas fa-clipboard-list"></i><span>Gemba Walk tracker</span></a>
+                <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+                <a href="/gemba-findings" class="nav-item" th:if="${session.canViewGembaWalkFindings}" data-tooltip="Gemba Walk Findings"><i class="fas fa-magnifying-glass-chart"></i><span>Gemba Walk Findings</span></a>
+                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
                 <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
-                <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
@@ -51,17 +54,23 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-                <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Scheduler</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-list-ul"></i><span>PMS Agenda</span></a>
-                <a href="/settings?config=abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-bug"></i><span>Abnormality Reporting</span></a>
-                <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-square"></i><span>Info Portal</span></a>
-                <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}" data-tooltip="KPI Dashboard Configuration"><i class="fas fa-sliders"></i><span>KPI Dashboard Configuration</span></a>
-                <a href="/settings?config=leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
-                <a href="/settings?config=process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
-                <a href="/pms-configuration" class="nav-item" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
+                <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}" data-tooltip="KPI Configuration"><i class="fas fa-sliders"></i><span>KPI Configuration</span></a>
+                <div class="nav-parent" th:if="${session.canViewMasterDataGroup}">
+                    <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                    <div class="nav-children">
+                        <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                        <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
+                        <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
+                        <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
+                        <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
+                        <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
+                        <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
+                    </div>
+                </div>
                 <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
-                <a href="/email-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email"><i class="fas fa-envelope"></i><span>Email</span></a>
             </nav>
             <div class="sidebar-footer">
                 <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -828,6 +837,65 @@
                                 <div id="gembaScheduleMessage" class="form-message"></div>
                             </div>
 
+                            <!-- Master Data Gemba Walk Form -->
+                            <div id="form-master-gemba-walk" class="form-section">
+                                <div class="kpi-rename-shell">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Gemba Walk</h2>
+                                    </div>
+
+                                    <div class="footer-btn-card master-gemba-walk-card" data-category="GEMBA_CATEGORY">
+                                        <div class="footer-btn-card-header"><i class="fas fa-list"></i> Gemba Category</div>
+                                        <div class="master-gemba-walk-entry">
+                                            <div class="form-group">
+                                                <label for="masterGembaCategoryInput">Gemba Category</label>
+                                                <input type="text" id="masterGembaCategoryInput" class="master-gemba-walk-input" maxlength="160" placeholder="Gemba Category">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-gemba-walk-add-btn" data-category="GEMBA_CATEGORY">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-gemba-walk-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Gemba Category</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterGembaCategoryTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="footer-btn-card master-gemba-walk-card" data-category="LIFE_SAVER_RULE">
+                                        <div class="footer-btn-card-header"><i class="fas fa-shield-halved"></i> Life Saver Rule (LSR)</div>
+                                        <div class="master-gemba-walk-entry">
+                                            <div class="form-group">
+                                                <label for="masterLifeSaverRuleInput">Life Saver Rule (LSR)</label>
+                                                <input type="text" id="masterLifeSaverRuleInput" class="master-gemba-walk-input" maxlength="160" placeholder="Life Saver Rule (LSR)">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-gemba-walk-add-btn" data-category="LIFE_SAVER_RULE">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-gemba-walk-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Life Saver Rule (LSR)</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterLifeSaverRuleTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div id="masterGembaWalkMessage" class="form-message"></div>
+                                </div>
+                            </div>
+
                             <div id="form-leadership-gemba-tracker" class="form-section">
                                 <div class="issue-board-meta-grid">
                                     <div class="form-group">
@@ -878,6 +946,41 @@
                                     </button>
                                 </div>
                                 <div id="lgtConfigMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- Master Data Gemba Kaizen Form -->
+                            <div id="form-master-gemba-kaizen" class="form-section">
+                                <div class="kpi-rename-shell">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Gemba Kaizen</h2>
+                                    </div>
+
+                                    <div class="footer-btn-card master-gemba-kaizen-card" data-category="CLASSIFICATION_OF_KAIZEN">
+                                        <div class="footer-btn-card-header"><i class="fas fa-lightbulb"></i> Classification of Kaizen</div>
+                                        <div class="master-gemba-kaizen-entry">
+                                            <div class="form-group">
+                                                <label for="masterClassificationOfKaizenInput">Classification of Kaizen</label>
+                                                <input type="text" id="masterClassificationOfKaizenInput" class="master-gemba-kaizen-input" maxlength="160" placeholder="Classification of Kaizen">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-gemba-kaizen-add-btn" data-category="CLASSIFICATION_OF_KAIZEN">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-gemba-kaizen-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Classification of Kaizen</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterClassificationOfKaizenTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div id="masterGembaKaizenMessage" class="form-message"></div>
+                                </div>
                             </div>
 
                             <div id="form-training-schedule" class="form-section issue-board-enterprise">
@@ -1224,6 +1327,89 @@
                                 <div id="processConfirmationMessage" class="form-message"></div>
                             </div>
 
+                            <!-- Master Data Process Form -->
+                            <div id="form-master-process" class="form-section">
+                                <div class="kpi-rename-shell">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Process</h2>
+                                    </div>
+
+                                    <div class="footer-btn-card master-process-card" data-category="ZM_OBSERVATION">
+                                        <div class="footer-btn-card-header"><i class="fas fa-eye"></i> ZM Describe Your Observation</div>
+                                        <div class="master-process-entry">
+                                            <div class="form-group">
+                                                <label for="masterZmObservationInput">ZM Describe Your Observation</label>
+                                                <input type="text" id="masterZmObservationInput" class="master-process-input" maxlength="160" placeholder="ZM Describe Your Observation">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="ZM_OBSERVATION">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-process-table">
+                                            <thead>
+                                            <tr>
+                                                <th>ZM Describe Your Observation</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterZmObservationTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="footer-btn-card master-process-card" data-category="PM_OBSERVATION">
+                                        <div class="footer-btn-card-header"><i class="fas fa-eye"></i> PM Describe Your Observation</div>
+                                        <div class="master-process-entry">
+                                            <div class="form-group">
+                                                <label for="masterPmObservationInput">PM Describe Your Observation</label>
+                                                <input type="text" id="masterPmObservationInput" class="master-process-input" maxlength="160" placeholder="PM Describe Your Observation">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="PM_OBSERVATION">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-process-table">
+                                            <thead>
+                                            <tr>
+                                                <th>PM Describe Your Observation</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterPmObservationTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="footer-btn-card master-process-card" data-category="QM_OBSERVATION">
+                                        <div class="footer-btn-card-header"><i class="fas fa-eye"></i> QM Describe Your Observation</div>
+                                        <div class="master-process-entry">
+                                            <div class="form-group">
+                                                <label for="masterQmObservationInput">QM Describe Your Observation</label>
+                                                <input type="text" id="masterQmObservationInput" class="master-process-input" maxlength="160" placeholder="QM Describe Your Observation">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="QM_OBSERVATION">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-process-table">
+                                            <thead>
+                                            <tr>
+                                                <th>QM Describe Your Observation</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterQmObservationTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div id="masterProcessMessage" class="form-message"></div>
+                                </div>
+                            </div>
+
                             <!-- Abnormality Tracker Config Form -->
                             <div id="form-abnormality-tracker" class="form-section issue-board-enterprise">
                                 <div class="config-form-section issue-board-form-card">
@@ -1274,6 +1460,65 @@
                                     </button>
                                 </div>
                                 <div id="atConfigMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- Master Data Abnormality Form -->
+                            <div id="form-master-abnormality" class="form-section">
+                                <div class="kpi-rename-shell">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Abnormality</h2>
+                                    </div>
+
+                                    <div class="footer-btn-card master-abnormality-card" data-category="ABT_TAG_TYPE">
+                                        <div class="footer-btn-card-header"><i class="fas fa-tag"></i> ABT Tag Type</div>
+                                        <div class="master-abnormality-entry">
+                                            <div class="form-group">
+                                                <label for="masterAbtTagTypeInput">ABT Tag Type</label>
+                                                <input type="text" id="masterAbtTagTypeInput" class="master-abnormality-input" maxlength="160" placeholder="ABT Tag Type">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-abnormality-add-btn" data-category="ABT_TAG_TYPE">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-abnormality-table">
+                                            <thead>
+                                            <tr>
+                                                <th>ABT Tag Type</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterAbtTagTypeTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="footer-btn-card master-abnormality-card" data-category="ABNORMALITY_DEFECT_TYPE">
+                                        <div class="footer-btn-card-header"><i class="fas fa-triangle-exclamation"></i> Abnormality / Defect Type</div>
+                                        <div class="master-abnormality-entry">
+                                            <div class="form-group">
+                                                <label for="masterAbnormalityDefectTypeInput">Abnormality / Defect Type</label>
+                                                <input type="text" id="masterAbnormalityDefectTypeInput" class="master-abnormality-input" maxlength="160" placeholder="Abnormality / Defect Type">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-abnormality-add-btn" data-category="ABNORMALITY_DEFECT_TYPE">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-abnormality-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Abnormality / Defect Type</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterAbnormalityDefectTypeTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div id="masterAbnormalityMessage" class="form-message"></div>
+                                </div>
                             </div>
 
                             <!-- H&S Cross Daily Config Form -->
@@ -1375,6 +1620,65 @@
                                     </button>
                                 </div>
                                 <div id="infoPortalMessage" class="form-message"></div>
+                            </div>
+
+                            <!-- Master Data Plant Form -->
+                            <div id="form-master-plant" class="form-section">
+                                <div class="kpi-rename-shell">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Plant</h2>
+                                    </div>
+
+                                    <div class="footer-btn-card master-plant-card" data-category="DEPARTMENT">
+                                        <div class="footer-btn-card-header"><i class="fas fa-building"></i> Department</div>
+                                        <div class="master-plant-entry">
+                                            <div class="form-group">
+                                                <label for="masterDepartmentInput">Department</label>
+                                                <input type="text" id="masterDepartmentInput" class="master-plant-input" maxlength="160" placeholder="Department">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-plant-add-btn" data-category="DEPARTMENT">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-plant-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Department</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterDepartmentTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="footer-btn-card master-plant-card" data-category="PROCESS_AREA">
+                                        <div class="footer-btn-card-header"><i class="fas fa-diagram-project"></i> Process Area</div>
+                                        <div class="master-plant-entry">
+                                            <div class="form-group">
+                                                <label for="masterProcessAreaInput">Process Area</label>
+                                                <input type="text" id="masterProcessAreaInput" class="master-plant-input" maxlength="160" placeholder="Process Area">
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-plant-add-btn" data-category="PROCESS_AREA">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <table class="config-table master-plant-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Process Area</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="masterProcessAreaTableBody">
+                                            <tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">Loading...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div id="masterPlantMessage" class="form-message"></div>
+                                </div>
                             </div>
 
                             <!-- KPI Rename Dashboard Form -->

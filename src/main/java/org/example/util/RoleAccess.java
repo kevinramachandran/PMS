@@ -19,6 +19,9 @@ public final class RoleAccess {
         public static final String PAGE_PRODUCTION_METRICS_DATA_COST = "PRODUCTION_METRICS_DATA_COST";
         public static final String PAGE_ISSUE_BOARD_CONFIGURATION = "ISSUE_BOARD_CONFIGURATION";
         public static final String PAGE_GEMBA_WALK_CONFIGURATION = "GEMBA_WALK_CONFIGURATION";
+        public static final String PAGE_GEMBA_WALK_FINDINGS = "GEMBA_WALK_FINDINGS";
+        public static final String PAGE_GEMBA_WALK_REPORTING = "GEMBA_WALK_REPORTING";
+        public static final String PAGE_USER_DASHBOARD = "USER_DASHBOARD";
         public static final String PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION = "LEADERSHIP_GEMBA_TRACKER_CONFIGURATION";
         public static final String PAGE_TRAINING_SCHEDULE_CONFIGURATION = "TRAINING_SCHEDULE_CONFIGURATION";
         public static final String PAGE_MEETING_AGENDA_CONFIGURATION = "MEETING_AGENDA_CONFIGURATION";
@@ -43,6 +46,9 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA_COST,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
+            PAGE_GEMBA_WALK_FINDINGS,
+            PAGE_GEMBA_WALK_REPORTING,
+            PAGE_USER_DASHBOARD,
             PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
             PAGE_MEETING_AGENDA_CONFIGURATION,
@@ -61,6 +67,9 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
+            PAGE_GEMBA_WALK_FINDINGS,
+            PAGE_GEMBA_WALK_REPORTING,
+            PAGE_USER_DASHBOARD,
             PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
             PAGE_MEETING_AGENDA_CONFIGURATION,
@@ -83,6 +92,9 @@ public final class RoleAccess {
             PAGE_PRODUCTION_METRICS_DATA_COST,
             PAGE_ISSUE_BOARD_CONFIGURATION,
             PAGE_GEMBA_WALK_CONFIGURATION,
+            PAGE_GEMBA_WALK_FINDINGS,
+            PAGE_GEMBA_WALK_REPORTING,
+            PAGE_USER_DASHBOARD,
             PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION,
             PAGE_TRAINING_SCHEDULE_CONFIGURATION,
             PAGE_MEETING_AGENDA_CONFIGURATION,
@@ -171,7 +183,6 @@ public final class RoleAccess {
         }
         if (PAGE_KPI_RENAME_DASHBOARD.equals(pageKey)) {
             return sanitized.contains(PAGE_KPI_RENAME_DASHBOARD)
-                    || sanitized.contains(PAGE_KPI_PLANT_NAME)
                     || sanitized.contains(PAGE_KPI_TARGET_CROSS_COLOR);
         }
 
@@ -192,7 +203,6 @@ public final class RoleAccess {
         }
         if (PAGE_KPI_RENAME_DASHBOARD.equals(pageKey)) {
             return sanitized.contains(PAGE_KPI_RENAME_DASHBOARD)
-                    || sanitized.contains(PAGE_KPI_PLANT_NAME)
                     || sanitized.contains(PAGE_KPI_TARGET_CROSS_COLOR);
         }
 
@@ -227,11 +237,18 @@ public final class RoleAccess {
         return switch (config.trim().toLowerCase(Locale.ROOT)) {
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
+            case "master-gemba-walk" -> PAGE_GEMBA_WALK_CONFIGURATION;
             case "gemba-schedule" -> PAGE_GEMBA_WALK_CONFIGURATION;
+            case "gemba-findings" -> PAGE_GEMBA_WALK_FINDINGS;
+            case "gemba-reporting" -> PAGE_GEMBA_WALK_REPORTING;
+            case "user-dashboard" -> PAGE_USER_DASHBOARD;
+            case "master-gemba-kaizen" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "leadership-gemba-tracker" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "training-schedule" -> PAGE_TRAINING_SCHEDULE_CONFIGURATION;
             case "meeting-agenda" -> PAGE_MEETING_AGENDA_CONFIGURATION;
+            case "master-process" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
             case "process-confirmation" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
+            case "master-abnormality" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "abnormality-tracker" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
@@ -253,11 +270,18 @@ public final class RoleAccess {
             case "priorities", "weekly-priorities", "daily-performance", "daily-section" -> PAGE_PMS_DATA_ENTRY;
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
+            case "master-gemba-walk" -> PAGE_GEMBA_WALK_CONFIGURATION;
             case "gemba-schedule" -> PAGE_GEMBA_WALK_CONFIGURATION;
+            case "gemba-findings" -> PAGE_GEMBA_WALK_FINDINGS;
+            case "gemba-reporting" -> PAGE_GEMBA_WALK_REPORTING;
+            case "user-dashboard" -> PAGE_USER_DASHBOARD;
+            case "master-gemba-kaizen" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "leadership-gemba-tracker" -> PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
             case "training-schedule" -> PAGE_TRAINING_SCHEDULE_CONFIGURATION;
             case "meeting-agenda" -> PAGE_MEETING_AGENDA_CONFIGURATION;
+            case "master-process" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
             case "process-confirmation" -> PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
+            case "master-abnormality" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "abnormality-tracker" -> PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;

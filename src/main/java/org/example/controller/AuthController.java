@@ -108,18 +108,37 @@ public class AuthController {
         }
 
         String username = asString(payload.get("username"));
+        String name = asString(payload.get("name"));
+        String employeeId = asString(payload.get("employeeId"));
+        String department = asString(payload.get("department"));
+        String area = asString(payload.get("area"));
+        String plant = asString(payload.get("plant"));
+        String designation = asString(payload.get("designation"));
+        String reportingManager = asString(payload.get("reportingManager"));
         String email = asString(payload.get("email"));
         String password = asString(payload.get("password"));
         String newRole = asString(payload.get("role"));
+        String status = asString(payload.get("status"));
         Set<String> viewPermissions = toPermissionSet(payload.get("viewPermissions"));
         Set<String> editPermissions = toPermissionSet(payload.get("editPermissions"));
 
-        Optional<String> validation = authService.addUser(username, email, password, newRole, viewPermissions, editPermissions);
+        Optional<String> validation = authService.addUser(username, name, employeeId, department, area, plant,
+                designation, reportingManager, email, password, newRole, status, viewPermissions, editPermissions);
         if (validation.isPresent()) {
             return Map.of("status", "error", "message", validation.get());
         }
 
         return Map.of("status", "success", "message", "User added successfully");
+    }
+
+    @GetMapping("/api/users/master-options")
+    @ResponseBody
+    public Map<String, Object> getUserMasterOptions(HttpSession session) {
+        if (!canViewPage(session, RoleAccess.PAGE_USER_MANAGEMENT)) {
+            return Map.of("status", "error", "message", "Forbidden");
+        }
+
+        return Map.of("status", "success", "options", authService.getUserMasterOptions());
     }
 
     @PutMapping("/api/users/{id}")
@@ -131,13 +150,22 @@ public class AuthController {
             return Map.of("status", "error", "message", "Forbidden");
         }
 
+        String name = asString(payload.get("name"));
+        String employeeId = asString(payload.get("employeeId"));
+        String department = asString(payload.get("department"));
+        String area = asString(payload.get("area"));
+        String plant = asString(payload.get("plant"));
+        String designation = asString(payload.get("designation"));
+        String reportingManager = asString(payload.get("reportingManager"));
         String email = asString(payload.get("email"));
         String password = asString(payload.get("password"));
         String role = asString(payload.get("role"));
+        String status = asString(payload.get("status"));
         Set<String> viewPermissions = toPermissionSet(payload.get("viewPermissions"));
         Set<String> editPermissions = toPermissionSet(payload.get("editPermissions"));
 
-        Optional<String> updateError = authService.updateUser(id, email, password, role, viewPermissions, editPermissions);
+        Optional<String> updateError = authService.updateUser(id, name, employeeId, department, area, plant,
+                designation, reportingManager, email, password, role, status, viewPermissions, editPermissions);
         if (updateError.isPresent()) {
             return Map.of("status", "error", "message", updateError.get());
         }
@@ -190,6 +218,9 @@ public class AuthController {
         boolean canViewProductionMetricsData = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_PRODUCTION_METRICS_DATA);
         boolean canViewIssueBoardConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
         boolean canViewGembaWalkConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION);
+        boolean canViewGembaWalkFindings = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_FINDINGS);
+        boolean canViewGembaWalkReporting = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_REPORTING);
+        boolean canViewUserDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_DASHBOARD);
         boolean canViewLeadershipGembaTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION);
         boolean canViewTrainingScheduleConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION);
         boolean canViewMeetingAgendaConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION);
@@ -204,6 +235,9 @@ public class AuthController {
         boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
         boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+        boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewKpiPlantName
+                || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
+                || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditUserManagement = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
 
@@ -214,6 +248,9 @@ public class AuthController {
         session.setAttribute("canViewIssueBoardConfiguration", canViewIssueBoardConfiguration);
         session.setAttribute("canEditIssueBoardConfiguration", canEditIssueBoardConfiguration);
         session.setAttribute("canViewGembaWalkConfiguration", canViewGembaWalkConfiguration);
+        session.setAttribute("canViewGembaWalkFindings", canViewGembaWalkFindings);
+        session.setAttribute("canViewGembaWalkReporting", canViewGembaWalkReporting);
+        session.setAttribute("canViewUserDashboard", canViewUserDashboard);
         session.setAttribute("canViewLeadershipGembaTrackerConfiguration", canViewLeadershipGembaTrackerConfiguration);
         session.setAttribute("canViewTrainingScheduleConfiguration", canViewTrainingScheduleConfiguration);
         session.setAttribute("canViewMeetingAgendaConfiguration", canViewMeetingAgendaConfiguration);
@@ -231,13 +268,15 @@ public class AuthController {
         session.setAttribute("canEditLicenseManagement", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT));
         session.setAttribute("canViewEmailConfiguration", canViewEmailConfiguration);
         session.setAttribute("canEditEmailConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION));
+        session.setAttribute("canViewMasterDataGroup", canViewMasterDataGroup);
         session.setAttribute("canViewConfigurationSettingsGroup",
                 canViewIssueBoardConfiguration || canViewGembaWalkConfiguration || canViewLeadershipGembaTrackerConfiguration
+                        || canViewGembaWalkFindings || canViewGembaWalkReporting
                         || canViewTrainingScheduleConfiguration || canViewMeetingAgendaConfiguration
                         || canViewProcessConfirmationConfiguration || canViewAbnormalityTrackerConfiguration);
         session.setAttribute("canViewProductionSettingsGroup",
                 canViewProductionMetricsData || canViewHsCrossDailyConfiguration || canViewLsrTrackingConfiguration);
-        session.setAttribute("canViewKpiConfigurationGroup", canViewKpiTargetCrossColor || canViewKpiRenameDashboard || canViewKpiPlantName);
+        session.setAttribute("canViewKpiConfigurationGroup", canViewKpiTargetCrossColor || canViewKpiRenameDashboard);
         session.setAttribute("canViewKpiDashboard",
                 RoleAccess.isAdmin(role) || canViewPmsDataEntry || canViewProductionMetricsData);
     }
@@ -267,6 +306,15 @@ public class AuthController {
         }
         if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION)) {
             return "/gemba-schedule";
+        }
+        if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_FINDINGS)) {
+            return "/gemba-findings";
+        }
+        if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_REPORTING)) {
+            return "/gemba-reporting";
+        }
+        if (pages.contains(RoleAccess.PAGE_USER_DASHBOARD)) {
+            return "/user-dashboard";
         }
         if (pages.contains(RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION)) {
             return "/training-schedule";
@@ -325,12 +373,19 @@ public class AuthController {
         Map<String, Object> row = new HashMap<>();
         row.put("id", user.getId());
         row.put("username", user.getUsername());
+        row.put("name", user.getName());
+        row.put("employeeId", user.getEmployeeId());
+        row.put("department", user.getDepartment());
+        row.put("area", user.getArea());
+        row.put("plant", user.getPlant());
+        row.put("designation", user.getDesignation());
+        row.put("reportingManager", user.getReportingManager());
         row.put("email", user.getEmail());
         row.put("role", normalizedRole);
         row.put("roleLabel", RoleAccess.displayName(user.getRole()));
         row.put("viewPermissions", viewPermissions);
         row.put("editPermissions", editPermissions);
-        row.put("status", "Active");
+        row.put("status", user.getStatus() == null || user.getStatus().isBlank() ? "ACTIVE" : user.getStatus());
         return row;
     }
 

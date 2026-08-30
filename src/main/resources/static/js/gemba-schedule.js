@@ -107,13 +107,15 @@ $(document).ready(function() {
                 row.__groupIndex = index;
                 const associate = row.associateName || row.functionName || '';
                 const editDate = row.scheduleDate || currentGembaEditDate || '';
+                const location = row.functionType || row.functionName || '';
+                const scheduleId = row.id || '';
                 tbody.append(
                     '<tr class="' + rowClass(row) + '">' +
                     '<td>' + escapeHtml(associate) + '</td>' +
-                    '<td>' + escapeHtml(row.week1) + '</td>' +
-                    '<td>' + escapeHtml(row.week2) + '</td>' +
-                    '<td>' + escapeHtml(row.week3) + '</td>' +
-                    '<td>' + escapeHtml(row.week4) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week1 || 'Week 1') + '">' + escapeHtml(row.week1) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week2 || 'Week 2') + '">' + escapeHtml(row.week2) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week3 || 'Week 3') + '">' + escapeHtml(row.week3) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week4 || 'Week 4') + '">' + escapeHtml(row.week4) + '</td>' +
                     (canEditCurrentPage ? '<td><button type="button" class="schedule-edit-link" data-date="' + escapeAttr(editDate) + '" title="Edit schedule" aria-label="Edit schedule"><i class="fas fa-pen-to-square"></i></button></td>' : '') +
                     '</tr>'
                 );
@@ -293,6 +295,15 @@ $(document).ready(function() {
             sessionStorage.setItem('gemba-schedule-open-date', editDate);
         }
         window.location.href = '/settings?config=gemba-schedule';
+    });
+
+    $('#gembaScheduleBody').on('click', '.gemba-selectable-cell', function() {
+        const scheduleId = $(this).data('id') || '';
+        const week = $(this).data('week') || '';
+        const location = $(this).data('location') || '';
+        window.location.href = '/gemba-walk-config?scheduleId=' + encodeURIComponent(scheduleId)
+            + '&week=' + encodeURIComponent(week)
+            + '&location=' + encodeURIComponent(location);
     });
 
     window.addEventListener('storage', function(e) {

@@ -32,6 +32,26 @@ public class WebController {
         return "gemba-schedule";
     }
 
+    @GetMapping("/gemba-walk-config")
+    public String gembaWalkConfig() {
+        return "gemba-walk-config";
+    }
+
+    @GetMapping("/gemba-findings")
+    public String gembaFindings(Model model) {
+        return placeholderView(model, "Gemba Walk Findings", "Gemba Walk findings will be configured here.");
+    }
+
+    @GetMapping("/gemba-reporting")
+    public String gembaReporting(Model model) {
+        return placeholderView(model, "Gemba Walk Reporting", "Gemba Walk reporting will be available here.");
+    }
+
+    @GetMapping("/user-dashboard")
+    public String userDashboard(Model model) {
+        return placeholderView(model, "User Dashboard", "User dashboard will be available here.");
+    }
+
     @GetMapping("/leadership-gemba-tracker")
     public String leadershipGembaTracker() {
         return "leadership-gemba-tracker";
@@ -57,6 +77,16 @@ public class WebController {
         return "abnormality-tracker";
     }
 
+    @GetMapping("/abnormality-reporting")
+    public String abnormalityReporting() {
+        return "abnormality-reporting";
+    }
+
+    @GetMapping("/abnormality-reporting-config")
+    public String abnormalityReportingConfig() {
+        return "abnormality-reporting-config";
+    }
+
     @GetMapping("/settings")
     public String settings(@RequestParam(value = "config", required = false) String config, Model model) {
         if (config == null || config.isBlank()) {
@@ -67,18 +97,22 @@ public class WebController {
         return switch (normalizedConfig) {
             case "metrics-data" -> settingsView(model, "metrics-data", "", "Production KPI Data");
             case "issue-board" -> settingsView(model, "issue-board", "", "Issue Board");
+            case "master-gemba-walk" -> settingsView(model, "master-gemba-walk", "", "Gemba Walk");
             case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk");
+            case "master-gemba-kaizen" -> settingsView(model, "master-gemba-kaizen", "", "Gemba Kaizen");
             case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker");
             case "training-schedule" -> settingsView(model, "training-schedule", "", "Training Schedule");
             case "meeting-agenda" -> settingsView(model, "meeting-agenda", "", "PMS Agenda");
+            case "master-process" -> settingsView(model, "master-process", "", "Process");
             case "process-confirmation" -> settingsView(model, "process-confirmation", "", "PMS Process Confirmation");
+            case "master-abnormality" -> settingsView(model, "master-abnormality", "", "Abnormality");
             case "abnormality-tracker" -> settingsView(model, "abnormality-tracker", "", "Abnormality Tracker");
             case "hs-cross" -> settingsView(model, "hs-cross", "", "H&S Cross Daily");
             case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking");
             case "info-portal" -> settingsView(model, "info-portal", "", "Info Portal");
             case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
             case "kpi-rename-dashboard" -> settingsView(model, "kpi-rename-dashboard", "", "KPI Configuration");
-            case "kpi-plant-name" -> settingsView(model, "kpi-plant-name", "", "Rename Plant Name");
+            case "kpi-plant-name" -> settingsView(model, "kpi-plant-name", "", "Plant");
             case "license" -> settingsView(model, "license", "", "License Management");
             default -> "redirect:/pms/top-priorities";
         };
@@ -204,5 +238,11 @@ public class WebController {
         model.addAttribute("activeType", activeType);
         model.addAttribute("activeTitle", activeTitle);
         return "settings";
+    }
+
+    private String placeholderView(Model model, String title, String message) {
+        model.addAttribute("placeholderTitle", title);
+        model.addAttribute("placeholderMessage", message);
+        return "placeholder-page";
     }
 }

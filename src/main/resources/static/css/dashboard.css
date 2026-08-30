@@ -2760,7 +2760,12 @@ body.modern-shell .footer p {
     padding: 18px 22px;
 }
 
+.um-left .pms-config-card-body {
+    overflow-x: auto;
+}
+
 .pms-users-table {
+    min-width: 1180px;
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
@@ -2822,6 +2827,17 @@ body.modern-shell .footer p {
 .pms-status-badge.active {
     background: #dcfce7;
     color: #166534;
+}
+
+.pms-status-badge.inactive {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.um-muted {
+    margin-top: 2px;
+    color: #64748b;
+    font-size: 11px;
 }
 
 .pms-add-user-form .form-select:disabled {

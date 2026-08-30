@@ -1,0 +1,109 @@
+.pms-attachment {
+    display: grid;
+    gap: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+}
+
+.pms-attachment-preview {
+    position: relative;
+    width: 100%;
+    min-height: 160px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.pms-attachment-img {
+    width: 100%;
+    height: 220px;
+    object-fit: contain;
+    background: #ffffff;
+}
+
+.pms-attachment-empty {
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pms-attachment-empty i {
+    font-size: 28px;
+    color: #94a3b8;
+}
+
+.pms-attachment-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 20px;
+    color: #334155;
+    font-size: 12px;
+}
+
+.pms-attachment-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.pms-attachment-status {
+    color: #64748b;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pms-attachment-status.success {
+    color: #15803d;
+}
+
+.pms-attachment-status.error {
+    color: #b91c1c;
+}
+
+.pms-attachment-status.loading {
+    color: #0369a1;
+}
+
+.pms-attachment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pms-attachment-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.pms-attachment-btn:hover {
+    border-color: #0b6b2e;
+    color: #0b6b2e;
+}
+
+.pms-attachment-remove {
+    color: #b91c1c;
+    border-color: #fecaca;
+}
