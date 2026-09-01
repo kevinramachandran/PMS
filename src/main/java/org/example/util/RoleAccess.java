@@ -9,6 +9,19 @@ public final class RoleAccess {
 
     public static final String ADMIN = "ADMIN";
     public static final String USER = "USER";
+    public static final String HOD = "HOD";
+    public static final String AREA_HOD = "AREA_HOD";
+    public static final String ENGINEER = "ENGINEER";
+    public static final String EXECUTIVE = "EXECUTIVE";
+    public static final String OPERATOR = "OPERATOR";
+    public static final Set<String> STANDARD_USER_ROLES = Set.of(
+            USER,
+            HOD,
+            AREA_HOD,
+            ENGINEER,
+            EXECUTIVE,
+            OPERATOR
+    );
 
         public static final String LEGACY_PAGE_SETTINGS = "SETTINGS";
         public static final String PAGE_PMS_DATA_ENTRY = "PMS_DATA_ENTRY";
@@ -123,17 +136,36 @@ public final class RoleAccess {
         return switch (normalized) {
             case ADMIN -> ADMIN;
             case USER, "L1", "L1_USER", "L2", "L2_USER" -> USER;
+            case HOD, "HO_D", "HEAD_OF_DEPARTMENT", "DEPARTMENT_HEAD" -> HOD;
+            case AREA_HOD, "AREA_HEAD", "AREA_HEAD_OF_DEPARTMENT" -> AREA_HOD;
+            case ENGINEER, "ENGG" -> ENGINEER;
+            case EXECUTIVE, "EXEC" -> EXECUTIVE;
+            case OPERATOR -> OPERATOR;
             default -> normalized;
         };
     }
 
     public static boolean isSupported(String role) {
         String normalized = normalize(role);
-        return ADMIN.equals(normalized) || USER.equals(normalized);
+        return ADMIN.equals(normalized) || STANDARD_USER_ROLES.contains(normalized);
     }
 
     public static boolean isAdmin(String role) {
         return ADMIN.equals(normalize(role));
+    }
+
+    public static boolean isHod(String role) {
+        String normalized = normalize(role);
+        return HOD.equals(normalized) || AREA_HOD.equals(normalized);
+    }
+
+    public static boolean isAssignableOperationalRole(String role) {
+        String normalized = normalize(role);
+        return ENGINEER.equals(normalized) || EXECUTIVE.equals(normalized) || OPERATOR.equals(normalized);
+    }
+
+    public static boolean isStandardUserRole(String role) {
+        return STANDARD_USER_ROLES.contains(normalize(role));
     }
 
     public static Set<String> sanitizePages(Set<String> pages) {
@@ -173,7 +205,7 @@ public final class RoleAccess {
         if (isAdmin(role)) {
             return true;
         }
-        if (!USER.equals(normalize(role))) {
+        if (!isStandardUserRole(role)) {
             return false;
         }
 
@@ -193,7 +225,7 @@ public final class RoleAccess {
         if (isAdmin(role)) {
             return true;
         }
-        if (!USER.equals(normalize(role))) {
+        if (!isStandardUserRole(role)) {
             return false;
         }
 
@@ -213,7 +245,7 @@ public final class RoleAccess {
         if (isAdmin(role)) {
             return true;
         }
-        if (!USER.equals(normalize(role))) {
+        if (!isStandardUserRole(role)) {
             return false;
         }
         return sanitizePages(viewPages).stream().anyMatch(CONFIGURATION_NAV_PAGES::contains);
@@ -223,7 +255,7 @@ public final class RoleAccess {
         if (isAdmin(role)) {
             return true;
         }
-        if (!USER.equals(normalize(role))) {
+        if (!isStandardUserRole(role)) {
             return false;
         }
         return sanitizePages(editPages).stream().anyMatch(CONFIGURATION_NAV_PAGES::contains);
@@ -298,6 +330,11 @@ public final class RoleAccess {
         return switch (normalize(role)) {
             case ADMIN -> "Admin";
             case USER -> "User";
+            case HOD -> "HoD";
+            case AREA_HOD -> "Area HoD";
+            case ENGINEER -> "Engineer";
+            case EXECUTIVE -> "Executive";
+            case OPERATOR -> "Operator";
             default -> role == null || role.isBlank() ? "User" : role;
         };
     }

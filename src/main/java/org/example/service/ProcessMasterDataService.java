@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProcessMasterDataService {
@@ -22,6 +23,12 @@ public class ProcessMasterDataService {
 
     public List<ProcessMasterDataItem> list(String category) {
         return repository.findByCategoryOrderByNameAsc(normalizeCategory(category));
+    }
+
+    public List<String> names(String category) {
+        return list(category).stream()
+                .map(ProcessMasterDataItem::getName)
+                .collect(Collectors.toList());
     }
 
     public ProcessMasterDataItem add(String category, String name) {

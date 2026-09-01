@@ -24,9 +24,12 @@ public class AbnormalityTrackerService {
             DateTimeFormatter.ofPattern("MMM''yyyy", Locale.ENGLISH);
 
     private final AbnormalityTrackerRepository repository;
+    private final PlantMasterDataService plantMasterDataService;
 
-    public AbnormalityTrackerService(AbnormalityTrackerRepository repository) {
+    public AbnormalityTrackerService(AbnormalityTrackerRepository repository,
+                                     PlantMasterDataService plantMasterDataService) {
         this.repository = repository;
+        this.plantMasterDataService = plantMasterDataService;
     }
 
     public List<AbnormalityTrackerEntry> getByPeriodLabel(String periodLabel) {
@@ -58,6 +61,7 @@ public class AbnormalityTrackerService {
             if (item.getRowOrder() == null || item.getRowOrder() < 1) {
                 item.setRowOrder(row);
             }
+            validateDepartment(item.getDepartment());
             row++;
         }
 
@@ -144,5 +148,17 @@ public class AbnormalityTrackerService {
             return 0.0;
         }
         return Double.parseDouble(cells.get(index).trim());
+    }
+
+    private void validateDepartment(String department) {
+        String value = department == null ? "" : department.trim();
+        if (value.isBlank()) {
+            return;
+        }
+        boolean configured = plantMasterDataService.names(PlantMasterDataService.DEPARTMENT).stream()
+                .anyMatch(option -> option != null && option.trim().equalsIgnoreCase(value));
+        if (!configured) {
+            throw new IllegalArgumentException("Department must be configured in Master Data");
+        }
     }
 }

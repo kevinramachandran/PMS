@@ -9,6 +9,10 @@ public class EmailConfigResponse {
     private String fromEmail;
     private String fromName;
     private String replyTo;
+    private String schedulerGroupEmail;
+    private boolean abnormalityReportingDailyEnabled;
+    private boolean gembaWalkDailyEnabled;
+    private boolean gembaKaizenDailyEnabled;
     private boolean enabled;
     private boolean passwordConfigured;
 
@@ -66,6 +70,38 @@ public class EmailConfigResponse {
 
     public void setReplyTo(String replyTo) {
         this.replyTo = replyTo;
+    }
+
+    public String getSchedulerGroupEmail() {
+        return schedulerGroupEmail;
+    }
+
+    public void setSchedulerGroupEmail(String schedulerGroupEmail) {
+        this.schedulerGroupEmail = schedulerGroupEmail;
+    }
+
+    public boolean isAbnormalityReportingDailyEnabled() {
+        return abnormalityReportingDailyEnabled;
+    }
+
+    public void setAbnormalityReportingDailyEnabled(boolean abnormalityReportingDailyEnabled) {
+        this.abnormalityReportingDailyEnabled = abnormalityReportingDailyEnabled;
+    }
+
+    public boolean isGembaWalkDailyEnabled() {
+        return gembaWalkDailyEnabled;
+    }
+
+    public void setGembaWalkDailyEnabled(boolean gembaWalkDailyEnabled) {
+        this.gembaWalkDailyEnabled = gembaWalkDailyEnabled;
+    }
+
+    public boolean isGembaKaizenDailyEnabled() {
+        return gembaKaizenDailyEnabled;
+    }
+
+    public void setGembaKaizenDailyEnabled(boolean gembaKaizenDailyEnabled) {
+        this.gembaKaizenDailyEnabled = gembaKaizenDailyEnabled;
     }
 
     public boolean isEnabled() {

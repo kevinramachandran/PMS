@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abnormality Reporting Config - Carlsberg Brewery</title>
+    <title>Abnormality Reporting Configuration - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
@@ -25,13 +25,13 @@
             <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
             <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
             <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-            <a href="/gemba-findings" class="nav-item" th:if="${session.canViewGembaWalkFindings}" data-tooltip="Gemba Walk Findings"><i class="fas fa-magnifying-glass-chart"></i><span>Gemba Walk Findings</span></a>
             <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
             <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
             <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
             <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
             <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
             <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
+            <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
             <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
             <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                 <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
@@ -54,6 +54,9 @@
                 </div>
             </div>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting Configuration</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-list-ul"></i><span>PMS Agenda</span></a>
             <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
@@ -70,7 +73,8 @@
                     <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
                 </div>
             </div>
-            <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
+            <a href="/smtp-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
+                <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
         </nav>
         <div class="sidebar-footer">
             <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -83,7 +87,7 @@
                 <button id="sidebarToggle" class="sidebar-toggle-btn" type="button" aria-label="Toggle sidebar">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Abnormality Reporting Config</h1>
+                <h1>Abnormality Reporting Configuration</h1>
             </div>
             <div class="header-right">
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -171,38 +175,6 @@
                 </div>
                 <div id="abnormalityReportingMessage" class="form-message"></div>
             </form>
-
-            <div class="ar-card">
-                <div class="ar-table-wrap">
-                    <table class="ar-table">
-                        <thead>
-                        <tr>
-                            <th>Type of Tag</th>
-                            <th>Priority</th>
-                            <th>Abnormality Tag Number</th>
-                            <th>Tag Raised By</th>
-                            <th>Date Raised</th>
-                            <th>Shift</th>
-                            <th>Abnormality Related To</th>
-                            <th>Department</th>
-                            <th>Area/Machine</th>
-                            <th>Component</th>
-                            <th>Description</th>
-                            <th>Proposed Action</th>
-                            <th>Picture/Image</th>
-                            <th>Abnormality/Defect Type</th>
-                            <th>Assign To</th>
-                            <th>Date Closed</th>
-                            <th>Tag Status</th>
-                            <th>Action</th>
-                        </tr>
-                        </thead>
-                        <tbody id="abnormalityReportingTableBody">
-                        <tr><td colspan="18" class="ar-empty">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
 
         <footer class="footer">
@@ -213,6 +185,6 @@
 
 <script src="/js/abnormality-reporting-config.js"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=username-global-20260814"></script>
+<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>

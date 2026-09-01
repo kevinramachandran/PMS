@@ -5,18 +5,12 @@ $(document).ready(function() {
     const mainContent = $('.main-content');
 
     let availablePeriods = [];
+    let processObservationOptions = [];
 
-    const defaultQuestions = [
-        'Are all inputs on the boards up to date before starting?',
-        'Was everyone on time and respected the rules?',
-        'Did the meeting start, finish on time and follow the agenda?',
-        'Are upcoming goals clear and actions to mitigate potential risks captured?',
-        'Is there an action for every underperforming KPI or negative trend?',
-        'Are PDCA and Root Cause fields used correctly?',
-        'Are overdue actions kept to minimum and escalation used correctly?',
-        'Was problem solving inside the meeting avoided and Gemba walk used instead?',
-        'Was meeting atmosphere productive and effective?',
-        'Are the top priorities until next meeting clear?'
+    const processObservationCategories = [
+        'ZM_OBSERVATION',
+        'PM_OBSERVATION',
+        'QM_OBSERVATION'
     ];
 
     hamburger.on('click', function() {
@@ -88,6 +82,56 @@ $(document).ready(function() {
         return 'na';
     }
 
+    function getProcessConfirmationDefaultQuestions() {
+        return processObservationOptions.map(function(option) {
+            return option.name;
+        }).slice(0, 10);
+    }
+
+    function hasProcessObservationOption(value) {
+        const normalized = String(value || '').trim();
+        return processObservationOptions.some(function(option) {
+            return option.name === normalized;
+        });
+    }
+
+    function processQuestionValue(value, fallback) {
+        const requested = String(value || '').trim();
+        const defaultValue = String(fallback || '').trim();
+        if (hasProcessObservationOption(requested)) {
+            return requested;
+        }
+        return hasProcessObservationOption(defaultValue) ? defaultValue : '';
+    }
+
+    function loadProcessObservationOptions(callback) {
+        const requests = processObservationCategories.map(function(category) {
+            return $.ajax({
+                url: '/api/dashboard-config/process-master-data/' + encodeURIComponent(category),
+                type: 'GET'
+            }).then(function(data) {
+                const items = data && data.status === 'success' && Array.isArray(data.items) ? data.items : [];
+                return items.map(function(item) {
+                    return { category: category, name: String(item.name || '').trim() };
+                }).filter(function(item) {
+                    return item.name.length > 0;
+                });
+            });
+        });
+
+        $.when.apply($, requests).done(function() {
+            processObservationOptions = Array.prototype.concat.apply([], Array.prototype.slice.call(arguments));
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }).fail(function() {
+            processObservationOptions = [];
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
+
     function renderDayHeader() {
         const row = $('#pcDayHeader');
         row.empty();
@@ -115,17 +159,18 @@ $(document).ready(function() {
         const body = $('#pcBody');
         body.empty();
 
+        const defaults = getProcessConfirmationDefaultQuestions();
         const questions = [
-            data?.question1 || defaultQuestions[0],
-            data?.question2 || defaultQuestions[1],
-            data?.question3 || defaultQuestions[2],
-            data?.question4 || defaultQuestions[3],
-            data?.question5 || defaultQuestions[4],
-            data?.question6 || defaultQuestions[5],
-            data?.question7 || defaultQuestions[6],
-            data?.question8 || defaultQuestions[7],
-            data?.question9 || defaultQuestions[8],
-            data?.question10 || defaultQuestions[9]
+            processQuestionValue(data?.question1, defaults[0]),
+            processQuestionValue(data?.question2, defaults[1]),
+            processQuestionValue(data?.question3, defaults[2]),
+            processQuestionValue(data?.question4, defaults[3]),
+            processQuestionValue(data?.question5, defaults[4]),
+            processQuestionValue(data?.question6, defaults[5]),
+            processQuestionValue(data?.question7, defaults[6]),
+            processQuestionValue(data?.question8, defaults[7]),
+            processQuestionValue(data?.question9, defaults[8]),
+            processQuestionValue(data?.question10, defaults[9])
         ];
 
         const statusesByRow = [
@@ -276,12 +321,14 @@ $(document).ready(function() {
 
     window.addEventListener('storage', function(e) {
         if (e.key === 'process-confirmation-update') {
-            loadFiltersAndData();
+            loadProcessObservationOptions(loadFiltersAndData);
         }
     });
 
     renderDayHeader();
-    render(null);
-    loadFiltersAndData();
+    loadProcessObservationOptions(function() {
+        render(null);
+        loadFiltersAndData();
+    });
     setInterval(loadFiltersAndData, 30000);
 });

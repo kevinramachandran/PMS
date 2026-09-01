@@ -50,6 +50,20 @@ public class EmailConfigController {
         }
     }
 
+    @PostMapping("/scheduler")
+    public ResponseEntity<?> saveSchedulerConfiguration(@RequestBody EmailConfigPayload payload, HttpSession session) {
+        if (!hasEditAccess(session)) {
+            return forbidden();
+        }
+
+        try {
+            emailConfigService.saveSchedulerConfiguration(payload);
+            return ResponseEntity.ok(Map.of("message", "Email scheduler saved successfully"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
+    }
+
     @PostMapping("/test")
     public ResponseEntity<EmailTestResponse> testConfiguration(@RequestBody EmailConfigPayload payload, HttpSession session) {
         if (!hasEditAccess(session)) {

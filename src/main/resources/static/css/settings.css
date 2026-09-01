@@ -4058,6 +4058,14 @@ table select {
     padding-right: 52px;
 }
 
+.email-config-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
 .email-password-toggle {
     position: absolute;
     top: 50%;

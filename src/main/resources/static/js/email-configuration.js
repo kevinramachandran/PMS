@@ -2,6 +2,7 @@
     const PASSWORD_MASK = '********';
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const canEditCurrentPage = String(document.body && document.body.dataset ? document.body.dataset.canEditCurrentPage : '').toLowerCase() === 'true';
+    const pageMode = String(document.body && document.body.dataset ? document.body.dataset.emailPageMode : 'scheduler').toLowerCase() === 'smtp' ? 'smtp' : 'scheduler';
 
     const fields = {
         host: document.getElementById('smtpHost'),
@@ -12,6 +13,10 @@
         fromEmail: document.getElementById('fromEmail'),
         fromName: document.getElementById('fromName'),
         replyTo: document.getElementById('replyTo'),
+        schedulerGroupEmail: document.getElementById('schedulerGroupEmail'),
+        abnormalityReportingDailyEnabled: document.getElementById('abnormalityReportingDailyEnabled'),
+        gembaWalkDailyEnabled: document.getElementById('gembaWalkDailyEnabled'),
+        gembaKaizenDailyEnabled: document.getElementById('gembaKaizenDailyEnabled'),
         enabled: document.getElementById('emailEnabled')
     };
 
@@ -23,7 +28,8 @@
         encryption: document.getElementById('smtpEncryptionError'),
         fromEmail: document.getElementById('fromEmailError'),
         fromName: document.getElementById('fromNameError'),
-        replyTo: document.getElementById('replyToError')
+        replyTo: document.getElementById('replyToError'),
+        schedulerGroupEmail: document.getElementById('schedulerGroupEmailError')
     };
 
     const testBtn = document.getElementById('testConnectionBtn');
@@ -137,6 +143,10 @@
             fromEmail: trimValue(fields.fromEmail),
             fromName: trimValue(fields.fromName),
             replyTo: trimValue(fields.replyTo),
+            schedulerGroupEmail: trimValue(fields.schedulerGroupEmail),
+            abnormalityReportingDailyEnabled: !!fields.abnormalityReportingDailyEnabled.checked,
+            gembaWalkDailyEnabled: !!fields.gembaWalkDailyEnabled.checked,
+            gembaKaizenDailyEnabled: !!fields.gembaKaizenDailyEnabled.checked,
             enabled: !!fields.enabled.checked
         };
     }
@@ -154,42 +164,44 @@
             }
         }
 
-        if (!payload.host) {
-            applyError('host', 'SMTP Host is required.');
-            valid = false;
+        if (pageMode === 'smtp') {
+            if (!payload.host) {
+                applyError('host', 'SMTP Host is required.');
+                valid = false;
+            }
+
+            if (!payload.port && payload.port !== 0) {
+                applyError('port', 'SMTP Port is required.');
+                valid = false;
+            } else if (payload.port < 1 || payload.port > 65535) {
+                applyError('port', 'Port must be between 1 and 65535.');
+                valid = false;
+            }
+
+            if (!payload.username) {
+                applyError('username', 'Username / Email is required.');
+                valid = false;
+            } else if (!isValidEmail(payload.username)) {
+                applyError('username', 'Enter a valid email address.');
+                valid = false;
+            }
+
+            if (!payload.password) {
+                applyError('password', 'Password is required.');
+                valid = false;
+            }
+
+            if (!['NONE', 'SSL', 'TLS'].includes(payload.encryption)) {
+                applyError('encryption', 'Choose a valid encryption type.');
+                valid = false;
+            } else if (!isEncryptionCompatible(payload.port, payload.encryption)) {
+                applyError('encryption', 'Use SSL for 465 and TLS for 587.');
+                applyError('port', 'Selected port does not match encryption.');
+                valid = false;
+            }
         }
 
-        if (!payload.port && payload.port !== 0) {
-            applyError('port', 'SMTP Port is required.');
-            valid = false;
-        } else if (payload.port < 1 || payload.port > 65535) {
-            applyError('port', 'Port must be between 1 and 65535.');
-            valid = false;
-        }
-
-        if (!payload.username) {
-            applyError('username', 'Username / Email is required.');
-            valid = false;
-        } else if (!isValidEmail(payload.username)) {
-            applyError('username', 'Enter a valid email address.');
-            valid = false;
-        }
-
-        if (!payload.password) {
-            applyError('password', 'Password is required.');
-            valid = false;
-        }
-
-        if (!['NONE', 'SSL', 'TLS'].includes(payload.encryption)) {
-            applyError('encryption', 'Choose a valid encryption type.');
-            valid = false;
-        } else if (!isEncryptionCompatible(payload.port, payload.encryption)) {
-            applyError('encryption', 'Use SSL for 465 and TLS for 587.');
-            applyError('port', 'Selected port does not match encryption.');
-            valid = false;
-        }
-
-        if (includeSenderFields) {
+        if (includeSenderFields && pageMode === 'smtp') {
             if (!payload.fromEmail) {
                 applyError('fromEmail', 'From Email Address is required.');
                 valid = false;
@@ -205,6 +217,22 @@
 
             if (payload.replyTo && !isValidEmail(payload.replyTo)) {
                 applyError('replyTo', 'Reply-To Email must be valid.');
+                valid = false;
+            }
+
+        }
+
+        if (includeSenderFields && pageMode === 'scheduler') {
+            if (payload.schedulerGroupEmail && !isValidEmail(payload.schedulerGroupEmail)) {
+                applyError('schedulerGroupEmail', 'Recipient / Group Email must be valid.');
+                valid = false;
+            }
+
+            const schedulerEnabled = payload.abnormalityReportingDailyEnabled
+                || payload.gembaWalkDailyEnabled
+                || payload.gembaKaizenDailyEnabled;
+            if (schedulerEnabled && !payload.schedulerGroupEmail) {
+                applyError('schedulerGroupEmail', 'Recipient / Group Email is required.');
                 valid = false;
             }
         }
@@ -255,6 +283,10 @@
         fields.fromEmail.value = data.fromEmail || '';
         fields.fromName.value = data.fromName || '';
         fields.replyTo.value = data.replyTo || '';
+        fields.schedulerGroupEmail.value = data.schedulerGroupEmail || '';
+        fields.abnormalityReportingDailyEnabled.checked = !!data.abnormalityReportingDailyEnabled;
+        fields.gembaWalkDailyEnabled.checked = !!data.gembaWalkDailyEnabled;
+        fields.gembaKaizenDailyEnabled.checked = !!data.gembaKaizenDailyEnabled;
         fields.enabled.checked = !!data.enabled;
 
         hasStoredPassword = !!data.passwordConfigured;
@@ -296,7 +328,7 @@
         }
 
         setButtonLoading(saveBtn, '<i class="fas fa-spinner fa-spin"></i> Saving...', true);
-        fetch('/api/email-config', {
+        fetch(pageMode === 'scheduler' ? '/api/email-config/scheduler' : '/api/email-config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result.payload)
@@ -316,14 +348,14 @@
                 fields.password.value = PASSWORD_MASK;
                 togglePasswordBtn.innerHTML = '<i class="fas fa-eye"></i>';
                 refreshPasswordState();
-                showMessage(resultData.data.message || 'Configuration saved successfully', 'success');
+                showMessage(resultData.data.message || (pageMode === 'scheduler' ? 'Email scheduler saved successfully' : 'Configuration saved successfully'), 'success');
                 updateTestButtonState();
             })
             .catch(function (error) {
                 showMessage(error.message || 'Unable to save configuration.', 'error');
             })
             .finally(function () {
-                setButtonLoading(saveBtn, '', false, '<i class="fas fa-save"></i> Save Configuration');
+                setButtonLoading(saveBtn, '', false, pageMode === 'scheduler' ? '<i class="fas fa-save"></i> Save Scheduler' : '<i class="fas fa-save"></i> Save Configuration');
             });
     }
 
@@ -368,6 +400,10 @@
             testBtn.disabled = true;
             return;
         }
+        if (pageMode !== 'smtp') {
+            testBtn.disabled = true;
+            return;
+        }
 
         const result = validatePayload(false, false);
         testBtn.disabled = !result.valid;
@@ -396,7 +432,7 @@
         });
     }
 
-    [fields.host, fields.port, fields.username, fields.password, fields.encryption, fields.fromEmail, fields.fromName, fields.replyTo]
+    [fields.host, fields.port, fields.username, fields.password, fields.encryption, fields.fromEmail, fields.fromName, fields.replyTo, fields.schedulerGroupEmail]
         .forEach(function (field) {
             if (!field) return;
             field.addEventListener('input', function () {
@@ -407,6 +443,14 @@
                 }
             });
             field.addEventListener('blur', function () {
+                validatePayload(true, true);
+            });
+        });
+
+    [fields.abnormalityReportingDailyEnabled, fields.gembaWalkDailyEnabled, fields.gembaKaizenDailyEnabled]
+        .forEach(function (field) {
+            if (!field) return;
+            field.addEventListener('change', function () {
                 validatePayload(true, true);
             });
         });

@@ -4,6 +4,8 @@ import org.example.entity.AbnormalityReportingRecord;
 import org.example.entity.AppUser;
 import org.example.repository.AbnormalityReportingRecordRepository;
 import org.example.repository.AppUserRepository;
+import org.example.util.RoleAccess;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -96,10 +98,30 @@ public class AbnormalityReportingConfigService {
         return payload;
     }
 
+    @Scheduled(cron = "0 0 9 * * *", zone = "${app.timezone:Asia/Calcutta}")
+    public void sendDailyDashboardReport() {
+        if (!emailConfigService.isAbnormalityReportingDailyEnabled()) {
+            return;
+        }
+        List<AbnormalityReportingRecord> rows = list();
+        int closed = (int) rows.stream().filter(row -> isClosed(row.getTagStatus())).count();
+        emailConfigService.sendEmail(
+                emailConfigService.configuredReportRecipients(),
+                "Abnormality Reporting Daily Report",
+                buildDailyReportBody(rows, rows.size(), closed),
+                true,
+                true
+        );
+    }
+
     private void apply(AbnormalityReportingRecord record, AbnormalityReportingRecord request) {
         if (request == null) {
             throw new IllegalArgumentException("Record is required");
         }
+        validateConfigured(request.getTypeOfTag(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE), "Type of Tag");
+        validateConfigured(request.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
+        validateConfigured(request.getAreaMachine(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area/Machine");
+        validateConfigured(request.getAbnormalityDefectType(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE), "Abnormality/Defect Type");
         record.setTypeOfTag(trim(request.getTypeOfTag()));
         record.setPriority(trim(request.getPriority()));
         record.setAbnormalityTagNumber(trim(request.getAbnormalityTagNumber()));
@@ -128,6 +150,18 @@ public class AbnormalityReportingConfigService {
         }
     }
 
+    private void validateConfigured(String value, List<String> options, String label) {
+        String trimmed = trim(value);
+        if (trimmed == null) {
+            return;
+        }
+        boolean configured = options.stream()
+                .anyMatch(option -> option != null && option.trim().equalsIgnoreCase(trimmed));
+        if (!configured) {
+            throw new IllegalArgumentException(label + " must be configured in Master Data");
+        }
+    }
+
     private void notifyDepartmentHod(AbnormalityReportingRecord record, String subjectPrefix) {
         List<String> recipients = emails(findDepartmentHods(record.getDepartment()));
         if (recipients.isEmpty()) {
@@ -149,7 +183,7 @@ public class AbnormalityReportingConfigService {
         return appUserRepository.findAll().stream()
                 .filter(this::isActive)
                 .filter(user -> isBlank(department) || equalsIgnoreCase(user.getDepartment(), department))
-                .filter(user -> normalize(user.getDesignation()).contains("HOD") || normalize(user.getDesignation()).contains("HEAD_OF_DEPARTMENT"))
+                .filter(this::isHod)
                 .toList();
     }
 
@@ -157,8 +191,20 @@ public class AbnormalityReportingConfigService {
         return appUserRepository.findAll().stream()
                 .filter(this::isActive)
                 .filter(user -> isBlank(department) || equalsIgnoreCase(user.getDepartment(), department))
-                .filter(user -> ASSIGNABLE_DESIGNATIONS.contains(normalize(user.getDesignation())))
+                .filter(this::isAssignable)
                 .toList();
+    }
+
+    private boolean isHod(AppUser user) {
+        String designation = normalize(user.getDesignation());
+        return RoleAccess.isHod(user.getRole())
+                || designation.contains("HOD")
+                || designation.contains("HEAD_OF_DEPARTMENT");
+    }
+
+    private boolean isAssignable(AppUser user) {
+        return RoleAccess.isAssignableOperationalRole(user.getRole())
+                || ASSIGNABLE_DESIGNATIONS.contains(normalize(user.getDesignation()));
     }
 
     private List<Map<String, String>> userOptions(List<AppUser> users) {
@@ -237,6 +283,54 @@ public class AbnormalityReportingConfigService {
                 .append("<p style='margin:16px 0 0 0;font-size:13px;color:#6b7280;'>Regards,<br>Brewery PMS</p>")
                 .append("</td></tr></table></td></tr></table></body></html>");
         return html.toString();
+    }
+
+    private String buildDailyReportBody(List<AbnormalityReportingRecord> rows, int reported, int closed) {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><body style='margin:0;padding:0;background:#f5f7f9;font-family:Arial,sans-serif;color:#1f2937;'>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='background:#f5f7f9;padding:24px 0;'>")
+                .append("<tr><td align='center'>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='760' style='max-width:760px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>")
+                .append("<tr><td style='background:#003d24;padding:16px 20px;'>")
+                .append("<img src='cid:brandLogo' alt='Carlsberg logo' style='height:34px;width:auto;display:block;'>")
+                .append("</td></tr><tr><td style='padding:20px;'>")
+                .append("<h2 style='margin:0 0 12px 0;color:#003d24;font-size:20px;'>Abnormality Reporting Daily Report</h2>")
+                .append("<p style='margin:0 0 16px;font-size:14px;'>Reported: ")
+                .append(reported)
+                .append(" | Closed: ")
+                .append(closed)
+                .append("</p>")
+                .append("<table cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:13px;'>")
+                .append("<tr>")
+                .append(headerCell("Type of Tag"))
+                .append(headerCell("Abnormality Tag Number"))
+                .append(headerCell("Department"))
+                .append(headerCell("Date Raised"))
+                .append(headerCell("Tag Status"))
+                .append("</tr>");
+        for (AbnormalityReportingRecord row : rows) {
+            html.append("<tr>")
+                    .append(bodyCell(row.getTypeOfTag()))
+                    .append(bodyCell(row.getAbnormalityTagNumber()))
+                    .append(bodyCell(row.getDepartment()))
+                    .append(bodyCell(formatDate(row.getDateRaised())))
+                    .append(bodyCell(row.getTagStatus()))
+                    .append("</tr>");
+        }
+        html.append("</table></td></tr></table></td></tr></table></body></html>");
+        return html.toString();
+    }
+
+    private String headerCell(String value) {
+        return "<th style='padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;text-align:left;'>"
+                + escape(value)
+                + "</th>";
+    }
+
+    private String bodyCell(String value) {
+        return "<td style='padding:8px;border:1px solid #e5e7eb;color:#111827;'>"
+                + escape(defaultText(value, "-"))
+                + "</td>";
     }
 
     private String row(String label, String value) {

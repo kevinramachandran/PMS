@@ -1,0 +1,122 @@
+.gemba-kaizen-page .gk-dashboard-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.gemba-kaizen-page .gk-count-card {
+    min-height: 92px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    cursor: pointer;
+}
+
+.gemba-kaizen-page .gk-count-card span {
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.gemba-kaizen-page .gk-count-card strong {
+    color: #047434;
+    font-size: 30px;
+    line-height: 1;
+}
+
+.gemba-kaizen-page .gk-count-card.active,
+.gemba-kaizen-page .gk-count-card:hover,
+.gemba-kaizen-page .gk-count-card:focus {
+    border-color: #16a34a;
+    background: #ecfdf5;
+    outline: none;
+}
+
+.gemba-kaizen-page .gk-report-card {
+    margin-bottom: 16px;
+}
+
+.gemba-kaizen-page .gk-filter-row {
+    align-items: end;
+    justify-content: flex-start;
+}
+
+.gemba-kaizen-page .gk-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 180px;
+}
+
+.gemba-kaizen-page .gk-filter-group label {
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.gemba-kaizen-page .gk-filter-group select {
+    height: 36px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    padding: 0 10px;
+}
+
+.gemba-kaizen-page .gk-filter-row .issue-add-button {
+    margin-left: auto;
+    text-decoration: none;
+}
+
+.gemba-kaizen-page .gk-chart-wrap {
+    height: 240px;
+    padding: 16px;
+}
+
+.gemba-kaizen-page .gk-record-table {
+    min-width: 1260px;
+}
+
+.gemba-kaizen-page .gk-open-btn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0b6b2e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.gemba-kaizen-page .gk-open-btn:hover,
+.gemba-kaizen-page .gk-open-btn:focus {
+    background: #ecfdf5;
+    outline: none;
+}
+
+@media (max-width: 768px) {
+    .gemba-kaizen-page .gk-dashboard-row {
+        grid-template-columns: 1fr;
+    }
+
+    .gemba-kaizen-page .gk-filter-row {
+        align-items: stretch;
+    }
+
+    .gemba-kaizen-page .gk-filter-group,
+    .gemba-kaizen-page .gk-filter-row .issue-add-button {
+        width: 100%;
+        margin-left: 0;
+    }
+}

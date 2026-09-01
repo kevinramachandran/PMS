@@ -22,6 +22,12 @@ public class GembaKaizenMasterDataService {
         return repository.findByCategoryOrderByNameAsc(normalizeCategory(category));
     }
 
+    public List<String> names(String category) {
+        return list(category).stream()
+                .map(GembaKaizenMasterDataItem::getName)
+                .toList();
+    }
+
     public GembaKaizenMasterDataItem add(String category, String name) {
         String normalizedCategory = normalizeCategory(category);
         String normalizedName = normalizeName(name);

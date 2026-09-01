@@ -593,7 +593,6 @@
                     <i class="fas fa-clipboard-list"></i>
                     <span>Gemba Walk Schedule</span>
                 </a>
-                <a href="/gemba-findings" class="nav-item" th:if="${session.canViewGembaWalkFindings}" data-tooltip="Gemba Walk Findings"><i class="fas fa-magnifying-glass-chart"></i><span>Gemba Walk Findings</span></a>
                 <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
 
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule">
@@ -613,6 +612,7 @@
                     <i class="fas fa-lightbulb"></i>
                     <span>Gemba Kaizen Ideas</span>
                 </a>
+            <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations">
                     <i class="fas fa-list-check"></i>
                     <span>Process Confirmations</span>
@@ -646,7 +646,9 @@
                         <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                         <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
                     </div>
-                </div>            </nav>
+                </div>
+                <a href="/smtp-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
+            </nav>
         </aside>
 
         <!-- Main Content -->
@@ -1188,7 +1190,7 @@
     </script>
     <script src="/js/add-metrics-bulk.js"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=username-global-20260814"></script>
+<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>
 

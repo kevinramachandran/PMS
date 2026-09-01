@@ -1,8 +1,8 @@
 package org.example.controller;
 
 import jakarta.servlet.http.HttpSession;
-import org.example.entity.GembaWalkRecord;
-import org.example.service.GembaWalkConfigService;
+import org.example.entity.GembaKaizenRecord;
+import org.example.service.GembaKaizenConfigService;
 import org.example.util.RoleAccess;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,18 +12,18 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/gemba-walk-config")
-public class GembaWalkConfigController {
+@RequestMapping("/api/gemba-kaizen-config")
+public class GembaKaizenConfigController {
 
-    private final GembaWalkConfigService service;
+    private final GembaKaizenConfigService service;
 
-    public GembaWalkConfigController(GembaWalkConfigService service) {
+    public GembaKaizenConfigController(GembaKaizenConfigService service) {
         this.service = service;
     }
 
     @GetMapping("/records")
     public ResponseEntity<Map<String, Object>> records(HttpSession session) {
-        if (!canView(session) && !canViewReporting(session)) {
+        if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         return ResponseEntity.ok(Map.of("records", service.list()));
@@ -31,7 +31,7 @@ public class GembaWalkConfigController {
 
     @GetMapping("/records/{id}")
     public ResponseEntity<Map<String, Object>> record(@PathVariable Long id, HttpSession session) {
-        if (!canView(session) && !canViewReporting(session)) {
+        if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         return service.find(id)
@@ -40,13 +40,12 @@ public class GembaWalkConfigController {
     }
 
     @PostMapping("/records")
-    public ResponseEntity<Map<String, Object>> create(@RequestBody GembaWalkRecord record, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> create(@RequestBody GembaKaizenRecord record, HttpSession session) {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
-            GembaWalkRecord saved = service.create(record, username(session));
-            return ResponseEntity.ok(Map.of("status", "success", "record", saved));
+            return ResponseEntity.ok(Map.of("status", "success", "record", service.create(record, username(session))));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", ex.getMessage()));
         }
@@ -54,7 +53,7 @@ public class GembaWalkConfigController {
 
     @PutMapping("/records/{id}")
     public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
-                                                      @RequestBody GembaWalkRecord record,
+                                                      @RequestBody GembaKaizenRecord record,
                                                       HttpSession session) {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
@@ -69,22 +68,16 @@ public class GembaWalkConfigController {
     }
 
     @GetMapping("/options")
-    public ResponseEntity<Map<String, Object>> options(@RequestParam(value = "location", required = false) String location,
-                                                       HttpSession session) {
+    public ResponseEntity<Map<String, Object>> options(HttpSession session) {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("options", service.options(username(session), location)));
+        return ResponseEntity.ok(Map.of("options", service.options(username(session))));
     }
 
     private boolean canView(HttpSession session) {
         String role = session == null ? null : (String) session.getAttribute("role");
-        return RoleAccess.canViewPage(role, permissions(session), RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION);
-    }
-
-    private boolean canViewReporting(HttpSession session) {
-        String role = session == null ? null : (String) session.getAttribute("role");
-        return RoleAccess.canViewPage(role, permissions(session), RoleAccess.PAGE_GEMBA_WALK_REPORTING);
+        return RoleAccess.canViewPage(role, permissions(session), RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION);
     }
 
     private String username(HttpSession session) {
@@ -97,4 +90,5 @@ public class GembaWalkConfigController {
         Object raw = session == null ? null : session.getAttribute("viewPermissions");
         return raw instanceof Set<?> ? (Set<String>) raw : Set.of();
     }
+
 }

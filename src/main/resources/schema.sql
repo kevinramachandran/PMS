@@ -128,6 +128,23 @@ CREATE TABLE IF NOT EXISTS gemba_walk_observations (
     INDEX idx_gemba_walk_observations_record (record_id)
 );
 
+CREATE TABLE IF NOT EXISTS gemba_kaizen_records (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(160) NULL,
+    last_modified_time VARCHAR(20) NULL,
+    gemba_kaizen_provider_name VARCHAR(160) NULL,
+    employee_id_ho_number VARCHAR(80) NULL,
+    department VARCHAR(160) NULL,
+    classification_of_kaizen VARCHAR(160) NULL,
+    gemba_kaizen_location VARCHAR(160) NULL,
+    gemba_kaizen_generation_date DATE NULL,
+    kaizen_idea VARCHAR(1000) NULL,
+    picture_image VARCHAR(255) NULL,
+    benefits_of_kaizen VARCHAR(1000) NULL,
+    is_kaizen_implemented VARCHAR(10) NULL,
+    PRIMARY KEY (id)
+);
+
 UPDATE abnormality_tracker SET row_order = NULL WHERE row_order IS NOT NULL AND (TRIM(row_order) = '' OR TRIM(row_order) NOT REGEXP '^-?[0-9]+$');
 UPDATE abnormality_tracker SET yellow_tags = NULL WHERE yellow_tags IS NOT NULL AND (TRIM(yellow_tags) = '' OR TRIM(yellow_tags) NOT REGEXP '^-?[0-9]+$');
 UPDATE abnormality_tracker SET red_tags = NULL WHERE red_tags IS NOT NULL AND (TRIM(red_tags) = '' OR TRIM(red_tags) NOT REGEXP '^-?[0-9]+$');
@@ -141,6 +158,10 @@ UPDATE daily_performance SET daily_target = 0 WHERE daily_target IS NOT NULL AND
 UPDATE daily_performance SET yesterday = 0 WHERE yesterday IS NOT NULL AND (TRIM(yesterday) = '' OR TRIM(yesterday) NOT REGEXP '^-?[0-9]+([.][0-9]+)?$');
 
 UPDATE email_config SET port = 587 WHERE port IS NOT NULL AND (TRIM(port) = '' OR TRIM(port) NOT REGEXP '^[0-9]+$');
+ALTER TABLE email_config ADD COLUMN scheduler_group_email VARCHAR(255) NULL;
+ALTER TABLE email_config ADD COLUMN abnormality_reporting_daily_enabled BIT NOT NULL DEFAULT 0;
+ALTER TABLE email_config ADD COLUMN gemba_walk_daily_enabled BIT NOT NULL DEFAULT 0;
+ALTER TABLE email_config ADD COLUMN gemba_kaizen_daily_enabled BIT NOT NULL DEFAULT 0;
 
 UPDATE gemba_schedule_items SET row_order = NULL WHERE row_order IS NOT NULL AND (TRIM(row_order) = '' OR TRIM(row_order) NOT REGEXP '^-?[0-9]+$');
 

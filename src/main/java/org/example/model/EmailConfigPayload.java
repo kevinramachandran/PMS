@@ -10,6 +10,10 @@ public class EmailConfigPayload {
     private String fromEmail;
     private String fromName;
     private String replyTo;
+    private String schedulerGroupEmail;
+    private Boolean abnormalityReportingDailyEnabled;
+    private Boolean gembaWalkDailyEnabled;
+    private Boolean gembaKaizenDailyEnabled;
     private Boolean enabled;
 
     public String getHost() {
@@ -74,6 +78,38 @@ public class EmailConfigPayload {
 
     public void setReplyTo(String replyTo) {
         this.replyTo = replyTo;
+    }
+
+    public String getSchedulerGroupEmail() {
+        return schedulerGroupEmail;
+    }
+
+    public void setSchedulerGroupEmail(String schedulerGroupEmail) {
+        this.schedulerGroupEmail = schedulerGroupEmail;
+    }
+
+    public Boolean getAbnormalityReportingDailyEnabled() {
+        return abnormalityReportingDailyEnabled;
+    }
+
+    public void setAbnormalityReportingDailyEnabled(Boolean abnormalityReportingDailyEnabled) {
+        this.abnormalityReportingDailyEnabled = abnormalityReportingDailyEnabled;
+    }
+
+    public Boolean getGembaWalkDailyEnabled() {
+        return gembaWalkDailyEnabled;
+    }
+
+    public void setGembaWalkDailyEnabled(Boolean gembaWalkDailyEnabled) {
+        this.gembaWalkDailyEnabled = gembaWalkDailyEnabled;
+    }
+
+    public Boolean getGembaKaizenDailyEnabled() {
+        return gembaKaizenDailyEnabled;
+    }
+
+    public void setGembaKaizenDailyEnabled(Boolean gembaKaizenDailyEnabled) {
+        this.gembaKaizenDailyEnabled = gembaKaizenDailyEnabled;
     }
 
     public Boolean getEnabled() {

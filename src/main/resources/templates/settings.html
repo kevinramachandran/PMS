@@ -25,13 +25,13 @@
                 <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
                 <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-                <a href="/gemba-findings" class="nav-item" th:if="${session.canViewGembaWalkFindings}" data-tooltip="Gemba Walk Findings"><i class="fas fa-magnifying-glass-chart"></i><span>Gemba Walk Findings</span></a>
                 <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
             <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
                 <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
+            <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
@@ -54,6 +54,9 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting Configuration</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-list-ul"></i><span>PMS Agenda</span></a>
                 <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
@@ -70,6 +73,7 @@
                         <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
                     </div>
                 </div>
+                <a href="/smtp-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
                 <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -1239,70 +1243,70 @@
                                         </thead>
                                         <tbody>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion1" placeholder="Question 1"></td>
+                                            <td><select id="pcQuestion1"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ1Statuses"></div>
                                                 <textarea id="pcQ1Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion2" placeholder="Question 2"></td>
+                                            <td><select id="pcQuestion2"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ2Statuses"></div>
                                                 <textarea id="pcQ2Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion3" placeholder="Question 3"></td>
+                                            <td><select id="pcQuestion3"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ3Statuses"></div>
                                                 <textarea id="pcQ3Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion4" placeholder="Question 4"></td>
+                                            <td><select id="pcQuestion4"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ4Statuses"></div>
                                                 <textarea id="pcQ4Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion5" placeholder="Question 5"></td>
+                                            <td><select id="pcQuestion5"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ5Statuses"></div>
                                                 <textarea id="pcQ5Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion6" placeholder="Question 6"></td>
+                                            <td><select id="pcQuestion6"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ6Statuses"></div>
                                                 <textarea id="pcQ6Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion7" placeholder="Question 7"></td>
+                                            <td><select id="pcQuestion7"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ7Statuses"></div>
                                                 <textarea id="pcQ7Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion8" placeholder="Question 8"></td>
+                                            <td><select id="pcQuestion8"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ8Statuses"></div>
                                                 <textarea id="pcQ8Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion9" placeholder="Question 9"></td>
+                                            <td><select id="pcQuestion9"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ9Statuses"></div>
                                                 <textarea id="pcQ9Statuses" class="pc-hidden-status"></textarea>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><input type="text" id="pcQuestion10" placeholder="Question 10"></td>
+                                            <td><select id="pcQuestion10"></select></td>
                                             <td>
                                                 <div class="pc-status-grid" data-target="pcQ10Statuses"></div>
                                                 <textarea id="pcQ10Statuses" class="pc-hidden-status"></textarea>
@@ -1988,7 +1992,7 @@
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=active-nav-20260817"></script>
+<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>
 

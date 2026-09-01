@@ -1,0 +1,80 @@
+.gemba-kaizen-config-page .gk-form-card {
+    overflow: visible;
+}
+
+.gemba-kaizen-config-page .gk-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 16px;
+}
+
+.gemba-kaizen-config-page .gk-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gemba-kaizen-config-page .gk-form-group label {
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.gemba-kaizen-config-page .gk-form-group input,
+.gemba-kaizen-config-page .gk-form-group select,
+.gemba-kaizen-config-page .gk-form-group textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.gemba-kaizen-config-page .gk-form-group input:focus,
+.gemba-kaizen-config-page .gk-form-group select:focus,
+.gemba-kaizen-config-page .gk-form-group textarea:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.gemba-kaizen-config-page .gk-form-group input[readonly] {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.gemba-kaizen-config-page .gk-wide {
+    grid-column: 1 / -1;
+}
+
+.gemba-kaizen-config-page .gk-message {
+    display: none;
+    margin: 0 16px 16px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.gemba-kaizen-config-page .gk-message.show {
+    display: block;
+}
+
+.gemba-kaizen-config-page .gk-message.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.gemba-kaizen-config-page .gk-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+@media (max-width: 900px) {
+    .gemba-kaizen-config-page .gk-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

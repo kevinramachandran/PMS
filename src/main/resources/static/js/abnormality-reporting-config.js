@@ -141,54 +141,6 @@ $(function () {
         setForm({});
     }
 
-    function renderRecords(records) {
-        const $body = $('#abnormalityReportingTableBody');
-        if (!records || !records.length) {
-            $body.html('<tr><td colspan="18" class="ar-empty">No data found.</td></tr>');
-            return;
-        }
-
-        $body.html(records.map(function(record) {
-            const image = record.pictureImage
-                ? '<a href="/api/attachments/abnormality-reporting/file/' + encodeURIComponent(record.pictureImage) + '" target="_blank">View</a>'
-                : '';
-            return '<tr data-id="' + escapeAttr(record.id || '') + '">' +
-                '<td>' + escapeHtml(record.typeOfTag) + '</td>' +
-                '<td>' + escapeHtml(record.priority) + '</td>' +
-                '<td>' + escapeHtml(record.abnormalityTagNumber) + '</td>' +
-                '<td>' + escapeHtml(record.tagRaisedBy) + '</td>' +
-                '<td>' + escapeHtml(record.dateRaised) + '</td>' +
-                '<td>' + escapeHtml(record.shift) + '</td>' +
-                '<td>' + escapeHtml(record.abnormalityRelatedTo) + '</td>' +
-                '<td>' + escapeHtml(record.department) + '</td>' +
-                '<td>' + escapeHtml(record.areaMachine) + '</td>' +
-                '<td>' + escapeHtml(record.component) + '</td>' +
-                '<td>' + escapeHtml(record.description) + '</td>' +
-                '<td>' + escapeHtml(record.proposedAction) + '</td>' +
-                '<td>' + image + '</td>' +
-                '<td>' + escapeHtml(record.abnormalityDefectType) + '</td>' +
-                '<td>' + escapeHtml(record.assignTo) + '</td>' +
-                '<td>' + escapeHtml(record.dateClosed) + '</td>' +
-                '<td>' + escapeHtml(record.tagStatus) + '</td>' +
-                '<td><button type="button" class="ar-action-btn ar-edit-btn"><i class="fas fa-edit"></i> Edit</button></td>' +
-            '</tr>';
-        }).join(''));
-    }
-
-    function loadRecords() {
-        $.ajax({
-            url: API + '/records',
-            type: 'GET',
-            success: function(data) {
-                renderRecords(data && data.records ? data.records : []);
-            },
-            error: function() {
-                renderRecords([]);
-                setMessage('Unable to load abnormality reports.', 'error');
-            }
-        });
-    }
-
     function loadRecordById(id) {
         if (!id) {
             return;
@@ -219,7 +171,6 @@ $(function () {
                 if (data && data.status === 'success') {
                     setMessage('Saved.', 'success');
                     resetForm();
-                    loadRecords();
                 } else {
                     setMessage((data && data.message) || 'Unable to save.', 'error');
                 }
@@ -273,26 +224,8 @@ $(function () {
         });
     });
 
-    $(document).on('click', '.ar-edit-btn', function() {
-        const id = $(this).closest('tr').data('id');
-        $.ajax({
-            url: API + '/records/' + encodeURIComponent(id),
-            type: 'GET',
-            success: function(data) {
-                if (data && data.record) {
-                    setForm(data.record);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            },
-            error: function() {
-                setMessage('Unable to load selected record.', 'error');
-            }
-        });
-    });
-
     const selectedRecordId = new URLSearchParams(window.location.search).get('id');
     const optionsRequest = loadOptions();
-    loadRecords();
     optionsRequest.always(function() {
         loadRecordById(selectedRecordId);
     });

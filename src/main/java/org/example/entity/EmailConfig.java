@@ -36,6 +36,18 @@ public class EmailConfig {
     @Column(length = 255)
     private String replyTo;
 
+    @Column(length = 255)
+    private String schedulerGroupEmail;
+
+    @Column(nullable = false)
+    private boolean abnormalityReportingDailyEnabled;
+
+    @Column(nullable = false)
+    private boolean gembaWalkDailyEnabled;
+
+    @Column(nullable = false)
+    private boolean gembaKaizenDailyEnabled;
+
     @Column(nullable = false)
     private boolean enabled;
 
@@ -109,6 +121,38 @@ public class EmailConfig {
 
     public void setReplyTo(String replyTo) {
         this.replyTo = replyTo;
+    }
+
+    public String getSchedulerGroupEmail() {
+        return schedulerGroupEmail;
+    }
+
+    public void setSchedulerGroupEmail(String schedulerGroupEmail) {
+        this.schedulerGroupEmail = schedulerGroupEmail;
+    }
+
+    public boolean isAbnormalityReportingDailyEnabled() {
+        return abnormalityReportingDailyEnabled;
+    }
+
+    public void setAbnormalityReportingDailyEnabled(boolean abnormalityReportingDailyEnabled) {
+        this.abnormalityReportingDailyEnabled = abnormalityReportingDailyEnabled;
+    }
+
+    public boolean isGembaWalkDailyEnabled() {
+        return gembaWalkDailyEnabled;
+    }
+
+    public void setGembaWalkDailyEnabled(boolean gembaWalkDailyEnabled) {
+        this.gembaWalkDailyEnabled = gembaWalkDailyEnabled;
+    }
+
+    public boolean isGembaKaizenDailyEnabled() {
+        return gembaKaizenDailyEnabled;
+    }
+
+    public void setGembaKaizenDailyEnabled(boolean gembaKaizenDailyEnabled) {
+        this.gembaKaizenDailyEnabled = gembaKaizenDailyEnabled;
     }
 
     public boolean isEnabled() {

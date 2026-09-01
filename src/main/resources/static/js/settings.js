@@ -327,24 +327,26 @@ $(document).ready(function() {
         } else if (config === 'gemba-schedule') {
             console.log('   -> Setting gemba-schedule form ACTIVE');
             $('#form-gemba-schedule').addClass('active');
-            if ($('#gembaScheduleDate').attr('data-load-latest-on-open') === '1') {
-                $('#gembaScheduleDate').attr('data-load-latest-on-open', '0');
-                loadLatestGembaScheduleConfig();
-            } else {
-                loadGembaScheduleByDate($('#gembaScheduleDate').val());
-            }
+            loadPlantMasterDataOptions(function() {
+                if ($('#gembaScheduleDate').attr('data-load-latest-on-open') === '1') {
+                    $('#gembaScheduleDate').attr('data-load-latest-on-open', '0');
+                    loadLatestGembaScheduleConfig();
+                } else {
+                    loadGembaScheduleByDate($('#gembaScheduleDate').val());
+                }
+            });
         } else if (config === 'master-gemba-walk') {
             $('#form-master-gemba-walk').addClass('active');
             loadMasterGembaWalkConfig();
         } else if (config === 'abnormality-tracker') {
             $('#form-abnormality-tracker').addClass('active');
-            loadLatestAtConfig();
+            loadPlantMasterDataOptions(loadLatestAtConfig);
         } else if (config === 'master-abnormality') {
             $('#form-master-abnormality').addClass('active');
             loadMasterAbnormalityConfig();
         } else if (config === 'leadership-gemba-tracker') {
             $('#form-leadership-gemba-tracker').addClass('active');
-            loadLatestLgtConfig();
+            loadPlantMasterDataOptions(loadLatestLgtConfig);
         } else if (config === 'master-gemba-kaizen') {
             $('#form-master-gemba-kaizen').addClass('active');
             loadMasterGembaKaizenConfig();
@@ -361,7 +363,7 @@ $(document).ready(function() {
             loadLatestMeetingAgendaConfig();
         } else if (config === 'process-confirmation') {
             $('#form-process-confirmation').addClass('active');
-            loadLatestProcessConfirmationConfig();
+            loadProcessObservationOptions(loadLatestProcessConfirmationConfig);
         } else if (config === 'master-process') {
             $('#form-master-process').addClass('active');
             loadMasterProcessConfig();
@@ -3913,7 +3915,7 @@ function regroupRows($container){
 
     function getGembaFormRowData() {
         return {
-            functionType: $('#gsFormFunctionType').val() || 'Packaging',
+            functionType: $('#gsFormFunctionType').val() || '',
             associateName: $('#gsFormAssociateName').val().trim(),
             week1: $('#gsFormWeek1').val().trim(),
             week2: $('#gsFormWeek2').val().trim(),
@@ -3923,7 +3925,7 @@ function regroupRows($container){
     }
 
     function populateGembaFormFromRow($row) {
-        $('#gsFormFunctionType').val($row.find('.gs-function-type').val() || 'Packaging');
+        $('#gsFormFunctionType').val($row.find('.gs-function-type').val() || '');
         $('#gsFormAssociateName').val($row.find('.gs-associate-name').val() || '');
         $('#gsFormWeek1').val($row.find('.gs-week1').val() || '');
         $('#gsFormWeek2').val($row.find('.gs-week2').val() || '');
@@ -3932,35 +3934,23 @@ function regroupRows($container){
     }
 
     function resetGembaFormInputs() {
-        $('#gsFormFunctionType').val('Packaging');
+        $('#gsFormFunctionType').val('');
         $('#gsFormAssociateName, #gsFormWeek1, #gsFormWeek2, #gsFormWeek3, #gsFormWeek4').val('');
     }
 
     function createGembaConfigRow(item) {
         const safeItem = item || {};
-        const functionType = safeItem.functionType || 'Packaging';
+        const functionType = safeItem.functionType || '';
         const associateName = safeItem.associateName || safeItem.functionName || '';
 
         return '' +
             '<tr>' +
-            '<td>' +
-            '<select class="gs-function-type">' +
-            '<option value="Packaging" ' + (functionType === 'Packaging' ? 'selected' : '') + '>Packaging</option>' +
-            '<option value="Quality" ' + (functionType === 'Quality' ? 'selected' : '') + '>Quality</option>' +
-            '<option value="HR & Admin" ' + (functionType === 'HR & Admin' ? 'selected' : '') + '>HR & Admin</option>' +
-            '<option value="Utility & Maintenance" ' + (functionType === 'Utility & Maintenance' ? 'selected' : '') + '>Utility & Maintenance</option>' +
-            '<option value="Customer Supply" ' + (functionType === 'Customer Supply' ? 'selected' : '') + '>Customer Supply</option>' +
-            '<option value="B&P" ' + (functionType === 'B&P' ? 'selected' : '') + '>B&P</option>' +
-            '<option value="Finance" ' + (functionType === 'Finance' ? 'selected' : '') + '>Finance</option>' +
-            '<option value="Health & Safety" ' + (functionType === 'Health & Safety' ? 'selected' : '') + '>Health & Safety</option>' +
-            '<option value="Carlsberg Excellence" ' + (functionType === 'Carlsberg Excellence' ? 'selected' : '') + '>Carlsberg Excellence</option>' +
-            '</select>' +
-            '</td>' +
+            '<td>' + masterDataSelectHtml('gs-function-type', plantMasterDataOptions.departments, functionType) + '</td>' +
             '<td><input type="text" class="gs-associate-name" value="' + escapeAttributeValue(associateName) + '" placeholder="Associate Name"></td>' +
-            '<td><input type="text" class="gs-week1" value="' + escapeAttributeValue(safeItem.week1 || '') + '" placeholder="Week #1"></td>' +
-            '<td><input type="text" class="gs-week2" value="' + escapeAttributeValue(safeItem.week2 || '') + '" placeholder="Week #2"></td>' +
-            '<td><input type="text" class="gs-week3" value="' + escapeAttributeValue(safeItem.week3 || '') + '" placeholder="Week #3"></td>' +
-            '<td><input type="text" class="gs-week4" value="' + escapeAttributeValue(safeItem.week4 || '') + '" placeholder="Week #4"></td>' +
+            '<td>' + masterDataSelectHtml('gs-week1', plantMasterDataOptions.processAreas, safeItem.week1 || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('gs-week2', plantMasterDataOptions.processAreas, safeItem.week2 || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('gs-week3', plantMasterDataOptions.processAreas, safeItem.week3 || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('gs-week4', plantMasterDataOptions.processAreas, safeItem.week4 || '') + '</td>' +
             '<td class="ib-action-cell"><button type="button" class="issue-delete gemba-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></td>' +
             '</tr>';
     }
@@ -4062,6 +4052,62 @@ function regroupRows($container){
             .replace(/"/g, '&quot;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+    }
+
+    const plantMasterDataOptions = {
+        departments: [],
+        processAreas: []
+    };
+
+    function masterDataOptionHtml(value, selected) {
+        const safeValue = String(value || '').trim();
+        if (!safeValue) {
+            return '';
+        }
+        return '<option value="' + escapeAttributeValue(safeValue) + '"' + (safeValue === selected ? ' selected' : '') + '>' + escapeHtml(safeValue) + '</option>';
+    }
+
+    function masterDataSelectHtml(className, values, selected) {
+        const selectedValue = String(selected || '').trim();
+        return '<select class="' + className + '"><option value=""></option>' +
+            (values || []).map(function(value) {
+                return masterDataOptionHtml(value, selectedValue);
+            }).join('') +
+            '</select>';
+    }
+
+    function loadPlantMasterDataOptions(callback) {
+        const departmentRequest = $.ajax({
+            url: '/api/dashboard-config/master-data/DEPARTMENT',
+            type: 'GET'
+        }).then(function(data) {
+            return data && data.status === 'success' && Array.isArray(data.items)
+                ? data.items.map(function(item) { return item.name; }).filter(Boolean)
+                : [];
+        });
+
+        const processAreaRequest = $.ajax({
+            url: '/api/dashboard-config/master-data/PROCESS_AREA',
+            type: 'GET'
+        }).then(function(data) {
+            return data && data.status === 'success' && Array.isArray(data.items)
+                ? data.items.map(function(item) { return item.name; }).filter(Boolean)
+                : [];
+        });
+
+        $.when(departmentRequest, processAreaRequest).done(function(departments, processAreas) {
+            plantMasterDataOptions.departments = departments || [];
+            plantMasterDataOptions.processAreas = processAreas || [];
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }).fail(function() {
+            plantMasterDataOptions.departments = [];
+            plantMasterDataOptions.processAreas = [];
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
     }
 
     const MASTER_GEMBA_WALK_CONFIG = {
@@ -4272,10 +4318,6 @@ function regroupRows($container){
 
     // ==================== ABNORMALITY TRACKER CONFIG ====================
 
-    const AT_DEPARTMENTS = [
-        'H&S and CE', 'Admin', 'B&P', 'Packaging', 'Quality', 'U&M', 'CS', 'Finance'
-    ];
-
     function initializeAtConfigDateField() {
         const today = getTodayDateString();
         const $dateInput = $('#atConfigDate');
@@ -4351,18 +4393,13 @@ function regroupRows($container){
 
     function createAtConfigRow(item) {
         const safeItem = item || {};
-        const dept = safeItem.department || 'H&S and CE';
+        const dept = safeItem.department || '';
         const yellow = safeItem.yellowTags != null ? safeItem.yellowTags : '';
         const red = safeItem.redTags != null ? safeItem.redTags : '';
         const closure = safeItem.closurePercent != null ? safeItem.closurePercent : '';
 
-        let deptOptions = '';
-        AT_DEPARTMENTS.forEach(function (d) {
-            deptOptions += '<option value="' + escapeAttributeValue(d) + '"' + (dept === d ? ' selected' : '') + '>' + escapeAttributeValue(d) + '</option>';
-        });
-
         return '<tr>' +
-            '<td><select class="at-department">' + deptOptions + '</select></td>' +
+            '<td>' + masterDataSelectHtml('at-department', plantMasterDataOptions.departments, dept) + '</td>' +
             '<td><input type="number" class="at-yellow" min="0" step="1" value="' + escapeAttributeValue(String(yellow)) + '" placeholder="0"></td>' +
             '<td><input type="number" class="at-red" min="0" step="1" value="' + escapeAttributeValue(String(red)) + '" placeholder="0"></td>' +
             '<td><input type="number" class="at-closure" min="0" max="100" step="0.1" value="' + escapeAttributeValue(String(closure)) + '" placeholder="0.0"></td>' +
@@ -4784,8 +4821,8 @@ function regroupRows($container){
         return '' +
             '<tr>' +
             '<td><input type="text" class="lgt-manager-name" value="' + escapeAttributeValue(safe.managerName || '') + '" placeholder="Manager name"></td>' +
-            '<td><input type="text" class="lgt-department" value="' + escapeAttributeValue(safe.department || '') + '" placeholder="Department"></td>' +
-            '<td><input type="text" class="lgt-area" value="' + escapeAttributeValue(safe.areaOfCoverage || '') + '" placeholder="Area of coverage"></td>' +
+            '<td>' + masterDataSelectHtml('lgt-department', plantMasterDataOptions.departments, safe.department || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('lgt-area', plantMasterDataOptions.processAreas, safe.areaOfCoverage || '') + '</td>' +
             '<td><input type="number" class="lgt-target-ytd" min="0" step="1" value="' + escapeAttributeValue(num(safe.targetYtd)) + '"></td>' +
             '<td><input type="number" class="lgt-target-mtd" min="0" step="1" value="' + escapeAttributeValue(num(safe.targetMtd)) + '"></td>' +
             '<td><input type="number" class="lgt-week1-target" min="0" step="1" value="' + escapeAttributeValue(num(safe.week1Target)) + '"></td>' +
@@ -5607,19 +5644,99 @@ function regroupRows($container){
 
     // ==================== PMS PROCESS CONFIRMATION CONFIG ====================
 
+    const PROCESS_OBSERVATION_CATEGORIES = [
+        { key: 'ZM_OBSERVATION', label: 'ZM Describe Your Observation' },
+        { key: 'PM_OBSERVATION', label: 'PM Describe Your Observation' },
+        { key: 'QM_OBSERVATION', label: 'QM Describe Your Observation' }
+    ];
+
+    let processObservationOptions = [];
+
     function getProcessConfirmationDefaultQuestions() {
+        return processObservationOptions.map(function(option) {
+            return option.name;
+        }).slice(0, 10);
+    }
+
+    function processQuestionSelectors() {
         return [
-            'Are all inputs on the boards up to date before starting?',
-            'Was everyone on time and respected the rules?',
-            'Did the meeting start, finish on time and follow the agenda?',
-            'Are upcoming goals clear and actions to mitigate potential risks captured?',
-            'Is there an action for every underperforming KPI or negative trend?',
-            'Are PDCA and Root Cause fields used correctly?',
-            'Are overdue actions kept to minimum and escalation used correctly?',
-            'Was problem solving inside the meeting avoided and Gemba walk used instead?',
-            'Was meeting atmosphere productive and effective?',
-            'Are the top priorities until next meeting clear?'
+            '#pcQuestion1', '#pcQuestion2', '#pcQuestion3', '#pcQuestion4', '#pcQuestion5',
+            '#pcQuestion6', '#pcQuestion7', '#pcQuestion8', '#pcQuestion9', '#pcQuestion10'
         ];
+    }
+
+    function hasProcessObservationOption(value) {
+        const normalized = String(value || '').trim();
+        return processObservationOptions.some(function(option) {
+            return option.name === normalized;
+        });
+    }
+
+    function setProcessQuestionValue(selector, value, fallback) {
+        const requested = String(value || '').trim();
+        const defaultValue = String(fallback || '').trim();
+        const selected = hasProcessObservationOption(requested) ? requested : (hasProcessObservationOption(defaultValue) ? defaultValue : '');
+        $(selector).val(selected);
+    }
+
+    function renderProcessObservationOptions() {
+        const grouped = PROCESS_OBSERVATION_CATEGORIES.map(function(category) {
+            return {
+                label: category.label,
+                items: processObservationOptions.filter(function(option) {
+                    return option.category === category.key;
+                })
+            };
+        });
+
+        processQuestionSelectors().forEach(function(selector) {
+            const $select = $(selector);
+            if (!$select.length) return;
+
+            const currentValue = String($select.val() || '').trim();
+            let html = '<option value=""></option>';
+            grouped.forEach(function(group) {
+                if (!group.items.length) return;
+                html += '<optgroup label="' + escapeAttributeValue(group.label) + '">';
+                group.items.forEach(function(item) {
+                    html += '<option value="' + escapeAttributeValue(item.name) + '">' + escapeHtml(item.name) + '</option>';
+                });
+                html += '</optgroup>';
+            });
+
+            $select.html(html);
+            setProcessQuestionValue(selector, currentValue, '');
+        });
+    }
+
+    function loadProcessObservationOptions(callback) {
+        const requests = PROCESS_OBSERVATION_CATEGORIES.map(function(category) {
+            return $.ajax({
+                url: '/api/dashboard-config/process-master-data/' + encodeURIComponent(category.key),
+                type: 'GET'
+            }).then(function(data) {
+                const items = data && data.status === 'success' && Array.isArray(data.items) ? data.items : [];
+                return items.map(function(item) {
+                    return { category: category.key, name: String(item.name || '').trim() };
+                }).filter(function(item) {
+                    return item.name.length > 0;
+                });
+            });
+        });
+
+        $.when.apply($, requests).done(function() {
+            processObservationOptions = Array.prototype.concat.apply([], Array.prototype.slice.call(arguments));
+            renderProcessObservationOptions();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }).fail(function() {
+            processObservationOptions = [];
+            renderProcessObservationOptions();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
     }
 
     function getPcStatusFieldIds() {
@@ -5773,16 +5890,9 @@ function regroupRows($container){
 
         $('#pcJanScore, #pcFebScore, #pcMarScore, #pcAprScore, #pcMayScore, #pcJunScore, #pcJulScore, #pcAugScore, #pcSepScore, #pcOctScore, #pcNovScore, #pcDecScore, #pcYtdScore').val('');
 
-        $('#pcQuestion1').val(defaults[0]);
-        $('#pcQuestion2').val(defaults[1]);
-        $('#pcQuestion3').val(defaults[2]);
-        $('#pcQuestion4').val(defaults[3]);
-        $('#pcQuestion5').val(defaults[4]);
-        $('#pcQuestion6').val(defaults[5]);
-        $('#pcQuestion7').val(defaults[6]);
-        $('#pcQuestion8').val(defaults[7]);
-        $('#pcQuestion9').val(defaults[8]);
-        $('#pcQuestion10').val(defaults[9]);
+        processQuestionSelectors().forEach(function(selector, index) {
+            setProcessQuestionValue(selector, '', defaults[index]);
+        });
 
         $('#pcQ1Statuses, #pcQ2Statuses, #pcQ3Statuses, #pcQ4Statuses, #pcQ5Statuses, #pcQ6Statuses, #pcQ7Statuses, #pcQ8Statuses, #pcQ9Statuses, #pcQ10Statuses, #pcTotalStatuses').val('');
 
@@ -5841,16 +5951,16 @@ function regroupRows($container){
                 $('#pcDecScore').val(data.decScore ?? '');
                 $('#pcYtdScore').val(data.ytdScore ?? '');
 
-                $('#pcQuestion1').val(data.question1 || defaults[0]);
-                $('#pcQuestion2').val(data.question2 || defaults[1]);
-                $('#pcQuestion3').val(data.question3 || defaults[2]);
-                $('#pcQuestion4').val(data.question4 || defaults[3]);
-                $('#pcQuestion5').val(data.question5 || defaults[4]);
-                $('#pcQuestion6').val(data.question6 || defaults[5]);
-                $('#pcQuestion7').val(data.question7 || defaults[6]);
-                $('#pcQuestion8').val(data.question8 || defaults[7]);
-                $('#pcQuestion9').val(data.question9 || defaults[8]);
-                $('#pcQuestion10').val(data.question10 || defaults[9]);
+                setProcessQuestionValue('#pcQuestion1', data.question1, defaults[0]);
+                setProcessQuestionValue('#pcQuestion2', data.question2, defaults[1]);
+                setProcessQuestionValue('#pcQuestion3', data.question3, defaults[2]);
+                setProcessQuestionValue('#pcQuestion4', data.question4, defaults[3]);
+                setProcessQuestionValue('#pcQuestion5', data.question5, defaults[4]);
+                setProcessQuestionValue('#pcQuestion6', data.question6, defaults[5]);
+                setProcessQuestionValue('#pcQuestion7', data.question7, defaults[6]);
+                setProcessQuestionValue('#pcQuestion8', data.question8, defaults[7]);
+                setProcessQuestionValue('#pcQuestion9', data.question9, defaults[8]);
+                setProcessQuestionValue('#pcQuestion10', data.question10, defaults[9]);
 
                 setPcStatuses('pcQ1Statuses', data.q1Statuses || '');
                 setPcStatuses('pcQ2Statuses', data.q2Statuses || '');
@@ -6072,6 +6182,8 @@ function regroupRows($container){
                     $(config.input).val('');
                     setMasterProcessMessage(config.label + ' added.', 'success');
                     loadMasterProcessCategory(category);
+                    loadProcessObservationOptions();
+                    localStorage.setItem('process-confirmation-update', Date.now());
                 } else {
                     setMasterProcessMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
                 }
@@ -6101,6 +6213,8 @@ function regroupRows($container){
                 if (data && data.status === 'success') {
                     setMasterProcessMessage(config.label + ' updated.', 'success');
                     loadMasterProcessCategory(category);
+                    loadProcessObservationOptions();
+                    localStorage.setItem('process-confirmation-update', Date.now());
                 } else {
                     setMasterProcessMessage((data && data.message) || 'Unable to update ' + config.label + '.', 'error');
                 }
@@ -6123,6 +6237,8 @@ function regroupRows($container){
                 if (data && data.status === 'success') {
                     setMasterProcessMessage(config.label + ' deleted.', 'success');
                     loadMasterProcessCategory(category);
+                    loadProcessObservationOptions();
+                    localStorage.setItem('process-confirmation-update', Date.now());
                 } else {
                     setMasterProcessMessage((data && data.message) || 'Unable to delete ' + config.label + '.', 'error');
                 }

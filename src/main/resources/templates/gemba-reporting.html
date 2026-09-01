@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abnormality Reporting - Carlsberg Brewery</title>
+    <title>Gemba Walk Reporting - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/abnormality-reporting.css?v=20260830">
+    <link rel="stylesheet" href="/css/gemba-reporting.css?v=20260830">
     <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page abnormality-reporting-page">
+<body class="modern-shell dashboard-bg issue-board-page gemba-reporting-page">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -27,11 +27,11 @@
             <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
             <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
             <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-            <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
+            <a href="/gemba-reporting" class="nav-item active" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
             <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
             <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
             <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/abnormality-reporting" class="nav-item active" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
             <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
             <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
@@ -87,10 +87,10 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>Abnormality Reporting</h1>
+                <h1>Gemba Walk Reporting</h1>
             </div>
             <div class="header-right">
-                <div class="sync-status" id="abnormalityReportingSyncStatus">Last synced: --:--:--</div>
+                <div class="sync-status" id="gembaReportingSyncStatus">Last synced: --:--:--</div>
                 <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
                 <div class="user-avatar" th:attr="data-username=${session.username != null ? session.username : 'User'}"><i class="fas fa-user"></i></div>
@@ -98,47 +98,33 @@
         </header>
 
         <div class="content-area">
-            <section class="ar-dashboard-row" aria-label="Abnormality reporting counts">
-                <button type="button" class="ar-count-card" data-status-filter="all">
+            <section class="gw-report-counts" aria-label="Gemba Walk counts">
+                <button type="button" class="gw-count-card active" data-status-filter="all">
                     <span>Reported</span>
                     <strong id="reportedCount">0</strong>
                 </button>
-                <button type="button" class="ar-count-card" data-status-filter="open">
-                    <span>Open</span>
-                    <strong id="openCount">0</strong>
-                </button>
-                <button type="button" class="ar-count-card" data-status-filter="closed">
+                <button type="button" class="gw-count-card" data-status-filter="closed">
                     <span>Closed</span>
                     <strong id="closedCount">0</strong>
                 </button>
             </section>
 
-            <section class="issue-board-card ar-report-card">
-                <div class="issue-board-title-row ar-filter-row">
-                    <div class="ar-filter-group">
-                        <label for="periodFilter">Report</label>
-                        <select id="periodFilter">
-                            <option value="ALL">All</option>
-                            <option value="FTD">FTD</option>
-                            <option value="MTD">MTD</option>
-                            <option value="YTD">YTD</option>
-                        </select>
-                    </div>
-                    <div class="ar-filter-group">
-                        <label for="statusFilter">Tag Status</label>
+            <section class="issue-board-card gw-report-card">
+                <div class="issue-board-title-row gw-filter-row">
+                    <div class="gw-filter-group">
+                        <label for="statusFilter">Status</label>
                         <select id="statusFilter">
                             <option value="all">All</option>
-                            <option value="open">Open</option>
                             <option value="closed">Closed</option>
                         </select>
                     </div>
-                    <a href="/abnormality-reporting-config" class="issue-add-button" th:if="${session.canViewAbnormalityTrackerConfiguration}">
+                    <a href="/gemba-walk-config" class="issue-add-button" th:if="${session.canViewGembaWalkConfiguration}">
                         <i class="fas fa-plus"></i>
-                        <span>New Record</span>
+                        <span>Gemba Walk Config</span>
                     </a>
                 </div>
-                <div class="ar-chart-wrap">
-                    <canvas id="abnormalityReportingChart" aria-label="Abnormality reporting graph"></canvas>
+                <div class="gw-chart-wrap">
+                    <canvas id="gembaReportingChart" aria-label="Gemba Walk reporting graph"></canvas>
                 </div>
             </section>
 
@@ -147,33 +133,27 @@
                     <h2>Records</h2>
                     <div class="issue-search" role="search">
                         <i class="fas fa-search" aria-hidden="true"></i>
-                        <input type="search" id="abnormalityReportingSearch" placeholder="Search" aria-label="Search abnormality reports">
-                        <button type="button" id="abnormalityReportingSearchClear" class="issue-search-clear" aria-label="Clear abnormality report search">
+                        <input type="search" id="gembaReportingSearch" placeholder="Search" aria-label="Search Gemba Walk records">
+                        <button type="button" id="gembaReportingSearchClear" class="issue-search-clear" aria-label="Clear Gemba Walk search">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
                 <div class="issue-table-wrap">
-                    <table class="issue-table ar-record-table" id="abnormalityReportingTable">
+                    <table class="issue-table gw-record-table" id="gembaReportingTable">
                         <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Type of Tag</th>
-                            <th>Priority</th>
-                            <th>Abnormality Tag Number</th>
-                            <th>Tag Raised By</th>
-                            <th>Date Raised</th>
-                            <th>Department</th>
-                            <th>Area/Machine</th>
-                            <th>Abnormality/Defect Type</th>
-                            <th>Assign To</th>
-                            <th>Date Closed</th>
-                            <th>Tag Status</th>
+                            <th>ID / Serial Number</th>
+                            <th>Date of Leadership Safety Walk Conducted</th>
+                            <th>Management Safety Walk Week</th>
+                            <th>Location of MSW Conducted</th>
+                            <th>Responsibility</th>
+                            <th>Observation Status</th>
                             <th>Open</th>
                         </tr>
                         </thead>
-                        <tbody id="abnormalityReportingTableBody">
-                        <tr><td colspan="13" class="empty-row">No abnormality reports found.</td></tr>
+                        <tbody id="gembaReportingTableBody">
+                        <tr><td colspan="7" class="empty-row">No Gemba Walk records found.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -189,7 +169,7 @@
     </main>
 </div>
 
-<script src="/js/abnormality-reporting.js?v=20260830"></script>
+<script src="/js/gemba-reporting.js?v=20260830"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

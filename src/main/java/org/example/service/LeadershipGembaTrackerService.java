@@ -18,9 +18,12 @@ public class LeadershipGembaTrackerService {
     private static final DateTimeFormatter PERIOD_FORMATTER = DateTimeFormatter.ofPattern("MMM''yy", Locale.ENGLISH);
 
     private final LeadershipGembaTrackerRepository repository;
+    private final PlantMasterDataService plantMasterDataService;
 
-    public LeadershipGembaTrackerService(LeadershipGembaTrackerRepository repository) {
+    public LeadershipGembaTrackerService(LeadershipGembaTrackerRepository repository,
+                                         PlantMasterDataService plantMasterDataService) {
         this.repository = repository;
+        this.plantMasterDataService = plantMasterDataService;
     }
 
     public List<LeadershipGembaTrackerEntry> getLatest() {
@@ -52,9 +55,23 @@ public class LeadershipGembaTrackerService {
             if (item.getRowOrder() == null || item.getRowOrder() < 1) {
                 item.setRowOrder(row);
             }
+            validateConfigured(item.getDepartment(), PlantMasterDataService.DEPARTMENT, "Department");
+            validateConfigured(item.getAreaOfCoverage(), PlantMasterDataService.PROCESS_AREA, "Area of Coverage");
             row++;
         }
 
         return repository.saveAll(items);
+    }
+
+    private void validateConfigured(String value, String category, String label) {
+        String trimmed = value == null ? "" : value.trim();
+        if (trimmed.isBlank()) {
+            return;
+        }
+        boolean configured = plantMasterDataService.names(category).stream()
+                .anyMatch(option -> option != null && option.trim().equalsIgnoreCase(trimmed));
+        if (!configured) {
+            throw new IllegalArgumentException(label + " must be configured in Master Data");
+        }
     }
 }

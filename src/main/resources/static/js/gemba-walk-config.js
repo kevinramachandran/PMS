@@ -6,6 +6,7 @@ $(function() {
     const params = new URLSearchParams(window.location.search);
     let gembaCategories = [];
     let lifeSaverRules = [];
+    let processAreas = [];
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -45,6 +46,10 @@ $(function() {
     function populateResponsibility(users, selected) {
         const html = ['<option value=""></option>'].concat((users || []).map(userOptionHtml)).join('');
         $('#responsibility').html(html).val(selected || '');
+    }
+
+    function populateSelect(selector, values, selected) {
+        $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
     }
 
     function renderObservation(index, observation) {
@@ -147,6 +152,8 @@ $(function() {
                 const options = data && data.options ? data.options : {};
                 gembaCategories = options.gembaCategories || [];
                 lifeSaverRules = options.lifeSaverRules || [];
+                processAreas = options.processAreas || [];
+                populateSelect('#locationOfMswConducted', processAreas, $('#locationOfMswConducted').val() || params.get('location') || '');
                 const currentUser = options.currentUser || {};
                 if (!$('#email').val()) {
                     $('#email').val(currentUser.email || '');

@@ -105,7 +105,7 @@
                 { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily', description: 'Health and safety daily cross settings.' },
                 { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking', description: 'LSR daily tracking settings and updates.' },
                 { key: 'KPI_RENAME_DASHBOARD', label: 'KPI Configuration', description: 'Maintain plant name, KPI labels, units, decimal precision, and target cross colors.' },
-                { key: 'EMAIL_CONFIGURATION', label: 'Email', description: 'SMTP settings and outbound mail test configuration.' }
+                { key: 'EMAIL_CONFIGURATION', label: 'SMTP Config / Email Scheduler', description: 'SMTP settings, outbound mail test, and scheduled email reports.' }
             ]
         },
         {
@@ -137,21 +137,41 @@
         .flatMap(function (group) { return group.items; })
         .map(function (item) { return item.key; });
 
+    const ROLE_LABELS = {
+        ADMIN: 'Admin',
+        USER: 'User',
+        HOD: 'HoD',
+        AREA_HOD: 'Area HoD',
+        ENGINEER: 'Engineer',
+        EXECUTIVE: 'Executive',
+        OPERATOR: 'Operator'
+    };
+
     function normalizeRole(role) {
         const value = String(role || '').trim().toUpperCase().replace(/\s+/g, '_');
         if (value === 'ADMIN') {
             return 'ADMIN';
         }
+        if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
+            return 'HOD';
+        }
+        if (value === 'AREA_HOD' || value === 'AREA_HEAD' || value === 'AREA_HEAD_OF_DEPARTMENT') {
+            return 'AREA_HOD';
+        }
+        if (value === 'ENGINEER' || value === 'ENGG') {
+            return 'ENGINEER';
+        }
+        if (value === 'EXECUTIVE' || value === 'EXEC') {
+            return 'EXECUTIVE';
+        }
+        if (value === 'OPERATOR') {
+            return 'OPERATOR';
+        }
         return 'USER';
     }
 
     function roleLabel(role) {
-        switch (normalizeRole(role)) {
-            case 'ADMIN':
-                return 'Admin';
-            default:
-                return 'User';
-        }
+        return ROLE_LABELS[normalizeRole(role)] || 'User';
     }
 
     function showMessage(targetEl, text, type) {
@@ -181,13 +201,17 @@
     function userIcon(role) {
         const normalized = normalizeRole(role);
         if (normalized === 'ADMIN') return 'fa-user-shield';
+        if (normalized === 'HOD' || normalized === 'AREA_HOD') return 'fa-user-tie';
+        if (normalized === 'ENGINEER') return 'fa-helmet-safety';
+        if (normalized === 'EXECUTIVE') return 'fa-briefcase';
+        if (normalized === 'OPERATOR') return 'fa-user-gear';
         return 'fa-user';
     }
 
     function roleClass(role) {
         const normalized = normalizeRole(role);
         if (normalized === 'ADMIN') return 'admin';
-        return 'l1';
+        return normalized.toLowerCase().replace(/_/g, '-');
     }
 
     function readArray(value) {
@@ -242,13 +266,26 @@
         }).join('');
     }
 
+    function setSelectOptions(select, values, selectedValue) {
+        if (!select || !Array.isArray(values)) {
+            return;
+        }
+        const selected = String(selectedValue || select.value || '').trim();
+        select.innerHTML = '<option value=""></option>' + values.map(function(value) {
+            const safe = escapeAttribute(value);
+            return '<option value="' + safe + '"' + (String(value || '').trim() === selected ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
+        }).join('');
+    }
+
     function loadMasterOptions() {
         fetch('/api/users/master-options')
             .then(parseJsonResponse)
             .then(function (data) {
                 const options = data.options || {};
-                setDatalistOptions('departmentOptions', options.departments || []);
-                setDatalistOptions('areaOptions', options.areas || []);
+                setSelectOptions(departmentEl, options.departments || []);
+                setSelectOptions(areaEl, options.areas || []);
+                setSelectOptions(editDepartmentEl, options.departments || []);
+                setSelectOptions(editAreaEl, options.areas || []);
                 setDatalistOptions('plantOptions', options.plants || []);
                 setDatalistOptions('designationOptions', options.designations || []);
             })

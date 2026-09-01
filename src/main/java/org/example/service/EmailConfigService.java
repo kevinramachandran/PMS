@@ -61,6 +61,9 @@ public class EmailConfigService {
             response.setEncryption("TLS");
             response.setEnabled(false);
             response.setPasswordConfigured(false);
+            response.setAbnormalityReportingDailyEnabled(false);
+            response.setGembaWalkDailyEnabled(false);
+            response.setGembaKaizenDailyEnabled(false);
             return response;
         }
 
@@ -72,6 +75,10 @@ public class EmailConfigService {
         response.setFromEmail(config.getFromEmail());
         response.setFromName(config.getFromName());
         response.setReplyTo(config.getReplyTo());
+        response.setSchedulerGroupEmail(config.getSchedulerGroupEmail());
+        response.setAbnormalityReportingDailyEnabled(config.isAbnormalityReportingDailyEnabled());
+        response.setGembaWalkDailyEnabled(config.isGembaWalkDailyEnabled());
+        response.setGembaKaizenDailyEnabled(config.isGembaKaizenDailyEnabled());
         response.setEnabled(config.isEnabled());
         response.setPasswordConfigured(config.getEncryptedPassword() != null && !config.getEncryptedPassword().isBlank());
         return response;
@@ -103,6 +110,27 @@ public class EmailConfigService {
             throw new IllegalArgumentException("Password is required");
         }
         target.setEncryptedPassword(cryptoService.encrypt(resolvedPassword));
+        repository.save(target);
+    }
+
+    public void saveSchedulerConfiguration(EmailConfigPayload payload) {
+        ValidationResult validation = validateSchedulerPayload(payload);
+        if (!validation.isValid()) {
+            throw new IllegalArgumentException(validation.message());
+        }
+
+        EmailConfig target = repository.findById(Objects.requireNonNull(SINGLETON_ID)).orElseGet(() -> {
+            EmailConfig config = new EmailConfig();
+            config.setId(SINGLETON_ID);
+            config.setPort(587);
+            config.setEncryption("TLS");
+            return config;
+        });
+
+        target.setSchedulerGroupEmail(trimToNull(payload.getSchedulerGroupEmail()));
+        target.setAbnormalityReportingDailyEnabled(Boolean.TRUE.equals(payload.getAbnormalityReportingDailyEnabled()));
+        target.setGembaWalkDailyEnabled(Boolean.TRUE.equals(payload.getGembaWalkDailyEnabled()));
+        target.setGembaKaizenDailyEnabled(Boolean.TRUE.equals(payload.getGembaKaizenDailyEnabled()));
         repository.save(target);
     }
 
@@ -138,6 +166,33 @@ public class EmailConfigService {
     public boolean hasStoredPassword() {
         return repository.findById(Objects.requireNonNull(SINGLETON_ID))
                 .map(config -> config.getEncryptedPassword() != null && !config.getEncryptedPassword().isBlank())
+                .orElse(false);
+    }
+
+    public List<String> configuredReportRecipients() {
+        return repository.findById(Objects.requireNonNull(SINGLETON_ID))
+                .map(config -> {
+                    String recipient = config.getSchedulerGroupEmail();
+                    return isBlank(recipient) ? List.<String>of() : List.of(recipient.trim());
+                })
+                .orElse(List.of());
+    }
+
+    public boolean isAbnormalityReportingDailyEnabled() {
+        return repository.findById(Objects.requireNonNull(SINGLETON_ID))
+                .map(EmailConfig::isAbnormalityReportingDailyEnabled)
+                .orElse(false);
+    }
+
+    public boolean isGembaWalkDailyEnabled() {
+        return repository.findById(Objects.requireNonNull(SINGLETON_ID))
+                .map(EmailConfig::isGembaWalkDailyEnabled)
+                .orElse(false);
+    }
+
+    public boolean isGembaKaizenDailyEnabled() {
+        return repository.findById(Objects.requireNonNull(SINGLETON_ID))
+                .map(EmailConfig::isGembaKaizenDailyEnabled)
                 .orElse(false);
     }
 
@@ -257,8 +312,33 @@ public class EmailConfigService {
             if (!isBlank(payload.getReplyTo()) && !isValidEmail(payload.getReplyTo())) {
                 return ValidationResult.invalid("Reply-To Email must be a valid email address");
             }
+            if (!isBlank(payload.getSchedulerGroupEmail()) && !isValidEmail(payload.getSchedulerGroupEmail())) {
+                return ValidationResult.invalid("Recipient / Group Email must be a valid email address");
+            }
+            boolean schedulerEnabled = Boolean.TRUE.equals(payload.getAbnormalityReportingDailyEnabled())
+                    || Boolean.TRUE.equals(payload.getGembaWalkDailyEnabled())
+                    || Boolean.TRUE.equals(payload.getGembaKaizenDailyEnabled());
+            if (schedulerEnabled && isBlank(payload.getSchedulerGroupEmail())) {
+                return ValidationResult.invalid("Recipient / Group Email is required for scheduled emails");
+            }
         }
 
+        return ValidationResult.valid();
+    }
+
+    private ValidationResult validateSchedulerPayload(EmailConfigPayload payload) {
+        if (payload == null) {
+            return ValidationResult.invalid("Scheduler payload is required");
+        }
+        if (!isBlank(payload.getSchedulerGroupEmail()) && !isValidEmail(payload.getSchedulerGroupEmail())) {
+            return ValidationResult.invalid("Recipient / Group Email must be a valid email address");
+        }
+        boolean schedulerEnabled = Boolean.TRUE.equals(payload.getAbnormalityReportingDailyEnabled())
+                || Boolean.TRUE.equals(payload.getGembaWalkDailyEnabled())
+                || Boolean.TRUE.equals(payload.getGembaKaizenDailyEnabled());
+        if (schedulerEnabled && isBlank(payload.getSchedulerGroupEmail())) {
+            return ValidationResult.invalid("Recipient / Group Email is required for scheduled emails");
+        }
         return ValidationResult.valid();
     }
 

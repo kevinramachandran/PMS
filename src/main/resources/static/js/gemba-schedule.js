@@ -27,6 +27,7 @@ $(document).ready(function() {
 
     let availableDates = [];
     let currentGembaEditDate = '';
+    let departmentOrder = [];
     const canEditCurrentPage = String(document.body && document.body.dataset.canEditCurrentPage || '').toLowerCase() === 'true';
 
     function escapeHtml(value) {
@@ -45,21 +46,11 @@ $(document).ready(function() {
     }
 
     function groupByFunctionType(rows) {
-        const orderedTypes = [
-            'Packaging',
-            'Quality',
-            'HR & Admin',
-            'Utility & Maintenance',
-            'Customer Supply',
-            'B&P',
-            'Finance',
-            'Health & Safety',
-            'Carlsberg Excellence'
-        ];
+        const orderedTypes = departmentOrder;
 
         const map = new Map();
         rows.forEach(function(row) {
-            const type = (row.functionType || '').trim() || 'Other';
+            const type = (row.functionType || '').trim();
             if (!map.has(type)) {
                 map.set(type, []);
             }
@@ -99,7 +90,7 @@ $(document).ready(function() {
         grouped.forEach(function(group) {
             tbody.append(
                 '<tr class="gemba-row-section">' +
-                '<td colspan="' + colCount + '">' + escapeHtml(group.type) + '</td>' +
+                '<td colspan="' + colCount + '">' + escapeHtml(group.type || '-') + '</td>' +
                 '</tr>'
             );
 
@@ -107,15 +98,14 @@ $(document).ready(function() {
                 row.__groupIndex = index;
                 const associate = row.associateName || row.functionName || '';
                 const editDate = row.scheduleDate || currentGembaEditDate || '';
-                const location = row.functionType || row.functionName || '';
                 const scheduleId = row.id || '';
                 tbody.append(
                     '<tr class="' + rowClass(row) + '">' +
                     '<td>' + escapeHtml(associate) + '</td>' +
-                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week1 || 'Week 1') + '">' + escapeHtml(row.week1) + '</td>' +
-                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week2 || 'Week 2') + '">' + escapeHtml(row.week2) + '</td>' +
-                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week3 || 'Week 3') + '">' + escapeHtml(row.week3) + '</td>' +
-                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(location) + '" data-week="' + escapeAttr(row.week4 || 'Week 4') + '">' + escapeHtml(row.week4) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(row.week1 || '') + '" data-week="' + escapeAttr(row.week1 || 'Week 1') + '">' + escapeHtml(row.week1) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(row.week2 || '') + '" data-week="' + escapeAttr(row.week2 || 'Week 2') + '">' + escapeHtml(row.week2) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(row.week3 || '') + '" data-week="' + escapeAttr(row.week3 || 'Week 3') + '">' + escapeHtml(row.week3) + '</td>' +
+                    '<td class="gemba-selectable-cell" data-id="' + escapeAttr(scheduleId) + '" data-location="' + escapeAttr(row.week4 || '') + '" data-week="' + escapeAttr(row.week4 || 'Week 4') + '">' + escapeHtml(row.week4) + '</td>' +
                     (canEditCurrentPage ? '<td><button type="button" class="schedule-edit-link" data-date="' + escapeAttr(editDate) + '" title="Edit schedule" aria-label="Edit schedule"><i class="fas fa-pen-to-square"></i></button></td>' : '') +
                     '</tr>'
                 );
@@ -284,6 +274,26 @@ $(document).ready(function() {
         });
     }
 
+    function loadDepartmentOrder(callback) {
+        $.ajax({
+            url: '/api/dashboard-config/master-data/DEPARTMENT',
+            type: 'GET',
+            success: function(data) {
+                const items = data && data.status === 'success' && Array.isArray(data.items) ? data.items : [];
+                departmentOrder = items.map(function(item) {
+                    return String(item.name || '').trim();
+                }).filter(function(name) {
+                    return name.length > 0;
+                });
+            },
+            complete: function() {
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+        });
+    }
+
     $('#gembaMonthFilter').on('change', function() {
         const selectedMonth = $(this).val();
         loadScheduleForMonth(selectedMonth);
@@ -312,7 +322,9 @@ $(document).ready(function() {
         }
     });
 
-    loadFiltersAndSchedule('');
+    loadDepartmentOrder(function() {
+        loadFiltersAndSchedule('');
+    });
     setInterval(function() {
         loadFiltersAndSchedule($('#gembaMonthFilter').val() || '');
     }, 30000);

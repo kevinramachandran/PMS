@@ -120,13 +120,17 @@ public class AuthService {
         if (name == null || name.trim().isEmpty()) return Optional.of("Name is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
         if (password == null || password.trim().isEmpty()) return Optional.of("Password is required");
-        if (!RoleAccess.isSupported(role)) return Optional.of("Role must be Admin or User");
+        if (!RoleAccess.isSupported(role)) return Optional.of("Role is not supported");
 
         String normalizedUsername = username.trim();
         String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedEmail = email.trim();
         String normalizedRole = RoleAccess.normalize(role);
         String normalizedStatus = normalizeStatus(status);
+        Optional<String> masterDataValidation = validateMasterDataProfile(department, area);
+        if (masterDataValidation.isPresent()) {
+            return masterDataValidation;
+        }
 
         Optional<String> licenseValidation = licenseService.validateManagedUserCreation();
         if (licenseValidation.isPresent()) {
@@ -184,7 +188,7 @@ public class AuthService {
         if (id == null) return Optional.of("User id is required");
         if (name == null || name.trim().isEmpty()) return Optional.of("Name is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
-        if (!RoleAccess.isSupported(role)) return Optional.of("Role must be Admin or User");
+        if (!RoleAccess.isSupported(role)) return Optional.of("Role is not supported");
 
         Optional<AppUser> maybeUser = appUserRepository.findById(id);
         if (maybeUser.isEmpty()) return Optional.of("User not found");
@@ -198,6 +202,10 @@ public class AuthService {
         String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedRole = RoleAccess.normalize(role);
         String normalizedStatus = normalizeStatus(status);
+        Optional<String> masterDataValidation = validateMasterDataProfile(department, area);
+        if (masterDataValidation.isPresent()) {
+            return masterDataValidation;
+        }
 
         if (appUserRepository.existsByEmailIgnoreCaseAndIdNot(normalizedEmail, id)) {
             return Optional.of("Email already exists");
@@ -239,8 +247,8 @@ public class AuthService {
 
     public Map<String, List<String>> getUserMasterOptions() {
         return Map.of(
-                "departments", mergeOptions(plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), appUserRepository.findDistinctDepartments()),
-                "areas", mergeOptions(plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), appUserRepository.findDistinctAreas()),
+                "departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT),
+                "areas", plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA),
                 "plants", appUserRepository.findDistinctPlants(),
                 "designations", appUserRepository.findDistinctDesignations()
         );
@@ -281,6 +289,25 @@ public class AuthService {
         user.setDesignation(trimToEmpty(designation));
         user.setReportingManager(trimToEmpty(reportingManager));
         user.setStatus(normalizeStatus(status));
+    }
+
+    private Optional<String> validateMasterDataProfile(String department, String area) {
+        if (!isConfiguredMasterValue(department, PlantMasterDataService.DEPARTMENT)) {
+            return Optional.of("Department must be configured in Master Data");
+        }
+        if (!isConfiguredMasterValue(area, PlantMasterDataService.PROCESS_AREA)) {
+            return Optional.of("Area must be configured in Master Data");
+        }
+        return Optional.empty();
+    }
+
+    private boolean isConfiguredMasterValue(String value, String category) {
+        String trimmed = trimToEmpty(value);
+        if (trimmed.isBlank()) {
+            return true;
+        }
+        return plantMasterDataService.names(category).stream()
+                .anyMatch(option -> option != null && option.trim().equalsIgnoreCase(trimmed));
     }
 
     private String normalizeStatus(String status) {

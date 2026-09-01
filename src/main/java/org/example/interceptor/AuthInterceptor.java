@@ -223,7 +223,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_USER_MANAGEMENT;
         }
 
-        if (path.startsWith("/email-configuration") || path.startsWith("/api/email-config")) {
+        if (path.startsWith("/email-configuration") || path.startsWith("/smtp-configuration") || path.startsWith("/api/email-config")) {
             return RoleAccess.PAGE_EMAIL_CONFIGURATION;
         }
 
@@ -283,11 +283,16 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/gemba-findings")) {
-            return RoleAccess.PAGE_GEMBA_WALK_FINDINGS;
+            return RoleAccess.PAGE_GEMBA_WALK_REPORTING;
         }
 
         if (path.startsWith("/gemba-reporting")) {
             return RoleAccess.PAGE_GEMBA_WALK_REPORTING;
+        }
+
+        if (path.startsWith("/gemba-kaizen") || path.startsWith("/gemba-kaizen-config")
+                || path.startsWith("/api/gemba-kaizen-config")) {
+            return RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
         }
 
         if (path.startsWith("/user-dashboard")) {
@@ -307,6 +312,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/config/process-confirmation") || path.startsWith("/api/process-confirmation")) {
+            return RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
+        }
+
+        if (path.startsWith("/api/dashboard-config/process-master-data")) {
             return RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
         }
 

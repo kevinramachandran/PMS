@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email - Carlsberg Brewery</title>
+    <title th:text="${emailPageTitle != null ? emailPageTitle + ' - Carlsberg Brewery' : 'Email Scheduler - Carlsberg Brewery'}">Email Scheduler - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
-<body class="modern-shell dashboard-bg" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
+<body class="modern-shell dashboard-bg"
+      th:attr="data-can-edit-current-page=${canEditCurrentPage},data-email-page-mode=${emailPageMode != null ? emailPageMode : 'scheduler'}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -24,13 +25,13 @@
                 <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
                 <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-                <a href="/gemba-findings" class="nav-item" th:if="${session.canViewGembaWalkFindings}" data-tooltip="Gemba Walk Findings"><i class="fas fa-magnifying-glass-chart"></i><span>Gemba Walk Findings</span></a>
                 <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
             <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
                 <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
+            <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
@@ -53,6 +54,9 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting Configuration</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
@@ -69,6 +73,7 @@
                         <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
                     </div>
                 </div>
+                <a href="/smtp-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
                 <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
             </nav>
             <div class="sidebar-footer">
@@ -80,7 +85,7 @@
             <header class="top-header">
                 <div class="header-left">
                     <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                    <h1>Email</h1>
+                    <h1 th:text="${emailPageTitle != null ? emailPageTitle : 'Email Scheduler'}">Email Scheduler</h1>
                 </div>
                 <div class="header-right">
                     <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -107,10 +112,10 @@
                         <div class="pms-config-card-body email-config-hero-body">
                             <div>
                                 <div class="email-config-kicker">System Notifications</div>
-                                <h2>SMTP Setup</h2>
-                                <p>Configure the outgoing mail server used by the application for alerts, workflow messages, and automated communication.</p>
+                                <h2 th:text="${emailPageTitle != null ? emailPageTitle : 'Email Scheduler'}">Email Scheduler</h2>
+                                <p th:text="${emailPageDescription != null ? emailPageDescription : 'Configure the outgoing mail server used by the application for alerts, workflow messages, and automated communication.'}">Configure the outgoing mail server used by the application for alerts, workflow messages, and automated communication.</p>
                             </div>
-                            <div class="email-config-status">
+                            <div class="email-config-status" th:style="${emailPageMode == 'scheduler'} ? 'display:none;' : ''">
                                 <span class="email-config-status-label">Email Sending</span>
                                 <label class="email-toggle">
                                     <input type="checkbox" id="emailEnabled">
@@ -121,7 +126,7 @@
                     </div>
 
                     <div class="email-config-grid">
-                        <div class="pms-config-card">
+                        <div class="pms-config-card" th:style="${emailPageMode == 'scheduler'} ? 'display:none;' : ''">
                             <div class="pms-config-card-header">
                                 <h2><i class="fas fa-server"></i> SMTP Details</h2>
                             </div>
@@ -168,7 +173,7 @@
                             </div>
                         </div>
 
-                        <div class="pms-config-card">
+                        <div class="pms-config-card" th:style="${emailPageMode == 'scheduler'} ? 'display:none;' : ''">
                             <div class="pms-config-card-header">
                                 <h2><i class="fas fa-paper-plane"></i> Sender Details</h2>
                             </div>
@@ -192,6 +197,39 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="pms-config-card" th:style="${emailPageMode == 'smtp'} ? 'display:none;' : ''">
+                            <div class="pms-config-card-header">
+                                <h2><i class="fas fa-clock"></i> Email Scheduler</h2>
+                            </div>
+                            <div class="pms-config-card-body">
+                                <div class="email-form-grid">
+                                    <div class="form-group email-form-grid-full">
+                                        <label class="form-label" for="schedulerGroupEmail">Recipient / Group Email</label>
+                                        <input type="text" id="schedulerGroupEmail" class="form-select" placeholder="group@example.com">
+                                        <div id="schedulerGroupEmailError" class="field-inline-error"></div>
+                                    </div>
+                                    <div class="form-group email-form-grid-full">
+                                        <label class="email-config-check">
+                                            <input type="checkbox" id="abnormalityReportingDailyEnabled">
+                                            <span>Abnormality Reporting - Daily 9:00 AM</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-group email-form-grid-full">
+                                        <label class="email-config-check">
+                                            <input type="checkbox" id="gembaWalkDailyEnabled">
+                                            <span>Gemba Walk - Daily 9:00 AM</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-group email-form-grid-full">
+                                        <label class="email-config-check">
+                                            <input type="checkbox" id="gembaKaizenDailyEnabled">
+                                            <span>Gemba Kaizen - Daily 9:00 AM</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="pms-config-card">
@@ -201,11 +239,11 @@
                                 <div class="email-config-hint"><i class="fas fa-circle-info"></i> Recommended combinations: port 465 with SSL, port 587 with TLS.</div>
                             </div>
                             <div class="form-actions email-action-row">
-                                <button type="button" class="btn btn-secondary" id="testConnectionBtn" disabled>
+                                <button type="button" class="btn btn-secondary" id="testConnectionBtn" disabled th:style="${emailPageMode == 'scheduler'} ? 'display:none;' : ''">
                                     <i class="fas fa-plug"></i> Test Connection
                                 </button>
                                 <button type="button" class="btn btn-primary" id="saveEmailConfigBtn">
-                                    <i class="fas fa-save"></i> Save Configuration
+                                    <i class="fas fa-save"></i> <span th:text="${emailPageMode == 'scheduler'} ? 'Save Scheduler' : 'Save Configuration'">Save Configuration</span>
                                 </button>
                             </div>
                         </div>
@@ -219,9 +257,9 @@
     </div>
 
     <script src="/js/dashboard.js"></script>
-    <script src="/js/email-configuration.js"></script>
+    <script src="/js/email-configuration.js?v=split-email-pages-20260901"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-    <script src="/js/ui-shell.js?v=username-global-20260814"></script>
+    <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>
 

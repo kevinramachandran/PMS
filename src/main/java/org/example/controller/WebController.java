@@ -39,22 +39,33 @@ public class WebController {
 
     @GetMapping("/gemba-findings")
     public String gembaFindings(Model model) {
-        return placeholderView(model, "Gemba Walk Findings", "Gemba Walk findings will be configured here.");
+        return "redirect:/gemba-reporting";
     }
 
     @GetMapping("/gemba-reporting")
-    public String gembaReporting(Model model) {
-        return placeholderView(model, "Gemba Walk Reporting", "Gemba Walk reporting will be available here.");
+    public String gembaReporting() {
+        return "gemba-reporting";
     }
 
     @GetMapping("/user-dashboard")
     public String userDashboard(Model model) {
-        return placeholderView(model, "User Dashboard", "User dashboard will be available here.");
+        model.addAttribute("isUserDashboard", true);
+        return placeholderView(model, "User Dashboard", "");
     }
 
     @GetMapping("/leadership-gemba-tracker")
     public String leadershipGembaTracker() {
         return "leadership-gemba-tracker";
+    }
+
+    @GetMapping("/gemba-kaizen")
+    public String gembaKaizen() {
+        return "gemba-kaizen";
+    }
+
+    @GetMapping("/gemba-kaizen-config")
+    public String gembaKaizenConfig() {
+        return "gemba-kaizen-config";
     }
 
     @GetMapping("/training-schedule")
@@ -228,8 +239,19 @@ public class WebController {
         return "pms-configuration";
     }
 
+    @GetMapping("/smtp-configuration")
+    public String smtpConfiguration(Model model) {
+        model.addAttribute("emailPageMode", "smtp");
+        model.addAttribute("emailPageTitle", "SMTP Config");
+        model.addAttribute("emailPageDescription", "Configure outgoing SMTP server, sender identity, and email sending status.");
+        return "email-configuration";
+    }
+
     @GetMapping("/email-configuration")
-    public String emailConfiguration() {
+    public String emailConfiguration(Model model) {
+        model.addAttribute("emailPageMode", "scheduler");
+        model.addAttribute("emailPageTitle", "Email Scheduler");
+        model.addAttribute("emailPageDescription", "Configure recurring group emails for Abnormality Reporting, Gemba Walk, and Gemba Kaizen.");
         return "email-configuration";
     }
 

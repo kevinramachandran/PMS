@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abnormality Reporting - Carlsberg Brewery</title>
+    <title>Gemba Kaizen - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/abnormality-reporting.css?v=20260830">
+    <link rel="stylesheet" href="/css/gemba-kaizen.css?v=20260830">
     <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page abnormality-reporting-page">
+<body class="modern-shell dashboard-bg issue-board-page gemba-kaizen-page">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -31,9 +31,9 @@
             <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
             <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
             <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/abnormality-reporting" class="nav-item active" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
             <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
-            <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
+            <a href="/gemba-kaizen" class="nav-item active" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
             <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
             <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                 <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
@@ -87,10 +87,10 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>Abnormality Reporting</h1>
+                <h1>Gemba Kaizen</h1>
             </div>
             <div class="header-right">
-                <div class="sync-status" id="abnormalityReportingSyncStatus">Last synced: --:--:--</div>
+                <div class="sync-status" id="gembaKaizenSyncStatus">Last synced: --:--:--</div>
                 <div class="header-icon"><i class="fas fa-sync-alt"></i></div>
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
                 <div class="user-avatar" th:attr="data-username=${session.username != null ? session.username : 'User'}"><i class="fas fa-user"></i></div>
@@ -98,47 +98,33 @@
         </header>
 
         <div class="content-area">
-            <section class="ar-dashboard-row" aria-label="Abnormality reporting counts">
-                <button type="button" class="ar-count-card" data-status-filter="all">
+            <section class="gk-dashboard-row" aria-label="Gemba Kaizen counts">
+                <button type="button" class="gk-count-card active" data-status-filter="all">
                     <span>Reported</span>
                     <strong id="reportedCount">0</strong>
                 </button>
-                <button type="button" class="ar-count-card" data-status-filter="open">
-                    <span>Open</span>
-                    <strong id="openCount">0</strong>
-                </button>
-                <button type="button" class="ar-count-card" data-status-filter="closed">
+                <button type="button" class="gk-count-card" data-status-filter="closed">
                     <span>Closed</span>
                     <strong id="closedCount">0</strong>
                 </button>
             </section>
 
-            <section class="issue-board-card ar-report-card">
-                <div class="issue-board-title-row ar-filter-row">
-                    <div class="ar-filter-group">
-                        <label for="periodFilter">Report</label>
-                        <select id="periodFilter">
-                            <option value="ALL">All</option>
-                            <option value="FTD">FTD</option>
-                            <option value="MTD">MTD</option>
-                            <option value="YTD">YTD</option>
-                        </select>
-                    </div>
-                    <div class="ar-filter-group">
-                        <label for="statusFilter">Tag Status</label>
+            <section class="issue-board-card gk-report-card">
+                <div class="issue-board-title-row gk-filter-row">
+                    <div class="gk-filter-group">
+                        <label for="statusFilter">Status</label>
                         <select id="statusFilter">
                             <option value="all">All</option>
-                            <option value="open">Open</option>
                             <option value="closed">Closed</option>
                         </select>
                     </div>
-                    <a href="/abnormality-reporting-config" class="issue-add-button" th:if="${session.canViewAbnormalityTrackerConfiguration}">
+                    <a href="/gemba-kaizen-config" class="issue-add-button" th:if="${session.canViewLeadershipGembaTrackerConfiguration}">
                         <i class="fas fa-plus"></i>
                         <span>New Record</span>
                     </a>
                 </div>
-                <div class="ar-chart-wrap">
-                    <canvas id="abnormalityReportingChart" aria-label="Abnormality reporting graph"></canvas>
+                <div class="gk-chart-wrap">
+                    <canvas id="gembaKaizenChart" aria-label="Gemba Kaizen graph"></canvas>
                 </div>
             </section>
 
@@ -147,33 +133,29 @@
                     <h2>Records</h2>
                     <div class="issue-search" role="search">
                         <i class="fas fa-search" aria-hidden="true"></i>
-                        <input type="search" id="abnormalityReportingSearch" placeholder="Search" aria-label="Search abnormality reports">
-                        <button type="button" id="abnormalityReportingSearchClear" class="issue-search-clear" aria-label="Clear abnormality report search">
+                        <input type="search" id="gembaKaizenSearch" placeholder="Search" aria-label="Search Gemba Kaizen records">
+                        <button type="button" id="gembaKaizenSearchClear" class="issue-search-clear" aria-label="Clear Gemba Kaizen search">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
                 <div class="issue-table-wrap">
-                    <table class="issue-table ar-record-table" id="abnormalityReportingTable">
+                    <table class="issue-table gk-record-table" id="gembaKaizenTable">
                         <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Type of Tag</th>
-                            <th>Priority</th>
-                            <th>Abnormality Tag Number</th>
-                            <th>Tag Raised By</th>
-                            <th>Date Raised</th>
+                            <th>Name</th>
+                            <th>Gemba Kaizen Provider Name</th>
+                            <th>Employee ID / HO Number</th>
                             <th>Department</th>
-                            <th>Area/Machine</th>
-                            <th>Abnormality/Defect Type</th>
-                            <th>Assign To</th>
-                            <th>Date Closed</th>
-                            <th>Tag Status</th>
+                            <th>Classification of Kaizen</th>
+                            <th>Gemba Kaizen Location</th>
+                            <th>Gemba Kaizen Generation Date</th>
+                            <th>Is Kaizen Implemented</th>
                             <th>Open</th>
                         </tr>
                         </thead>
-                        <tbody id="abnormalityReportingTableBody">
-                        <tr><td colspan="13" class="empty-row">No abnormality reports found.</td></tr>
+                        <tbody id="gembaKaizenTableBody">
+                        <tr><td colspan="9" class="empty-row">No Gemba Kaizen records found.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -189,7 +171,7 @@
     </main>
 </div>
 
-<script src="/js/abnormality-reporting.js?v=20260830"></script>
+<script src="/js/gemba-kaizen.js?v=20260830"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

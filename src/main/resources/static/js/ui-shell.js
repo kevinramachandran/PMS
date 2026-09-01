@@ -63,7 +63,13 @@
 
     function isConfigPage() {
         const path = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '');
-        return path === '/settings' || path === '/pms-configuration' || path === '/email-configuration';
+        return path === '/settings'
+            || path === '/pms-configuration'
+            || path === '/smtp-configuration'
+            || path === '/email-configuration'
+            || path === '/abnormality-reporting-config'
+            || path === '/gemba-walk-config'
+            || path === '/gemba-kaizen-config';
     }
 
     function normalizeCellText(cell) {
@@ -203,7 +209,7 @@
         const existingRole = existingRoleBadge ? existingRoleBadge.textContent.trim().toUpperCase().replace(/\s+/g, '_') : '';
         const canAccessPmsDataEntry = Boolean(document.querySelector('.sidebar-nav .nav-parent')) || Boolean(document.querySelector('.sidebar-nav a[href^="/settings?config="]'));
         const canManageUsers = Boolean(document.querySelector('.sidebar-nav a[href="/pms-configuration"]'));
-        const canManageEmailConfiguration = Boolean(document.querySelector('.sidebar-nav a[href="/email-configuration"]'));
+        const canManageEmailConfiguration = Boolean(document.querySelector('.sidebar-nav a[href="/smtp-configuration"], .sidebar-nav a[href="/email-configuration"]'));
 
         if (!header.contains(headerRight)) {
             header.appendChild(headerRight);

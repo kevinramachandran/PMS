@@ -308,7 +308,7 @@ public class AuthController {
             return "/gemba-schedule";
         }
         if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_FINDINGS)) {
-            return "/gemba-findings";
+            return "/gemba-reporting";
         }
         if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_REPORTING)) {
             return "/gemba-reporting";
@@ -341,7 +341,7 @@ public class AuthController {
             return "/settings?config=license";
         }
         if (pages.contains(RoleAccess.PAGE_EMAIL_CONFIGURATION)) {
-            return "/email-configuration";
+            return "/smtp-configuration";
         }
         if (pages.contains(RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION)) {
             return "/settings?config=hs-cross";

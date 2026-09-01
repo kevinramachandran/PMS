@@ -66,13 +66,20 @@ public class AttachmentController {
     }
 
     private boolean canView(HttpSession session, String module) {
+        if ("gemba-kaizen".equals(storageService.normalizeModule(module))) {
+            return session != null && session.getAttribute("username") != null;
+        }
         String role = session == null ? null : (String) session.getAttribute("role");
         return RoleAccess.canViewPage(role, permissions(session, "viewPermissions"), pageKey(module));
     }
 
     private boolean canEdit(HttpSession session, String module) {
         String normalizedModule = storageService.normalizeModule(module);
-        if ("abnormality-reporting".equals(normalizedModule) || "gemba-walk".equals(normalizedModule)) {
+        if ("abnormality-reporting".equals(normalizedModule) || "gemba-walk".equals(normalizedModule)
+                || "gemba-kaizen".equals(normalizedModule)) {
+            if ("gemba-kaizen".equals(normalizedModule)) {
+                return session != null && session.getAttribute("username") != null;
+            }
             return canView(session, module);
         }
         String role = session == null ? null : (String) session.getAttribute("role");
