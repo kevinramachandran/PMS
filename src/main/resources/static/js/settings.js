@@ -2750,7 +2750,7 @@ function regroupRows($container){
         });
 
         if (term && tbody.find('tr').not('.placeholder-row, .loading-row').length > 0 && visibleRows === 0) {
-            tbody.append('<tr class="issue-config-search-empty"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No matching issue rows found.</td></tr>');
+            tbody.append('<tr class="issue-config-search-empty"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No matching issue rows found.</td></tr>');
         }
     }
 
@@ -3053,7 +3053,7 @@ function regroupRows($container){
             return;
         }
 
-        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="13" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading issue board data...</td></tr>');
+        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="14" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading issue board data...</td></tr>');
         setIssueBoardSaveState();
 
         $.ajax({
@@ -3071,7 +3071,7 @@ function regroupRows($container){
     }
 
     function loadLatestIssueBoardConfig() {
-        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="13" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading latest issue board data...</td></tr>');
+        $('#issueBoardConfigTableBody').html('<tr class="loading-row"><td colspan="14" style="text-align:center; padding: 18px; color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Loading latest issue board data...</td></tr>');
         setIssueBoardSaveState();
 
         $.ajax({
@@ -3103,7 +3103,7 @@ function regroupRows($container){
         if (!items || items.length === 0) {
             $('#issueBoardLastReviewDate').val('');
             $('#issueBoardNextReviewDate').val('');
-            tbody.html('<tr class="placeholder-row"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
+            tbody.html('<tr class="placeholder-row"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
             applyIssueBoardConfigSearch();
             setIssueBoardSaveState();
             return;
@@ -3222,6 +3222,7 @@ function regroupRows($container){
 
         return '' +
             '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '">' +
+            '<td class="ib-row-number"></td>' +
             textCell('ib-problem', safeItem.problem, 'Describe issue') +
             '<td class="ib-display-cell"><span class="ib-priority-pill ib-priority-' + escapeAttributeValue(String(safeItem.priority || '').toLowerCase()) + '">' + escapeHtml(safeItem.priority || '-') + '</span><input type="hidden" class="ib-priority" value="' + escapeAttributeValue(safeItem.priority || '') + '"></td>' +
             textCell('ib-owner', safeItem.ownerName, 'Owner name') +
@@ -3518,7 +3519,7 @@ function regroupRows($container){
         });
     });
 
-    $('#issueConfigDrawerClose, #issueConfigDrawerCancel, #issueConfigDrawerBackdrop').on('click', function() {
+    $('#issueConfigDrawerClose, #issueConfigDrawerCancel').on('click', function() {
         setIssueConfigDrawerOpen(false);
     });
 
@@ -3645,7 +3646,7 @@ function regroupRows($container){
             }
             $(this).closest('tr').remove();
             if ($('#issueBoardConfigTableBody tr').length === 0) {
-                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="13" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
+                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
             }
             applyIssueBoardConfigSearch();
             setIssueBoardSaveState();

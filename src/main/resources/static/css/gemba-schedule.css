@@ -193,3 +193,43 @@
         display: none;
     }
 }
+
+/* Issue Board pattern: compact full-table schedule view */
+.gemba-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.gemba-title-row,
+.gemba-filter-row {
+    border-bottom-color: #dfe5e2;
+    background: #ffffff;
+}
+
+.gemba-title-row h2 {
+    font-size: 20px;
+    text-align: left;
+}
+
+.gemba-table {
+    min-width: 980px;
+    table-layout: fixed;
+}
+
+.gemba-table thead th,
+.gemba-table tbody td {
+    border-color: #dfe5e2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.gemba-table thead th {
+    background: #ffffff;
+    color: #111827;
+}
+
+.gemba-table tbody td {
+    font-size: 13px;
+}

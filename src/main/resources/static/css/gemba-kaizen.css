@@ -120,3 +120,72 @@
         margin-left: 0;
     }
 }
+
+/* Issue Board pattern: table-only data view */
+.gemba-kaizen-page .gk-dashboard-row,
+.gemba-kaizen-page .gk-chart-wrap {
+    display: none;
+}
+
+.gemba-kaizen-page .content-area {
+    padding: 28px;
+}
+
+.gemba-kaizen-page .issue-board-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.gemba-kaizen-page .gk-report-card {
+    margin-bottom: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.gemba-kaizen-page .gk-filter-row {
+    gap: 14px;
+    padding: 18px;
+    border-bottom: 1px solid #dfe5e2;
+}
+
+.gemba-kaizen-page .issue-board-card:has(.gk-record-table) {
+    border-top: 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    overflow: hidden;
+}
+
+.gemba-kaizen-page .issue-board-card:has(.gk-record-table) .issue-board-title-row {
+    padding: 16px 18px;
+    margin: 0;
+}
+
+.gemba-kaizen-page .issue-table-wrap {
+    border-top: 1px solid #dfe5e2;
+}
+
+.gemba-kaizen-page .gk-record-table {
+    min-width: 1080px;
+    table-layout: fixed;
+}
+
+.gemba-kaizen-page .gk-record-table th,
+.gemba-kaizen-page .gk-record-table td {
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.gemba-kaizen-page .gk-record-table thead th {
+    background: #ffffff;
+    color: #111827;
+    letter-spacing: 0;
+}
+
+.gemba-kaizen-page .gk-open-btn {
+    border: 0;
+}

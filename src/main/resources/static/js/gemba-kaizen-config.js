@@ -4,6 +4,7 @@ $(function() {
     const API = '/api/gemba-kaizen-config';
     const ATTACHMENT_API = '/api/attachments/gemba-kaizen/upload';
     const params = new URLSearchParams(window.location.search);
+    let records = [];
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -73,6 +74,94 @@ $(function() {
         $('#isKaizenImplemented').val(item.isKaizenImplemented || 'No');
     }
 
+    function resetRecord() {
+        $('#gembaKaizenRecordId').val('');
+        $('#name').val('');
+        $('#lastModifiedTime').val(currentTime());
+        $('#gembaKaizenProviderName').val('');
+        $('#employeeIdHoNumber').val('');
+        $('#department').val('');
+        $('#classificationOfKaizen').val('');
+        $('#gembaKaizenLocation').val('');
+        $('#gembaKaizenGenerationDate').val(todayDate());
+        $('#kaizenIdea').val('');
+        $('#pictureImage').val('');
+        $('#pictureImageStored').val('');
+        $('#benefitsOfKaizen').val('');
+        $('#isKaizenImplemented').val('No');
+        setMessage('', 'success');
+        loadOptions();
+    }
+
+    function renderTable() {
+        const rows = records.map(function(record, index) {
+            return '' +
+                '<tr>' +
+                '<td class="gk-row-number">' + (index + 1) + '</td>' +
+                '<td>' + escapeHtml(record.id) + '</td>' +
+                '<td>' + escapeHtml(record.name) + '</td>' +
+                '<td>' + escapeHtml(record.lastModifiedTime) + '</td>' +
+                '<td>' + escapeHtml(record.gembaKaizenProviderName) + '</td>' +
+                '<td>' + escapeHtml(record.employeeIdHoNumber) + '</td>' +
+                '<td>' + escapeHtml(record.department) + '</td>' +
+                '<td>' + escapeHtml(record.classificationOfKaizen) + '</td>' +
+                '<td>' + escapeHtml(record.gembaKaizenLocation) + '</td>' +
+                '<td>' + escapeHtml(record.gembaKaizenGenerationDate) + '</td>' +
+                '<td>' + escapeHtml(record.kaizenIdea) + '</td>' +
+                '<td>' + escapeHtml(record.pictureImage) + '</td>' +
+                '<td>' + escapeHtml(record.benefitsOfKaizen) + '</td>' +
+                '<td><span class="gk-status-pill">' + escapeHtml(record.isKaizenImplemented || 'No') + '</span></td>' +
+                '<td><button type="button" class="gk-table-action gk-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Kaizen"><i class="fas fa-pen"></i></button></td>' +
+                '</tr>';
+        }).join('');
+        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gk-empty-cell">No records found.</td></tr>');
+    }
+
+    function loadRecords() {
+        $.ajax({
+            url: API + '/records',
+            type: 'GET',
+            success: function(data) {
+                records = data && Array.isArray(data.records) ? data.records : [];
+                renderTable();
+            },
+            error: function() {
+                records = [];
+                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="15" class="gk-empty-cell">Unable to load records.</td></tr>');
+            }
+        });
+    }
+
+    function openDrawer(record) {
+        $('#gembaKaizenDrawerTitle').text(record && record.id ? 'Edit Gemba Kaizen' : 'Add Gemba Kaizen');
+        $('#gembaKaizenSubmitBtn span').text(record && record.id ? 'Update Kaizen' : 'Save Kaizen');
+        $('.gemba-kaizen-config-page').addClass('gk-drawer-open');
+        $('#gembaKaizenConfigForm').attr('aria-hidden', 'false');
+        $('#gembaKaizenConfigDrawerBackdrop').attr('aria-hidden', 'false');
+    }
+
+    function closeDrawer() {
+        $('.gemba-kaizen-config-page').removeClass('gk-drawer-open');
+        $('#gembaKaizenConfigForm').attr('aria-hidden', 'true');
+        $('#gembaKaizenConfigDrawerBackdrop').attr('aria-hidden', 'true');
+    }
+
+    function loadRecordIntoDrawer(id) {
+        $.ajax({
+            url: API + '/records/' + encodeURIComponent(id),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.record) {
+                    setRecord(data.record);
+                    openDrawer(data.record);
+                }
+            },
+            error: function() {
+                setMessage('Unable to load selected Gemba Kaizen.', 'error');
+            }
+        });
+    }
+
     function loadOptions() {
         return $.ajax({
             url: API + '/options',
@@ -82,6 +171,9 @@ $(function() {
                 const currentUser = options.currentUser || {};
                 if (!$('#name').val()) {
                     $('#name').val(currentUser.name || '');
+                }
+                if (!$('#gembaKaizenProviderName').val()) {
+                    $('#gembaKaizenProviderName').val(currentUser.name || '');
                 }
                 if (!$('#employeeIdHoNumber').val()) {
                     $('#employeeIdHoNumber').val(currentUser.employeeId || '');
@@ -107,6 +199,8 @@ $(function() {
                 if (data && data.status === 'success' && data.record) {
                     setRecord(data.record);
                     setMessage('Submitted.', 'success');
+                    loadRecords();
+                    closeDrawer();
                 } else {
                     setMessage('Unable to submit.', 'error');
                 }
@@ -168,26 +262,29 @@ $(function() {
         saveRecord();
     });
 
+    $('#gembaKaizenAddRecordBtn').on('click', function() {
+        resetRecord();
+        openDrawer(null);
+    });
+
+    $('#gembaKaizenConfigRecordsBody').on('click', '.gk-edit-record', function() {
+        loadRecordIntoDrawer($(this).data('id'));
+    });
+
+    $('#gembaKaizenConfigDrawerClose, #gembaKaizenConfigCancelBtn').on('click', function() {
+        closeDrawer();
+    });
+
     $('#lastModifiedTime').val(currentTime());
     $('#gembaKaizenGenerationDate').val(todayDate());
     $('#isKaizenImplemented').val('No');
 
+    loadRecords();
     loadOptions().always(function() {
         const id = params.get('id');
         if (!id) {
             return;
         }
-        $.ajax({
-            url: API + '/records/' + encodeURIComponent(id),
-            type: 'GET',
-            success: function(data) {
-                if (data && data.record) {
-                    setRecord(data.record);
-                }
-            },
-            error: function() {
-                setMessage('Unable to load selected Gemba Kaizen.', 'error');
-            }
-        });
+        loadRecordIntoDrawer(id);
     });
 });

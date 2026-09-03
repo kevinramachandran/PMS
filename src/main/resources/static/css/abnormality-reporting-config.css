@@ -141,3 +141,268 @@
         grid-column: span 1;
     }
 }
+
+/* Issue Board pattern: clean config/data entry surface */
+.abnormality-reporting-config-page .content-area {
+    padding: 28px;
+}
+
+.abnormality-reporting-config-page .ar-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #ffffff;
+}
+
+.abnormality-reporting-config-page .ar-grid {
+    gap: 12px;
+}
+
+.abnormality-reporting-config-page .ar-card input,
+.abnormality-reporting-config-page .ar-card select,
+.abnormality-reporting-config-page .ar-card textarea {
+    border-color: #d1d5db;
+    border-radius: 6px;
+}
+
+.abnormality-reporting-config-page .ar-card .form-actions {
+    justify-content: flex-end;
+    padding-top: 14px;
+    border-top: 1px solid #dfe5e2;
+}
+
+.abnormality-reporting-config-page .ar-table {
+    min-width: 1480px;
+    table-layout: fixed;
+}
+
+.abnormality-reporting-config-page .ar-table th,
+.abnormality-reporting-config-page .ar-table td {
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.abnormality-reporting-config-page .ar-table th {
+    background: #ffffff;
+    color: #111827;
+    letter-spacing: 0;
+}
+
+.abnormality-reporting-config-page .ar-config-table-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.abnormality-reporting-config-page .issue-board-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #dfe5e2;
+}
+
+.abnormality-reporting-config-page .issue-board-title-row h2 {
+    margin: 0;
+    color: #047434;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.abnormality-reporting-config-page .ar-table-wrap {
+    max-height: calc(100vh - 275px);
+    overflow: auto;
+}
+
+.abnormality-reporting-config-page .ar-table {
+    min-width: 2060px;
+    table-layout: fixed;
+}
+
+.abnormality-reporting-config-page .ar-table th,
+.abnormality-reporting-config-page .ar-table td {
+    padding: 12px 14px;
+    line-height: 1.35;
+    vertical-align: middle;
+}
+
+.abnormality-reporting-config-page .ar-table th:first-child,
+.abnormality-reporting-config-page .ar-table td:first-child {
+    width: 56px;
+    text-align: center;
+}
+
+.abnormality-reporting-config-page .ar-table th:last-child,
+.abnormality-reporting-config-page .ar-table td:last-child {
+    width: 92px;
+    text-align: center;
+    border-right: 0;
+}
+
+.abnormality-reporting-config-page .ar-priority-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.abnormality-reporting-config-page .ar-table-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #15803d;
+    cursor: pointer;
+}
+
+.abnormality-reporting-config-page .ar-table-action:hover {
+    background: #dcfce7;
+}
+
+.abnormality-reporting-config-page .ar-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    display: none;
+    background: rgba(15, 23, 42, 0.26);
+}
+
+.abnormality-reporting-config-page.ar-drawer-open .ar-drawer-backdrop {
+    display: block;
+}
+
+.abnormality-reporting-config-page .ar-config-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 3000;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(620px, calc(100vw - 40px));
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid #dfe5e2;
+    border-radius: 0;
+    box-shadow: -18px 0 34px rgba(15, 23, 42, 0.18);
+    transform: translateX(100%);
+    transition: transform 180ms ease;
+    overflow: hidden;
+}
+
+.abnormality-reporting-config-page.ar-drawer-open .ar-config-drawer {
+    transform: translateX(0);
+}
+
+.abnormality-reporting-config-page .ar-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 26px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.abnormality-reporting-config-page .ar-drawer-header h2 {
+    margin: 0;
+    color: #047434;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.abnormality-reporting-config-page .ar-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.abnormality-reporting-config-page .ar-drawer-close:hover {
+    background: #f1f5f9;
+}
+
+.abnormality-reporting-config-page .ar-drawer-body {
+    min-height: 0;
+    overflow: auto;
+    padding: 18px;
+}
+
+.abnormality-reporting-config-page .ar-drawer-body .ar-grid {
+    padding: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.abnormality-reporting-config-page .ar-drawer-body .ar-span {
+    grid-column: 1 / -1;
+}
+
+.abnormality-reporting-config-page .ar-drawer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 18px 26px;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.abnormality-reporting-config-page .issue-cancel-button,
+.abnormality-reporting-config-page .issue-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 44px;
+    border-radius: 7px;
+    padding: 0 22px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.abnormality-reporting-config-page .issue-cancel-button {
+    border: 1px solid #9ca3af;
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.abnormality-reporting-config-page .issue-add-button {
+    border: 1px solid #15803d;
+    background: #168334;
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .abnormality-reporting-config-page .content-area {
+        padding: 16px;
+    }
+
+    .abnormality-reporting-config-page .ar-config-drawer {
+        width: 100vw;
+    }
+
+    .abnormality-reporting-config-page .ar-drawer-body .ar-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .abnormality-reporting-config-page .ar-drawer-actions {
+        flex-wrap: wrap;
+    }
+}

@@ -7,6 +7,7 @@ $(function() {
     let gembaCategories = [];
     let lifeSaverRules = [];
     let processAreas = [];
+    let records = [];
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -112,6 +113,7 @@ $(function() {
             managementSafetyWalkWeek: $('#managementSafetyWalkWeek').val(),
             locationOfMswConducted: $('#locationOfMswConducted').val(),
             responsibility: $('#responsibility').val(),
+            finalComments: $('#finalComments').val(),
             observations: $('#gembaWalkObservations .gw-observation').map(function() {
                 const $section = $(this);
                 return {
@@ -138,9 +140,96 @@ $(function() {
         $('#managementSafetyWalkWeek').val(item.managementSafetyWalkWeek || params.get('week') || '');
         $('#locationOfMswConducted').val(item.locationOfMswConducted || params.get('location') || '');
         $('#responsibility').val(item.responsibility || $('#responsibility').val() || '');
+        $('#finalComments').val(item.finalComments || '');
         $('#gembaWalkObservations').empty();
         const observations = item.observations && item.observations.length ? item.observations : [{}];
         observations.forEach(addObservation);
+    }
+
+    function resetRecord() {
+        $('#gembaWalkRecordId').val('');
+        $('#serialNumber').val('');
+        $('#scheduleItemId').val(params.get('scheduleId') || '');
+        $('#startTime').val(currentTime());
+        $('#completionTime').val(currentTime());
+        $('#email').val('');
+        $('#managerName').val('');
+        $('#dateConducted').val(todayDate());
+        $('#managementSafetyWalkWeek').val(params.get('week') || '');
+        $('#locationOfMswConducted').val(params.get('location') || '');
+        $('#responsibility').val('');
+        $('#finalComments').val('');
+        $('#gembaWalkObservations').empty();
+        setMessage('', 'success');
+        loadOptions();
+    }
+
+    function renderTable() {
+        const rows = records.map(function(record, index) {
+            const observations = Array.isArray(record.observations) ? record.observations : [];
+            return '' +
+                '<tr>' +
+                '<td class="gw-row-number">' + (index + 1) + '</td>' +
+                '<td>' + escapeHtml(record.id) + '</td>' +
+                '<td>' + escapeHtml(record.startTime) + '</td>' +
+                '<td>' + escapeHtml(record.completionTime) + '</td>' +
+                '<td>' + escapeHtml(record.managerName) + '</td>' +
+                '<td>' + escapeHtml(record.email) + '</td>' +
+                '<td>' + escapeHtml(record.dateOfLeadershipSafetyWalkConducted) + '</td>' +
+                '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
+                '<td>' + escapeHtml(record.locationOfMswConducted) + '</td>' +
+                '<td>' + escapeHtml(record.responsibility) + '</td>' +
+                '<td><span class="gw-status-pill">' + observations.length + '</span></td>' +
+                '<td>' + escapeHtml(record.finalComments) + '</td>' +
+                '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button></td>' +
+                '</tr>';
+        }).join('');
+        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="13" class="gw-empty-cell">No records found.</td></tr>');
+    }
+
+    function loadRecords() {
+        $.ajax({
+            url: API + '/records',
+            type: 'GET',
+            success: function(data) {
+                records = data && Array.isArray(data.records) ? data.records : [];
+                renderTable();
+            },
+            error: function() {
+                records = [];
+                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="13" class="gw-empty-cell">Unable to load records.</td></tr>');
+            }
+        });
+    }
+
+    function openDrawer(record) {
+        $('#gembaWalkDrawerTitle').text(record && record.id ? 'Edit Gemba Walk' : 'Add Gemba Walk');
+        $('#gembaWalkSubmitBtn span').text(record && record.id ? 'Update Walk' : 'Save Walk');
+        $('.gemba-walk-config-page').addClass('gw-drawer-open');
+        $('#gembaWalkConfigForm').attr('aria-hidden', 'false');
+        $('#gembaWalkConfigDrawerBackdrop').attr('aria-hidden', 'false');
+    }
+
+    function closeDrawer() {
+        $('.gemba-walk-config-page').removeClass('gw-drawer-open');
+        $('#gembaWalkConfigForm').attr('aria-hidden', 'true');
+        $('#gembaWalkConfigDrawerBackdrop').attr('aria-hidden', 'true');
+    }
+
+    function loadRecordIntoDrawer(id) {
+        $.ajax({
+            url: API + '/records/' + encodeURIComponent(id),
+            type: 'GET',
+            success: function(data) {
+                if (data && data.record) {
+                    setRecord(data.record);
+                    openDrawer(data.record);
+                }
+            },
+            error: function() {
+                setMessage('Unable to load selected Gemba Walk.', 'error');
+            }
+        });
     }
 
     function loadOptions() {
@@ -192,6 +281,8 @@ $(function() {
                 if (data && data.status === 'success' && data.record) {
                     setRecord(data.record);
                     setMessage('Submitted.', 'success');
+                    loadRecords();
+                    closeDrawer();
                 } else {
                     setMessage('Unable to submit.', 'error');
                 }
@@ -236,6 +327,19 @@ $(function() {
         saveRecord();
     });
 
+    $('#gembaWalkAddRecordBtn').on('click', function() {
+        resetRecord();
+        openDrawer(null);
+    });
+
+    $('#gembaWalkConfigRecordsBody').on('click', '.gw-edit-record', function() {
+        loadRecordIntoDrawer($(this).data('id'));
+    });
+
+    $('#gembaWalkConfigDrawerClose, #gembaWalkConfigCancelBtn').on('click', function() {
+        closeDrawer();
+    });
+
     $('#gembaWalkObservations').on('change', '.gw-picture-image', function() {
         const file = this.files && this.files[0];
         const $section = $(this).closest('.gw-observation');
@@ -269,23 +373,12 @@ $(function() {
     $('#completionTime').val(currentTime());
     $('#dateConducted').val(todayDate());
 
+    loadRecords();
     loadOptions().always(function() {
         const id = params.get('id');
         if (!id) {
-            addObservation({});
             return;
         }
-        $.ajax({
-            url: API + '/records/' + encodeURIComponent(id),
-            type: 'GET',
-            success: function(data) {
-                if (data && data.record) {
-                    setRecord(data.record);
-                }
-            },
-            error: function() {
-                setMessage('Unable to load selected Gemba Walk.', 'error');
-            }
-        });
+        loadRecordIntoDrawer(id);
     });
 });

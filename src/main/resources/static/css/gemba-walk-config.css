@@ -102,3 +102,304 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Issue Board pattern: clean config/data entry surface */
+.gemba-walk-config-page .content-area {
+    padding: 28px;
+}
+
+.gemba-walk-config-page .gw-form-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #ffffff;
+}
+
+.gemba-walk-config-page .issue-board-title-row {
+    padding: 16px 18px;
+    border-bottom: 1px solid #dfe5e2;
+}
+
+.gemba-walk-config-page .gw-form-grid,
+.gemba-walk-config-page .gw-observation-grid {
+    gap: 12px;
+    padding: 18px;
+}
+
+.gemba-walk-config-page .gw-observation {
+    border-top-color: #dfe5e2;
+}
+
+.gemba-walk-config-page .gw-form-group input,
+.gemba-walk-config-page .gw-form-group select,
+.gemba-walk-config-page .gw-form-group textarea {
+    border-color: #d1d5db;
+}
+
+.gemba-walk-config-page .gw-add-row,
+.gemba-walk-config-page .issue-drawer-actions {
+    padding: 14px 18px 18px;
+}
+
+.gemba-walk-config-page .gw-config-table-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.gemba-walk-config-page .gw-table-shell {
+    overflow: auto;
+    max-height: calc(100vh - 275px);
+    border-top: 1px solid #dfe5e2;
+}
+
+.gemba-walk-config-page .gw-config-table {
+    width: 100%;
+    min-width: 1540px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.gemba-walk-config-page .gw-config-table th,
+.gemba-walk-config-page .gw-config-table td {
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    padding: 12px 14px;
+    color: #111827;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: left;
+    vertical-align: middle;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.gemba-walk-config-page .gw-config-table th {
+    background: #ffffff;
+    color: #020617;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.gemba-walk-config-page .gw-config-table th:first-child,
+.gemba-walk-config-page .gw-config-table td:first-child {
+    width: 56px;
+    text-align: center;
+}
+
+.gemba-walk-config-page .gw-config-table th:last-child,
+.gemba-walk-config-page .gw-config-table td:last-child {
+    width: 92px;
+    text-align: center;
+    border-right: 0;
+}
+
+.gemba-walk-config-page .gw-empty-cell {
+    height: 120px;
+    color: #64748b;
+    text-align: center !important;
+}
+
+.gemba-walk-config-page .gw-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    border-radius: 4px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.gemba-walk-config-page .gw-table-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #15803d;
+    cursor: pointer;
+}
+
+.gemba-walk-config-page .gw-table-action:hover {
+    background: #dcfce7;
+}
+
+.gemba-walk-config-page .gw-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    display: none;
+    background: rgba(15, 23, 42, 0.26);
+}
+
+.gemba-walk-config-page.gw-drawer-open .gw-drawer-backdrop {
+    display: block;
+}
+
+.gemba-walk-config-page .gw-config-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 3000;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(700px, calc(100vw - 40px));
+    height: 100vh;
+    margin: 0;
+    border: 0;
+    border-left: 1px solid #dfe5e2;
+    border-radius: 0;
+    box-shadow: -18px 0 34px rgba(15, 23, 42, 0.18);
+    transform: translateX(100%);
+    transition: transform 180ms ease;
+    overflow: hidden;
+}
+
+.gemba-walk-config-page.gw-drawer-open .gw-config-drawer {
+    transform: translateX(0);
+}
+
+.gemba-walk-config-page .gw-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 26px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.gemba-walk-config-page .gw-drawer-header h2 {
+    margin: 0;
+    color: #047434;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.gemba-walk-config-page .gw-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.gemba-walk-config-page .gw-drawer-close:hover {
+    background: #f1f5f9;
+}
+
+.gemba-walk-config-page .gw-drawer-body {
+    min-height: 0;
+    overflow: auto;
+    padding: 18px;
+    padding-bottom: 28px;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-form-grid,
+.gemba-walk-config-page .gw-drawer-body .gw-observation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 14px;
+    padding: 0;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-wide {
+    grid-column: 1 / -1;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-form-group {
+    min-width: 0;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-form-group label {
+    min-height: 16px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-form-group input,
+.gemba-walk-config-page .gw-drawer-body .gw-form-group select,
+.gemba-walk-config-page .gw-drawer-body .gw-form-group textarea {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-observation {
+    margin: 18px -18px 0;
+    padding: 18px;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-observation-title {
+    padding: 0 0 16px;
+}
+
+.gemba-walk-config-page .gw-drawer-body .gw-add-row {
+    padding: 18px 0 0;
+}
+
+.gemba-walk-config-page .gw-drawer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 18px 26px;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.gemba-walk-config-page .issue-cancel-button,
+.gemba-walk-config-page .issue-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 44px;
+    border-radius: 7px;
+    padding: 0 22px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.gemba-walk-config-page .issue-cancel-button {
+    border: 1px solid #9ca3af;
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.gemba-walk-config-page .issue-add-button {
+    border: 1px solid #15803d;
+    background: #168334;
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .gemba-walk-config-page .content-area {
+        padding: 16px;
+    }
+
+    .gemba-walk-config-page .gw-config-drawer {
+        width: 100vw;
+    }
+
+    .gemba-walk-config-page .gw-drawer-body .gw-form-grid,
+    .gemba-walk-config-page .gw-drawer-body .gw-observation-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gemba-walk-config-page .gw-drawer-actions {
+        flex-wrap: wrap;
+    }
+}

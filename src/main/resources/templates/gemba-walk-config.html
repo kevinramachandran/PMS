@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/gemba-walk-config.css?v=20260830">
+    <link rel="stylesheet" href="/css/gemba-walk-config.css?v=20260903-field-audit">
     <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -95,19 +95,53 @@
         </header>
 
         <div class="content-area">
-            <form id="gembaWalkConfigForm" class="issue-board-card gw-form-card">
+            <section class="issue-board-card gw-config-table-card">
                 <div class="issue-board-title-row">
                     <h2>Gemba Walk</h2>
-                    <button type="submit" class="issue-add-button"><i class="fas fa-check"></i><span>Submit</span></button>
+                    <button type="button" id="gembaWalkAddRecordBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Walk</span></button>
+                </div>
+
+                <div class="gw-table-shell">
+                    <table class="gw-config-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Serial No.</th>
+                                <th>Start Time</th>
+                                <th>Completion Time</th>
+                                <th>Manager</th>
+                                <th>Email</th>
+                                <th>Date Conducted</th>
+                                <th>Week</th>
+                                <th>Location</th>
+                                <th>Responsibility</th>
+                                <th>Observations</th>
+                                <th>Final Comments</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gembaWalkConfigRecordsBody">
+                            <tr><td colspan="13" class="gw-empty-cell">Loading records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="gembaWalkConfigDrawerBackdrop" class="gw-drawer-backdrop" aria-hidden="true"></div>
+            <form id="gembaWalkConfigForm" class="issue-board-card gw-form-card gw-config-drawer" aria-hidden="true">
+                <div class="gw-drawer-header">
+                    <h2 id="gembaWalkDrawerTitle">Add Gemba Walk</h2>
+                    <button type="button" id="gembaWalkConfigDrawerClose" class="gw-drawer-close" aria-label="Close Gemba Walk form"><i class="fas fa-times"></i></button>
                 </div>
 
                 <input type="hidden" id="gembaWalkRecordId">
                 <input type="hidden" id="scheduleItemId">
 
-                <div class="gw-form-grid">
+                <div class="gw-drawer-body">
+                    <div class="gw-form-grid">
                     <div class="gw-form-group">
                         <label for="serialNumber">ID / Serial Number</label>
-                        <input type="text" id="serialNumber" readonly>
+                        <input type="text" id="serialNumber">
                     </div>
                     <div class="gw-form-group">
                         <label for="startTime">Start Time</label>
@@ -119,11 +153,11 @@
                     </div>
                     <div class="gw-form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" readonly>
+                        <input type="email" id="email">
                     </div>
                     <div class="gw-form-group">
                         <label for="managerName">Manager Name</label>
-                        <input type="text" id="managerName" readonly>
+                        <input type="text" id="managerName">
                     </div>
                     <div class="gw-form-group">
                         <label for="dateConducted">Date of Leadership Safety Walk Conducted</label>
@@ -148,7 +182,16 @@
                 <div class="gw-add-row">
                     <button type="button" id="addObservationBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add</span></button>
                 </div>
+                <div class="gw-form-group gw-wide">
+                    <label for="finalComments">Remarks / Final Comments</label>
+                    <textarea id="finalComments" rows="3"></textarea>
+                </div>
                 <div id="gembaWalkConfigMessage" class="gw-message"></div>
+                </div>
+                <div class="gw-drawer-actions">
+                    <button type="button" id="gembaWalkConfigCancelBtn" class="issue-cancel-button"><i class="fas fa-times"></i><span>Cancel</span></button>
+                    <button type="submit" id="gembaWalkSubmitBtn" class="issue-add-button"><i class="fas fa-check"></i><span>Save Walk</span></button>
+                </div>
             </form>
         </div>
 
@@ -161,7 +204,7 @@
     </main>
 </div>
 
-<script src="/js/gemba-walk-config.js?v=20260830"></script>
+<script src="/js/gemba-walk-config.js?v=20260903-field-audit"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

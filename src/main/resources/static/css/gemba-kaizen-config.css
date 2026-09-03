@@ -78,3 +78,276 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Issue Board pattern: clean config/data entry surface */
+.gemba-kaizen-config-page .content-area {
+    padding: 28px;
+}
+
+.gemba-kaizen-config-page .gk-form-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #ffffff;
+}
+
+.gemba-kaizen-config-page .issue-board-title-row {
+    padding: 16px 18px;
+    border-bottom: 1px solid #dfe5e2;
+}
+
+.gemba-kaizen-config-page .gk-form-grid {
+    gap: 12px;
+    padding: 18px;
+}
+
+.gemba-kaizen-config-page .gk-form-group input,
+.gemba-kaizen-config-page .gk-form-group select,
+.gemba-kaizen-config-page .gk-form-group textarea {
+    border-color: #d1d5db;
+}
+
+.gemba-kaizen-config-page .gk-config-table-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.gemba-kaizen-config-page .gk-table-shell {
+    overflow: auto;
+    max-height: calc(100vh - 275px);
+    border-top: 1px solid #dfe5e2;
+}
+
+.gemba-kaizen-config-page .gk-config-table {
+    width: 100%;
+    min-width: 1720px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.gemba-kaizen-config-page .gk-config-table th,
+.gemba-kaizen-config-page .gk-config-table td {
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    padding: 12px 14px;
+    color: #111827;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: left;
+    vertical-align: middle;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.gemba-kaizen-config-page .gk-config-table th {
+    background: #ffffff;
+    color: #020617;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.gemba-kaizen-config-page .gk-config-table th:first-child,
+.gemba-kaizen-config-page .gk-config-table td:first-child {
+    width: 56px;
+    text-align: center;
+}
+
+.gemba-kaizen-config-page .gk-config-table th:last-child,
+.gemba-kaizen-config-page .gk-config-table td:last-child {
+    width: 92px;
+    text-align: center;
+    border-right: 0;
+}
+
+.gemba-kaizen-config-page .gk-empty-cell {
+    height: 120px;
+    color: #64748b;
+    text-align: center !important;
+}
+
+.gemba-kaizen-config-page .gk-status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    background: #dcfce7;
+    color: #166534;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.gemba-kaizen-config-page .gk-table-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #15803d;
+    cursor: pointer;
+}
+
+.gemba-kaizen-config-page .gk-table-action:hover {
+    background: #dcfce7;
+}
+
+.gemba-kaizen-config-page .gk-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    display: none;
+    background: rgba(15, 23, 42, 0.26);
+}
+
+.gemba-kaizen-config-page.gk-drawer-open .gk-drawer-backdrop {
+    display: block;
+}
+
+.gemba-kaizen-config-page .gk-config-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 3000;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    width: min(590px, calc(100vw - 40px));
+    height: 100vh;
+    margin: 0;
+    border: 0;
+    border-left: 1px solid #dfe5e2;
+    border-radius: 0;
+    box-shadow: -18px 0 34px rgba(15, 23, 42, 0.18);
+    transform: translateX(100%);
+    transition: transform 180ms ease;
+    overflow: hidden;
+}
+
+.gemba-kaizen-config-page.gk-drawer-open .gk-config-drawer {
+    transform: translateX(0);
+}
+
+.gemba-kaizen-config-page .gk-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 24px 26px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.gemba-kaizen-config-page .gk-drawer-header h2 {
+    margin: 0;
+    color: #047434;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.gemba-kaizen-config-page .gk-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.gemba-kaizen-config-page .gk-drawer-close:hover {
+    background: #f1f5f9;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body {
+    min-height: 0;
+    overflow: auto;
+    padding: 18px;
+    padding-bottom: 28px;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 14px;
+    padding: 0;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body .gk-wide {
+    grid-column: 1 / -1;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-group {
+    min-width: 0;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-group label {
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-group input,
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-group select,
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-group textarea {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.gemba-kaizen-config-page .gk-drawer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 18px 26px;
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.gemba-kaizen-config-page .issue-cancel-button,
+.gemba-kaizen-config-page .issue-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 44px;
+    border-radius: 7px;
+    padding: 0 22px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.gemba-kaizen-config-page .issue-cancel-button {
+    border: 1px solid #9ca3af;
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.gemba-kaizen-config-page .issue-add-button {
+    border: 1px solid #15803d;
+    background: #168334;
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .gemba-kaizen-config-page .content-area {
+        padding: 16px;
+    }
+
+    .gemba-kaizen-config-page .gk-config-drawer {
+        width: 100vw;
+    }
+
+    .gemba-kaizen-config-page .gk-drawer-body .gk-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gemba-kaizen-config-page .gk-drawer-actions {
+        flex-wrap: wrap;
+    }
+}

@@ -119,6 +119,7 @@ public class AbnormalityReportingConfigService {
             throw new IllegalArgumentException("Record is required");
         }
         validateConfigured(request.getTypeOfTag(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE), "Type of Tag");
+        validateConfigured(request.getAbnormalityRelatedTo(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Abnormality Related To");
         validateConfigured(request.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
         validateConfigured(request.getAreaMachine(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area/Machine");
         validateConfigured(request.getAbnormalityDefectType(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE), "Abnormality/Defect Type");

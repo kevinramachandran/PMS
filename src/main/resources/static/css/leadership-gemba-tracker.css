@@ -90,3 +90,43 @@
         font-size: 18px;
     }
 }
+
+/* Issue Board pattern: compact full-table tracker view */
+.lgt-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.lgt-title-row {
+    border-bottom-color: #dfe5e2;
+}
+
+.lgt-title-row h2 {
+    font-size: 20px;
+    text-align: left;
+}
+
+.lgt-table {
+    min-width: 1900px;
+    table-layout: fixed;
+}
+
+.lgt-table thead th,
+.lgt-table tbody td {
+    border-color: #dfe5e2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.lgt-table thead th {
+    background: #ffffff;
+    color: #111827;
+    letter-spacing: 0;
+}
+
+.lgt-table tbody tr:nth-child(even) td,
+.lgt-table tbody tr:hover td {
+    background: #ffffff;
+}

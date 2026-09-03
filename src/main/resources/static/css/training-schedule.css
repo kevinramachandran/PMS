@@ -158,3 +158,41 @@
         font-size: 22px;
     }
 }
+
+/* Issue Board pattern: compact full-table training view */
+.ts-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.ts-title-row {
+    padding: 16px 18px;
+    border-bottom-color: #dfe5e2;
+    font-size: 20px;
+    text-align: left;
+}
+
+.ts-table {
+    min-width: 1260px;
+    table-layout: fixed;
+}
+
+.ts-table thead th,
+.ts-table tbody td {
+    border-color: #dfe5e2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.ts-table thead th {
+    background: #ffffff;
+    color: #111827;
+    letter-spacing: 0;
+}
+
+.ts-table tbody tr:nth-child(even) td,
+.ts-table tbody tr:hover td {
+    background: #ffffff;
+}

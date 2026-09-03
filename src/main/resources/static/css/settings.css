@@ -2027,6 +2027,7 @@ padding:4px 8px;
     flex-direction: column;
     gap: 14px;
     padding: 18px 22px 22px;
+    scroll-padding-bottom: 24px;
 }
 
 #form-issue-board .issue-drawer-form .form-group {
@@ -2092,16 +2093,17 @@ padding:4px 8px;
 }
 
 #form-issue-board .issue-drawer-actions {
-    position: sticky;
-    bottom: 0;
+    position: static;
+    z-index: 8;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: auto;
-    padding: 16px 22px;
-    margin-left: -22px;
-    margin-right: -22px;
+    margin-top: 0;
+    padding: 18px 22px;
+    margin-left: 0;
+    margin-right: 0;
     background: #ffffff;
     border-top: 1px solid #eef2f7;
     box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
@@ -2131,7 +2133,7 @@ padding:4px 8px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 14px 0 0;
+    padding: 14px 0 10px;
 }
 
 #form-issue-board .issue-drawer-history-header {
@@ -4244,4 +4246,407 @@ table select {
     font-size: 12px;
     width: auto;
     align-self: flex-start;
+}
+
+/* Issue Board full-table layout */
+#form-issue-board.issue-board-enterprise {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-form-card,
+#form-issue-board.issue-board-enterprise .issue-board-table-card {
+    width: 100%;
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-meta-card {
+    padding: 18px 18px 14px;
+    margin-bottom: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 18px 32px;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-table-card {
+    padding: 0;
+    margin-bottom: 0;
+    border-top: 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    overflow: hidden;
+}
+
+#form-issue-board.issue-board-enterprise .issue-config-toolbar {
+    justify-content: flex-end;
+    padding: 0 18px 18px;
+    margin: 0;
+    min-height: 44px;
+    pointer-events: none;
+}
+
+#form-issue-board.issue-board-enterprise .issue-config-search {
+    width: min(430px, 100%);
+    height: 38px;
+    pointer-events: auto;
+}
+
+#form-issue-board.issue-board-enterprise .issue-config-table-wrap {
+    max-height: min(560px, calc(100vh - 320px));
+    min-height: 260px;
+    border-top: 1px solid #dfe5e2;
+    border-radius: 0;
+    background: #ffffff;
+}
+
+#form-issue-board #issueBoardConfigTable {
+    width: max(100%, 1580px);
+    min-width: 1580px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    color: #111827;
+}
+
+#form-issue-board #issueBoardConfigTable thead th {
+    height: 54px;
+    padding: 0 12px;
+    background: #ffffff;
+    color: #111827;
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#form-issue-board #issueBoardConfigTable th,
+#form-issue-board #issueBoardConfigTable td {
+    min-width: 0;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:first-child,
+#form-issue-board #issueBoardConfigTable tbody td:first-child,
+#form-issue-board #issueBoardConfigTable tfoot td:first-child {
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+    text-align: center;
+}
+
+#form-issue-board #issueBoardConfigTable tbody td,
+#form-issue-board #issueBoardConfigTable tfoot td {
+    height: 52px;
+    padding: 8px 10px;
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    background: #ffffff;
+    vertical-align: middle;
+}
+
+#form-issue-board #issueBoardConfigTable tbody tr:nth-child(even),
+#form-issue-board #issueBoardConfigTable tbody tr:hover {
+    background: #ffffff;
+}
+
+#form-issue-board #issueBoardConfigTable tbody tr:nth-child(even) td,
+#form-issue-board #issueBoardConfigTable tbody tr:hover td {
+    background: #ffffff;
+}
+
+#form-issue-board #issueBoardConfigTable tbody {
+    counter-reset: issue-board-row;
+}
+
+#form-issue-board #issueBoardConfigTable tbody tr:not(.placeholder-row):not(.loading-row):not(.issue-config-search-empty) {
+    counter-increment: issue-board-row;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-row-number::before {
+    content: counter(issue-board-row);
+}
+
+#form-issue-board #issueBoardConfigTable .ib-row-number {
+    color: #111827;
+    font-weight: 700;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(2),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(2) {
+    width: 160px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(3),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(3) {
+    width: 90px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(4),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(4),
+#form-issue-board #issueBoardConfigTable thead th:nth-child(8),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(8) {
+    width: 118px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(5),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(5) {
+    width: 112px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(6),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(6),
+#form-issue-board #issueBoardConfigTable thead th:nth-child(7),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(7) {
+    width: 165px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(9),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(9) {
+    width: 260px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(10),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(10) {
+    width: 82px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(11),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(11) {
+    width: 112px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(12),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(12) {
+    width: 116px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(13),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(13) {
+    width: 72px;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:nth-child(14),
+#form-issue-board #issueBoardConfigTable tbody td:nth-child(14) {
+    width: 96px;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-display-cell {
+    text-align: left;
+    font-weight: 500;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-cell-text {
+    display: block;
+    color: #1f2937;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-priority-pill {
+    min-width: 0;
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-pdca-circle {
+    width: 40px;
+    height: 40px;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-pdca-circle::before {
+    inset: 13px;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-edit,
+#form-issue-board #issueBoardConfigTable .issue-config-history,
+#form-issue-board #issueBoardConfigTable .issue-delete {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-edit {
+    color: #16833d;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-config-history {
+    color: #1d4ed8;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-delete {
+    color: #ff3048;
+}
+
+#form-issue-board #issueBoardConfigTable .issue-edit:hover,
+#form-issue-board #issueBoardConfigTable .issue-config-history:hover,
+#form-issue-board #issueBoardConfigTable .issue-delete:hover {
+    background: #f3f4f6;
+}
+
+#form-issue-board #issueBoardConfigTable .ib-action-stack {
+    gap: 6px;
+}
+
+#form-issue-board.issue-board-enterprise .sticky-save-bar {
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 22px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+#cancelIssueBoardBtn,
+#addIssueBoardRowTableBtn,
+#saveIssueBoardBtn {
+    min-width: 140px;
+    height: 44px;
+    border-radius: 6px;
+}
+
+#form-issue-board #addIssueBoardRowTableBtn {
+    border-color: #86efac;
+    background: #ffffff;
+    color: #15803d;
+}
+
+#form-issue-board #addIssueBoardRowTableBtn:hover {
+    background: #f0fdf4;
+}
+
+@media (max-width: 1024px) {
+    #form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #form-issue-board.issue-board-enterprise .issue-config-toolbar {
+        margin: 0;
+        padding-top: 0;
+    }
+}
+
+/* Issue Board pattern shared by Settings config tables */
+#form-gemba-schedule.issue-board-enterprise,
+#form-training-schedule.issue-board-enterprise,
+#form-abnormality-tracker.issue-board-enterprise,
+#form-process-confirmation,
+#form-leadership-gemba-tracker,
+#form-master-gemba-walk,
+#form-master-gemba-kaizen,
+#form-master-process,
+#form-master-abnormality,
+#form-hs-cross,
+#form-lsr-tracking {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+#form-gemba-schedule.issue-board-enterprise .issue-board-form-card,
+#form-gemba-schedule.issue-board-enterprise .issue-board-table-card,
+#form-training-schedule.issue-board-enterprise .issue-board-form-card,
+#form-training-schedule.issue-board-enterprise .issue-board-table-card,
+#form-abnormality-tracker.issue-board-enterprise .issue-board-form-card,
+#form-abnormality-tracker.issue-board-enterprise .issue-board-table-card,
+#form-process-confirmation .pc-config-card,
+#form-leadership-gemba-tracker .issue-board-form-card,
+#form-master-gemba-walk .footer-btn-card,
+#form-master-gemba-kaizen .footer-btn-card,
+#form-master-process .footer-btn-card,
+#form-master-abnormality .footer-btn-card,
+#form-hs-cross .hs-cross-header-card,
+#form-hs-cross .hs-cross-table-wrap,
+#form-lsr-tracking .lsr-header-card,
+#form-lsr-tracking .lsr-table-wrap {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+#form-gemba-schedule.issue-board-enterprise .issue-config-table-wrap,
+#form-training-schedule.issue-board-enterprise .issue-config-table-wrap,
+#form-abnormality-tracker.issue-board-enterprise .issue-config-table-wrap,
+#form-process-confirmation .issue-config-table-wrap,
+#form-hs-cross .hs-cross-table-wrap,
+#form-lsr-tracking .lsr-table-wrap {
+    max-height: min(560px, calc(100vh - 320px));
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#gembaConfigTable,
+#trainingScheduleConfigTable,
+#abnormalityConfigTable,
+#leadershipGembaConfigTable,
+#hsCrossConfigTable,
+#lsrConfigTable {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+#gembaConfigTable thead th,
+#trainingScheduleConfigTable thead th,
+#abnormalityConfigTable thead th,
+#leadershipGembaConfigTable thead th,
+#hsCrossConfigTable thead th,
+#lsrConfigTable thead th {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #dfe5e2;
+    letter-spacing: 0;
+}
+
+#gembaConfigTable tbody td,
+#trainingScheduleConfigTable tbody td,
+#abnormalityConfigTable tbody td,
+#leadershipGembaConfigTable tbody td,
+#hsCrossConfigTable tbody td,
+#lsrConfigTable tbody td {
+    border: 1px solid #dfe5e2;
+    background: #ffffff;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+#gembaConfigTable tbody tr:nth-child(even) td,
+#trainingScheduleConfigTable tbody tr:nth-child(even) td,
+#abnormalityConfigTable tbody tr:nth-child(even) td,
+#leadershipGembaConfigTable tbody tr:nth-child(even) td,
+#hsCrossConfigTable tbody tr:nth-child(even) td,
+#lsrConfigTable tbody tr:nth-child(even) td,
+#gembaConfigTable tbody tr:hover td,
+#trainingScheduleConfigTable tbody tr:hover td,
+#abnormalityConfigTable tbody tr:hover td,
+#leadershipGembaConfigTable tbody tr:hover td,
+#hsCrossConfigTable tbody tr:hover td,
+#lsrConfigTable tbody tr:hover td {
+    background: #ffffff;
+}
+
+#form-gemba-schedule.issue-board-enterprise .sticky-save-bar,
+#form-training-schedule.issue-board-enterprise .sticky-save-bar,
+#form-abnormality-tracker.issue-board-enterprise .sticky-save-bar,
+#form-process-confirmation .form-actions {
+    justify-content: flex-end;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
 }

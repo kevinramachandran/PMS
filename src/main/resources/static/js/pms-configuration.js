@@ -1,5 +1,10 @@
 (function () {
     const tableBody = document.getElementById('adminUsersTableBody');
+    const openAddDrawerBtn = document.getElementById('openAddUserDrawer');
+    const addDrawerEl = document.getElementById('addUserDrawer');
+    const addDrawerBackdropEl = document.getElementById('addUserDrawerBackdrop');
+    const closeAddDrawerBtn = document.getElementById('closeAddUserDrawer');
+    const cancelAddUserBtn = document.getElementById('cancelAddUserBtn');
     const addBtn = document.getElementById('addUserBtn');
     const form = document.getElementById('addUserForm');
 
@@ -47,6 +52,8 @@
 
     let pendingDeleteUserId = null;
     const canEditUserManagement = String(document.body.getAttribute('data-can-edit-user-management') || '').toLowerCase() === 'true';
+
+    const DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
 
     const PERMISSION_GROUPS = [
         {
@@ -172,6 +179,31 @@
 
     function roleLabel(role) {
         return ROLE_LABELS[normalizeRole(role)] || 'User';
+    }
+
+    function normalizeDesignation(designation) {
+        const value = String(designation || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+        if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
+            return 'HOD';
+        }
+        if (value === 'AREA_HOD' || value === 'AREA_HEAD' || value === 'AREA_HEAD_OF_DEPARTMENT') {
+            return 'AREA_HOD';
+        }
+        if (value === 'ENGINEER' || value === 'ENGG') {
+            return 'ENGINEER';
+        }
+        if (value === 'EXECUTIVE' || value === 'EXEC') {
+            return 'EXECUTIVE';
+        }
+        if (value === 'OPERATOR') {
+            return 'OPERATOR';
+        }
+        return DESIGNATION_VALUES.includes(value) ? value : '';
+    }
+
+    function designationLabel(designation) {
+        const normalized = normalizeDesignation(designation);
+        return normalized ? ROLE_LABELS[normalized] : (designation || '-');
     }
 
     function showMessage(targetEl, text, type) {
@@ -496,7 +528,7 @@
                 '<td>' + escapeHtml(u.department || '-') + '</td>' +
                 '<td>' + escapeHtml(u.area || '-') + '</td>' +
                 '<td>' + escapeHtml(u.plant || '-') + '</td>' +
-                '<td>' + escapeHtml(u.designation || '-') + '</td>' +
+                '<td>' + escapeHtml(designationLabel(u.designation)) + '</td>' +
                 '<td>' + escapeHtml(u.reportingManager || '-') + '</td>' +
                 '<td>' + escapeHtml(u.email || '-') + '</td>' +
                 '<td><span class="pms-role-badge ' + roleClass(u.role) + '">' + escapeHtml(u.roleLabel || roleLabel(u.role)) + '</span></td>' +
@@ -551,7 +583,7 @@
         const department = (departmentEl.value || '').trim();
         const area = (areaEl.value || '').trim();
         const plant = (plantEl.value || '').trim();
-        const designation = (designationEl.value || '').trim();
+        const designation = normalizeDesignation(designationEl.value || '');
         const reportingManager = (reportingManagerEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
@@ -599,6 +631,7 @@
                     if (statusEl) statusEl.value = 'ACTIVE';
                     resetPermissions('new');
                     togglePermissionSection(roleEl, newPermissionsSectionEl);
+                    closeAddUserDrawer();
                     loadMasterOptions();
                     loadUsers();
                 } else {
@@ -610,8 +643,37 @@
             })
             .finally(function () {
                 addBtn.disabled = false;
-                addBtn.innerHTML = '<i class="fas fa-plus"></i> Add User';
+                    addBtn.innerHTML = '<i class="fas fa-plus"></i> Add User';
             });
+    }
+
+    function openAddUserDrawer() {
+        if (!addDrawerEl || !canEditUserManagement) {
+            return;
+        }
+        if (addDrawerBackdropEl) {
+            addDrawerBackdropEl.style.display = 'block';
+        }
+        addDrawerEl.style.display = 'flex';
+        addDrawerEl.classList.add('is-open');
+        if (messageEl) {
+            messageEl.className = 'form-message';
+            messageEl.textContent = '';
+        }
+        setTimeout(function () {
+            if (nameEl) nameEl.focus();
+        }, 50);
+    }
+
+    function closeAddUserDrawer() {
+        if (!addDrawerEl) {
+            return;
+        }
+        addDrawerEl.classList.remove('is-open');
+        addDrawerEl.style.display = 'none';
+        if (addDrawerBackdropEl) {
+            addDrawerBackdropEl.style.display = 'none';
+        }
     }
 
     function openEditModal(user) {
@@ -623,7 +685,7 @@
         editDepartmentEl.value = user.department || '';
         editAreaEl.value = user.area || '';
         editPlantEl.value = user.plant || '';
-        editDesignationEl.value = user.designation || '';
+        editDesignationEl.value = normalizeDesignation(user.designation || '');
         editReportingManagerEl.value = user.reportingManager || '';
         editEmailEl.value = user.email || '';
         editRoleEl.value = normalizeRole(user.role || 'USER');
@@ -667,7 +729,7 @@
         const department = (editDepartmentEl.value || '').trim();
         const area = (editAreaEl.value || '').trim();
         const plant = (editPlantEl.value || '').trim();
-        const designation = (editDesignationEl.value || '').trim();
+        const designation = normalizeDesignation(editDesignationEl.value || '');
         const reportingManager = (editReportingManagerEl.value || '').trim();
         const email = (editEmailEl.value || '').trim();
         const role = normalizeRole(editRoleEl.value || 'USER');
@@ -720,7 +782,7 @@
             })
             .finally(function () {
                 saveEditBtn.disabled = false;
-                saveEditBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+                saveEditBtn.innerHTML = '<i class="fas fa-check"></i> Update User';
             });
     }
 
@@ -787,6 +849,18 @@
                 openDeleteModal(btn.dataset.id);
             });
         });
+    }
+
+    if (openAddDrawerBtn) {
+        openAddDrawerBtn.addEventListener('click', openAddUserDrawer);
+    }
+
+    if (closeAddDrawerBtn) {
+        closeAddDrawerBtn.addEventListener('click', closeAddUserDrawer);
+    }
+
+    if (cancelAddUserBtn) {
+        cancelAddUserBtn.addEventListener('click', closeAddUserDrawer);
     }
 
     if (addBtn) {
@@ -901,12 +975,6 @@
         cancelDeleteBtn.addEventListener('click', closeDeleteModal);
     }
 
-    if (modalEl) {
-        modalEl.addEventListener('click', function (e) {
-            if (e.target === modalEl) closeEditModal();
-        });
-    }
-
     if (deleteModalEl) {
         deleteModalEl.addEventListener('click', function (e) {
             if (e.target === deleteModalEl) closeDeleteModal();
@@ -915,7 +983,6 @@
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            closeEditModal();
             closeDeleteModal();
         }
     });

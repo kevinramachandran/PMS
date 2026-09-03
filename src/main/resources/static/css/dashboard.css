@@ -5181,6 +5181,287 @@ body.kpi-tv-layout .lsr-mini-col-grid {
     height: 22px;
 }
 
+/* ===== User Management Issue Board Layout ===== */
+body.user-management-page .pms-config-page {
+    gap: 0;
+}
+
+body.user-management-page .um-intro-strip {
+    display: none;
+}
+
+body.user-management-page .um-layout {
+    display: block;
+}
+
+body.user-management-page .um-left {
+    order: initial;
+    width: 100%;
+}
+
+body.user-management-page .pms-config-card {
+    border-radius: 8px;
+    border: 1px solid #dbe3dd;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.08);
+}
+
+body.user-management-page .pms-config-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #ffffff;
+}
+
+body.user-management-page .pms-config-card-header h2 {
+    color: #1b7c2f;
+    font-size: 18px;
+}
+
+body.user-management-page .pms-config-card-header p {
+    color: #64748b;
+    font-size: 12px;
+}
+
+body.user-management-page .um-header-add-btn {
+    min-width: 138px;
+    min-height: 40px;
+    border-radius: 7px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+body.user-management-page .um-left .pms-config-card-body {
+    padding: 0;
+    overflow: auto;
+    max-height: calc(100vh - 250px);
+}
+
+body.user-management-page .pms-users-table {
+    min-width: 1220px;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+body.user-management-page .pms-users-table th,
+body.user-management-page .pms-users-table td {
+    border: 1px solid #dbe3dd;
+    padding: 10px 10px !important;
+    text-align: left !important;
+    vertical-align: middle;
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+}
+
+body.user-management-page .pms-users-table th {
+    background: #f8fafc;
+    color: #0f172a;
+    font-size: 12px !important;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+body.user-management-page .pms-users-table td {
+    color: #1f2937;
+    font-size: 12px !important;
+    min-height: 54px;
+}
+
+body.user-management-page .pms-users-table th:nth-child(1),
+body.user-management-page .pms-users-table td:nth-child(1) {
+    width: 150px;
+}
+
+body.user-management-page .pms-users-table th:nth-child(2),
+body.user-management-page .pms-users-table td:nth-child(2),
+body.user-management-page .pms-users-table th:nth-child(4),
+body.user-management-page .pms-users-table td:nth-child(4),
+body.user-management-page .pms-users-table th:nth-child(5),
+body.user-management-page .pms-users-table td:nth-child(5),
+body.user-management-page .pms-users-table th:nth-child(6),
+body.user-management-page .pms-users-table td:nth-child(6),
+body.user-management-page .pms-users-table th:nth-child(9),
+body.user-management-page .pms-users-table td:nth-child(9),
+body.user-management-page .pms-users-table th:nth-child(11),
+body.user-management-page .pms-users-table td:nth-child(11) {
+    width: 105px;
+}
+
+body.user-management-page .pms-users-table th:nth-child(10),
+body.user-management-page .pms-users-table td:nth-child(10) {
+    width: 150px;
+}
+
+body.user-management-page .pms-users-table th:nth-child(12),
+body.user-management-page .pms-users-table td:nth-child(12) {
+    width: 130px;
+}
+
+body.user-management-page .pms-user-actions {
+    flex-wrap: nowrap;
+}
+
+body.user-management-page .pms-action-btn {
+    min-height: 32px;
+    border-radius: 7px;
+    padding: 6px 9px;
+}
+
+body.user-management-page .um-add-backdrop {
+    z-index: 3050;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.35);
+}
+
+body.user-management-page .um-user-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    width: min(760px, calc(100vw - 22px));
+    max-width: 100%;
+    z-index: 3100;
+    flex-direction: column;
+    border-radius: 0;
+    box-shadow: -24px 0 56px rgba(15, 23, 42, 0.18);
+}
+
+body.user-management-page .um-user-drawer.is-open {
+    display: flex;
+}
+
+body.user-management-page .um-user-drawer .pms-config-card-header {
+    flex: 0 0 auto;
+}
+
+body.user-management-page .um-user-drawer .pms-config-card-body {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding: 16px 20px 0;
+    overflow-y: auto;
+}
+
+body.user-management-page #addUserForm {
+    min-height: 100%;
+}
+
+body.user-management-page #addUserDrawer .pms-form-grid-single,
+body.user-management-page #editUserForm {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+body.user-management-page #newPermissionsSection,
+body.user-management-page #editPermissionsSection,
+body.user-management-page #editUserForm .form-group:has(#editPassword),
+body.user-management-page #addUserForm .form-actions,
+body.user-management-page #editUserForm .form-actions,
+body.user-management-page #addUserMessage,
+body.user-management-page #editUserMessage {
+    grid-column: 1 / -1;
+}
+
+body.user-management-page #addUserForm .form-actions,
+body.user-management-page #editUserForm .form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin: 16px -20px 0 !important;
+    padding: 14px 20px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -10px 24px rgba(15, 23, 42, 0.06);
+}
+
+body.user-management-page #addUserForm .form-actions .btn,
+body.user-management-page #editUserForm .form-actions .btn {
+    min-width: 142px;
+    min-height: 42px;
+    border-radius: 7px;
+    justify-content: center;
+}
+
+body.user-management-page .permissions-builder {
+    border-radius: 8px;
+    padding: 12px;
+}
+
+body.user-management-page .permission-group-card {
+    border-radius: 8px;
+    padding: 12px;
+}
+
+body.user-management-page .permission-card-grid {
+    grid-template-columns: 1fr;
+}
+
+body.user-management-page .permission-card {
+    border-radius: 8px;
+    padding: 12px;
+}
+
+body.user-management-page #editUserModal {
+    align-items: stretch;
+    justify-content: flex-end;
+    padding: 0;
+    z-index: 3100;
+    background: rgba(15, 23, 42, 0.35);
+}
+
+body.user-management-page #editUserModal .pms-modal-card {
+    width: min(760px, calc(100vw - 22px));
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0;
+    box-shadow: -24px 0 56px rgba(15, 23, 42, 0.18);
+}
+
+body.user-management-page #editUserModal .pms-modal-body {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding: 16px 20px 0;
+    overflow-y: auto;
+}
+
+body.user-management-page #deleteUserModal {
+    z-index: 3200;
+}
+
+@media (max-width: 760px) {
+    body.user-management-page #addUserDrawer .pms-form-grid-single,
+    body.user-management-page #editUserForm {
+        grid-template-columns: 1fr;
+    }
+
+    body.user-management-page .pms-config-card-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    body.user-management-page #addUserForm .form-actions,
+    body.user-management-page #editUserForm .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    body.user-management-page #addUserForm .form-actions .btn,
+    body.user-management-page #editUserForm .form-actions .btn {
+        width: 100%;
+    }
+}
+
 /* Table Sorting Icons */
 .sortable {
     cursor: pointer;

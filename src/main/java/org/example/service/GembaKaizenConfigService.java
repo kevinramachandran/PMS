@@ -117,6 +117,12 @@ public class GembaKaizenConfigService {
             if (isBlank(record.getName())) {
                 record.setName(firstNonBlank(user.getName(), user.getUsername()));
             }
+            if (isBlank(record.getGembaKaizenProviderName())) {
+                record.setGembaKaizenProviderName(firstNonBlank(user.getName(), user.getUsername()));
+            }
+            if (isBlank(record.getEmployeeIdHoNumber())) {
+                record.setEmployeeIdHoNumber(trim(user.getEmployeeId()));
+            }
         });
         if (isBlank(record.getLastModifiedTime())) {
             record.setLastModifiedTime(LocalTime.now().format(TIME_FORMATTER));

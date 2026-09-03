@@ -74,6 +74,7 @@ public class GembaWalkConfigService {
             existing.setManagementSafetyWalkWeek(trim(incoming.getManagementSafetyWalkWeek()));
             existing.setLocationOfMswConducted(trim(incoming.getLocationOfMswConducted()));
             existing.setResponsibility(trim(incoming.getResponsibility()));
+            existing.setFinalComments(trim(incoming.getFinalComments()));
             applyDefaults(existing, username);
             replaceObservations(existing, incoming.getObservations());
             GembaWalkRecord saved = repository.save(existing);
@@ -133,6 +134,7 @@ public class GembaWalkConfigService {
         if (isBlank(record.getResponsibility())) {
             defaultResponsibility(record.getLocationOfMswConducted()).ifPresent(record::setResponsibility);
         }
+        record.setFinalComments(trim(record.getFinalComments()));
         validateConfigured(record.getLocationOfMswConducted(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Location of MSW Conducted");
     }
 

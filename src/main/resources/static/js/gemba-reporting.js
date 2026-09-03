@@ -23,6 +23,19 @@ $(function() {
         return isClosed(record) ? 'Closed' : 'Open';
     }
 
+    function observationsSummary(record) {
+        const observations = record && Array.isArray(record.observations) ? record.observations : [];
+        return observations.map(function(observation, index) {
+            return 'Observation ' + (index + 1) + ': ' + [
+                observation.observationDescription,
+                observation.gembaCategory,
+                observation.lifeSaverRule,
+                observation.status,
+                observation.pictureImage ? 'Picture: ' + observation.pictureImage : ''
+            ].filter(Boolean).join(' | ');
+        }).join(' / ');
+    }
+
     function filteredRecords() {
         const status = $('#statusFilter').val() || 'all';
         const term = searchTerm.trim().toLowerCase();
@@ -33,10 +46,16 @@ $(function() {
             if (term) {
                 return [
                     record.id,
+                    record.startTime,
+                    record.completionTime,
+                    record.email,
+                    record.managerName,
                     record.dateOfLeadershipSafetyWalkConducted,
                     record.managementSafetyWalkWeek,
                     record.locationOfMswConducted,
                     record.responsibility,
+                    observationsSummary(record),
+                    record.finalComments,
                     statusLabel(record)
                 ].join(' ').toLowerCase().includes(term);
             }
@@ -97,17 +116,23 @@ $(function() {
         const rows = filteredRecords();
         const $body = $('#gembaReportingTableBody');
         if (!rows.length) {
-            $body.html('<tr><td colspan="7" class="empty-row">No Gemba Walk records found.</td></tr>');
+            $body.html('<tr><td colspan="13" class="empty-row">No Gemba Walk records found.</td></tr>');
             return;
         }
         $body.html(rows.map(function(record) {
             return '<tr>' +
                 '<td>' + escapeHtml(record.id) + '</td>' +
+                '<td>' + escapeHtml(record.startTime) + '</td>' +
+                '<td>' + escapeHtml(record.completionTime) + '</td>' +
+                '<td>' + escapeHtml(record.email) + '</td>' +
+                '<td>' + escapeHtml(record.managerName) + '</td>' +
                 '<td>' + escapeHtml(record.dateOfLeadershipSafetyWalkConducted) + '</td>' +
                 '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
                 '<td>' + escapeHtml(record.locationOfMswConducted) + '</td>' +
                 '<td>' + escapeHtml(record.responsibility) + '</td>' +
+                '<td>' + escapeHtml(observationsSummary(record)) + '</td>' +
                 '<td>' + escapeHtml(statusLabel(record)) + '</td>' +
+                '<td>' + escapeHtml(record.finalComments) + '</td>' +
                 '<td><button type="button" class="gw-open-btn" data-id="' + escapeHtml(record.id) + '" title="Open record" aria-label="Open Gemba Walk record"><i class="fas fa-arrow-up-right-from-square"></i></button></td>' +
                 '</tr>';
         }).join(''));

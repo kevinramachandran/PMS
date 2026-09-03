@@ -66,8 +66,14 @@ $(function () {
                 record.abnormalityTagNumber,
                 record.tagRaisedBy,
                 record.dateRaised,
+                record.shift,
+                record.abnormalityRelatedTo,
                 record.department,
                 record.areaMachine,
+                record.component,
+                record.description,
+                record.proposedAction,
+                record.pictureImage,
                 record.abnormalityDefectType,
                 record.assignTo,
                 record.dateClosed,
@@ -133,7 +139,7 @@ $(function () {
         const rows = filteredRecords(false);
         const $body = $('#abnormalityReportingTableBody');
         if (!rows.length) {
-            $body.html('<tr><td colspan="13" class="empty-row">No abnormality reports found.</td></tr>');
+            $body.html('<tr><td colspan="19" class="empty-row">No abnormality reports found.</td></tr>');
             return;
         }
         $body.html(rows.map(function(record, index) {
@@ -144,8 +150,14 @@ $(function () {
                 '<td>' + escapeHtml(record.abnormalityTagNumber) + '</td>' +
                 '<td>' + escapeHtml(record.tagRaisedBy) + '</td>' +
                 '<td>' + escapeHtml(record.dateRaised) + '</td>' +
+                '<td>' + escapeHtml(record.shift) + '</td>' +
+                '<td>' + escapeHtml(record.abnormalityRelatedTo) + '</td>' +
                 '<td>' + escapeHtml(record.department) + '</td>' +
                 '<td>' + escapeHtml(record.areaMachine) + '</td>' +
+                '<td>' + escapeHtml(record.component) + '</td>' +
+                '<td>' + escapeHtml(record.description) + '</td>' +
+                '<td>' + escapeHtml(record.proposedAction) + '</td>' +
+                '<td>' + escapeHtml(record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.abnormalityDefectType) + '</td>' +
                 '<td>' + escapeHtml(record.assignTo) + '</td>' +
                 '<td>' + escapeHtml(record.dateClosed) + '</td>' +

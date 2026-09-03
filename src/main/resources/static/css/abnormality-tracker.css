@@ -501,3 +501,50 @@
         width: 100%;
     }
 }
+
+/* Issue Board pattern: table-only summary view */
+.at-charts-grid {
+    display: none;
+}
+
+.at-dashboard .content-area {
+    padding: 28px;
+}
+
+.at-table-card {
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: none;
+    background: #ffffff;
+}
+
+.at-table-title {
+    padding: 16px 18px;
+    border-bottom-color: #dfe5e2;
+    background: #ffffff;
+}
+
+.at-summary-table {
+    min-width: 820px;
+    table-layout: fixed;
+}
+
+.at-summary-table th,
+.at-summary-table td {
+    border-right: 1px solid #dfe5e2;
+    border-bottom: 1px solid #dfe5e2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.at-summary-table th {
+    background: #ffffff;
+    color: #111827;
+    letter-spacing: 0;
+}
+
+.at-summary-table tbody tr:hover,
+.at-summary-table tbody tr:hover td {
+    background: #ffffff;
+}

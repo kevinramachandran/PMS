@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
-    <link rel="stylesheet" href="/css/abnormality-reporting-config.css">
+    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260903-field-audit">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="modern-shell dashboard-bg abnormality-reporting-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
@@ -96,16 +96,64 @@
         </header>
 
         <div class="content-area">
-            <form id="abnormalityReportingForm" class="ar-card">
+            <section class="ar-card ar-config-table-card">
+                <div class="issue-board-title-row">
+                    <h2>Abnormality Reporting</h2>
+                    <button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Report</span></button>
+                </div>
+                <div class="ar-table-wrap">
+                    <table class="ar-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Type of Tag</th>
+                                <th>Priority</th>
+                                <th>Tag Number</th>
+                                <th>Raised By</th>
+                                <th>Date Raised</th>
+                                <th>Shift</th>
+                                <th>Related To</th>
+                                <th>Department</th>
+                                <th>Area/Machine</th>
+                                <th>Component</th>
+                                <th>Description</th>
+                                <th>Proposed Action</th>
+                                <th>Picture/Image</th>
+                                <th>Defect Type</th>
+                                <th>Assign To</th>
+                                <th>Date Closed</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="abnormalityReportingRecordsBody">
+                            <tr><td colspan="19" class="ar-empty">Loading records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="abnormalityReportingDrawerBackdrop" class="ar-drawer-backdrop" aria-hidden="true"></div>
+            <form id="abnormalityReportingForm" class="ar-card ar-config-drawer" aria-hidden="true">
+                <div class="ar-drawer-header">
+                    <h2 id="abnormalityReportingDrawerTitle">Add Abnormality Reporting</h2>
+                    <button type="button" id="abnormalityReportingDrawerClose" class="ar-drawer-close" aria-label="Close abnormality reporting form"><i class="fas fa-times"></i></button>
+                </div>
                 <input type="hidden" id="abnormalityReportingId">
-                <div class="ar-grid">
+                <div class="ar-drawer-body">
+                    <div class="ar-grid">
                     <div class="form-group">
                         <label for="typeOfTag">Type of Tag</label>
                         <select id="typeOfTag" name="typeOfTag"></select>
                     </div>
                     <div class="form-group">
                         <label for="priority">Priority</label>
-                        <input type="text" id="priority" name="priority">
+                        <select id="priority" name="priority">
+                            <option value=""></option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="abnormalityTagNumber">Abnormality Tag Number</label>
@@ -121,11 +169,17 @@
                     </div>
                     <div class="form-group">
                         <label for="shift">Shift</label>
-                        <input type="text" id="shift" name="shift">
+                        <select id="shift" name="shift">
+                            <option value=""></option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="G">G</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="abnormalityRelatedTo">Abnormality Related To</label>
-                        <input type="text" id="abnormalityRelatedTo" name="abnormalityRelatedTo">
+                        <select id="abnormalityRelatedTo" name="abnormalityRelatedTo"></select>
                     </div>
                     <div class="form-group">
                         <label for="department">Department</label>
@@ -166,14 +220,20 @@
                     </div>
                     <div class="form-group">
                         <label for="tagStatus">Tag Status</label>
-                        <input type="text" id="tagStatus" name="tagStatus">
+                        <select id="tagStatus" name="tagStatus">
+                            <option value=""></option>
+                            <option value="Open">Open</option>
+                            <option value="Closed">Closed</option>
+                        </select>
                     </div>
                 </div>
                 <datalist id="reportingUsersList"></datalist>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" id="saveAbnormalityReportingBtn"><i class="fas fa-save"></i> Save</button>
-                </div>
                 <div id="abnormalityReportingMessage" class="form-message"></div>
+                </div>
+                <div class="ar-drawer-actions">
+                    <button type="button" id="cancelAbnormalityReportingBtn" class="issue-cancel-button"><i class="fas fa-times"></i><span>Cancel</span></button>
+                    <button type="submit" class="issue-add-button" id="saveAbnormalityReportingBtn"><i class="fas fa-save"></i><span>Save</span></button>
+                </div>
             </form>
         </div>
 
@@ -183,7 +243,7 @@
     </main>
 </div>
 
-<script src="/js/abnormality-reporting-config.js"></script>
+<script src="/js/abnormality-reporting-config.js?v=20260903-field-audit"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

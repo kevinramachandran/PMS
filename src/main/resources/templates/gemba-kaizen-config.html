@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=20260830">
+    <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=20260903-field-audit">
     <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -95,19 +95,55 @@
         </header>
 
         <div class="content-area">
-            <form id="gembaKaizenConfigForm" class="issue-board-card gk-form-card">
+            <section class="issue-board-card gk-config-table-card">
                 <div class="issue-board-title-row">
                     <h2>Gemba Kaizen</h2>
-                    <button type="submit" class="issue-add-button"><i class="fas fa-check"></i><span>Submit</span></button>
+                    <button type="button" id="gembaKaizenAddRecordBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Kaizen</span></button>
+                </div>
+
+                <div class="gk-table-shell">
+                    <table class="gk-config-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Last Modified Time</th>
+                                <th>Provider Name</th>
+                                <th>Employee ID / HO Number</th>
+                                <th>Department</th>
+                                <th>Classification</th>
+                                <th>Location</th>
+                                <th>Generation Date</th>
+                                <th>Kaizen Idea</th>
+                                <th>Picture/Image</th>
+                                <th>Benefits of Kaizen</th>
+                                <th>Implemented</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gembaKaizenConfigRecordsBody">
+                            <tr><td colspan="15" class="gk-empty-cell">Loading records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="gembaKaizenConfigDrawerBackdrop" class="gk-drawer-backdrop" aria-hidden="true"></div>
+            <form id="gembaKaizenConfigForm" class="issue-board-card gk-form-card gk-config-drawer" aria-hidden="true">
+                <div class="gk-drawer-header">
+                    <h2 id="gembaKaizenDrawerTitle">Add Gemba Kaizen</h2>
+                    <button type="button" id="gembaKaizenConfigDrawerClose" class="gk-drawer-close" aria-label="Close Gemba Kaizen form"><i class="fas fa-times"></i></button>
                 </div>
 
                 <input type="hidden" id="gembaKaizenRecordId">
                 <input type="hidden" id="pictureImageStored">
 
-                <div class="gk-form-grid">
+                <div class="gk-drawer-body">
+                    <div class="gk-form-grid">
                     <div class="gk-form-group">
                         <label for="name">Name</label>
-                        <input type="text" id="name" readonly>
+                        <input type="text" id="name">
                     </div>
                     <div class="gk-form-group">
                         <label for="lastModifiedTime">Last Modified Time</label>
@@ -158,6 +194,11 @@
                     </div>
                 </div>
                 <div id="gembaKaizenConfigMessage" class="gk-message"></div>
+                </div>
+                <div class="gk-drawer-actions">
+                    <button type="button" id="gembaKaizenConfigCancelBtn" class="issue-cancel-button"><i class="fas fa-times"></i><span>Cancel</span></button>
+                    <button type="submit" id="gembaKaizenSubmitBtn" class="issue-add-button"><i class="fas fa-check"></i><span>Save Kaizen</span></button>
+                </div>
             </form>
         </div>
 
@@ -170,7 +211,7 @@
     </main>
 </div>
 
-<script src="/js/gemba-kaizen-config.js?v=20260830"></script>
+<script src="/js/gemba-kaizen-config.js?v=20260903-field-audit"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
