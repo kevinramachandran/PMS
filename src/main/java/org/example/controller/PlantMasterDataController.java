@@ -35,7 +35,11 @@ public class PlantMasterDataController {
     @PostMapping("/{category}")
     public Map<String, Object> add(@PathVariable String category, @RequestBody Map<String, Object> request) {
         try {
-            return success(service.add(category, asString(request.get("name"))));
+            return success(service.add(
+                    category,
+                    asString(request.get("name")),
+                    asString(request.get("parentPlant")),
+                    asString(request.get("parentDepartment"))));
         } catch (IllegalArgumentException ex) {
             return error(ex.getMessage());
         }
@@ -44,7 +48,11 @@ public class PlantMasterDataController {
     @PutMapping("/{id}")
     public Map<String, Object> update(@PathVariable Long id, @RequestBody Map<String, Object> request) {
         try {
-            return service.update(id, asString(request.get("name")))
+            return service.update(
+                            id,
+                            asString(request.get("name")),
+                            request.containsKey("parentPlant") ? asString(request.get("parentPlant")) : null,
+                            request.containsKey("parentDepartment") ? asString(request.get("parentDepartment")) : null)
                     .<Map<String, Object>>map(this::success)
                     .orElseGet(() -> error("Item not found"));
         } catch (IllegalArgumentException ex) {
@@ -54,10 +62,14 @@ public class PlantMasterDataController {
 
     @DeleteMapping("/{id}")
     public Map<String, Object> delete(@PathVariable Long id) {
-        if (!service.delete(id)) {
-            return error("Item not found");
+        try {
+            if (!service.delete(id)) {
+                return error("Item not found");
+            }
+            return Map.of("status", "success");
+        } catch (IllegalArgumentException ex) {
+            return error(ex.getMessage());
         }
-        return Map.of("status", "success");
     }
 
     private Map<String, Object> success(List<PlantMasterDataItem> items) {

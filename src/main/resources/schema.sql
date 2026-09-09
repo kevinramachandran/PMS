@@ -43,9 +43,16 @@ CREATE TABLE IF NOT EXISTS plant_master_data_items (
     id BIGINT NOT NULL AUTO_INCREMENT,
     category VARCHAR(40) NOT NULL,
     name VARCHAR(160) NOT NULL,
+    parent_plant VARCHAR(160) NULL,
+    parent_department VARCHAR(160) NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_plant_master_category_name (category, name)
+    UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, name)
 );
+
+ALTER TABLE plant_master_data_items ADD COLUMN parent_plant VARCHAR(160) NULL;
+ALTER TABLE plant_master_data_items ADD COLUMN parent_department VARCHAR(160) NULL;
+ALTER TABLE plant_master_data_items DROP INDEX uk_plant_master_category_name;
+ALTER TABLE plant_master_data_items ADD UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, name);
 
 CREATE TABLE IF NOT EXISTS abnormality_master_data_items (
     id BIGINT NOT NULL AUTO_INCREMENT,
@@ -142,6 +149,42 @@ CREATE TABLE IF NOT EXISTS gemba_kaizen_records (
     picture_image VARCHAR(255) NULL,
     benefits_of_kaizen VARCHAR(1000) NULL,
     is_kaizen_implemented VARCHAR(10) NULL,
+    assigned_to VARCHAR(160) NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS assignment_history (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    module VARCHAR(80) NOT NULL,
+    record_id BIGINT NOT NULL,
+    from_assignee VARCHAR(160) NULL,
+    to_assignee VARCHAR(160) NULL,
+    assigned_by VARCHAR(160) NULL,
+    remarks VARCHAR(1000) NULL,
+    escalation_level INT NULL,
+    assigned_at DATETIME(6) NULL,
+    PRIMARY KEY (id), INDEX idx_assignment_history_record (module, record_id)
+);
+
+CREATE TABLE IF NOT EXISTS carlex_process_confirmations (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    start_time TIME NULL,
+    completion_time TIME NULL,
+    email VARCHAR(160) NULL,
+    name VARCHAR(160) NULL,
+    last_modified_time DATETIME(6) NULL,
+    process_confirmation_done_by VARCHAR(160) NULL,
+    date_of_gw_process_confirmation_conducted DATE NULL,
+    gw_pc_week VARCHAR(80) NULL,
+    area_of_gw_process_confirmation_conducted VARCHAR(160) NULL,
+    area_responsibility VARCHAR(160) NULL,
+    zm1_description TEXT NULL, zm1_counter_measure_actions TEXT NULL, zm1_status VARCHAR(40) NULL, zm1_observation_image VARCHAR(255) NULL, another_zm_observation BIT NULL,
+    zm2_description TEXT NULL, zm2_counter_measure_actions TEXT NULL, zm2_status VARCHAR(40) NULL, zm2_observation_image VARCHAR(255) NULL,
+    pm1_description TEXT NULL, pm1_counter_measure_actions TEXT NULL, pm1_status VARCHAR(40) NULL, pm1_observation_image VARCHAR(255) NULL, another_pm_observation BIT NULL,
+    pm2_description TEXT NULL, pm2_counter_measure_actions TEXT NULL, pm2_status VARCHAR(40) NULL, pm2_observation_image VARCHAR(255) NULL,
+    om1_description TEXT NULL, om1_counter_measure_actions TEXT NULL, om1_status VARCHAR(40) NULL, om1_observation_image VARCHAR(255) NULL,
+    qm1_description TEXT NULL, qm1_counter_measure_actions TEXT NULL, qm1_status VARCHAR(40) NULL, qm1_observation_image VARCHAR(255) NULL, another_qm_observation BIT NULL,
+    qm2_description TEXT NULL, qm2_counter_measure_actions TEXT NULL, qm2_status VARCHAR(40) NULL, qm2_observation_image VARCHAR(255) NULL,
     PRIMARY KEY (id)
 );
 

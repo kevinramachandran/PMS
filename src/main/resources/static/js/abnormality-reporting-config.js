@@ -25,6 +25,20 @@ $(function () {
             .toggleClass('show', !!message);
     }
 
+    function setSaveLoading(loading) {
+        const $btn = $('#saveAbnormalityReportingBtn');
+        if (loading) {
+            if (!$btn.data('original-html')) {
+                $btn.data('original-html', $btn.html());
+            }
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i><span>Saving...</span>');
+            $('#cancelAbnormalityReportingBtn, #abnormalityReportingDrawerClose').prop('disabled', true);
+            return;
+        }
+        $btn.prop('disabled', false).html($btn.data('original-html') || '<i class="fas fa-save"></i><span>Save</span>');
+        $('#cancelAbnormalityReportingBtn, #abnormalityReportingDrawerClose').prop('disabled', false);
+    }
+
     function optionHtml(value) {
         const safe = escapeHtml(value || '');
         return '<option value="' + safe + '">' + safe + '</option>';
@@ -44,7 +58,8 @@ $(function () {
     function populateAssignTo(users) {
         allUsers = users || allUsers;
         const html = ['<option value=""></option>'].concat((users || []).map(function(user) {
-            return '<option value="' + escapeAttr(user.username || '') + '">' + escapeHtml(userLabel(user)) + '</option>';
+            const value = user.username || user.name || user.email || '';
+            return '<option value="' + escapeAttr(value) + '">' + escapeHtml(userLabel(user)) + '</option>';
         })).join('');
         $('#assignTo').html(html);
     }
@@ -68,7 +83,7 @@ $(function () {
                 populateSelect('#areaMachine', options.areaMachines || []);
                 populateSelect('#abnormalityDefectType', options.abnormalityDefectTypes || []);
                 populateAssignTo(options.assignableUsers || []);
-                populateRaisedByUsers(options.assignableUsers || []);
+                populateRaisedByUsers(options.reportingUsers || options.assignableUsers || []);
                 if (username && !$('#tagRaisedBy').val()) {
                     $('#tagRaisedBy').val(username);
                 }
@@ -108,9 +123,58 @@ $(function () {
             pictureImage: $('#pictureImageStored').val(),
             abnormalityDefectType: $('#abnormalityDefectType').val(),
             assignTo: $('#assignTo').val(),
+            assignmentRemark: $('#assignmentRemark').val(),
             dateClosed: $('#dateClosed').val() || null,
             tagStatus: $('#tagStatus').val()
         };
+    }
+
+    function fieldLabel(selector) {
+        return $('label[for="' + selector.replace('#', '') + '"]').text().trim() || 'This field';
+    }
+
+    function markField(selector, invalid) {
+        $(selector).toggleClass('ar-invalid', !!invalid);
+    }
+
+    function validateRecord(record) {
+        const requiredFields = [
+            ['#typeOfTag', record.typeOfTag],
+            ['#priority', record.priority],
+            ['#abnormalityTagNumber', record.abnormalityTagNumber],
+            ['#tagRaisedBy', record.tagRaisedBy],
+            ['#dateRaised', record.dateRaised],
+            ['#shift', record.shift],
+            ['#abnormalityRelatedTo', record.abnormalityRelatedTo],
+            ['#department', record.department],
+            ['#areaMachine', record.areaMachine],
+            ['#component', record.component],
+            ['#description', record.description],
+            ['#proposedAction', record.proposedAction],
+            ['#abnormalityDefectType', record.abnormalityDefectType],
+            ['#assignTo', record.assignTo],
+            ['#tagStatus', record.tagStatus]
+        ];
+        let firstInvalid = null;
+        const missing = [];
+        requiredFields.forEach(function(field) {
+            const selector = field[0];
+            const value = String(field[1] || '').trim();
+            const invalid = !value;
+            markField(selector, invalid);
+            if (invalid) {
+                missing.push(fieldLabel(selector));
+                if (!firstInvalid) {
+                    firstInvalid = selector;
+                }
+            }
+        });
+        if (missing.length) {
+            setMessage(missing[0] + ' is required.', 'error');
+            $(firstInvalid).trigger('focus');
+            return false;
+        }
+        return true;
     }
 
     function setForm(record) {
@@ -137,6 +201,7 @@ $(function () {
         }, 150);
         $('#dateClosed').val(item.dateClosed || '');
         $('#tagStatus').val(item.tagStatus || '');
+        $('#assignmentRemark').val('');
     }
 
     function resetForm() {
@@ -160,15 +225,17 @@ $(function () {
                 '<td>' + escapeHtml(record.component) + '</td>' +
                 '<td>' + escapeHtml(record.description) + '</td>' +
                 '<td>' + escapeHtml(record.proposedAction) + '</td>' +
-                '<td>' + escapeHtml(record.pictureImage) + '</td>' +
+                '<td>' + attachmentIcon('abnormality-reporting', record.pictureImage, record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.abnormalityDefectType) + '</td>' +
                 '<td>' + escapeHtml(record.assignTo) + '</td>' +
                 '<td>' + escapeHtml(record.dateClosed) + '</td>' +
                 '<td>' + escapeHtml(record.tagStatus) + '</td>' +
+                '<td class="assignment-history-cell" data-record-id="' + escapeAttr(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="ar-table-action ar-edit-record" data-id="' + escapeAttr(record.id) + '" title="Edit" aria-label="Edit abnormality reporting"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#abnormalityReportingRecordsBody').html(rows || '<tr><td colspan="19" class="ar-empty">No records found.</td></tr>');
+            $('#abnormalityReportingRecordsBody').html(rows || '<tr><td colspan="20" class="ar-empty">No records found.</td></tr>');
+            records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
     function loadRecords() {
@@ -221,11 +288,16 @@ $(function () {
 
     function saveRecord() {
         const id = $('#abnormalityReportingId').val();
+        const record = payload();
+        if (!validateRecord(record)) {
+            return;
+        }
+        setSaveLoading(true);
         $.ajax({
             url: API + '/records' + (id ? '/' + encodeURIComponent(id) : ''),
             type: id ? 'PUT' : 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(payload()),
+            data: JSON.stringify(record),
             success: function(data) {
                 if (data && data.status === 'success') {
                     setMessage('Saved.', 'success');
@@ -238,6 +310,9 @@ $(function () {
             },
             error: function(xhr) {
                 setMessage(xhr.responseJSON?.message || 'Unable to save.', 'error');
+            },
+            complete: function() {
+                setSaveLoading(false);
             }
         });
     }
@@ -262,6 +337,10 @@ $(function () {
 
     $('#department').on('change', function() {
         loadDepartmentOptions($(this).val());
+    });
+
+    $('#abnormalityReportingForm').on('input change', 'input, select, textarea', function() {
+        markField('#' + this.id, false);
     });
 
     $('#tagStatus').on('change input', function() {

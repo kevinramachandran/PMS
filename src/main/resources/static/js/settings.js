@@ -23,6 +23,13 @@ $(document).ready(function() {
     let issueBoardAssignableUsers = [];
     let issueBoardAssignableLookup = new Map();
 
+    function confirmDelete(options) {
+        if (window.PmsConfirm && typeof window.PmsConfirm.open === 'function') {
+            return window.PmsConfirm.open(options);
+        }
+        return Promise.resolve(window.confirm((options && options.message) || 'Delete this record?'));
+    }
+
     const fixedMetricSections = {
         people: [
             'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityMtdTarget', 'productionProductivityYtdActual', 'productionProductivityYtdTarget',
@@ -381,7 +388,6 @@ $(document).ready(function() {
             loadKpiCrossColorConfig();
         } else if (config === 'kpi-rename-dashboard') {
             $('#form-kpi-rename-dashboard').addClass('active');
-            loadKpiPlantNameConfig();
             loadKpiRenameDashboard();
         } else if (config === 'kpi-plant-name') {
             $('#form-master-plant').addClass('active');
@@ -2608,9 +2614,17 @@ function regroupRows($container){
 
                 users.forEach(function(user) {
                     const username = (user.username || '').trim();
+                    const name = (user.name || '').trim();
+                    const employeeId = (user.employeeId || '').trim();
                     const email = (user.email || '').trim();
                     if (username) {
                         issueBoardAssignableLookup.set(username.toLowerCase(), user);
+                    }
+                    if (name) {
+                        issueBoardAssignableLookup.set(name.toLowerCase(), user);
+                    }
+                    if (employeeId) {
+                        issueBoardAssignableLookup.set(employeeId.toLowerCase(), user);
                     }
                     if (email) {
                         issueBoardAssignableLookup.set(email.toLowerCase(), user);
@@ -2640,14 +2654,16 @@ function regroupRows($container){
         $list.empty();
         issueBoardAssignableUsers.forEach(function(user) {
             const username = (user.username || '').trim();
+            const label = (user.label || '').trim();
             const email = (user.email || '').trim();
-            if (!username) {
+            const value = username || (user.name || '').trim() || email;
+            if (!value) {
                 return;
             }
 
             $('<option>')
-                .attr('value', username)
-                .attr('label', email ? username + ' (' + email + ')' : username)
+                .attr('value', value)
+                .attr('label', label || (email ? value + ' (' + email + ')' : value))
                 .appendTo($list);
         });
     }
@@ -2689,6 +2705,28 @@ function regroupRows($container){
         window.__issueBoardPopupTimer = window.setTimeout(function() {
             $popup.removeClass('show');
         }, 2600);
+    }
+
+    function extractAjaxErrorMessage(xhr) {
+        if (!xhr) {
+            return '';
+        }
+        const response = xhr.responseJSON;
+        if (response && response.message) {
+            return response.message;
+        }
+        if (response && response.error) {
+            return response.error;
+        }
+        if (xhr.responseText) {
+            try {
+                const parsed = JSON.parse(xhr.responseText);
+                return parsed.message || parsed.error || '';
+            } catch (ignore) {
+                return xhr.responseText.length < 180 ? xhr.responseText : '';
+            }
+        }
+        return '';
     }
 
     function showIssueBoardToast(message, type) {
@@ -2849,10 +2887,23 @@ function regroupRows($container){
         }).length > 0;
     }
 
-    function validateIssueBoardRows(showErrors) {
-        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
-            return $(this).find('.ib-problem').length > 0;
+    function hasIssueBoardCoreSaveData($row) {
+        return !!(
+            $row.find('.ib-problem').val().trim()
+            || $row.find('.ib-actions').val().trim()
+            || $row.find('.ib-responsible').val().trim()
+        );
+    }
+
+    function getIssueBoardRowsForSave() {
+        return $('#issueBoardConfigTableBody tr').filter(function() {
+            const $row = $(this);
+            return $row.find('.ib-problem').length > 0 && hasIssueBoardCoreSaveData($row);
         });
+    }
+
+    function validateIssueBoardRows(showErrors) {
+        const rows = getIssueBoardRowsForSave();
 
         if (rows.length === 0) {
             return false;
@@ -3329,7 +3380,7 @@ function regroupRows($container){
         $('#issueConfigDrawerProblem').val(safe.problem || '');
         $('#issueConfigDrawerPriority').val(safe.priority || '');
         $('#issueConfigDrawerOwner').val(safe.ownerName || '');
-        $('#issueConfigDrawerIssueDate').val(safe.issueDate || $('#issueBoardConfigDate').val() || getTodayDateString());
+        $('#issueConfigDrawerIssueDate').val(safe.issueDate || getTodayDateString());
         $('#issueConfigDrawerTargetDate').val(safe.targetDate || '');
         $('#issueConfigDrawerTargetDateRemark').val(safe.targetDateRemark || '');
         $('#issueConfigDrawerTargetExt1').val(safe.targetDateExtension1 || '');
@@ -3341,13 +3392,14 @@ function regroupRows($container){
             { date: '#issueConfigDrawerTargetExt1', remark: '#issueConfigDrawerTargetExt1Remark', dateValue: safe.targetDateExtension1 },
             { date: '#issueConfigDrawerTargetExt2', remark: '#issueConfigDrawerTargetExt2Remark', dateValue: safe.targetDateExtension2 }
         ].forEach(function(pair) {
-            const locked = isExistingIssue && !!pair.dateValue;
+            const isExtensionDate = pair.date !== '#issueConfigDrawerTargetDate';
+            const locked = (!isExistingIssue && isExtensionDate) || (isExistingIssue && !!pair.dateValue);
             $(pair.date)
                 .prop('disabled', locked)
-                .attr('title', locked ? 'Saved target date' : 'Enter target date');
+                .attr('title', locked ? (!isExistingIssue ? 'Extensions can be added after the issue is saved' : 'Saved target date') : 'Enter target date');
             $(pair.remark)
                 .prop('disabled', locked)
-                .attr('title', locked ? 'Saved target date remarks' : 'Enter remarks for this target date');
+                .attr('title', locked ? (!isExistingIssue ? 'Extensions can be added after the issue is saved' : 'Saved target date remarks') : 'Enter remarks for this target date');
         });
         $('#issueConfigDrawerRootCause').val(safe.rootCause || '');
         $('#issueConfigDrawerActions').val(safe.actions || '');
@@ -3640,16 +3692,22 @@ function regroupRows($container){
 
     function bindIssueBoardDeleteButtons() {
         $('.issue-delete').off('click').on('click', function() {
-            const confirmed = window.confirm('Delete this issue row? This change will be lost if you do not save.');
-            if (!confirmed) {
-                return;
-            }
-            $(this).closest('tr').remove();
-            if ($('#issueBoardConfigTableBody tr').length === 0) {
-                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
-            }
-            applyIssueBoardConfigSearch();
-            setIssueBoardSaveState();
+            const $button = $(this);
+            confirmDelete({
+                title: 'Delete issue row?',
+                message: 'This issue row will be removed from the board. Click Save Issue Board to apply the change.',
+                confirmText: 'Delete Row'
+            }).then(function(confirmed) {
+                if (!confirmed) {
+                    return;
+                }
+                $button.closest('tr').remove();
+                if ($('#issueBoardConfigTableBody tr').length === 0) {
+                    $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
+                }
+                applyIssueBoardConfigSearch();
+                setIssueBoardSaveState();
+            });
         });
 
     }
@@ -3698,9 +3756,7 @@ function regroupRows($container){
             return;
         }
 
-        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
-            return $(this).find('.ib-problem').length > 0;
-        });
+        const rows = getIssueBoardRowsForSave();
 
         if (rows.length > 0 && !validateIssueBoardRows(true)) {
             showIssueBoardPopup('Problem, Actions, Responsible, and completion date for 100% are required.');
@@ -3804,7 +3860,8 @@ function regroupRows($container){
                 showIssueBoardToast('Issue Board saved successfully.', 'success');
             },
             error: function() {
-                showIssueBoardPopup('Error saving Issue Board data. Please try again.');
+                const message = extractAjaxErrorMessage(arguments[0]) || 'Error saving Issue Board data. Please try again.';
+                showIssueBoardPopup(message);
                 showIssueBoardToast('Save failed. Please retry.', 'error');
             },
             complete: function() {
@@ -5190,12 +5247,18 @@ function regroupRows($container){
 
     function bindTrainingScheduleDeleteButtons() {
         $('.ts-delete').off('click').on('click', function() {
-            const confirmed = window.confirm('Delete this row? This change will be lost if you do not save.');
-            if (!confirmed) return;
-            $(this).closest('tr').remove();
-            if ($('#trainingScheduleConfigTableBody tr').length === 0) {
-                $('#trainingScheduleConfigTableBody').html('<tr class="placeholder-row"><td colspan="10" style="text-align:center;padding:18px;color:#9ca3af;">No training rows for selected date. Click "Add New Row".</td></tr>');
-            }
+            const $button = $(this);
+            confirmDelete({
+                title: 'Delete training row?',
+                message: 'This training schedule row will be removed. Click Save Training Schedule to apply the change.',
+                confirmText: 'Delete Row'
+            }).then(function(confirmed) {
+                if (!confirmed) return;
+                $button.closest('tr').remove();
+                if ($('#trainingScheduleConfigTableBody tr').length === 0) {
+                    $('#trainingScheduleConfigTableBody').html('<tr class="placeholder-row"><td colspan="10" style="text-align:center;padding:18px;color:#9ca3af;">No training rows for selected date. Click "Add New Row".</td></tr>');
+                }
+            });
         });
     }
 
@@ -5648,6 +5711,7 @@ function regroupRows($container){
     const PROCESS_OBSERVATION_CATEGORIES = [
         { key: 'ZM_OBSERVATION', label: 'ZM Describe Your Observation' },
         { key: 'PM_OBSERVATION', label: 'PM Describe Your Observation' },
+        { key: 'OM_OBSERVATION', label: 'OM Describe Your Observation' },
         { key: 'QM_OBSERVATION', label: 'QM Describe Your Observation' }
     ];
 
@@ -6075,6 +6139,11 @@ function regroupRows($container){
             input: '#masterPmObservationInput',
             body: '#masterPmObservationTableBody',
             label: 'PM Describe Your Observation'
+        },
+        OM_OBSERVATION: {
+            input: '#masterOmObservationInput',
+            body: '#masterOmObservationTableBody',
+            label: 'OM Describe Your Observation'
         },
         QM_OBSERVATION: {
             input: '#masterQmObservationInput',
@@ -6508,17 +6577,28 @@ function regroupRows($container){
     });
 
     const MASTER_PLANT_CONFIG = {
+        PLANT: {
+            input: '#kpiPlantNameInput',
+            suggestions: '#masterPlantSuggestions',
+            label: 'Plant'
+        },
         DEPARTMENT: {
             input: '#masterDepartmentInput',
-            body: '#masterDepartmentTableBody',
-            label: 'Department'
+            suggestions: '#masterDepartmentSuggestions',
+            label: 'Department',
+            parentPlant: '#masterDepartmentPlantSelect'
         },
         PROCESS_AREA: {
             input: '#masterProcessAreaInput',
-            body: '#masterProcessAreaTableBody',
-            label: 'Process Area'
+            suggestions: '#masterProcessAreaSuggestions',
+            label: 'Area',
+            parentPlant: '#masterAreaPlantSelect',
+            parentDepartment: '#masterAreaDepartmentSelect'
         }
     };
+    const masterPlantItems = {};
+    let masterPlantViewCategory = '';
+    let pendingMasterPlantDelete = null;
 
     function setMasterPlantMessage(message, type) {
         const $message = $('#masterPlantMessage');
@@ -6534,47 +6614,161 @@ function regroupRows($container){
         return '/api/dashboard-config/master-data/' + encodeURIComponent(category);
     }
 
+    function selectedMasterPlantParent(category) {
+        const config = MASTER_PLANT_CONFIG[category];
+        return config && config.parentPlant ? ($(config.parentPlant).val() || '').trim() : '';
+    }
+
+    function selectedMasterPlantDepartment(category) {
+        const config = MASTER_PLANT_CONFIG[category];
+        return config && config.parentDepartment ? ($(config.parentDepartment).val() || '').trim() : '';
+    }
+
+    function masterPlantItemMatchesContext(category, item) {
+        const parentPlant = selectedMasterPlantParent(category);
+        const parentDepartment = selectedMasterPlantDepartment(category);
+        if (parentPlant && String(item.parentPlant || '').toLowerCase() !== parentPlant.toLowerCase()) {
+            return false;
+        }
+        if (parentDepartment && String(item.parentDepartment || '').toLowerCase() !== parentDepartment.toLowerCase()) {
+            return false;
+        }
+        return true;
+    }
+
+    function masterPlantItemNames(category) {
+        return (masterPlantItems[category] || []).filter(function(item) {
+            return masterPlantItemMatchesContext(category, item || {});
+        }).map(function(item) {
+            return item && item.name ? String(item.name) : '';
+        }).filter(Boolean);
+    }
+
+    function masterPlantOptionHtml(items, placeholder) {
+        const options = ['<option value="">' + escapeHtml(placeholder) + '</option>'];
+        (items || []).forEach(function(item) {
+            const value = item && item.name ? String(item.name) : '';
+            if (value) {
+                options.push('<option value="' + escapeAttributeValue(value) + '">' + escapeHtml(value) + '</option>');
+            }
+        });
+        return options.join('');
+    }
+
+    function populateMasterPlantHierarchyControls() {
+        const plants = masterPlantItems.PLANT || [];
+        const departmentPlant = $('#masterDepartmentPlantSelect').val() || '';
+        const areaPlant = $('#masterAreaPlantSelect').val() || '';
+        $('#masterDepartmentPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(departmentPlant);
+        $('#masterAreaPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(areaPlant);
+
+        const selectedAreaPlant = $('#masterAreaPlantSelect').val() || '';
+        const areaDepartment = $('#masterAreaDepartmentSelect').val() || '';
+        const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
+            return !selectedAreaPlant || String(item.parentPlant || '').toLowerCase() === selectedAreaPlant.toLowerCase();
+        });
+        $('#masterAreaDepartmentSelect').html(masterPlantOptionHtml(departments, 'Select Department')).val(areaDepartment);
+        if ($('#masterAreaDepartmentSelect').val() !== areaDepartment) {
+            $('#masterAreaDepartmentSelect').val('');
+        }
+    }
+
+    function renderMasterPlantSuggestions(category) {
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!config) return;
+        const $input = $(config.input);
+        const $suggestions = $(config.suggestions);
+        const term = ($input.val() || '').trim().toLowerCase();
+        if (!term) {
+            $suggestions.removeClass('show').empty();
+            return;
+        }
+        const matches = masterPlantItemNames(category).filter(function(name) {
+            return name.toLowerCase().startsWith(term);
+        }).slice(0, 8);
+        if (!matches.length) {
+            $suggestions.removeClass('show').empty();
+            return;
+        }
+        $suggestions.html(matches.map(function(name) {
+            return '<button type="button" class="master-plant-suggestion" role="option" data-value="' + escapeAttributeValue(name) + '">' + escapeHtml(name) + '</button>';
+        }).join('')).addClass('show');
+    }
+
+    function hideMasterPlantSuggestions(category) {
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!config) return;
+        $(config.suggestions).removeClass('show').empty();
+    }
+
     function masterPlantRowHtml(category, item) {
         const safeItem = item || {};
         const name = safeItem.name || '';
+        const metaParts = [];
+        if (safeItem.parentPlant) metaParts.push('Plant: ' + safeItem.parentPlant);
+        if (safeItem.parentDepartment) metaParts.push('Department: ' + safeItem.parentDepartment);
         return '' +
-            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
-                '<td><span class="master-plant-name">' + escapeHtml(name) + '</span></td>' +
-                '<td>' +
+            '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<span><span class="master-plant-name">' + escapeHtml(name) + '</span>' +
+                (metaParts.length ? '<small class="master-plant-row-meta">' + escapeHtml(metaParts.join(' | ')) + '</small>' : '') + '</span>' +
+                '<div>' +
                     '<div class="kpi-rename-actions">' +
                         '<button type="button" class="master-plant-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
                         '<button type="button" class="master-plant-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
                     '</div>' +
-                '</td>' +
-            '</tr>';
+                '</div>' +
+            '</div>';
     }
 
     function masterPlantEditRowHtml(category, item) {
         const safeItem = item || {};
         return '' +
-            '<tr data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
-                '<td><input type="text" class="master-plant-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '"></td>' +
-                '<td>' +
+            '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
+                '<input type="text" class="master-plant-edit-input" maxlength="160" value="' + escapeAttributeValue(safeItem.name || '') + '">' +
+                '<div>' +
                     '<div class="kpi-rename-actions">' +
                         '<button type="button" class="master-plant-save-btn" title="Save"><i class="fas fa-save"></i></button>' +
                         '<button type="button" class="master-plant-cancel-btn" title="Cancel"><i class="fas fa-ban"></i></button>' +
                     '</div>' +
-                '</td>' +
-            '</tr>';
+                '</div>' +
+            '</div>';
     }
 
     function renderMasterPlantCategory(category, items) {
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
-        const $body = $(config.body);
-        if (!$body.length) return;
-        if (!Array.isArray(items) || !items.length) {
-            $body.html('<tr><td colspan="2" style="text-align:center;color:#64748b;padding:14px;">No data found.</td></tr>');
-            return;
+        masterPlantItems[category] = Array.isArray(items) ? items : [];
+        populateMasterPlantHierarchyControls();
+        renderMasterPlantSuggestions(category);
+        if (masterPlantViewCategory === category) {
+            renderMasterPlantView();
         }
-        $body.html(items.map(function(item) {
+    }
+
+    function renderMasterPlantView() {
+        const category = masterPlantViewCategory;
+        const config = MASTER_PLANT_CONFIG[category];
+        const term = ($('#masterPlantViewSearch').val() || '').trim().toLowerCase();
+        const items = (masterPlantItems[category] || []).filter(function(item) {
+            return !term || String(item.name || '').toLowerCase().includes(term);
+        });
+        $('#masterPlantViewTitle').text('View ' + (config ? config.label.toLowerCase() + 's' : 'master data'));
+        $('#masterPlantViewList').html(items.length ? items.map(function(item) {
             return masterPlantRowHtml(category, item);
-        }).join(''));
+        }).join('') : '<div class="master-plant-view-empty">No matching data found.</div>');
+    }
+
+    function openMasterPlantView(category) {
+        masterPlantViewCategory = category;
+        $('#masterPlantViewSearch').val('');
+        renderMasterPlantView();
+        $('#masterPlantViewModal').css('display', 'flex');
+        $('#masterPlantViewSearch').trigger('focus');
+    }
+
+    function closeMasterPlantView() {
+        $('#masterPlantViewModal').hide();
+        masterPlantViewCategory = '';
     }
 
     function loadMasterPlantCategory(category) {
@@ -6600,6 +6794,7 @@ function regroupRows($container){
 
     function loadMasterPlantConfig() {
         Object.keys(MASTER_PLANT_CONFIG).forEach(loadMasterPlantCategory);
+        loadKpiPlantNameConfig();
     }
 
     function saveMasterPlantCategory(category) {
@@ -6610,18 +6805,40 @@ function regroupRows($container){
             setMasterPlantMessage(config.label + ' is required.', 'warning');
             return;
         }
+        const payload = { name: value };
+        if (config.parentPlant) {
+            payload.parentPlant = selectedMasterPlantParent(category);
+            if (!payload.parentPlant) {
+                setMasterPlantMessage('Select Plant before adding ' + config.label + '.', 'warning');
+                return;
+            }
+        }
+        if (config.parentDepartment) {
+            payload.parentDepartment = selectedMasterPlantDepartment(category);
+            if (!payload.parentDepartment) {
+                setMasterPlantMessage('Select Department before adding Area.', 'warning');
+                return;
+            }
+        }
         $.ajax({
             url: masterPlantUrl(category),
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ name: value }),
+            data: JSON.stringify(payload),
             success: function(data) {
                 if (data && data.status === 'success') {
                     $(config.input).val('');
                     setMasterPlantMessage(config.label + ' added.', 'success');
+                    if (category === 'PLANT') {
+                        saveKpiPlantNameConfig(value, false);
+                    }
                     loadMasterPlantCategory(category);
                 } else {
-                    setMasterPlantMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
+                    if (category === 'PLANT' && data && data.message === 'Name already exists') {
+                        saveKpiPlantNameConfig(value, true);
+                    } else {
+                        setMasterPlantMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
+                    }
                 }
             },
             error: function(xhr) {
@@ -6681,6 +6898,24 @@ function regroupRows($container){
         });
     }
 
+    function openMasterPlantDeleteConfirm($row) {
+        const category = $row.data('category');
+        const config = MASTER_PLANT_CONFIG[category];
+        const itemName = $row.find('.master-plant-name').text() || 'this item';
+        pendingMasterPlantDelete = $row;
+        $('#masterPlantDeleteConfirmText').text('Delete "' + itemName + '"? Undo is not possible.');
+        $('#masterPlantDeleteConfirmModal').css('display', 'flex');
+        $('#confirmMasterPlantDelete').trigger('focus');
+        if (config) {
+            $('#masterPlantDeleteConfirmTitle').html('<i class="fas fa-triangle-exclamation delete-modal-icon"></i> Delete ' + escapeHtml(config.label.toLowerCase()));
+        }
+    }
+
+    function closeMasterPlantDeleteConfirm() {
+        $('#masterPlantDeleteConfirmModal').hide();
+        pendingMasterPlantDelete = null;
+    }
+
     $('.master-plant-add-btn').on('click', function() {
         saveMasterPlantCategory($(this).data('category'));
     });
@@ -6689,10 +6924,34 @@ function regroupRows($container){
         if (event.key === 'Enter') {
             saveMasterPlantCategory($(this).closest('.master-plant-card').data('category'));
         }
+        if (event.key === 'Escape') {
+            hideMasterPlantSuggestions($(this).closest('.master-plant-card').data('category'));
+        }
+    });
+
+    $('.master-plant-input').on('input focus', function() {
+        renderMasterPlantSuggestions($(this).closest('.master-plant-card').data('category'));
+    });
+
+    $(document).on('mousedown', '.master-plant-suggestion', function(event) {
+        event.preventDefault();
+        const $button = $(this);
+        const $card = $button.closest('.master-plant-card');
+        const category = $card.data('category');
+        const config = MASTER_PLANT_CONFIG[category];
+        if (!config) return;
+        $(config.input).val($button.data('value') || $button.text()).trigger('focus');
+        hideMasterPlantSuggestions(category);
+    });
+
+    $(document).on('mousedown', function(event) {
+        if (!$(event.target).closest('.master-plant-suggest-wrap').length) {
+            Object.keys(MASTER_PLANT_CONFIG).forEach(hideMasterPlantSuggestions);
+        }
     });
 
     $(document).on('click', '.master-plant-edit-btn', function() {
-        const $row = $(this).closest('tr');
+        const $row = $(this).closest('.master-plant-view-row');
         const category = $row.data('category');
         const item = {
             id: $row.data('id'),
@@ -6702,15 +6961,50 @@ function regroupRows($container){
     });
 
     $(document).on('click', '.master-plant-cancel-btn', function() {
-        loadMasterPlantCategory($(this).closest('tr').data('category'));
+        loadMasterPlantCategory($(this).closest('.master-plant-view-row').data('category'));
     });
 
     $(document).on('click', '.master-plant-save-btn', function() {
-        updateMasterPlantRow($(this).closest('tr'));
+        updateMasterPlantRow($(this).closest('.master-plant-view-row'));
     });
 
     $(document).on('click', '.master-plant-delete-btn', function() {
-        deleteMasterPlantRow($(this).closest('tr'));
+        openMasterPlantDeleteConfirm($(this).closest('.master-plant-view-row'));
+    });
+
+    $('#closeMasterPlantDeleteConfirm, #cancelMasterPlantDelete, #masterPlantDeleteConfirmModal').on('click', function(event) {
+        if (event.target === this) {
+            closeMasterPlantDeleteConfirm();
+        }
+    });
+
+    $('#confirmMasterPlantDelete').on('click', function() {
+        if (pendingMasterPlantDelete && pendingMasterPlantDelete.length) {
+            deleteMasterPlantRow(pendingMasterPlantDelete);
+        }
+        closeMasterPlantDeleteConfirm();
+    });
+
+    $(document).on('click', '.master-plant-view-btn', function() {
+        openMasterPlantView($(this).data('category'));
+    });
+
+    $('#closeMasterPlantView, #masterPlantViewModal').on('click', function(event) {
+        if (event.target === this) {
+            closeMasterPlantView();
+        }
+    });
+
+    $('#masterPlantViewSearch').on('input', renderMasterPlantView);
+    $('#clearMasterPlantViewSearch').on('click', function() {
+        $('#masterPlantViewSearch').val('').trigger('focus');
+        renderMasterPlantView();
+    });
+
+    $('.master-plant-parent-select').on('change', function() {
+        populateMasterPlantHierarchyControls();
+        renderMasterPlantSuggestions('DEPARTMENT');
+        renderMasterPlantSuggestions('PROCESS_AREA');
     });
 
     function setKpiPlantNameMessage(message, type) {
@@ -6736,8 +7030,8 @@ function regroupRows($container){
         });
     }
 
-    $('#saveKpiPlantNameBtn').on('click', function() {
-        const plantName = ($('#kpiPlantNameInput').val() || '').trim();
+    function saveKpiPlantNameConfig(plantName, showAlreadyExistsMessage) {
+        plantName = (plantName || $('#kpiPlantNameInput').val() || '').trim();
         if (!plantName) {
             setKpiPlantNameMessage('Plant name is required.', 'error');
             return;
@@ -6751,12 +7045,16 @@ function regroupRows($container){
             success: function(data) {
                 $('#kpiDeckTitlePrefix').val(data.prefix || 'PMS 4 deck V0_');
                 $('#kpiPlantNameInput').val(data.plantName || plantName);
-                setKpiPlantNameMessage('Plant name saved. KPI Dashboard will show: ' + (data.deckTitle || ''), 'success');
+                setKpiPlantNameMessage((showAlreadyExistsMessage ? 'Plant already exists. ' : '') + 'KPI Dashboard will show: ' + (data.deckTitle || ''), 'success');
             },
             error: function(xhr) {
                 setKpiPlantNameMessage('Unable to save plant name: ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
             }
         });
+    }
+
+    $('#saveKpiPlantNameBtn').on('click', function() {
+        saveKpiPlantNameConfig();
     });
 
     $('#resetKpiPlantNameBtn').on('click', function() {

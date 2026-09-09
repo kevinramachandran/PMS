@@ -53,6 +53,313 @@
         }, 2600);
     }
 
+    function ensureGlobalTableHeaderStyle() {
+        if (document.getElementById('pmsGlobalTableHeaderStyle')) {
+            return;
+        }
+        const style = document.createElement('style');
+        style.id = 'pmsGlobalTableHeaderStyle';
+        style.textContent = '' +
+            'body:not(.login-page) table thead th{' +
+            'background:linear-gradient(135deg,#0b6b2e 0%,#087333 100%)!important;' +
+            'color:#fff!important;border-color:#075f2c!important;font-weight:800;' +
+            'letter-spacing:0;text-transform:uppercase;' +
+            '}' +
+            'body:not(.login-page) table thead th a,' +
+            'body:not(.login-page) table thead th button,' +
+            'body:not(.login-page) table thead th span,' +
+            'body:not(.login-page) table thead th i{color:inherit!important;}' +
+            'body:not(.login-page) table thead th input,' +
+            'body:not(.login-page) table thead th select,' +
+            'body:not(.login-page) table thead th textarea{color:#111827!important;}' +
+            'body:not(.login-page) table thead th.pms-global-sortable,' +
+            'body:not(.login-page) table thead th.sortable{cursor:pointer;position:relative;padding-right:26px!important;}' +
+            'body:not(.login-page) table thead th.pms-global-sortable:hover,' +
+            'body:not(.login-page) table thead th.sortable:hover{background:linear-gradient(135deg,#087333 0%,#065f2a 100%)!important;}' +
+            'body:not(.login-page) table thead th.pms-global-sortable:after,' +
+            'body:not(.login-page) table thead th.sortable:after{font-family:"Font Awesome 6 Free";font-weight:900;content:"\\f0dc";position:absolute;right:9px;top:50%;transform:translateY(-50%);color:#d8f8e2!important;opacity:.78;font-size:.8em;}' +
+            'body:not(.login-page) table thead th.pms-sort-asc:after,' +
+            'body:not(.login-page) table thead th.sort-asc:after{content:"\\f0de";color:#fff!important;opacity:1;}' +
+            'body:not(.login-page) table thead th.pms-sort-desc:after,' +
+            'body:not(.login-page) table thead th.sort-desc:after{content:"\\f0dd";color:#fff!important;opacity:1;}';
+        document.head.appendChild(style);
+    }
+
+    function isPlainSortableHeader(header) {
+        if (!header || header.tagName !== 'TH') {
+            return false;
+        }
+        if (header.classList.contains('sortable') || header.classList.contains('no-sort') || header.dataset.noSort === 'true') {
+            return false;
+        }
+        if (header.colSpan > 1 || header.rowSpan > 1 || header.querySelector('input, select, textarea')) {
+            return false;
+        }
+        const text = normalizeCellText(header).toLowerCase();
+        return text && !/^(action|actions|history|assignment history|pictures?|image|open)$/i.test(text);
+    }
+
+    function enhanceSortableTables(root) {
+        const scope = root || document;
+        scope.querySelectorAll('table').forEach(function (table) {
+            const headerRow = table.tHead && table.tHead.rows.length ? table.tHead.rows[table.tHead.rows.length - 1] : null;
+            const body = table.tBodies && table.tBodies.length ? table.tBodies[0] : null;
+            if (!headerRow || !body) {
+                return;
+            }
+            Array.from(headerRow.cells || []).forEach(function (header) {
+                if (header.classList.contains('sortable')) {
+                    header.setAttribute('aria-sort', header.classList.contains('sort-asc') ? 'ascending' : (header.classList.contains('sort-desc') ? 'descending' : 'none'));
+                    return;
+                }
+                if (!isPlainSortableHeader(header)) {
+                    return;
+                }
+                header.classList.add('pms-global-sortable');
+                header.setAttribute('role', 'button');
+                header.setAttribute('tabindex', '0');
+                header.setAttribute('aria-sort', header.classList.contains('pms-sort-asc') ? 'ascending' : (header.classList.contains('pms-sort-desc') ? 'descending' : 'none'));
+                if (!header.getAttribute('title')) {
+                    header.setAttribute('title', 'Sort column');
+                }
+            });
+        });
+    }
+
+    function cellSortText(cell) {
+        if (!cell) {
+            return '';
+        }
+        const field = cell.querySelector('input:not([type="hidden"]), select, textarea');
+        if (field) {
+            if (field.tagName === 'SELECT') {
+                const option = field.options[field.selectedIndex];
+                return ((option && option.textContent) || field.value || '').trim();
+            }
+            return (field.value || '').trim();
+        }
+        return normalizeCellText(cell);
+    }
+
+    function parseSortableDate(value) {
+        const text = String(value || '').trim();
+        if (!text) {
+            return null;
+        }
+        let match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (match) {
+            return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+        }
+        match = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+        if (match) {
+            return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])).getTime();
+        }
+        const parsed = Date.parse(text.replace(/\bSept\b/i, 'Sep'));
+        return Number.isNaN(parsed) ? null : parsed;
+    }
+
+    function sortableValue(text) {
+        const value = String(text || '').replace(/\s+/g, ' ').trim();
+        const date = parseSortableDate(value);
+        if (date !== null) {
+            return { type: 'date', value: date };
+        }
+        const numeric = Number(value.replace(/[%#,]/g, ''));
+        if (value && Number.isFinite(numeric) && /^-?[\d,]+(\.\d+)?%?$/.test(value)) {
+            return { type: 'number', value: numeric };
+        }
+        return { type: 'text', value: value.toLowerCase() };
+    }
+
+    function compareSortableValues(left, right) {
+        if (left.type === right.type) {
+            if (left.value < right.value) return -1;
+            if (left.value > right.value) return 1;
+            return 0;
+        }
+        return String(left.value).localeCompare(String(right.value), undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    function sortPlainTable(header) {
+        const table = header.closest('table');
+        const body = table && table.tBodies && table.tBodies.length ? table.tBodies[0] : null;
+        const headerRow = header.parentElement;
+        if (!table || !body || !headerRow) {
+            return;
+        }
+
+        const columnIndex = Array.from(headerRow.cells).indexOf(header);
+        if (columnIndex < 0) {
+            return;
+        }
+
+        const ascending = !header.classList.contains('pms-sort-asc');
+        Array.from(headerRow.cells).forEach(function (cell) {
+            cell.classList.remove('pms-sort-asc', 'pms-sort-desc');
+            if (cell.classList.contains('pms-global-sortable')) {
+                cell.setAttribute('aria-sort', 'none');
+            }
+        });
+        header.classList.add(ascending ? 'pms-sort-asc' : 'pms-sort-desc');
+        header.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
+
+        const movableRows = [];
+        const pinnedRows = [];
+        Array.from(body.rows || []).forEach(function (row, originalIndex) {
+            if (row.classList.contains('placeholder-row') || row.classList.contains('loading-row') || row.classList.contains('issue-config-search-empty') || row.cells.length <= columnIndex) {
+                pinnedRows.push(row);
+                return;
+            }
+            movableRows.push({
+                row: row,
+                value: sortableValue(cellSortText(row.cells[columnIndex])),
+                originalIndex: originalIndex
+            });
+        });
+
+        movableRows.sort(function (a, b) {
+            const compared = compareSortableValues(a.value, b.value);
+            if (compared === 0) {
+                return a.originalIndex - b.originalIndex;
+            }
+            return ascending ? compared : -compared;
+        });
+
+        movableRows.forEach(function (item) {
+            body.appendChild(item.row);
+        });
+        pinnedRows.forEach(function (row) {
+            body.appendChild(row);
+        });
+        standardizeTableAlignment(table);
+    }
+
+    function bindGlobalTableSorting() {
+        if (window.__pmsGlobalTableSortingBound) {
+            return;
+        }
+        document.addEventListener('click', function (event) {
+            const header = event.target.closest('th.pms-global-sortable');
+            if (!header) {
+                return;
+            }
+            sortPlainTable(header);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+            const header = event.target.closest('th.pms-global-sortable');
+            if (!header) {
+                return;
+            }
+            event.preventDefault();
+            sortPlainTable(header);
+        });
+        window.__pmsGlobalTableSortingBound = true;
+    }
+
+    function createConfirmIfNeeded() {
+        let modal = document.getElementById('pmsConfirmModal');
+        if (modal) {
+            return modal;
+        }
+
+        modal = document.createElement('div');
+        modal.id = 'pmsConfirmModal';
+        modal.className = 'pms-confirm-modal';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML = '' +
+            '<div class="pms-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="pmsConfirmTitle" aria-describedby="pmsConfirmMessage">' +
+            '<div class="pms-confirm-icon" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></div>' +
+            '<div class="pms-confirm-copy">' +
+            '<h2 id="pmsConfirmTitle">Delete record?</h2>' +
+            '<p id="pmsConfirmMessage">This action cannot be undone.</p>' +
+            '</div>' +
+            '<div class="pms-confirm-actions">' +
+            '<button type="button" class="pms-confirm-cancel">Cancel</button>' +
+            '<button type="button" class="pms-confirm-delete"><i class="fas fa-trash-alt"></i><span>Delete</span></button>' +
+            '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    window.PmsConfirm = {
+        open: function (options) {
+            const settings = options || {};
+            const modal = createConfirmIfNeeded();
+            const title = modal.querySelector('#pmsConfirmTitle');
+            const message = modal.querySelector('#pmsConfirmMessage');
+            const cancelButton = modal.querySelector('.pms-confirm-cancel');
+            const deleteButton = modal.querySelector('.pms-confirm-delete');
+            const deleteText = deleteButton.querySelector('span');
+            const previousFocus = document.activeElement;
+
+            title.textContent = settings.title || 'Delete record?';
+            message.textContent = settings.message || 'This action cannot be undone.';
+            deleteText.textContent = settings.confirmText || 'Delete';
+
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('pms-confirm-open');
+
+            return new Promise(function (resolve) {
+                let settled = false;
+
+                function cleanup(result) {
+                    if (settled) {
+                        return;
+                    }
+                    settled = true;
+                    modal.classList.remove('is-open');
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.classList.remove('pms-confirm-open');
+                    cancelButton.removeEventListener('click', onCancel);
+                    deleteButton.removeEventListener('click', onConfirm);
+                    modal.removeEventListener('click', onBackdrop);
+                    document.removeEventListener('keydown', onKeydown);
+                    if (previousFocus && typeof previousFocus.focus === 'function') {
+                        previousFocus.focus();
+                    }
+                    resolve(result);
+                }
+
+                function onCancel() {
+                    cleanup(false);
+                }
+
+                function onConfirm() {
+                    cleanup(true);
+                }
+
+                function onBackdrop(event) {
+                    if (event.target === modal) {
+                        cleanup(false);
+                    }
+                }
+
+                function onKeydown(event) {
+                    if (event.key === 'Escape') {
+                        cleanup(false);
+                    }
+                    if (event.key === 'Enter' && document.activeElement === deleteButton) {
+                        cleanup(true);
+                    }
+                }
+
+                cancelButton.addEventListener('click', onCancel);
+                deleteButton.addEventListener('click', onConfirm);
+                modal.addEventListener('click', onBackdrop);
+                document.addEventListener('keydown', onKeydown);
+
+                window.setTimeout(function () {
+                    cancelButton.focus();
+                }, 0);
+            });
+        }
+    };
+
     const originalAlert = window.alert;
     window.alert = function (message) {
         showToast(message || 'Notification');
@@ -185,6 +492,9 @@
 
             if (hasTableMutation) {
                 scheduleRefresh();
+                window.setTimeout(function () {
+                    enhanceSortableTables(document);
+                }, 140);
             }
         });
 
@@ -519,6 +829,27 @@
         });
     }
 
+    function addProcessConfirmationConfigNavigation() {
+        const processLink = document.querySelector('.sidebar-nav a[href="/process-confirmation"]');
+        const sidebarNav = document.querySelector('.sidebar-nav');
+        if (!processLink || !sidebarNav || sidebarNav.querySelector('a[href="/process-confirmation-config"]')) {
+            return;
+        }
+
+        const configLink = document.createElement('a');
+        configLink.href = '/process-confirmation-config';
+        configLink.className = 'nav-item';
+        configLink.dataset.tooltip = 'CarlEx P C reporting';
+        configLink.innerHTML = '<i class="fas fa-sliders"></i><span>CarlEx P C reporting</span>';
+
+        const insertBefore = sidebarNav.querySelector('a[href="/gemba-kaizen-config"]');
+        if (insertBefore) {
+            insertBefore.parentNode.insertBefore(configLink, insertBefore);
+        } else {
+            processLink.insertAdjacentElement('afterend', configLink);
+        }
+    }
+
     document.addEventListener('click', function (event) {
         document.querySelectorAll('.pms-profile.open').forEach(function (profile) {
             if (!profile.contains(event.target)) {
@@ -528,14 +859,18 @@
     });
 
     document.addEventListener('DOMContentLoaded', function () {
+        ensureGlobalTableHeaderStyle();
         document.querySelectorAll('.top-header').forEach(enhanceHeader);
         normalizeSidebarLabels();
+        addProcessConfirmationConfigNavigation();
         setupSidebarDropdowns();
         keepActiveNavigationVisible();
         loadPmsDeckNavDates();
         window.setTimeout(keepActiveNavigationVisible, 150);
         fixFooterBranding();
         standardizeTableAlignment(document);
+        enhanceSortableTables(document);
+        bindGlobalTableSorting();
         bindTableAlignmentObserver();
     });
 })();

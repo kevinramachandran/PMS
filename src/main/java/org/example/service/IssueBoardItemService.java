@@ -74,6 +74,7 @@ public class IssueBoardItemService {
     public IssueBoardItem updateProgress(Long id, IssueBoardProgressUpdate update, String editedBy) {
         IssueBoardItem item = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Issue not found"));
+        IssueBoardItem previousSnapshot = notificationSnapshot(item);
 
         String user = editedBy == null || editedBy.isBlank() ? "system" : editedBy.trim();
         List<IssueBoardItemHistory> history = new ArrayList<>();
@@ -176,6 +177,11 @@ public class IssueBoardItemService {
         IssueBoardItem saved = repository.save(item);
         if (!history.isEmpty()) {
             historyRepository.saveAll(history);
+        }
+        try {
+            notificationService.sendAssignmentNotification(saved.getBoardDate(), saved.getRowOrder(), previousSnapshot, saved);
+        } catch (Exception ex) {
+            log.error("Failed to send assignment notification for issueId={} - save was still successful", saved.getId(), ex);
         }
         return saved;
     }
@@ -378,5 +384,18 @@ public class IssueBoardItemService {
             return null;
         }
         return Math.toIntExact(ChronoUnit.DAYS.between(LocalDate.now(), targetDate));
+    }
+
+    private IssueBoardItem notificationSnapshot(IssueBoardItem source) {
+        IssueBoardItem snapshot = new IssueBoardItem();
+        snapshot.setRowOrder(source.getRowOrder());
+        snapshot.setProblem(source.getProblem());
+        snapshot.setActions(source.getActions());
+        snapshot.setResponsible(source.getResponsible());
+        snapshot.setTargetDate(source.getTargetDate());
+        snapshot.setStatus(source.getStatus());
+        snapshot.setCompletedDate(source.getCompletedDate());
+        snapshot.setBoardDate(source.getBoardDate());
+        return snapshot;
     }
 }

@@ -7,6 +7,7 @@ import org.example.model.IssueBoardProgressUpdate;
 import org.example.service.AuthService;
 import org.example.service.IssueBoardItemService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -51,9 +52,11 @@ public class IssueBoardItemController {
     public Map<String, Object> getAssignableUsers() {
         List<Map<String, String>> users = authService.getManageableUsers().stream()
                 .map(user -> Map.of(
-                        "username", user.getUsername(),
-                        "email", user.getEmail(),
-                        "label", user.getUsername() + " (" + user.getEmail() + ")"
+                        "username", defaultText(user.getUsername()),
+                        "name", defaultText(user.getName()),
+                        "employeeId", defaultText(user.getEmployeeId()),
+                        "email", defaultText(user.getEmail()),
+                        "label", buildUserLabel(user)
                 ))
                 .toList();
 
@@ -61,12 +64,16 @@ public class IssueBoardItemController {
     }
 
     @PostMapping("/replace/date/{date}")
-    public List<IssueBoardItem> replaceByDate(
+    public ResponseEntity<?> replaceByDate(
             @PathVariable String date,
             @RequestBody List<IssueBoardItem> items,
             HttpSession session) {
         String username = session == null ? null : (String) session.getAttribute("username");
-        return service.replaceByBoardDate(LocalDate.parse(date), items, username);
+        try {
+            return ResponseEntity.ok(service.replaceByBoardDate(LocalDate.parse(date), items, username));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
     }
 
     @PatchMapping("/{id}/progress")
@@ -79,5 +86,17 @@ public class IssueBoardItemController {
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
         }
+    }
+
+    private String buildUserLabel(org.example.entity.AppUser user) {
+        String name = defaultText(user.getName());
+        String username = defaultText(user.getUsername());
+        String email = defaultText(user.getEmail());
+        String display = !name.isBlank() ? name : username;
+        return email.isBlank() ? display : display + " (" + email + ")";
+    }
+
+    private String defaultText(String value) {
+        return value == null ? "" : value.trim();
     }
 }

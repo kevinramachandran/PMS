@@ -8,6 +8,15 @@ $(function() {
     let lifeSaverRules = [];
     let processAreas = [];
     let records = [];
+    let currentUserIdentity = {};
+
+    const EDIT_ALLOWED_SELECTOR = [
+        '#responsibility',
+        '#assignmentRemark',
+        '#finalComments',
+        '.gw-picture-image',
+        '.gw-status'
+    ].join(',');
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -44,6 +53,21 @@ $(function() {
             .toggleClass('show', !!message);
     }
 
+    function setSaveLoading(loading) {
+        const $btn = $('#gembaWalkSubmitBtn');
+        if (loading) {
+            if (!$btn.data('original-html')) {
+                $btn.data('original-html', $btn.html());
+            }
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i><span>Saving...</span>');
+            $('#gembaWalkConfigCancelBtn, #gembaWalkConfigDrawerClose, #addObservationBtn').prop('disabled', true);
+            return;
+        }
+        $btn.prop('disabled', false).html($btn.data('original-html') || '<i class="fas fa-save"></i><span>Save Walk</span>');
+        $('#gembaWalkConfigCancelBtn, #gembaWalkConfigDrawerClose, #addObservationBtn').prop('disabled', false);
+        setEditLock(isEditMode());
+    }
+
     function populateResponsibility(users, selected) {
         const html = ['<option value=""></option>'].concat((users || []).map(userOptionHtml)).join('');
         $('#responsibility').html(html).val(selected || '');
@@ -51,6 +75,32 @@ $(function() {
 
     function populateSelect(selector, values, selected) {
         $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
+    }
+
+    function isEditMode() {
+        return !!$('#gembaWalkRecordId').val();
+    }
+
+    function applyCurrentUserIdentity(force) {
+        if (force || !$('#email').val()) {
+            $('#email').val(currentUserIdentity.email || '');
+        }
+        if (force || !$('#managerName').val()) {
+            $('#managerName').val(currentUserIdentity.label || currentUserIdentity.username || '');
+        }
+    }
+
+    function setEditLock(locked) {
+        const $fields = $('#gembaWalkConfigForm')
+            .find('input, select, textarea')
+            .not('[type="hidden"]');
+        $fields.each(function() {
+            const $field = $(this);
+            const editableInUpdate = $field.is(EDIT_ALLOWED_SELECTOR);
+            $field.prop('disabled', locked && !editableInUpdate);
+        });
+        $('#email, #managerName').prop('readonly', true);
+        $('#addObservationBtn').toggle(!locked);
     }
 
     function renderObservation(index, observation) {
@@ -63,9 +113,9 @@ $(function() {
             '<h3 class="gw-observation-title">' + title + '</h3>' +
             '<div class="gw-observation-grid">' +
             '<input type="hidden" class="gw-picture-stored" value="' + escapeHtml(item.pictureImage) + '">' +
-            '<div class="gw-form-group gw-wide">' +
+            '<div class="gw-form-group">' +
             '<label>Observation Description</label>' +
-            '<textarea class="gw-observation-description" rows="3">' + escapeHtml(item.observationDescription) + '</textarea>' +
+            '<textarea class="gw-observation-description" rows="2">' + escapeHtml(item.observationDescription) + '</textarea>' +
             '</div>' +
             '<div class="gw-form-group">' +
             '<label>Picture/Image</label>' +
@@ -100,6 +150,7 @@ $(function() {
         const index = $('#gembaWalkObservations .gw-observation').length;
         $('#gembaWalkObservations').append(renderObservation(index, observation));
         setObservationValues($('#gembaWalkObservations .gw-observation').last(), observation);
+        setEditLock(isEditMode());
     }
 
     function payload() {
@@ -113,6 +164,7 @@ $(function() {
             managementSafetyWalkWeek: $('#managementSafetyWalkWeek').val(),
             locationOfMswConducted: $('#locationOfMswConducted').val(),
             responsibility: $('#responsibility').val(),
+            assignmentRemark: $('#assignmentRemark').val(),
             finalComments: $('#finalComments').val(),
             observations: $('#gembaWalkObservations .gw-observation').map(function() {
                 const $section = $(this);
@@ -130,7 +182,6 @@ $(function() {
     function setRecord(record) {
         const item = record || {};
         $('#gembaWalkRecordId').val(item.id || '');
-        $('#serialNumber').val(item.id || '');
         $('#scheduleItemId').val(item.scheduleItemId || params.get('scheduleId') || '');
         $('#startTime').val(item.startTime || currentTime());
         $('#completionTime').val(item.completionTime || currentTime());
@@ -140,6 +191,7 @@ $(function() {
         $('#managementSafetyWalkWeek').val(item.managementSafetyWalkWeek || params.get('week') || '');
         $('#locationOfMswConducted').val(item.locationOfMswConducted || params.get('location') || '');
         $('#responsibility').val(item.responsibility || $('#responsibility').val() || '');
+        $('#assignmentRemark').val('');
         $('#finalComments').val(item.finalComments || '');
         $('#gembaWalkObservations').empty();
         const observations = item.observations && item.observations.length ? item.observations : [{}];
@@ -148,7 +200,6 @@ $(function() {
 
     function resetRecord() {
         $('#gembaWalkRecordId').val('');
-        $('#serialNumber').val('');
         $('#scheduleItemId').val(params.get('scheduleId') || '');
         $('#startTime').val(currentTime());
         $('#completionTime').val(currentTime());
@@ -161,6 +212,8 @@ $(function() {
         $('#finalComments').val('');
         $('#gembaWalkObservations').empty();
         setMessage('', 'success');
+        applyCurrentUserIdentity(true);
+        setEditLock(false);
         loadOptions();
     }
 
@@ -170,7 +223,6 @@ $(function() {
             return '' +
                 '<tr>' +
                 '<td class="gw-row-number">' + (index + 1) + '</td>' +
-                '<td>' + escapeHtml(record.id) + '</td>' +
                 '<td>' + escapeHtml(record.startTime) + '</td>' +
                 '<td>' + escapeHtml(record.completionTime) + '</td>' +
                 '<td>' + escapeHtml(record.managerName) + '</td>' +
@@ -179,12 +231,15 @@ $(function() {
                 '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
                 '<td>' + escapeHtml(record.locationOfMswConducted) + '</td>' +
                 '<td>' + escapeHtml(record.responsibility) + '</td>' +
+                '<td>' + observations.map(function(observation) { return attachmentIcon('gemba-walk', observation.pictureImage, observation.pictureImage); }).join(' ') + '</td>' +
                 '<td><span class="gw-status-pill">' + observations.length + '</span></td>' +
                 '<td>' + escapeHtml(record.finalComments) + '</td>' +
+                '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="13" class="gw-empty-cell">No records found.</td></tr>');
+        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="14" class="gw-empty-cell">No records found.</td></tr>');
+        records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
     function loadRecords() {
@@ -197,14 +252,16 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="13" class="gw-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="14" class="gw-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }
 
     function openDrawer(record) {
-        $('#gembaWalkDrawerTitle').text(record && record.id ? 'Edit Gemba Walk' : 'Add Gemba Walk');
-        $('#gembaWalkSubmitBtn span').text(record && record.id ? 'Update Walk' : 'Save Walk');
+        const editing = !!(record && record.id);
+        $('#gembaWalkDrawerTitle').text(editing ? 'Edit Gemba Walk' : 'Add Gemba Walk');
+        $('#gembaWalkSubmitBtn span').text(editing ? 'Update Walk' : 'Save Walk');
+        setEditLock(editing);
         $('.gemba-walk-config-page').addClass('gw-drawer-open');
         $('#gembaWalkConfigForm').attr('aria-hidden', 'false');
         $('#gembaWalkConfigDrawerBackdrop').attr('aria-hidden', 'false');
@@ -243,13 +300,8 @@ $(function() {
                 lifeSaverRules = options.lifeSaverRules || [];
                 processAreas = options.processAreas || [];
                 populateSelect('#locationOfMswConducted', processAreas, $('#locationOfMswConducted').val() || params.get('location') || '');
-                const currentUser = options.currentUser || {};
-                if (!$('#email').val()) {
-                    $('#email').val(currentUser.email || '');
-                }
-                if (!$('#managerName').val()) {
-                    $('#managerName').val(currentUser.label || currentUser.username || '');
-                }
+                currentUserIdentity = options.currentUser || {};
+                applyCurrentUserIdentity(false);
                 populateResponsibility(options.responsibilityUsers || [], $('#responsibility').val() || options.defaultResponsibility || '');
                 const existing = $('#gembaWalkObservations .gw-observation').map(function() {
                     const $section = $(this);
@@ -263,6 +315,7 @@ $(function() {
                 }).get();
                 $('#gembaWalkObservations').empty();
                 (existing.length ? existing : [{}]).forEach(addObservation);
+                setEditLock(isEditMode());
             },
             error: function() {
                 setMessage('Unable to load Gemba Walk data.', 'error');
@@ -272,6 +325,7 @@ $(function() {
 
     function saveRecord() {
         const id = $('#gembaWalkRecordId').val();
+        setSaveLoading(true);
         $.ajax({
             url: API + '/records' + (id ? '/' + encodeURIComponent(id) : ''),
             type: id ? 'PUT' : 'POST',
@@ -289,6 +343,9 @@ $(function() {
             },
             error: function(xhr) {
                 setMessage(xhr.responseJSON?.message || 'Unable to submit.', 'error');
+            },
+            complete: function() {
+                setSaveLoading(false);
             }
         });
     }

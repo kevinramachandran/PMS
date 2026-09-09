@@ -365,13 +365,18 @@
             return;
         }
 
-        const result = validatePayload(false, true);
+        const result = validatePayload(true, true);
         if (!result.valid) {
-            showMessage('Please complete the required SMTP fields before testing.', 'error');
+            showMessage('Please complete the SMTP and sender fields before sending a test email.', 'error');
+            return;
+        }
+        if (!result.payload.replyTo) {
+            setFieldError('replyTo', 'Reply-To Email is required for test mail.');
+            showMessage('Please enter a Reply-To Email to receive the test email.', 'error');
             return;
         }
 
-        setButtonLoading(testBtn, '<i class="fas fa-spinner fa-spin"></i> Testing...', true);
+        setButtonLoading(testBtn, '<i class="fas fa-spinner fa-spin"></i> Sending...', true);
         fetch('/api/email-config/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -387,7 +392,7 @@
                 showMessage(data.message || 'Test completed.', resultData.ok ? 'success' : 'error');
             })
             .catch(function () {
-                showMessage('Unable to test SMTP connection. Please try again.', 'error');
+                showMessage('Unable to send test email. Please try again.', 'error');
             })
             .finally(function () {
                 setButtonLoading(testBtn, '', false, '<i class="fas fa-plug"></i> Test Connection');
@@ -405,8 +410,8 @@
             return;
         }
 
-        const result = validatePayload(false, false);
-        testBtn.disabled = !result.valid;
+        const result = validatePayload(true, false);
+        testBtn.disabled = !result.valid || !result.payload.replyTo;
     }
 
     function handlePasswordInput() {

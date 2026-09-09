@@ -441,6 +441,188 @@ body.modern-shell .footer {
     transform: translateY(0);
 }
 
+.pms-confirm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(15, 23, 42, 0.48);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+}
+
+.pms-confirm-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.pms-confirm-dialog {
+    width: min(430px, calc(100vw - 32px));
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    padding: 24px;
+    transform: translateY(10px) scale(0.98);
+    transition: transform 0.18s ease;
+}
+
+.pms-confirm-modal.is-open .pms-confirm-dialog {
+    transform: translateY(0) scale(1);
+}
+
+.pms-confirm-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b42318;
+    font-size: 18px;
+}
+
+.pms-confirm-copy h2 {
+    margin: 0;
+    color: #111827;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.pms-confirm-copy p {
+    margin: 10px 0 0;
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.pms-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.pms-confirm-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 104px;
+    min-height: 42px;
+    border-radius: 7px;
+    padding: 0 16px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.pms-confirm-cancel {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #111827;
+}
+
+.pms-confirm-cancel:hover {
+    background: #eef2f7;
+}
+
+.pms-confirm-delete {
+    border: 1px solid #b42318;
+    background: #c51f1a;
+    color: #ffffff;
+}
+
+.pms-confirm-delete:hover {
+    background: #a91714;
+}
+
+.pms-confirm-open {
+    overflow: hidden;
+}
+
+@media (max-width: 520px) {
+    .pms-confirm-dialog {
+        padding: 20px;
+    }
+
+    .pms-confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    .pms-confirm-actions button {
+        width: 100%;
+    }
+}
+
+body:not(.login-page) table thead th {
+    background: linear-gradient(135deg, #0b6b2e 0%, #087333 100%) !important;
+    color: #ffffff !important;
+    border-color: #075f2c !important;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+body:not(.login-page) table thead th a,
+body:not(.login-page) table thead th button,
+body:not(.login-page) table thead th span,
+body:not(.login-page) table thead th i {
+    color: inherit !important;
+}
+
+body:not(.login-page) table thead th input,
+body:not(.login-page) table thead th select,
+body:not(.login-page) table thead th textarea {
+    color: #111827 !important;
+}
+
+body:not(.login-page) table thead th.pms-global-sortable,
+body:not(.login-page) table thead th.sortable {
+    position: relative;
+    cursor: pointer;
+    padding-right: 26px !important;
+}
+
+body:not(.login-page) table thead th.pms-global-sortable:hover,
+body:not(.login-page) table thead th.sortable:hover {
+    background: linear-gradient(135deg, #087333 0%, #065f2a 100%) !important;
+}
+
+body:not(.login-page) table thead th.pms-global-sortable::after,
+body:not(.login-page) table thead th.sortable::after {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f0dc";
+    position: absolute;
+    right: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #d8f8e2 !important;
+    opacity: 0.78;
+    font-size: 0.8em;
+}
+
+body:not(.login-page) table thead th.pms-sort-asc::after,
+body:not(.login-page) table thead th.sort-asc::after {
+    content: "\f0de";
+    color: #ffffff !important;
+    opacity: 1;
+}
+
+body:not(.login-page) table thead th.pms-sort-desc::after,
+body:not(.login-page) table thead th.sort-desc::after {
+    content: "\f0dd";
+    color: #ffffff !important;
+    opacity: 1;
+}
+
 /* Keep full settings navigation visible for all config pages. */
 .settings-container.issue-board-full-page .settings-sidebar {
     display: block !important;

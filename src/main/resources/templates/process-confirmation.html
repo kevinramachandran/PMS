@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMS Process Confirmation - Carlsberg Brewery</title>
+    <title>CarlEX Process Confirmation - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/process-confirmation.css">
+    <link rel="stylesheet" href="/css/dashboard.css?v=table-sort-20260909">
+    <link rel="stylesheet" href="/css/process-confirmation.css?v=carlex-records-polish-20260906">
     <link rel="stylesheet" href="/css/pms-attachment.css?v=20260830">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=table-sort-20260909">
+    <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
 </head>
 <body class="modern-shell dashboard-bg">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -26,14 +27,13 @@
             <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
             <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
             <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-            <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
+            <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
             <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
             <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
             <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
-                <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
-                <a href="/process-confirmation" class="nav-item active" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
+                <a href="/process-confirmation" class="nav-item active" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
             <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                 <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                 <div class="nav-children">
@@ -54,9 +54,10 @@
                         <a href="/settings?config=lsr-tracking" class="nav-item nav-child" th:if="${session.canViewLsrTrackingConfiguration}" data-tooltip="LSR Tracking"><i class="fas fa-graduation-cap"></i><span>LSR Tracking</span></a>
                     </div>
                 </div>            <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
+            <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
             <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
@@ -64,7 +65,7 @@
                 <div class="nav-parent" th:if="${session.canViewMasterDataGroup}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
-                        <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                        <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
                         <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                         <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
                         <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
@@ -85,21 +86,30 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>PMS Process Confirmation</h1>
+                <h1>CarlEX Process Confirmation</h1>
             </div>
-            <div class="header-center">
-                <label class="header-filter-label" for="pcMonthFilter">Month &amp; Year</label>
-                <input type="month" id="pcMonthFilter" class="header-filter-select pms-month-picker" aria-label="Process confirmation month and year">
-            </div>
+            <div class="header-center"></div>
             <div class="header-right">
-                <div class="sync-status" id="pcSyncStatus">Last synced: --:--:--</div>
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
                 <div class="user-avatar" th:attr="data-username=${session.username != null ? session.username : 'User'}"><i class="fas fa-user"></i></div>
             </div>
         </header>
 
         <div class="content-area">
-            <section class="pc-card">
+            <section class="pc-card carlex-records-card">
+                <div class="pc-page-toolbar">
+                    <div class="pc-page-title">
+                        <h2>CarlEX Process Confirmation</h2>
+                        <p>Review completed process confirmation records.</p>
+                    </div>
+                    <a class="pc-config-link" href="/process-confirmation-config" title="Open configuration">
+                        <i class="fas fa-sliders"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+                <div class="pc-records-wrap"><table class="pc-records-table"><thead><tr><th>#</th><th>ID</th><th>Date of GW Process Confirmation</th><th>Name</th><th>Area</th><th>Responsibility</th><th>Assigned To</th><th>Done By</th><th>Start time</th><th>Completion time</th><th>Pictures</th><th>Assignment History</th><th>Actions</th></tr></thead><tbody id="pcRecordsBody"><tr><td colspan="13">Loading records...</td></tr></tbody></table></div>
+            </section>
+            <section class="pc-card pc-legacy-view" aria-hidden="true">
                 <div class="pc-meta-row">
                     <div class="pc-meta-card"><strong>KPI:</strong> <span id="pcKpi">Meeting Process Confirmation</span></div>
                     <div class="pc-meta-card"><strong>Target:</strong> <span id="pcTarget">&gt; 80%</span></div>
@@ -151,10 +161,10 @@
     </main>
 </div>
 
-<script src="/js/process-confirmation.js?v=nav-global-20260814"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation.js?v=nav-global-20260814"></script>
 <script src="/js/pms-attachment.js?v=20260830"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=table-sort-20260909"></script>
 </body>
 </html>
 

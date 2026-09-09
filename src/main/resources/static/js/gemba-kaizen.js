@@ -110,9 +110,11 @@ $(function() {
                 '<td>' + escapeHtml(record.gembaKaizenLocation) + '</td>' +
                 '<td>' + escapeHtml(record.gembaKaizenGenerationDate) + '</td>' +
                 '<td>' + escapeHtml(record.kaizenIdea) + '</td>' +
-                '<td>' + escapeHtml(record.pictureImage) + '</td>' +
+                '<td>' + attachmentIcon('gemba-kaizen', record.pictureImage, record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.benefitsOfKaizen) + '</td>' +
                 '<td>' + escapeHtml(record.isKaizenImplemented) + '</td>' +
+                '<td>' + escapeHtml(record.assignedTo) + '</td>' +
+                '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="gk-open-btn" data-id="' + escapeHtml(record.id) + '" title="Open record" aria-label="Open Gemba Kaizen record"><i class="fas fa-arrow-up-right-from-square"></i></button></td>' +
                 '</tr>';
         }).join(''));
@@ -122,6 +124,7 @@ $(function() {
         updateCounts();
         renderChart();
         renderRows();
+        $('.assignment-history-cell').each(function() { const cell=$(this); $.getJSON(API + '/records/' + cell.data('record-id') + '/history', function(entries) { cell.html(formatAssignmentHistory(entries)); }); });
     }
 
     function loadRecords() {

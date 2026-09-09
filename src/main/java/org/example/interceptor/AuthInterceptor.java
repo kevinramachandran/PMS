@@ -277,6 +277,10 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION;
         }
 
+        if (isReadMethod(request.getMethod()) && (path.startsWith("/api/gemba-walk-config/records") || path.startsWith("/api/gemba-walk-config/options"))) {
+            return RoleAccess.PAGE_GEMBA_WALK_REPORTING;
+        }
+
         if (path.startsWith("/gemba-walk-config") || path.startsWith("/config/gemba-walk")
                 || path.startsWith("/api/gemba-walk-config") || path.startsWith("/api/gemba-schedule")) {
             return RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION;
@@ -311,7 +315,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION;
         }
 
-        if (path.startsWith("/config/process-confirmation") || path.startsWith("/api/process-confirmation")) {
+        if (path.startsWith("/config/process-confirmation") || path.startsWith("/process-confirmation-config") || path.startsWith("/api/process-confirmation") || path.startsWith("/api/carlex-process-confirmation") || path.startsWith("/api/assignment-history")) {
             return RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
         }
 

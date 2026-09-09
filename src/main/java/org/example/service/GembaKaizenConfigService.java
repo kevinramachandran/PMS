@@ -29,17 +29,20 @@ public class GembaKaizenConfigService {
     private final PlantMasterDataService plantMasterDataService;
     private final AppUserRepository userRepository;
     private final EmailConfigService emailConfigService;
+    private final AssignmentHistoryService assignmentHistoryService;
 
     public GembaKaizenConfigService(GembaKaizenRecordRepository repository,
                                     GembaKaizenMasterDataService kaizenMasterDataService,
                                     PlantMasterDataService plantMasterDataService,
                                     AppUserRepository userRepository,
-                                    EmailConfigService emailConfigService) {
+                                    EmailConfigService emailConfigService,
+                                    AssignmentHistoryService assignmentHistoryService) {
         this.repository = repository;
         this.kaizenMasterDataService = kaizenMasterDataService;
         this.plantMasterDataService = plantMasterDataService;
         this.userRepository = userRepository;
         this.emailConfigService = emailConfigService;
+        this.assignmentHistoryService = assignmentHistoryService;
     }
 
     public List<GembaKaizenRecord> list() {
@@ -54,7 +57,8 @@ public class GembaKaizenConfigService {
     public GembaKaizenRecord create(GembaKaizenRecord record, String username) {
         applyDefaults(record, username);
         GembaKaizenRecord saved = repository.save(record);
-        notifyHods(saved, username, "Gemba Kaizen Submitted: #" + saved.getId(), "Gemba Kaizen #" + saved.getId() + " has been submitted.");
+        assignmentHistoryService.record("gemba-kaizen", saved.getId(), "", saved.getAssignedTo(), saved.getAssignmentRemark(), username, saved.getGembaKaizenLocation());
+        notifyHods(saved, username, "Gemba Kaizen Submitted: #" + saved.getId(), buildKaizenEmailBody("Gemba Kaizen Submitted", "A Gemba Kaizen idea has been submitted for review.", saved));
         if (isImplemented(saved)) {
             notifyClosed(saved, username);
         }
@@ -64,21 +68,15 @@ public class GembaKaizenConfigService {
     @Transactional
     public Optional<GembaKaizenRecord> update(Long id, GembaKaizenRecord incoming, String username) {
         return repository.findById(id).map(existing -> {
+            String previousAssignee = existing.getAssignedTo();
             boolean wasImplemented = isImplemented(existing);
-            existing.setName(trim(incoming.getName()));
-            existing.setLastModifiedTime(trim(incoming.getLastModifiedTime()));
-            existing.setGembaKaizenProviderName(trim(incoming.getGembaKaizenProviderName()));
-            existing.setEmployeeIdHoNumber(trim(incoming.getEmployeeIdHoNumber()));
-            existing.setDepartment(trim(incoming.getDepartment()));
-            existing.setClassificationOfKaizen(trim(incoming.getClassificationOfKaizen()));
-            existing.setGembaKaizenLocation(trim(incoming.getGembaKaizenLocation()));
-            existing.setGembaKaizenGenerationDate(incoming.getGembaKaizenGenerationDate());
-            existing.setKaizenIdea(trim(incoming.getKaizenIdea()));
             existing.setPictureImage(trim(incoming.getPictureImage()));
-            existing.setBenefitsOfKaizen(trim(incoming.getBenefitsOfKaizen()));
             existing.setIsKaizenImplemented(normalizeYesNo(incoming.getIsKaizenImplemented()));
+            existing.setAssignedTo(trim(incoming.getAssignedTo()));
+            existing.setAssignmentRemark(incoming.getAssignmentRemark());
             applyDefaults(existing, username);
             GembaKaizenRecord saved = repository.save(existing);
+            assignmentHistoryService.record("gemba-kaizen", saved.getId(), previousAssignee, saved.getAssignedTo(), incoming.getAssignmentRemark(), username, saved.getGembaKaizenLocation());
             if (!wasImplemented && isImplemented(saved)) {
                 notifyClosed(saved, username);
             }
@@ -92,6 +90,7 @@ public class GembaKaizenConfigService {
         options.put("departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT));
         options.put("processAreas", plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA));
         options.put("classifications", kaizenMasterDataService.names(GembaKaizenMasterDataService.CLASSIFICATION_OF_KAIZEN));
+        options.put("assignmentUsers", activeUsers().stream().filter(user -> isHod(user) || isAssignable(user)).map(this::userOption).toList());
         return options;
     }
 
@@ -116,9 +115,6 @@ public class GembaKaizenConfigService {
         currentUser(username).ifPresent(user -> {
             if (isBlank(record.getName())) {
                 record.setName(firstNonBlank(user.getName(), user.getUsername()));
-            }
-            if (isBlank(record.getGembaKaizenProviderName())) {
-                record.setGembaKaizenProviderName(firstNonBlank(user.getName(), user.getUsername()));
             }
             if (isBlank(record.getEmployeeIdHoNumber())) {
                 record.setEmployeeIdHoNumber(trim(user.getEmployeeId()));
@@ -149,7 +145,7 @@ public class GembaKaizenConfigService {
     }
 
     private void notifyHods(GembaKaizenRecord record, String username, String subject, String body) {
-        emailConfigService.sendEmail(hodEmails(record, username), subject, body);
+        emailConfigService.sendEmail(hodEmails(record, username), subject, body, true, true);
     }
 
     private void notifyClosed(GembaKaizenRecord record, String username) {
@@ -162,7 +158,12 @@ public class GembaKaizenConfigService {
                         recipients.add(email);
                     }
                 });
-        emailConfigService.sendEmail(recipients, "Gemba Kaizen Closed: #" + record.getId(), "Gemba Kaizen #" + record.getId() + " has been closed.");
+        assignedUserEmail(record.getAssignedTo()).ifPresent(email -> {
+            if (!recipients.contains(email)) {
+                recipients.add(email);
+            }
+        });
+        emailConfigService.sendEmail(recipients, "Gemba Kaizen Closed: #" + record.getId(), buildKaizenEmailBody("Gemba Kaizen Closed", "This Gemba Kaizen has been marked as implemented.", record), true, true);
     }
 
     private List<String> hodEmails(GembaKaizenRecord record, String username) {
@@ -173,7 +174,25 @@ public class GembaKaizenConfigService {
                 recipients.add(email);
             }
         });
+        assignedUserEmail(record.getAssignedTo()).ifPresent(email -> {
+            if (!recipients.contains(email)) {
+                recipients.add(email);
+            }
+        });
         return recipients;
+    }
+
+    private Optional<String> assignedUserEmail(String assignedTo) {
+        String value = trim(assignedTo);
+        if (value.isBlank()) {
+            return Optional.empty();
+        }
+        return userRepository.findByUsernameIgnoreCase(value)
+                .or(() -> userRepository.findByEmailIgnoreCase(value))
+                .or(() -> userRepository.findByNameIgnoreCase(value))
+                .or(() -> userRepository.findByEmployeeIdIgnoreCase(value))
+                .map(AppUser::getEmail)
+                .filter(email -> !isBlank(email));
     }
 
     private Optional<String> reportingHodEmail(AppUser user) {
@@ -225,6 +244,14 @@ public class GembaKaizenConfigService {
                 || designation.contains("HEAD_OF_DEPARTMENT");
     }
 
+    private boolean isAssignable(AppUser user) {
+        String designation = trim(user.getDesignation()).toUpperCase(Locale.ENGLISH);
+        return RoleAccess.isAssignableOperationalRole(user.getRole())
+                || designation.equals("ENGINEER")
+                || designation.equals("EXECUTIVE")
+                || designation.equals("OPERATOR");
+    }
+
     private Optional<AppUser> currentUser(String username) {
         if (isBlank(username)) {
             return Optional.empty();
@@ -242,7 +269,9 @@ public class GembaKaizenConfigService {
 
     private Map<String, String> userOption(AppUser user) {
         return Map.of(
+            "username", firstNonBlank(user.getUsername(), user.getEmail()),
                 "name", firstNonBlank(user.getName(), user.getUsername()),
+            "label", firstNonBlank(user.getName(), user.getUsername()),
                 "employeeId", trim(user.getEmployeeId())
         );
     }
@@ -290,6 +319,49 @@ public class GembaKaizenConfigService {
                 .append("</td></tr></table>")
                 .append("</body></html>");
         return html.toString();
+    }
+
+    private String buildKaizenEmailBody(String title, String intro, GembaKaizenRecord record) {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><body style='margin:0;padding:0;background:#f5f7f9;font-family:Arial,sans-serif;color:#1f2937;'>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='background:#f5f7f9;padding:24px 0;'>")
+                .append("<tr><td align='center'>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='680' style='max-width:680px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>")
+                .append("<tr><td style='background:#003d24;padding:16px 20px;'>")
+                .append("<img src='cid:brandLogo' alt='Carlsberg logo' style='height:34px;width:auto;display:block;'>")
+                .append("</td></tr><tr><td style='padding:20px;'>")
+                .append("<h2 style='margin:0 0 8px;color:#003d24;font-size:20px;'>")
+                .append(escapeHtml(title))
+                .append("</h2>")
+                .append("<p style='margin:0 0 16px;font-size:14px;line-height:1.5;'>")
+                .append(escapeHtml(intro))
+                .append("</p>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:14px;'>")
+                .append(detailRow("Kaizen ID", record.getId() == null ? "-" : "#" + record.getId()))
+                .append(detailRow("Name", record.getName()))
+                .append(detailRow("Provider Name", record.getGembaKaizenProviderName()))
+                .append(detailRow("Employee ID / HO Number", record.getEmployeeIdHoNumber()))
+                .append(detailRow("Department", record.getDepartment()))
+                .append(detailRow("Classification", record.getClassificationOfKaizen()))
+                .append(detailRow("Location", record.getGembaKaizenLocation()))
+                .append(detailRow("Generation Date", record.getGembaKaizenGenerationDate() == null ? "" : record.getGembaKaizenGenerationDate().toString()))
+                .append(detailRow("Kaizen Idea", record.getKaizenIdea()))
+                .append(detailRow("Benefits", record.getBenefitsOfKaizen()))
+                .append(detailRow("Implemented", record.getIsKaizenImplemented()))
+                .append(detailRow("Assigned To", record.getAssignedTo()))
+                .append("</table>")
+                .append("<p style='margin:16px 0 0;font-size:13px;color:#6b7280;'>Please review and update the Gemba Kaizen record in PMS.</p>")
+                .append("<p style='margin:16px 0 0;font-size:13px;color:#6b7280;'>Regards,<br>Brewery PMS</p>")
+                .append("</td></tr></table></td></tr></table></body></html>");
+        return html.toString();
+    }
+
+    private String detailRow(String label, String value) {
+        return "<tr><td style='padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;width:190px;color:#374151;font-weight:600;'>"
+                + escapeHtml(label)
+                + "</td><td style='padding:8px 10px;border:1px solid #e5e7eb;color:#111827;'>"
+                + escapeHtml(isBlank(value) ? "-" : value)
+                + "</td></tr>";
     }
 
     private String headerCell(String value) {

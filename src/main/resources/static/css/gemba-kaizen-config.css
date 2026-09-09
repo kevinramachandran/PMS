@@ -46,6 +46,15 @@
     color: #475569;
 }
 
+.gemba-kaizen-config-page .gk-form-group input:disabled,
+.gemba-kaizen-config-page .gk-form-group select:disabled,
+.gemba-kaizen-config-page .gk-form-group textarea:disabled {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
 .gemba-kaizen-config-page .gk-wide {
     grid-column: 1 / -1;
 }
@@ -212,25 +221,29 @@
 
 .gemba-kaizen-config-page .gk-config-drawer {
     position: fixed;
-    top: 0;
-    right: 0;
+    top: 50%;
+    right: auto;
+    left: 50%;
     z-index: 3000;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
-    width: min(590px, calc(100vw - 40px));
-    height: 100vh;
+    width: min(1180px, calc(100vw - 54px));
+    height: min(88vh, 820px);
     margin: 0;
-    border: 0;
-    border-left: 1px solid #dfe5e2;
-    border-radius: 0;
-    box-shadow: -18px 0 34px rgba(15, 23, 42, 0.18);
-    transform: translateX(100%);
-    transition: transform 180ms ease;
+    border: 1px solid #dfe5e2;
+    border-radius: 8px;
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
+    transform: translate(-50%, -46%) scale(0.98);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 180ms ease, opacity 180ms ease;
     overflow: hidden;
 }
 
 .gemba-kaizen-config-page.gk-drawer-open .gk-config-drawer {
-    transform: translateX(0);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .gemba-kaizen-config-page .gk-drawer-header {
@@ -238,7 +251,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 24px 26px;
+    padding: 18px 24px;
     border-bottom: 1px solid #e5e7eb;
 }
 
@@ -269,18 +282,18 @@
 .gemba-kaizen-config-page .gk-drawer-body {
     min-height: 0;
     overflow: auto;
-    padding: 18px;
-    padding-bottom: 28px;
+    padding: 16px 24px;
+    padding-bottom: 20px;
 }
 
 .gemba-kaizen-config-page .gk-drawer-body .gk-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 14px;
     padding: 0;
 }
 
 .gemba-kaizen-config-page .gk-drawer-body .gk-wide {
-    grid-column: 1 / -1;
+    grid-column: span 2;
 }
 
 .gemba-kaizen-config-page .gk-drawer-body .gk-form-group {
@@ -297,6 +310,13 @@
 .gemba-kaizen-config-page .gk-drawer-body .gk-form-group textarea {
     min-width: 0;
     box-sizing: border-box;
+    min-height: 40px;
+    padding: 8px 10px;
+}
+
+.gemba-kaizen-config-page .gk-drawer-body .gk-form-group textarea {
+    min-height: 72px;
+    resize: vertical;
 }
 
 .gemba-kaizen-config-page .gk-drawer-actions {
@@ -304,7 +324,7 @@
     align-items: center;
     justify-content: flex-end;
     gap: 14px;
-    padding: 18px 26px;
+    padding: 14px 24px;
     border-top: 1px solid #e5e7eb;
     background: #ffffff;
 }
@@ -340,7 +360,15 @@
     }
 
     .gemba-kaizen-config-page .gk-config-drawer {
+        inset: 0;
         width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        transform: translateX(100%);
+    }
+
+    .gemba-kaizen-config-page.gk-drawer-open .gk-config-drawer {
+        transform: translateX(0);
     }
 
     .gemba-kaizen-config-page .gk-drawer-body .gk-form-grid {

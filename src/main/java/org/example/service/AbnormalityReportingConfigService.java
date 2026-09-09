@@ -7,6 +7,7 @@ import org.example.repository.AppUserRepository;
 import org.example.util.RoleAccess;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -23,24 +24,29 @@ import java.util.Set;
 public class AbnormalityReportingConfigService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-    private static final Set<String> ASSIGNABLE_DESIGNATIONS = Set.of("ENGINEER", "EXECUTIVE", "OPERATOR");
+    private static final Set<String> PRIORITIES = Set.of("HIGH", "MEDIUM", "LOW");
+    private static final Set<String> SHIFTS = Set.of("A", "B", "C", "G");
+    private static final Set<String> TAG_STATUSES = Set.of("OPEN", "CLOSED");
 
     private final AbnormalityReportingRecordRepository repository;
     private final AbnormalityMasterDataService abnormalityMasterDataService;
     private final PlantMasterDataService plantMasterDataService;
     private final AppUserRepository appUserRepository;
     private final EmailConfigService emailConfigService;
+    private final AssignmentHistoryService assignmentHistoryService;
 
     public AbnormalityReportingConfigService(AbnormalityReportingRecordRepository repository,
                                              AbnormalityMasterDataService abnormalityMasterDataService,
                                              PlantMasterDataService plantMasterDataService,
                                              AppUserRepository appUserRepository,
-                                             EmailConfigService emailConfigService) {
+                                             EmailConfigService emailConfigService,
+                                             AssignmentHistoryService assignmentHistoryService) {
         this.repository = repository;
         this.abnormalityMasterDataService = abnormalityMasterDataService;
         this.plantMasterDataService = plantMasterDataService;
         this.appUserRepository = appUserRepository;
         this.emailConfigService = emailConfigService;
+        this.assignmentHistoryService = assignmentHistoryService;
     }
 
     public List<AbnormalityReportingRecord> list() {
@@ -51,6 +57,7 @@ public class AbnormalityReportingConfigService {
         return id == null ? Optional.empty() : repository.findById(id);
     }
 
+    @Transactional
     public AbnormalityReportingRecord create(AbnormalityReportingRecord request, String username) {
         AbnormalityReportingRecord record = new AbnormalityReportingRecord();
         apply(record, request);
@@ -59,10 +66,12 @@ public class AbnormalityReportingConfigService {
         }
         applyClosedDate(record);
         AbnormalityReportingRecord saved = repository.save(record);
+        assignmentHistoryService.record("abnormality-reporting", saved.getId(), "", saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
         notifyDepartmentHod(saved, "Abnormality Report Raised");
         return saved;
     }
 
+    @Transactional
     public Optional<AbnormalityReportingRecord> update(Long id, AbnormalityReportingRecord request, String username) {
         Optional<AbnormalityReportingRecord> existing = find(id);
         if (existing.isEmpty()) {
@@ -70,10 +79,12 @@ public class AbnormalityReportingConfigService {
         }
 
         AbnormalityReportingRecord record = existing.get();
+        String previousAssignee = record.getAssignTo();
         boolean wasClosed = isClosed(record.getTagStatus());
         apply(record, request);
         applyClosedDate(record);
         AbnormalityReportingRecord saved = repository.save(record);
+        assignmentHistoryService.record("abnormality-reporting", saved.getId(), previousAssignee, saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
         if (!wasClosed && isClosed(saved.getTagStatus())) {
             notifyClosure(saved);
         }
@@ -83,18 +94,23 @@ public class AbnormalityReportingConfigService {
     public Map<String, Object> options() {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("typeOfTags", abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE));
+        payload.put("plants", plantMasterDataService.names(PlantMasterDataService.PLANT));
         payload.put("departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT));
         payload.put("areaMachines", plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA));
+        payload.put("plantItems", plantMasterDataService.list(PlantMasterDataService.PLANT));
+        payload.put("departmentItems", plantMasterDataService.list(PlantMasterDataService.DEPARTMENT));
+        payload.put("areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA));
         payload.put("abnormalityDefectTypes", abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE));
         payload.put("hods", userOptions(findDepartmentHods(null)));
-        payload.put("assignableUsers", userOptions(findAssignableUsers(null)));
+        payload.put("assignableUsers", userOptions(findDepartmentHods(null)));
+        payload.put("reportingUsers", userOptions(activeUsers()));
         return payload;
     }
 
     public Map<String, Object> departmentOptions(String department) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("hods", userOptions(findDepartmentHods(department)));
-        payload.put("assignableUsers", userOptions(findAssignableUsers(department)));
+        payload.put("assignableUsers", userOptions(findDepartmentHods(department)));
         return payload;
     }
 
@@ -119,10 +135,20 @@ public class AbnormalityReportingConfigService {
             throw new IllegalArgumentException("Record is required");
         }
         validateConfigured(request.getTypeOfTag(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE), "Type of Tag");
+        validateInSet(request.getPriority(), PRIORITIES, "Priority");
+        validateRequired(request.getAbnormalityTagNumber(), "Abnormality Tag Number");
+        validateRequired(request.getTagRaisedBy(), "Tag Raised By");
+        validateRequired(request.getDateRaised(), "Date Raised");
+        validateInSet(request.getShift(), SHIFTS, "Shift");
         validateConfigured(request.getAbnormalityRelatedTo(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Abnormality Related To");
         validateConfigured(request.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
         validateConfigured(request.getAreaMachine(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area/Machine");
+        validateRequired(request.getComponent(), "Component");
+        validateRequired(request.getDescription(), "Description");
+        validateRequired(request.getProposedAction(), "Proposed Action");
         validateConfigured(request.getAbnormalityDefectType(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE), "Abnormality/Defect Type");
+        validateDepartmentHod(request.getAssignTo(), request.getDepartment());
+        validateInSet(request.getTagStatus(), TAG_STATUSES, "Tag Status");
         record.setTypeOfTag(trim(request.getTypeOfTag()));
         record.setPriority(trim(request.getPriority()));
         record.setAbnormalityTagNumber(trim(request.getAbnormalityTagNumber()));
@@ -154,12 +180,46 @@ public class AbnormalityReportingConfigService {
     private void validateConfigured(String value, List<String> options, String label) {
         String trimmed = trim(value);
         if (trimmed == null) {
-            return;
+            throw new IllegalArgumentException(label + " is required");
         }
         boolean configured = options.stream()
                 .anyMatch(option -> option != null && option.trim().equalsIgnoreCase(trimmed));
         if (!configured) {
             throw new IllegalArgumentException(label + " must be configured in Master Data");
+        }
+    }
+
+    private void validateRequired(String value, String label) {
+        if (isBlank(value)) {
+            throw new IllegalArgumentException(label + " is required");
+        }
+    }
+
+    private void validateRequired(LocalDate value, String label) {
+        if (value == null) {
+            throw new IllegalArgumentException(label + " is required");
+        }
+    }
+
+    private void validateInSet(String value, Set<String> allowedValues, String label) {
+        String normalized = normalize(value);
+        if (normalized.isBlank()) {
+            throw new IllegalArgumentException(label + " is required");
+        }
+        if (!allowedValues.contains(normalized)) {
+            throw new IllegalArgumentException(label + " is invalid");
+        }
+    }
+
+    private void validateDepartmentHod(String username, String department) {
+        validateRequired(username, "Assign To");
+        boolean valid = findDepartmentHods(department).stream()
+                .anyMatch(user -> equalsIgnoreCase(user.getUsername(), username)
+                        || equalsIgnoreCase(user.getName(), username)
+                        || equalsIgnoreCase(user.getEmail(), username)
+                        || equalsIgnoreCase(user.getEmployeeId(), username));
+        if (!valid) {
+            throw new IllegalArgumentException("Assign To must be a HoD from the selected department");
         }
     }
 
@@ -181,18 +241,22 @@ public class AbnormalityReportingConfigService {
     }
 
     private List<AppUser> findDepartmentHods(String department) {
-        return appUserRepository.findAll().stream()
+        List<AppUser> hods = appUserRepository.findAll().stream()
                 .filter(this::isActive)
-                .filter(user -> isBlank(department) || equalsIgnoreCase(user.getDepartment(), department))
                 .filter(this::isHod)
                 .toList();
+        if (isBlank(department)) {
+            return hods;
+        }
+        List<AppUser> scoped = hods.stream()
+                .filter(user -> sameMasterValue(user.getDepartment(), department))
+                .toList();
+        return scoped.isEmpty() ? hods : scoped;
     }
 
-    private List<AppUser> findAssignableUsers(String department) {
+    private List<AppUser> activeUsers() {
         return appUserRepository.findAll().stream()
                 .filter(this::isActive)
-                .filter(user -> isBlank(department) || equalsIgnoreCase(user.getDepartment(), department))
-                .filter(this::isAssignable)
                 .toList();
     }
 
@@ -200,12 +264,9 @@ public class AbnormalityReportingConfigService {
         String designation = normalize(user.getDesignation());
         return RoleAccess.isHod(user.getRole())
                 || designation.contains("HOD")
-                || designation.contains("HEAD_OF_DEPARTMENT");
-    }
-
-    private boolean isAssignable(AppUser user) {
-        return RoleAccess.isAssignableOperationalRole(user.getRole())
-                || ASSIGNABLE_DESIGNATIONS.contains(normalize(user.getDesignation()));
+                || designation.contains("HEAD_OF_DEPARTMENT")
+                || designation.contains("DEPARTMENT_HEAD")
+                || designation.contains("AREA_HEAD");
     }
 
     private List<Map<String, String>> userOptions(List<AppUser> users) {
@@ -348,6 +409,20 @@ public class AbnormalityReportingConfigService {
 
     private boolean equalsIgnoreCase(String left, String right) {
         return trim(left) != null && trim(right) != null && trim(left).equalsIgnoreCase(trim(right));
+    }
+
+    private boolean sameMasterValue(String left, String right) {
+        String first = compact(left);
+        String second = compact(right);
+        return !first.isBlank() && !second.isBlank() && first.equals(second);
+    }
+
+    private String compact(String value) {
+        String trimmed = trim(value);
+        if (trimmed == null) {
+            return "";
+        }
+        return trimmed.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
     }
 
     private String normalize(String value) {

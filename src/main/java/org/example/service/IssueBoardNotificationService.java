@@ -45,43 +45,67 @@ public class IssueBoardNotificationService {
                                             Map<Integer, IssueBoardItem> previousItems,
                                             Map<Integer, IssueBoardItem> currentItems) {
         for (Map.Entry<Integer, IssueBoardItem> entry : currentItems.entrySet()) {
-            IssueBoardItem currentItem = entry.getValue();
-            IssueBoardItem previousItem = previousItems.get(entry.getKey());
+            sendAssignmentNotification(boardDate, entry.getKey(), previousItems.get(entry.getKey()), entry.getValue());
+        }
+    }
 
-            if (!shouldSendAssignment(previousItem, currentItem)) {
-                log.debug("Row {}: no assignment change — skipping notification", entry.getKey());
-                continue;
-            }
+    public void sendAssignmentNotification(LocalDate boardDate,
+                                           Integer rowOrder,
+                                           IssueBoardItem previousItem,
+                                           IssueBoardItem currentItem) {
+        String rowLabel = rowOrder == null ? "-" : String.valueOf(rowOrder);
+        if (shouldSendCompletion(previousItem, currentItem)) {
+            sendResponsibleNotification(
+                    boardDate,
+                    rowLabel,
+                    currentItem,
+                    "Issue Completed: " + defaultText(currentItem.getProblem(), "Issue Board Item"),
+                    buildCompletionBody(boardDate, currentItem)
+            );
+            return;
+        }
 
-            log.info("Row {}: assignment changed, responsible='{}', problem='{}'",
-                    entry.getKey(), currentItem.getResponsible(), currentItem.getProblem());
+        if (!shouldSendAssignment(previousItem, currentItem)) {
+            log.debug("Row {}: no assignment change - skipping notification", rowLabel);
+            return;
+        }
 
-            Optional<AppUser> maybeRecipient = resolveRecipient(currentItem.getResponsible());
-            if (maybeRecipient.isEmpty()) {
-                log.warn("Row {}: no matching user found for responsible='{}' — assignment email NOT sent",
-                        entry.getKey(), currentItem.getResponsible());
-                continue;
-            }
+        log.info("Row {}: assignment changed, responsible='{}', problem='{}'",
+                rowLabel, currentItem.getResponsible(), currentItem.getProblem());
 
-            AppUser recipient = maybeRecipient.get();
-            String recipientEmail = recipient.getEmail();
-            if (recipientEmail == null || recipientEmail.isBlank()) {
-                log.warn("Row {}: user '{}' has no email address — assignment email NOT sent",
-                        entry.getKey(), recipient.getUsername());
-                continue;
-            }
+        String subject = "Issue Assigned: " + defaultText(currentItem.getProblem(), "Issue Board Item");
+        sendResponsibleNotification(boardDate, rowLabel, currentItem, subject, buildAssignmentBody(boardDate, currentItem));
+    }
 
-            log.info("Row {}: sending assignment email to '{}' ({})",
-                    entry.getKey(), recipient.getUsername(), recipientEmail);
+    private void sendResponsibleNotification(LocalDate boardDate,
+                                             String rowLabel,
+                                             IssueBoardItem currentItem,
+                                             String subject,
+                                             NotificationBodyFactory bodyFactory) {
+        Optional<AppUser> maybeRecipient = resolveRecipient(currentItem.getResponsible());
+        if (maybeRecipient.isEmpty()) {
+            log.warn("Row {}: no matching user found for responsible='{}' - assignment email NOT sent",
+                    rowLabel, currentItem.getResponsible());
+            return;
+        }
 
-            String subject = "Issue Assigned: " + defaultText(currentItem.getProblem(), "Issue Board Item");
-            String body = buildAssignmentBody(boardDate, recipient, currentItem);
-            boolean sent = emailConfigService.sendEmail(List.of(recipientEmail), subject, body, true, true);
-            if (sent) {
-                log.info("Row {}: assignment email sent successfully to '{}'", entry.getKey(), recipientEmail);
-            } else {
-                log.warn("Row {}: assignment email was NOT sent to '{}' — check email configuration (enabled flag, SMTP password)", entry.getKey(), recipientEmail);
-            }
+        AppUser recipient = maybeRecipient.get();
+        String recipientEmail = recipient.getEmail();
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Row {}: user '{}' has no email address - assignment email NOT sent",
+                    rowLabel, recipient.getUsername());
+            return;
+        }
+
+        log.info("Row {}: sending assignment email to '{}' ({})",
+                rowLabel, recipient.getUsername(), recipientEmail);
+
+        String body = bodyFactory.build(recipient);
+        boolean sent = emailConfigService.sendEmail(List.of(recipientEmail), subject, body, true, true);
+        if (sent) {
+            log.info("Row {}: assignment email sent successfully to '{}'", rowLabel, recipientEmail);
+        } else {
+            log.warn("Row {}: assignment email was NOT sent to '{}' - check email configuration (enabled flag, SMTP password)", rowLabel, recipientEmail);
         }
     }
 
@@ -150,17 +174,26 @@ public class IssueBoardNotificationService {
                 || !Objects.equals(previousItem.getTargetDate(), currentItem.getTargetDate());
     }
 
+    private boolean shouldSendCompletion(IssueBoardItem previousItem, IssueBoardItem currentItem) {
+        if (currentItem == null || currentItem.getCompletedDate() == null || normalize(currentItem.getResponsible()) == null) {
+            return false;
+        }
+        return previousItem == null
+                || previousItem.getCompletedDate() == null
+                || !Objects.equals(previousItem.getCompletedDate(), currentItem.getCompletedDate());
+    }
+
     private Optional<AppUser> resolveRecipient(String responsible) {
         String normalized = normalize(responsible);
         if (normalized == null) {
             return Optional.empty();
         }
 
-        Optional<AppUser> byUsername = appUserRepository.findByUsernameIgnoreCase(normalized);
-        if (byUsername.isPresent()) {
-            return byUsername;
-        }
-        return appUserRepository.findByEmailIgnoreCase(normalized);
+        return appUserRepository.findByUsernameIgnoreCase(normalized)
+                .or(() -> appUserRepository.findByEmailIgnoreCase(normalized))
+                .or(() -> appUserRepository.findByNameIgnoreCase(normalized))
+                .or(() -> appUserRepository.findByEmployeeIdIgnoreCase(normalized))
+                .filter(user -> !"INACTIVE".equalsIgnoreCase(trim(user.getStatus())));
     }
 
     private boolean isClosed(IssueBoardItem item) {
@@ -174,7 +207,8 @@ public class IssueBoardNotificationService {
                 || item.getCompletedDate() != null;
     }
 
-    private String buildAssignmentBody(LocalDate boardDate, AppUser recipient, IssueBoardItem item) {
+    private NotificationBodyFactory buildAssignmentBody(LocalDate boardDate, IssueBoardItem item) {
+        return recipient -> {
         String intro = "An issue has been assigned to you in Brewery PMS.";
         String footer = "Please review and update the issue status in PMS.";
         return buildIssueEmailHtml(
@@ -185,6 +219,22 @@ public class IssueBoardNotificationService {
             footer,
             null
         );
+        };
+    }
+
+    private NotificationBodyFactory buildCompletionBody(LocalDate boardDate, IssueBoardItem item) {
+        return recipient -> {
+            String intro = "The issue assigned to you has been marked completed in Brewery PMS.";
+            String footer = "Thank you for closing the issue. Please review PMS if any detail needs correction.";
+            return buildIssueEmailHtml(
+                recipient,
+                item,
+                boardDate,
+                intro,
+                footer,
+                null
+            );
+        };
     }
 
     private String buildReminderBody(LocalDate boardDate,
@@ -237,6 +287,10 @@ public class IssueBoardNotificationService {
             .append(buildDetailRow("Target Date", formatDate(item.getTargetDate())))
             .append(buildDetailRow("Board Date", formatDate(boardDate)))
             .append(buildDetailRow("Current Status", defaultText(item.getStatus(), "0%")));
+
+        if (item.getCompletedDate() != null) {
+            html.append(buildDetailRow("Completed Date", formatDate(item.getCompletedDate())));
+        }
 
         if (overdueDetail != null) {
             html.append(buildDetailRow("Days Overdue", overdueDetail));
@@ -299,5 +353,10 @@ public class IssueBoardNotificationService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @FunctionalInterface
+    private interface NotificationBodyFactory {
+        String build(AppUser recipient);
     }
 }

@@ -31,17 +31,20 @@ public class GembaWalkConfigService {
     private final PlantMasterDataService plantMasterDataService;
     private final AppUserRepository userRepository;
     private final EmailConfigService emailConfigService;
+    private final AssignmentHistoryService assignmentHistoryService;
 
     public GembaWalkConfigService(GembaWalkRecordRepository repository,
                                   GembaWalkMasterDataService masterDataService,
                                   PlantMasterDataService plantMasterDataService,
                                   AppUserRepository userRepository,
-                                  EmailConfigService emailConfigService) {
+                                  EmailConfigService emailConfigService,
+                                  AssignmentHistoryService assignmentHistoryService) {
         this.repository = repository;
         this.masterDataService = masterDataService;
         this.plantMasterDataService = plantMasterDataService;
         this.userRepository = userRepository;
         this.emailConfigService = emailConfigService;
+        this.assignmentHistoryService = assignmentHistoryService;
     }
 
     public Optional<GembaWalkRecord> find(Long id) {
@@ -54,9 +57,10 @@ public class GembaWalkConfigService {
 
     @Transactional
     public GembaWalkRecord create(GembaWalkRecord record, String username) {
-        applyDefaults(record, username);
+        applyDefaults(record, username, true);
         replaceObservations(record, record.getObservations());
         GembaWalkRecord saved = repository.save(record);
+        assignmentHistoryService.record("gemba-walk", saved.getId(), "", saved.getResponsibility(), saved.getAssignmentRemark(), username, saved.getLocationOfMswConducted());
         notifyAreaHod(saved, "Gemba Walk Observation Submitted: " + label(saved), submittedBody(saved));
         return saved;
     }
@@ -64,20 +68,15 @@ public class GembaWalkConfigService {
     @Transactional
     public Optional<GembaWalkRecord> update(Long id, GembaWalkRecord incoming, String username) {
         return repository.findById(id).map(existing -> {
+            String previousAssignee = existing.getResponsibility();
             boolean hadOpenObservation = hasOpenObservation(existing);
-            existing.setScheduleItemId(incoming.getScheduleItemId());
-            existing.setStartTime(trim(incoming.getStartTime()));
-            existing.setCompletionTime(trim(incoming.getCompletionTime()));
-            existing.setEmail(trim(incoming.getEmail()));
-            existing.setManagerName(trim(incoming.getManagerName()));
-            existing.setDateOfLeadershipSafetyWalkConducted(incoming.getDateOfLeadershipSafetyWalkConducted());
-            existing.setManagementSafetyWalkWeek(trim(incoming.getManagementSafetyWalkWeek()));
-            existing.setLocationOfMswConducted(trim(incoming.getLocationOfMswConducted()));
             existing.setResponsibility(trim(incoming.getResponsibility()));
+            existing.setAssignmentRemark(trim(incoming.getAssignmentRemark()));
             existing.setFinalComments(trim(incoming.getFinalComments()));
-            applyDefaults(existing, username);
-            replaceObservations(existing, incoming.getObservations());
+            applyDefaults(existing, username, false);
+            updateEditableObservationFields(existing, incoming.getObservations());
             GembaWalkRecord saved = repository.save(existing);
+            assignmentHistoryService.record("gemba-walk", saved.getId(), previousAssignee, saved.getResponsibility(), incoming.getAssignmentRemark(), username, saved.getLocationOfMswConducted());
             if (hadOpenObservation && !hasOpenObservation(saved)) {
                 notifyClosed(saved);
             }
@@ -91,7 +90,12 @@ public class GembaWalkConfigService {
         options.put("currentUser", currentUser.map(this::userOption).orElse(Map.of()));
         options.put("gembaCategories", masterDataService.names(GembaWalkMasterDataService.GEMBA_CATEGORY));
         options.put("lifeSaverRules", masterDataService.names(GembaWalkMasterDataService.LIFE_SAVER_RULE));
+        options.put("plants", plantMasterDataService.names(PlantMasterDataService.PLANT));
+        options.put("departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT));
         options.put("processAreas", plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA));
+        options.put("plantItems", plantMasterDataService.list(PlantMasterDataService.PLANT));
+        options.put("departmentItems", plantMasterDataService.list(PlantMasterDataService.DEPARTMENT));
+        options.put("areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA));
         options.put("responsibilityUsers", responsibilityUsers(location));
         options.put("defaultResponsibility", defaultResponsibility(location).orElse(""));
         return options;
@@ -113,12 +117,12 @@ public class GembaWalkConfigService {
         );
     }
 
-    private void applyDefaults(GembaWalkRecord record, String username) {
+    private void applyDefaults(GembaWalkRecord record, String username, boolean forceUserIdentity) {
         currentUser(username).ifPresent(user -> {
-            if (isBlank(record.getEmail())) {
+            if (forceUserIdentity || isBlank(record.getEmail())) {
                 record.setEmail(trim(user.getEmail()));
             }
-            if (isBlank(record.getManagerName())) {
+            if (forceUserIdentity || isBlank(record.getManagerName())) {
                 record.setManagerName(firstNonBlank(user.getName(), user.getUsername()));
             }
         });
@@ -136,6 +140,7 @@ public class GembaWalkConfigService {
         }
         record.setFinalComments(trim(record.getFinalComments()));
         validateConfigured(record.getLocationOfMswConducted(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Location of MSW Conducted");
+        validateResponsibility(record.getResponsibility(), record.getLocationOfMswConducted());
     }
 
     private void replaceObservations(GembaWalkRecord record, List<GembaWalkObservation> observations) {
@@ -160,6 +165,22 @@ public class GembaWalkConfigService {
         }
     }
 
+    private void updateEditableObservationFields(GembaWalkRecord record, List<GembaWalkObservation> observations) {
+        if (record.getObservations() == null) {
+            record.setObservations(new ArrayList<>());
+        }
+        List<GembaWalkObservation> incoming = observations == null ? List.of() : observations;
+        for (int index = 0; index < record.getObservations().size(); index++) {
+            if (index >= incoming.size()) {
+                break;
+            }
+            GembaWalkObservation target = record.getObservations().get(index);
+            GembaWalkObservation source = incoming.get(index);
+            target.setPictureImage(trim(source.getPictureImage()));
+            target.setStatus(normalizeStatus(source.getStatus()));
+        }
+    }
+
     private boolean hasOpenObservation(GembaWalkRecord record) {
         return record.getObservations().stream()
                 .anyMatch(observation -> !"Closed".equalsIgnoreCase(trim(observation.getStatus())));
@@ -177,16 +198,57 @@ public class GembaWalkConfigService {
         }
     }
 
+    private void validateResponsibility(String value, String location) {
+        String trimmed = trim(value);
+        if (trimmed.isBlank()) {
+            return;
+        }
+        boolean configured = responsibilityUsers(location).stream()
+                .anyMatch(user -> trim(user.get("username")).equalsIgnoreCase(trimmed)
+                        || trim(user.get("label")).equalsIgnoreCase(trimmed));
+        if (!configured) {
+            throw new IllegalArgumentException("Responsibility must be assigned to an HoD");
+        }
+    }
+
     private void notifyClosed(GembaWalkRecord record) {
         List<String> recipients = new ArrayList<>(areaHodEmails(record.getLocationOfMswConducted()));
         if (!isBlank(record.getEmail()) && !recipients.contains(record.getEmail())) {
             recipients.add(record.getEmail());
         }
-        emailConfigService.sendEmail(recipients, "Gemba Walk Observation Closed: " + label(record), closedBody(record));
+        responsibilityEmail(record.getResponsibility()).ifPresent(email -> {
+            if (!recipients.contains(email)) {
+                recipients.add(email);
+            }
+        });
+        emailConfigService.sendEmail(recipients, "Gemba Walk Observation Closed: " + label(record), closedBody(record), true, true);
     }
 
     private void notifyAreaHod(GembaWalkRecord record, String subject, String body) {
-        emailConfigService.sendEmail(areaHodEmails(record.getLocationOfMswConducted()), subject, body);
+        emailConfigService.sendEmail(gembaWalkRecipients(record), subject, body, true, true);
+    }
+
+    private List<String> gembaWalkRecipients(GembaWalkRecord record) {
+        List<String> recipients = new ArrayList<>(areaHodEmails(record.getLocationOfMswConducted()));
+        responsibilityEmail(record.getResponsibility()).ifPresent(email -> {
+            if (!recipients.contains(email)) {
+                recipients.add(email);
+            }
+        });
+        return recipients;
+    }
+
+    private Optional<String> responsibilityEmail(String responsibility) {
+        String value = trim(responsibility);
+        if (value.isBlank()) {
+            return Optional.empty();
+        }
+        return userRepository.findByUsernameIgnoreCase(value)
+                .or(() -> userRepository.findByEmailIgnoreCase(value))
+                .or(() -> userRepository.findByNameIgnoreCase(value))
+                .or(() -> userRepository.findByEmployeeIdIgnoreCase(value))
+                .map(AppUser::getEmail)
+                .filter(email -> !isBlank(email));
     }
 
     private List<String> areaHodEmails(String location) {
@@ -210,10 +272,10 @@ public class GembaWalkConfigService {
     private List<Map<String, String>> responsibilityUsers(String location) {
         List<AppUser> scoped = activeUsers().stream()
                 .filter(user -> isAreaMatch(user, location))
-                .filter(user -> isHod(user) || isAssignable(user))
+                .filter(this::isHod)
                 .toList();
         List<AppUser> users = scoped.isEmpty()
-                ? activeUsers().stream().filter(user -> isHod(user) || isAssignable(user)).toList()
+                ? activeUsers().stream().filter(this::isHod).toList()
                 : scoped;
         return users.stream().map(this::userOption).toList();
     }
@@ -247,14 +309,6 @@ public class GembaWalkConfigService {
                 || designation.contains("HEAD_OF_DEPARTMENT");
     }
 
-    private boolean isAssignable(AppUser user) {
-        String designation = trim(user.getDesignation()).toUpperCase(Locale.ENGLISH);
-        return RoleAccess.isAssignableOperationalRole(user.getRole())
-                || designation.equals("ENGINEER")
-                || designation.equals("EXECUTIVE")
-                || designation.equals("OPERATOR");
-    }
-
     private Map<String, String> userOption(AppUser user) {
         String username = firstNonBlank(user.getUsername(), user.getEmail());
         String label = firstNonBlank(user.getName(), user.getUsername());
@@ -274,11 +328,84 @@ public class GembaWalkConfigService {
     }
 
     private String submittedBody(GembaWalkRecord record) {
-        return "Gemba Walk observation " + label(record) + " has been submitted for " + trim(record.getLocationOfMswConducted()) + ".";
+        return buildGembaWalkEmailBody(
+                "Gemba Walk Observation Submitted",
+                "A Gemba Walk observation has been submitted for review.",
+                record
+        );
     }
 
     private String closedBody(GembaWalkRecord record) {
-        return "Gemba Walk observation " + label(record) + " has been closed.";
+        return buildGembaWalkEmailBody(
+                "Gemba Walk Observation Closed",
+                "All observations in this Gemba Walk have been closed.",
+                record
+        );
+    }
+
+    private String buildGembaWalkEmailBody(String title, String intro, GembaWalkRecord record) {
+        StringBuilder html = new StringBuilder();
+        html.append("<html><body style='margin:0;padding:0;background:#f5f7f9;font-family:Arial,sans-serif;color:#1f2937;'>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='background:#f5f7f9;padding:24px 0;'>")
+                .append("<tr><td align='center'>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='680' style='max-width:680px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>")
+                .append("<tr><td style='background:#003d24;padding:16px 20px;'>")
+                .append("<img src='cid:brandLogo' alt='Carlsberg logo' style='height:34px;width:auto;display:block;'>")
+                .append("</td></tr><tr><td style='padding:20px;'>")
+                .append("<h2 style='margin:0 0 8px 0;color:#003d24;font-size:20px;'>")
+                .append(escapeHtml(title))
+                .append("</h2>")
+                .append("<p style='margin:0 0 16px;font-size:14px;line-height:1.5;'>")
+                .append(escapeHtml(intro))
+                .append("</p>")
+                .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:14px;'>")
+                .append(detailRow("Record ID", label(record)))
+                .append(detailRow("Manager", record.getManagerName()))
+                .append(detailRow("Email", record.getEmail()))
+                .append(detailRow("Date Conducted", record.getDateOfLeadershipSafetyWalkConducted() == null ? "" : DATE_FORMATTER.format(record.getDateOfLeadershipSafetyWalkConducted())))
+                .append(detailRow("Week", record.getManagementSafetyWalkWeek()))
+                .append(detailRow("Location", record.getLocationOfMswConducted()))
+                .append(detailRow("Responsibility", record.getResponsibility()))
+                .append(detailRow("Start Time", record.getStartTime()))
+                .append(detailRow("Completion Time", record.getCompletionTime()));
+        if (!isBlank(record.getFinalComments())) {
+            html.append(detailRow("Final Comments", record.getFinalComments()));
+        }
+        html.append("</table>");
+
+        if (record.getObservations() != null && !record.getObservations().isEmpty()) {
+            html.append("<h3 style='margin:18px 0 8px;color:#003d24;font-size:16px;'>Observations</h3>")
+                    .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:13px;'>")
+                    .append("<tr>")
+                    .append(headerCell("No."))
+                    .append(headerCell("Observation"))
+                    .append(headerCell("Category"))
+                    .append(headerCell("LSR"))
+                    .append(headerCell("Status"))
+                    .append("</tr>");
+            for (GembaWalkObservation observation : record.getObservations()) {
+                html.append("<tr>")
+                        .append(bodyCell(observation.getObservationOrder() == null ? "" : String.valueOf(observation.getObservationOrder())))
+                        .append(bodyCell(observation.getObservationDescription()))
+                        .append(bodyCell(observation.getGembaCategory()))
+                        .append(bodyCell(observation.getLifeSaverRule()))
+                        .append(bodyCell(observation.getStatus()))
+                        .append("</tr>");
+            }
+            html.append("</table>");
+        }
+
+        html.append("<p style='margin:16px 0 0 0;font-size:13px;color:#6b7280;'>Regards,<br>Brewery PMS</p>")
+                .append("</td></tr></table></td></tr></table></body></html>");
+        return html.toString();
+    }
+
+    private String detailRow(String label, String value) {
+        return "<tr><td style='padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;width:190px;color:#374151;font-weight:600;'>"
+                + escapeHtml(label)
+                + "</td><td style='padding:8px 10px;border:1px solid #e5e7eb;color:#111827;'>"
+                + escapeHtml(isBlank(value) ? "-" : value)
+                + "</td></tr>";
     }
 
     private String buildDailyReportBody(List<GembaWalkRecord> rows, int reported, int closed) {

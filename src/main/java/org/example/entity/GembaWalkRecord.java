@@ -42,6 +42,9 @@ public class GembaWalkRecord {
     @Column(length = 1000)
     private String finalComments;
 
+    @Transient
+    private String assignmentRemark;
+
     @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("observationOrder ASC, id ASC")
     private List<GembaWalkObservation> observations = new ArrayList<>();
@@ -133,6 +136,9 @@ public class GembaWalkRecord {
     public void setFinalComments(String finalComments) {
         this.finalComments = finalComments;
     }
+
+    public String getAssignmentRemark() { return assignmentRemark; }
+    public void setAssignmentRemark(String assignmentRemark) { this.assignmentRemark = assignmentRemark; }
 
     public List<GembaWalkObservation> getObservations() {
         return observations;

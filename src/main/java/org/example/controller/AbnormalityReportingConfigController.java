@@ -3,6 +3,8 @@ package org.example.controller;
 import jakarta.servlet.http.HttpSession;
 import org.example.entity.AbnormalityReportingRecord;
 import org.example.service.AbnormalityReportingConfigService;
+import org.example.entity.AssignmentHistory;
+import org.example.service.AssignmentHistoryService;
 import org.example.util.RoleAccess;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +25,11 @@ import java.util.Set;
 public class AbnormalityReportingConfigController {
 
     private final AbnormalityReportingConfigService service;
+    private final AssignmentHistoryService assignmentHistoryService;
 
-    public AbnormalityReportingConfigController(AbnormalityReportingConfigService service) {
+    public AbnormalityReportingConfigController(AbnormalityReportingConfigService service, AssignmentHistoryService assignmentHistoryService) {
         this.service = service;
+        this.assignmentHistoryService = assignmentHistoryService;
     }
 
     @GetMapping("/records")
@@ -44,6 +48,12 @@ public class AbnormalityReportingConfigController {
         return service.find(id)
                 .<ResponseEntity<?>>map(item -> ResponseEntity.ok(Map.of("status", "success", "record", item)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found")));
+    }
+
+    @GetMapping("/records/{id}/history")
+    public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
+        if (!canView(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+        return ResponseEntity.ok(assignmentHistoryService.history("abnormality-reporting", id));
     }
 
     @PostMapping("/records")

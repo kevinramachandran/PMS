@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${placeholderTitle + ' - Carlsberg Brewery'}">PMS - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
+    <link rel="stylesheet" href="/css/dashboard.css?v=table-sort-20260909">
     <link rel="stylesheet" href="/css/settings.css">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=table-sort-20260909">
 </head>
 <body class="modern-shell dashboard-bg"
       th:attr="data-current-username=${session.username},data-current-email=${session.email},data-current-role=${session.role}">
@@ -25,14 +25,13 @@
                 <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
                 <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-chart-pie"></i><span>Gemba Walk Reporting</span></a>
+                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                 <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
-                <a href="/leadership-gemba-tracker" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Ideas"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Ideas</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
-                <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process Confirmations"><i class="fas fa-list-check"></i><span>Process Confirmations</span></a>
+                <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS Data Entry"><i class="fas fa-database"></i><span>PMS Data Entry</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
@@ -54,9 +53,10 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
+            <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
@@ -64,7 +64,7 @@
                 <div class="nav-parent" th:if="${session.canViewMasterDataGroup}">
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
-                        <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canViewUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                        <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
                         <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                         <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
                         <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
@@ -125,102 +125,71 @@
                                     <div class="user-dashboard-sync" id="userDashboardSyncStatus">Loading...</div>
                                 </div>
 
-                                <div class="user-dashboard-stats" aria-label="User dashboard summary">
-                                    <a href="/issue-board" class="user-dashboard-stat">
-                                        <span class="stat-icon stat-issue"><i class="fas fa-table-list"></i></span>
-                                        <span class="stat-copy">
-                                            <span class="stat-label">Open Issues</span>
-                                            <strong id="userOpenIssues">-</strong>
-                                        </span>
-                                    </a>
-                                    <a href="/abnormality-reporting" class="user-dashboard-stat">
-                                        <span class="stat-icon stat-abnormality"><i class="fas fa-triangle-exclamation"></i></span>
-                                        <span class="stat-copy">
-                                            <span class="stat-label">Open Abnormalities</span>
-                                            <strong id="userOpenAbnormalities">-</strong>
-                                        </span>
-                                    </a>
-                                    <a href="/gemba-reporting" class="user-dashboard-stat">
-                                        <span class="stat-icon stat-gemba"><i class="fas fa-chart-pie"></i></span>
-                                        <span class="stat-copy">
-                                            <span class="stat-label">Gemba Findings</span>
-                                            <strong id="userGembaFindings">-</strong>
-                                        </span>
-                                    </a>
-                                    <a href="/gemba-kaizen" class="user-dashboard-stat">
-                                        <span class="stat-icon stat-kaizen"><i class="fas fa-lightbulb"></i></span>
-                                        <span class="stat-copy">
-                                            <span class="stat-label">Kaizen Open</span>
-                                            <strong id="userOpenKaizen">-</strong>
-                                        </span>
-                                    </a>
-                                </div>
+                                <div class="user-dashboard-stats user-dashboard-notifications" aria-label="User dashboard notifications">
+                                    <div class="user-notification-group">
+                                        <a href="/issue-board" class="user-dashboard-stat user-notification-card">
+                                            <span class="stat-icon stat-issue"><i class="fas fa-table-list"></i></span>
+                                            <span class="stat-copy">
+                                                <span class="stat-label">Issues</span>
+                                                <strong id="userOpenIssues">-</strong>
+                                            </span>
+                                        </a>
+                                        <div class="user-notification-glimpse" id="userIssueGlimpse">
+                                            <span class="user-dashboard-loading">Loading issues...</span>
+                                        </div>
+                                    </div>
 
-                                <div class="user-dashboard-grid">
-                                    <article class="user-dashboard-card user-dashboard-wide-card">
-                                        <div class="user-card-header">
-                                            <div>
-                                                <h3>KPI Snapshot</h3>
-                                                <p id="userKpiDate">Latest production data</p>
-                                            </div>
-                                            <a href="/kpi-dashboard" title="Open KPI Dashboard" aria-label="Open KPI Dashboard"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                    <div class="user-notification-group">
+                                        <a href="/gemba-reporting" class="user-dashboard-stat user-notification-card">
+                                            <span class="stat-icon stat-gemba"><i class="fas fa-map-location-dot"></i></span>
+                                            <span class="stat-copy">
+                                                <span class="stat-label">Gemba Walk</span>
+                                                <strong id="userGembaFindings">-</strong>
+                                            </span>
+                                        </a>
+                                        <div class="user-notification-glimpse" id="userGembaGlimpse">
+                                            <span class="user-dashboard-loading">Loading walks...</span>
                                         </div>
-                                        <div class="user-kpi-list" id="userKpiList">
-                                            <div class="user-dashboard-loading">Loading KPI snapshot...</div>
-                                        </div>
-                                    </article>
+                                    </div>
 
-                                    <article class="user-dashboard-card">
-                                        <div class="user-card-header">
-                                            <div>
-                                                <h3>Due Soon</h3>
-                                                <p>Issue board actions</p>
-                                            </div>
-                                            <a href="/issue-board" title="Open Issue Board" aria-label="Open Issue Board"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                    <div class="user-notification-group">
+                                        <a href="/gemba-kaizen" class="user-dashboard-stat user-notification-card">
+                                            <span class="stat-icon stat-kaizen"><i class="fas fa-lightbulb"></i></span>
+                                            <span class="stat-copy">
+                                                <span class="stat-label">Gemba Kaizen</span>
+                                                <strong id="userOpenKaizen">-</strong>
+                                            </span>
+                                        </a>
+                                        <div class="user-notification-glimpse" id="userKaizenGlimpse">
+                                            <span class="user-dashboard-loading">Loading kaizen...</span>
                                         </div>
-                                        <div class="user-item-list" id="userDueIssues">
-                                            <div class="user-dashboard-loading">Loading issues...</div>
-                                        </div>
-                                    </article>
+                                    </div>
 
-                                    <article class="user-dashboard-card">
-                                        <div class="user-card-header">
-                                            <div>
-                                                <h3>Training</h3>
-                                                <p>This month</p>
-                                            </div>
-                                            <a href="/training-schedule" title="Open Training Schedule" aria-label="Open Training Schedule"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                    <div class="user-notification-group">
+                                        <a href="/abnormality-reporting" class="user-dashboard-stat user-notification-card">
+                                            <span class="stat-icon stat-abnormality"><i class="fas fa-triangle-exclamation"></i></span>
+                                            <span class="stat-copy">
+                                                <span class="stat-label">Abnormality</span>
+                                                <strong id="userOpenAbnormalities">-</strong>
+                                            </span>
+                                        </a>
+                                        <div class="user-notification-glimpse" id="userAbnormalityGlimpse">
+                                            <span class="user-dashboard-loading">Loading abnormalities...</span>
                                         </div>
-                                        <div class="user-item-list" id="userTrainingList">
-                                            <div class="user-dashboard-loading">Loading training...</div>
-                                        </div>
-                                    </article>
+                                    </div>
 
-                                    <article class="user-dashboard-card">
-                                        <div class="user-card-header">
-                                            <div>
-                                                <h3>Gemba Walks</h3>
-                                                <p>Recent findings</p>
-                                            </div>
-                                            <a href="/gemba-reporting" title="Open Gemba Reporting" aria-label="Open Gemba Reporting"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                    <div class="user-notification-group">
+                                        <a href="/process-confirmation" class="user-dashboard-stat user-notification-card">
+                                            <span class="stat-icon stat-process"><i class="fas fa-list-check"></i></span>
+                                            <span class="stat-copy">
+                                                <span class="stat-label">Process Confirmation</span>
+                                                <strong id="userOpenProcessConfirmations">-</strong>
+                                            </span>
+                                        </a>
+                                        <div class="user-notification-glimpse" id="userProcessConfirmationGlimpse">
+                                            <span class="user-dashboard-loading">Loading confirmations...</span>
                                         </div>
-                                        <div class="user-item-list" id="userGembaList">
-                                            <div class="user-dashboard-loading">Loading findings...</div>
-                                        </div>
-                                    </article>
-
-                                    <article class="user-dashboard-card">
-                                        <div class="user-card-header">
-                                            <div>
-                                                <h3>Abnormalities</h3>
-                                                <p>Newest reports</p>
-                                            </div>
-                                            <a href="/abnormality-reporting" title="Open Abnormality Reporting" aria-label="Open Abnormality Reporting"><i class="fas fa-arrow-up-right-from-square"></i></a>
-                                        </div>
-                                        <div class="user-item-list" id="userAbnormalityList">
-                                            <div class="user-dashboard-loading">Loading abnormalities...</div>
-                                        </div>
-                                    </article>
+                                    </div>
                                 </div>
                             </section>
                         </div>
@@ -255,7 +224,7 @@
             }
         });
     </script>
-    <script src="/js/user-dashboard.js?v=user-scoped-20260901" th:if="${isUserDashboard == true}"></script>
-    <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+    <script src="/js/user-dashboard.js?v=user-notification-boxes-20260906" th:if="${isUserDashboard == true}"></script>
+    <script src="/js/ui-shell.js?v=table-sort-20260909"></script>
 </body>
 </html>

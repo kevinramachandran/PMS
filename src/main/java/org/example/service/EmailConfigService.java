@@ -22,10 +22,13 @@ import org.springframework.stereotype.Service;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -135,9 +138,12 @@ public class EmailConfigService {
     }
 
     public EmailTestResponse testConfiguration(EmailConfigPayload payload, String actorKey) {
-        ValidationResult validation = validatePayload(payload, false);
+        ValidationResult validation = validatePayload(payload, true);
         if (!validation.isValid()) {
             return new EmailTestResponse("ERROR", validation.message());
+        }
+        if (isBlank(payload.getReplyTo())) {
+            return new EmailTestResponse("ERROR", "Reply-To Email is required to receive the test email");
         }
 
         if (isRateLimited(actorKey)) {
@@ -152,15 +158,71 @@ public class EmailConfigService {
         JavaMailSenderImpl mailSender = buildMailSender(payload, password);
         String host = trim(payload.getHost());
         try {
-            mailSender.testConnection();
-            return new EmailTestResponse("SUCCESS", "Connection successful");
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
+            String replyTo = Objects.requireNonNull(payload.getReplyTo()).trim();
+            helper.setTo(replyTo);
+            helper.setSubject("Brewery PMS | SMTP Configuration Test");
+            helper.setText(buildSmtpTestEmailHtml(payload), true);
+            if (!isBlank(payload.getFromName())) {
+                helper.setFrom(Objects.requireNonNull(payload.getFromEmail()).trim(), Objects.requireNonNull(payload.getFromName()).trim());
+            } else {
+                helper.setFrom(Objects.requireNonNull(payload.getFromEmail()).trim());
+            }
+            helper.setReplyTo(replyTo);
+            mailSender.send(message);
+            return new EmailTestResponse("SUCCESS", "Test email sent to " + replyTo);
         } catch (MailAuthenticationException ex) {
             return new EmailTestResponse("ERROR", buildAuthFailedMessage(host));
         } catch (MailSendException ex) {
             return new EmailTestResponse("ERROR", resolveConnectionMessage(ex, host));
         } catch (MessagingException ex) {
             return new EmailTestResponse("ERROR", resolveConnectionMessage(ex, host));
+        } catch (Exception ex) {
+            log.error("Failed to send SMTP test email to {}", payload.getReplyTo(), ex);
+            return new EmailTestResponse("ERROR", "Unable to send test email — check sender and Reply-To details");
         }
+    }
+
+    private String buildSmtpTestEmailHtml(EmailConfigPayload payload) {
+        String generatedAt = ZonedDateTime.now()
+                .format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a z"));
+        String fromEmail = escapeHtml(payload.getFromEmail());
+        String replyTo = escapeHtml(payload.getReplyTo());
+
+        return """
+                <!doctype html>
+                <html>
+                <body style="margin:0;padding:0;background:#f4f7f5;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+                  <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background:#f4f7f5;padding:24px 0;">
+                    <tr>
+                      <td align="center">
+                        <table role="presentation" width="620" cellpadding="0" cellspacing="0" style="max-width:620px;width:94%%;background:#ffffff;border:1px solid #dfe7e2;border-radius:8px;overflow:hidden;">
+                          <tr>
+                            <td style="background:#087733;color:#ffffff;padding:18px 24px;">
+                              <div style="font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;">Brewery PMS</div>
+                              <div style="font-size:22px;font-weight:800;margin-top:4px;">SMTP Configuration Test</div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="padding:24px;">
+                              <p style="margin:0 0 14px;font-size:15px;line-height:1.55;">This is an automated test email from Brewery PMS.</p>
+                              <p style="margin:0 0 20px;font-size:15px;line-height:1.55;">The SMTP server connection and email delivery test completed successfully. Your system is able to send outbound email using the current SMTP configuration.</p>
+                              <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f8faf9;border:1px solid #e5ebe7;border-radius:6px;">
+                                <tr><td style="padding:10px 14px;font-size:13px;color:#475569;border-bottom:1px solid #e5ebe7;">From</td><td style="padding:10px 14px;font-size:13px;font-weight:700;border-bottom:1px solid #e5ebe7;">%s</td></tr>
+                                <tr><td style="padding:10px 14px;font-size:13px;color:#475569;border-bottom:1px solid #e5ebe7;">Reply-To</td><td style="padding:10px 14px;font-size:13px;font-weight:700;border-bottom:1px solid #e5ebe7;">%s</td></tr>
+                                <tr><td style="padding:10px 14px;font-size:13px;color:#475569;">Generated</td><td style="padding:10px 14px;font-size:13px;font-weight:700;">%s</td></tr>
+                              </table>
+                              <p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#64748b;">No action is required. This message was generated only to verify SMTP configuration.</p>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(fromEmail, replyTo, generatedAt);
     }
 
     public boolean hasStoredPassword() {
@@ -205,7 +267,9 @@ public class EmailConfigService {
                              String body,
                              boolean isHtml,
                              boolean includeBrandLogo) {
-        if (recipients == null || recipients.isEmpty()) {
+        List<String> cleanRecipients = normalizeRecipients(recipients);
+        if (cleanRecipients.isEmpty()) {
+            log.warn("Skipping email send because no valid recipients were supplied: {}", recipients);
             return false;
         }
 
@@ -216,11 +280,6 @@ public class EmailConfigService {
         }
 
         EmailConfig config = maybeConfig.get();
-        if (!config.isEnabled()) {
-            log.warn("Skipping email send because email configuration is disabled — enable it on the Email Configuration page");
-            return false;
-        }
-
         String password = resolvePassword(PASSWORD_MASK, config);
         if (password == null || password.isBlank()) {
             log.warn("Skipping email send because no SMTP password is configured");
@@ -232,7 +291,7 @@ public class EmailConfigService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, includeBrandLogo, StandardCharsets.UTF_8.name());
-            helper.setTo(recipients.toArray(new String[0]));
+            helper.setTo(cleanRecipients.toArray(new String[0]));
             helper.setSubject(Objects.requireNonNull(subject));
             helper.setText(Objects.requireNonNull(body), isHtml);
 
@@ -253,9 +312,33 @@ public class EmailConfigService {
             mailSender.send(message);
             return true;
         } catch (Exception ex) {
-            log.error("Failed to send email to {}", recipients, ex);
+            log.error("Failed to send email to {}", cleanRecipients, ex);
             return false;
         }
+    }
+
+    private List<String> normalizeRecipients(List<String> recipients) {
+        if (recipients == null || recipients.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashSet<String> validRecipients = new LinkedHashSet<>();
+        for (String recipient : recipients) {
+            String trimmed = trimToNull(recipient);
+            if (trimmed == null) {
+                continue;
+            }
+            if (!isValidEmail(trimmed)) {
+                log.warn("Skipping invalid email recipient '{}'", trimmed);
+                continue;
+            }
+            if (isPlaceholderEmail(trimmed)) {
+                log.warn("Skipping placeholder email recipient '{}'", trimmed);
+                continue;
+            }
+            validRecipients.add(trimmed);
+        }
+        return List.copyOf(validRecipients);
     }
 
     private void addInlineBrandLogo(MimeMessageHelper helper) {
@@ -495,6 +578,17 @@ public class EmailConfigService {
         return !isBlank(value) && EMAIL_PATTERN.matcher(value.trim()).matches();
     }
 
+    private boolean isPlaceholderEmail(String value) {
+        if (isBlank(value)) {
+            return true;
+        }
+        String normalized = value.trim().toLowerCase();
+        return normalized.equals("email@solvexes.com")
+                || normalized.equals("email@example.com")
+                || normalized.equals("test@example.com")
+                || normalized.startsWith("email@");
+    }
+
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
@@ -509,6 +603,18 @@ public class EmailConfigService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim()
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private static final class ValidationResult {

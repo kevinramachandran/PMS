@@ -13,6 +13,7 @@ public class ProcessMasterDataService {
 
     public static final String ZM_OBSERVATION = "ZM_OBSERVATION";
     public static final String PM_OBSERVATION = "PM_OBSERVATION";
+    public static final String OM_OBSERVATION = "OM_OBSERVATION";
     public static final String QM_OBSERVATION = "QM_OBSERVATION";
 
     private final ProcessMasterDataItemRepository repository;
@@ -68,7 +69,7 @@ public class ProcessMasterDataService {
 
     private String normalizeCategory(String category) {
         String normalized = category == null ? "" : category.trim().toUpperCase().replace('-', '_');
-        if (ZM_OBSERVATION.equals(normalized) || PM_OBSERVATION.equals(normalized) || QM_OBSERVATION.equals(normalized)) {
+        if (ZM_OBSERVATION.equals(normalized) || PM_OBSERVATION.equals(normalized) || OM_OBSERVATION.equals(normalized) || QM_OBSERVATION.equals(normalized)) {
             return normalized;
         }
         throw new IllegalArgumentException("Unsupported category");

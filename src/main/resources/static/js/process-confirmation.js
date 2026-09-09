@@ -7,6 +7,24 @@ $(document).ready(function() {
     let availablePeriods = [];
     let processObservationOptions = [];
 
+    function escapeRecordHtml(value) {
+        return $('<div>').text(value == null ? '' : value).html();
+    }
+
+    function loadCarlExRecords() {
+        $.getJSON('/api/carlex-process-confirmation/records', function(data) {
+            const records = Array.isArray(data) ? data : [];
+            const rows = records.map(function(record, index) {
+                const imageFields = ['zm1ObservationImage', 'zm2ObservationImage', 'pm1ObservationImage', 'pm2ObservationImage', 'om1ObservationImage', 'qm1ObservationImage', 'qm2ObservationImage'];
+                return '<tr><td>' + (index + 1) + '</td><td>' + escapeRecordHtml(record.id) + '</td><td>' + escapeRecordHtml(record.dateOfGwProcessConfirmationConducted) + '</td><td>' + escapeRecordHtml(record.name) + '</td><td>' + escapeRecordHtml(record.areaOfGwProcessConfirmationConducted) + '</td><td>' + escapeRecordHtml(record.areaResponsibility) + '</td><td>' + escapeRecordHtml(record.assignedTo) + '</td><td>' + escapeRecordHtml(record.processConfirmationDoneBy) + '</td><td>' + escapeRecordHtml(record.startTime) + '</td><td>' + escapeRecordHtml(record.completionTime) + '</td><td>' + imageFields.map(function(field) { return attachmentIcon('process-confirmation', record[field], record[field]); }).join(' ') + '</td><td class="assignment-history-cell" data-record-id="' + record.id + '">Loading...</td><td><a class="pc-table-action" href="/process-confirmation-config?edit=' + encodeURIComponent(record.id) + '" title="Edit" aria-label="Edit record"><i class="fas fa-pen"></i></a></td></tr>';
+            }).join('');
+            $('#pcRecordsBody').html(rows || '<tr><td colspan="13">No CarlEX process confirmations found.</td></tr>');
+            $('.assignment-history-cell').each(function() { const cell=$(this); $.getJSON('/api/carlex-process-confirmation/records/' + cell.data('record-id') + '/history', function(entries) { cell.html(formatAssignmentHistory(entries)); }); });
+        }).fail(function() {
+            $('#pcRecordsBody').html('<tr><td colspan="13">Unable to load records.</td></tr>');
+        });
+    }
+
     const processObservationCategories = [
         'ZM_OBSERVATION',
         'PM_OBSERVATION',
@@ -324,6 +342,11 @@ $(document).ready(function() {
             loadProcessObservationOptions(loadFiltersAndData);
         }
     });
+
+    if ($('#pcRecordsBody').length) {
+        loadCarlExRecords();
+        return;
+    }
 
     renderDayHeader();
     loadProcessObservationOptions(function() {

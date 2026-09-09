@@ -1,12 +1,80 @@
+.abnormality-reporting-page .content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.abnormality-reporting-page .ar-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.abnormality-reporting-page .ar-section-title h2 {
+    margin: 0;
+    color: #064e3b;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.abnormality-reporting-page .ar-section-title p,
+.abnormality-reporting-page .ar-detail-note {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.abnormality-reporting-page .ar-filter-card {
+    margin: 0;
+}
+
+.abnormality-reporting-page .ar-filter-card .issue-add-button {
+    text-decoration: none;
+}
+
+.abnormality-reporting-page .ar-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    padding: 18px 20px;
+}
+
+.abnormality-reporting-page .ar-filter-group {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.abnormality-reporting-page .ar-filter-group label {
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.abnormality-reporting-page .ar-filter-group select,
+.abnormality-reporting-page .ar-filter-group input {
+    height: 38px;
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    padding: 0 10px;
+}
+
 .abnormality-reporting-page .ar-dashboard-row {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
-    margin-bottom: 16px;
 }
 
 .abnormality-reporting-page .ar-count-card {
-    min-height: 92px;
+    min-height: 96px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: #ffffff;
@@ -16,7 +84,7 @@
     align-items: flex-start;
     justify-content: center;
     gap: 8px;
-    padding: 16px;
+    padding: 17px;
     cursor: pointer;
 }
 
@@ -28,7 +96,7 @@
 
 .abnormality-reporting-page .ar-count-card strong {
     color: #047434;
-    font-size: 30px;
+    font-size: 31px;
     line-height: 1;
 }
 
@@ -40,50 +108,199 @@
     outline: none;
 }
 
-.abnormality-reporting-page .ar-report-card {
-    margin-bottom: 16px;
+.abnormality-reporting-page .ar-chart-grid,
+.abnormality-reporting-page .ar-summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
 }
 
-.abnormality-reporting-page .ar-filter-row {
-    align-items: end;
-    justify-content: flex-start;
-}
-
-.abnormality-reporting-page .ar-filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 180px;
-}
-
-.abnormality-reporting-page .ar-filter-group label {
-    color: #1f2937;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.abnormality-reporting-page .ar-filter-group select {
-    height: 36px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #111827;
-    font-size: 13px;
-    padding: 0 10px;
-}
-
-.abnormality-reporting-page .ar-filter-row .issue-add-button {
-    margin-left: auto;
-    text-decoration: none;
+.abnormality-reporting-page .ar-report-card,
+.abnormality-reporting-page .ar-summary-card,
+.abnormality-reporting-page .ar-detail-card {
+    margin: 0;
 }
 
 .abnormality-reporting-page .ar-chart-wrap {
-    height: 260px;
-    padding: 16px;
+    height: 310px;
+    padding: 18px;
+}
+
+.abnormality-reporting-page .ar-summary-table {
+    padding: 0;
+}
+
+.abnormality-reporting-page .ar-summary-table table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.abnormality-reporting-page .ar-summary-table th,
+.abnormality-reporting-page .ar-summary-table td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 11px 12px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.abnormality-reporting-page .ar-summary-table th {
+    background: #f8fafc;
+    color: #31564e;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.abnormality-reporting-page .ar-summary-table td:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.abnormality-reporting-page .ar-summary-empty {
+    padding: 16px 20px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.abnormality-reporting-page .ar-detail-card .issue-board-title-row {
+    align-items: center;
+    gap: 14px;
+}
+
+.abnormality-reporting-page .ar-detail-card .issue-search {
+    margin-left: auto;
+}
+
+.abnormality-reporting-page .ar-secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    border: 1px solid #a7f3d0;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #047434;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.abnormality-reporting-page .ar-secondary-button:hover,
+.abnormality-reporting-page .ar-secondary-button:focus {
+    background: #ecfdf5;
+    outline: none;
+}
+
+.abnormality-reporting-page .ar-detail-table-wrap[hidden] {
+    display: none;
 }
 
 .abnormality-reporting-page .ar-record-table {
-    min-width: 1320px;
+    min-width: 2640px;
+    table-layout: auto;
+}
+
+.abnormality-reporting-page .ar-record-table thead th {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    letter-spacing: 0;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(1),
+.abnormality-reporting-page .ar-record-table td:nth-child(1) {
+    width: 46px;
+    min-width: 46px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(2),
+.abnormality-reporting-page .ar-record-table td:nth-child(2) {
+    width: 120px;
+    min-width: 120px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(3),
+.abnormality-reporting-page .ar-record-table td:nth-child(3) {
+    width: 110px;
+    min-width: 110px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(4),
+.abnormality-reporting-page .ar-record-table td:nth-child(4) {
+    width: 160px;
+    min-width: 160px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(5),
+.abnormality-reporting-page .ar-record-table td:nth-child(5) {
+    width: 130px;
+    min-width: 130px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(6),
+.abnormality-reporting-page .ar-record-table td:nth-child(6),
+.abnormality-reporting-page .ar-record-table th:nth-child(17),
+.abnormality-reporting-page .ar-record-table td:nth-child(17),
+.abnormality-reporting-page .ar-record-table th:nth-child(18),
+.abnormality-reporting-page .ar-record-table td:nth-child(18) {
+    width: 125px;
+    min-width: 125px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(7),
+.abnormality-reporting-page .ar-record-table td:nth-child(7) {
+    width: 100px;
+    min-width: 100px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(8),
+.abnormality-reporting-page .ar-record-table td:nth-child(8),
+.abnormality-reporting-page .ar-record-table th:nth-child(15),
+.abnormality-reporting-page .ar-record-table td:nth-child(15) {
+    width: 170px;
+    min-width: 170px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(9),
+.abnormality-reporting-page .ar-record-table td:nth-child(9),
+.abnormality-reporting-page .ar-record-table th:nth-child(10),
+.abnormality-reporting-page .ar-record-table td:nth-child(10) {
+    width: 150px;
+    min-width: 150px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(11),
+.abnormality-reporting-page .ar-record-table td:nth-child(11),
+.abnormality-reporting-page .ar-record-table th:nth-child(14),
+.abnormality-reporting-page .ar-record-table td:nth-child(14),
+.abnormality-reporting-page .ar-record-table th:nth-child(16),
+.abnormality-reporting-page .ar-record-table td:nth-child(16) {
+    width: 130px;
+    min-width: 130px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(12),
+.abnormality-reporting-page .ar-record-table td:nth-child(12),
+.abnormality-reporting-page .ar-record-table th:nth-child(13),
+.abnormality-reporting-page .ar-record-table td:nth-child(13) {
+    width: 180px;
+    min-width: 180px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(19),
+.abnormality-reporting-page .ar-record-table td:nth-child(19) {
+    width: 220px;
+    min-width: 220px;
+}
+
+.abnormality-reporting-page .ar-record-table th:nth-child(20),
+.abnormality-reporting-page .ar-record-table td:nth-child(20) {
+    width: 80px;
+    min-width: 80px;
 }
 
 .abnormality-reporting-page .ar-open-btn {
@@ -105,17 +322,34 @@
     outline: none;
 }
 
+@media (max-width: 1280px) {
+    .abnormality-reporting-page .ar-filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 920px) {
+    .abnormality-reporting-page .ar-dashboard-row,
+    .abnormality-reporting-page .ar-chart-grid,
+    .abnormality-reporting-page .ar-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
-    .abnormality-reporting-page .ar-dashboard-row {
+    .abnormality-reporting-page .ar-section-title,
+    .abnormality-reporting-page .ar-detail-card .issue-board-title-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .abnormality-reporting-page .ar-filter-grid {
         grid-template-columns: 1fr;
     }
 
-    .abnormality-reporting-page .ar-filter-row {
-        align-items: stretch;
-    }
-
-    .abnormality-reporting-page .ar-filter-group,
-    .abnormality-reporting-page .ar-filter-row .issue-add-button {
+    .abnormality-reporting-page .ar-detail-card .issue-search,
+    .abnormality-reporting-page .ar-secondary-button,
+    .abnormality-reporting-page .ar-filter-card .issue-add-button {
         width: 100%;
         margin-left: 0;
     }

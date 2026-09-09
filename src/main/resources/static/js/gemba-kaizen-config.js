@@ -5,6 +5,8 @@ $(function() {
     const ATTACHMENT_API = '/api/attachments/gemba-kaizen/upload';
     const params = new URLSearchParams(window.location.search);
     let records = [];
+    let currentUserIdentity = {};
+    const EDIT_ALLOWED_FIELDS = '#pictureImage, #isKaizenImplemented, #assignedTo, #assignmentRemark';
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -35,8 +37,46 @@ $(function() {
             .toggleClass('show', !!message);
     }
 
+    function setSaveLoading(loading) {
+        const $btn = $('#gembaKaizenSubmitBtn');
+        if (loading) {
+            if (!$btn.data('original-html')) {
+                $btn.data('original-html', $btn.html());
+            }
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i><span>Saving...</span>');
+            $('#gembaKaizenConfigCancelBtn, #gembaKaizenConfigDrawerClose').prop('disabled', true);
+            return;
+        }
+        $btn.prop('disabled', false).html($btn.data('original-html') || '<i class="fas fa-save"></i><span>Save Kaizen</span>');
+        $('#gembaKaizenConfigCancelBtn, #gembaKaizenConfigDrawerClose').prop('disabled', false);
+        setEditLock(isEditMode());
+    }
+
     function populateSelect(selector, values, selected) {
         $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
+    }
+
+    function currentUserName() {
+        return currentUserIdentity.name || currentUserIdentity.username || '';
+    }
+
+    function applyCurrentUserIdentity(force) {
+        const userName = currentUserName();
+        const employeeId = currentUserIdentity.employeeId || '';
+        if (force || !$('#name').val()) {
+            $('#name').val(userName);
+        }
+        if (force || !$('#employeeIdHoNumber').val()) {
+            $('#employeeIdHoNumber').val(employeeId);
+        }
+    }
+
+    function setEditLock(isEdit) {
+        const $fields = $('#gembaKaizenConfigForm')
+            .find('input:not([type="hidden"]), select, textarea')
+            .not(EDIT_ALLOWED_FIELDS);
+        $fields.prop('disabled', !!isEdit);
+        $('#gembaKaizenConfigForm').toggleClass('gk-edit-locked', !!isEdit);
     }
 
     function payload() {
@@ -52,7 +92,9 @@ $(function() {
             kaizenIdea: $('#kaizenIdea').val(),
             pictureImage: $('#pictureImageStored').val(),
             benefitsOfKaizen: $('#benefitsOfKaizen').val(),
-            isKaizenImplemented: $('#isKaizenImplemented').val()
+            isKaizenImplemented: $('#isKaizenImplemented').val(),
+            assignedTo: $('#assignedTo').val(),
+            assignmentRemark: $('#assignmentRemark').val()
         };
     }
 
@@ -72,14 +114,17 @@ $(function() {
         $('#pictureImageStored').val(item.pictureImage || '');
         $('#benefitsOfKaizen').val(item.benefitsOfKaizen || '');
         $('#isKaizenImplemented').val(item.isKaizenImplemented || 'No');
+        $('#assignedTo').val(item.assignedTo || '');
+        $('#assignmentRemark').val('');
+        applyCurrentUserIdentity(false);
     }
 
     function resetRecord() {
         $('#gembaKaizenRecordId').val('');
-        $('#name').val('');
+        $('#name').val(currentUserName());
         $('#lastModifiedTime').val(currentTime());
         $('#gembaKaizenProviderName').val('');
-        $('#employeeIdHoNumber').val('');
+        $('#employeeIdHoNumber').val(currentUserIdentity.employeeId || '');
         $('#department').val('');
         $('#classificationOfKaizen').val('');
         $('#gembaKaizenLocation').val('');
@@ -90,7 +135,9 @@ $(function() {
         $('#benefitsOfKaizen').val('');
         $('#isKaizenImplemented').val('No');
         setMessage('', 'success');
-        loadOptions();
+        loadOptions().done(function() {
+            applyCurrentUserIdentity(true);
+        });
     }
 
     function renderTable() {
@@ -108,13 +155,16 @@ $(function() {
                 '<td>' + escapeHtml(record.gembaKaizenLocation) + '</td>' +
                 '<td>' + escapeHtml(record.gembaKaizenGenerationDate) + '</td>' +
                 '<td>' + escapeHtml(record.kaizenIdea) + '</td>' +
-                '<td>' + escapeHtml(record.pictureImage) + '</td>' +
+                '<td>' + attachmentIcon('gemba-kaizen', record.pictureImage, record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.benefitsOfKaizen) + '</td>' +
                 '<td><span class="gk-status-pill">' + escapeHtml(record.isKaizenImplemented || 'No') + '</span></td>' +
+                '<td>' + escapeHtml(record.assignedTo) + '</td>' +
+                '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="gk-table-action gk-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Kaizen"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gk-empty-cell">No records found.</td></tr>');
+        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="17" class="gk-empty-cell">No records found.</td></tr>');
+        records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
     function loadRecords() {
@@ -133,8 +183,10 @@ $(function() {
     }
 
     function openDrawer(record) {
-        $('#gembaKaizenDrawerTitle').text(record && record.id ? 'Edit Gemba Kaizen' : 'Add Gemba Kaizen');
-        $('#gembaKaizenSubmitBtn span').text(record && record.id ? 'Update Kaizen' : 'Save Kaizen');
+        const isEdit = !!(record && record.id);
+        $('#gembaKaizenDrawerTitle').text(isEdit ? 'Edit Gemba Kaizen' : 'Add Gemba Kaizen');
+        $('#gembaKaizenSubmitBtn span').text(isEdit ? 'Update Kaizen' : 'Save Kaizen');
+        setEditLock(isEdit);
         $('.gemba-kaizen-config-page').addClass('gk-drawer-open');
         $('#gembaKaizenConfigForm').attr('aria-hidden', 'false');
         $('#gembaKaizenConfigDrawerBackdrop').attr('aria-hidden', 'false');
@@ -168,19 +220,13 @@ $(function() {
             type: 'GET',
             success: function(data) {
                 const options = data && data.options ? data.options : {};
-                const currentUser = options.currentUser || {};
-                if (!$('#name').val()) {
-                    $('#name').val(currentUser.name || '');
-                }
-                if (!$('#gembaKaizenProviderName').val()) {
-                    $('#gembaKaizenProviderName').val(currentUser.name || '');
-                }
-                if (!$('#employeeIdHoNumber').val()) {
-                    $('#employeeIdHoNumber').val(currentUser.employeeId || '');
-                }
+                currentUserIdentity = options.currentUser || {};
+                applyCurrentUserIdentity(false);
                 populateSelect('#department', options.departments || [], $('#department').val());
                 populateSelect('#classificationOfKaizen', options.classifications || [], $('#classificationOfKaizen').val());
                 populateSelect('#gembaKaizenLocation', options.processAreas || [], $('#gembaKaizenLocation').val());
+                const assignmentUsers = options.assignmentUsers || [];
+                populateSelect('#assignedTo', assignmentUsers.map(function(user) { return user.username; }), $('#assignedTo').val());
             },
             error: function() {
                 setMessage('Unable to load Gemba Kaizen data.', 'error');
@@ -190,6 +236,7 @@ $(function() {
 
     function saveRecord() {
         const id = $('#gembaKaizenRecordId').val();
+        setSaveLoading(true);
         $.ajax({
             url: API + '/records' + (id ? '/' + encodeURIComponent(id) : ''),
             type: id ? 'PUT' : 'POST',
@@ -207,6 +254,9 @@ $(function() {
             },
             error: function(xhr) {
                 setMessage(xhr.responseJSON?.message || 'Unable to submit.', 'error');
+            },
+            complete: function() {
+                setSaveLoading(false);
             }
         });
     }

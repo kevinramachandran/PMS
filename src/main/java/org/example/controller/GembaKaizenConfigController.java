@@ -2,7 +2,9 @@ package org.example.controller;
 
 import jakarta.servlet.http.HttpSession;
 import org.example.entity.GembaKaizenRecord;
+import org.example.entity.AssignmentHistory;
 import org.example.service.GembaKaizenConfigService;
+import org.example.service.AssignmentHistoryService;
 import org.example.util.RoleAccess;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,11 @@ import java.util.Set;
 public class GembaKaizenConfigController {
 
     private final GembaKaizenConfigService service;
+    private final AssignmentHistoryService assignmentHistoryService;
 
-    public GembaKaizenConfigController(GembaKaizenConfigService service) {
+    public GembaKaizenConfigController(GembaKaizenConfigService service, AssignmentHistoryService assignmentHistoryService) {
         this.service = service;
+        this.assignmentHistoryService = assignmentHistoryService;
     }
 
     @GetMapping("/records")
@@ -37,6 +41,12 @@ public class GembaKaizenConfigController {
         return service.find(id)
                 .<ResponseEntity<Map<String, Object>>>map(record -> ResponseEntity.ok(Map.of("record", record)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
+    }
+
+    @GetMapping("/records/{id}/history")
+    public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
+        if (!canView(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+        return ResponseEntity.ok(assignmentHistoryService.history("gemba-kaizen", id));
     }
 
     @PostMapping("/records")

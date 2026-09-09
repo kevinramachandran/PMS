@@ -83,6 +83,11 @@ public class WebController {
         return "process-confirmation";
     }
 
+    @GetMapping("/process-confirmation-config")
+    public String processConfirmationConfig() {
+        return "process-confirmation-config";
+    }
+
     @GetMapping("/abnormality-tracker")
     public String abnormalityTracker() {
         return "abnormality-tracker";

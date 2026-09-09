@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "abnormality_reporting_records")
@@ -68,6 +69,9 @@ public class AbnormalityReportingRecord {
     @Column(name = "tag_status", length = 80)
     private String tagStatus;
 
+    @Transient
+    private String assignmentRemark;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTypeOfTag() { return typeOfTag; }
@@ -104,4 +108,6 @@ public class AbnormalityReportingRecord {
     public void setDateClosed(LocalDate dateClosed) { this.dateClosed = dateClosed; }
     public String getTagStatus() { return tagStatus; }
     public void setTagStatus(String tagStatus) { this.tagStatus = tagStatus; }
+    public String getAssignmentRemark() { return assignmentRemark; }
+    public void setAssignmentRemark(String assignmentRemark) { this.assignmentRemark = assignmentRemark; }
 }

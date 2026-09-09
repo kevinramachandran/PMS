@@ -47,6 +47,12 @@ public class GembaKaizenRecord {
     @Column(length = 10)
     private String isKaizenImplemented;
 
+    @Column(length = 160)
+    private String assignedTo;
+
+    @Transient
+    private String assignmentRemark;
+
     public Long getId() {
         return id;
     }
@@ -150,4 +156,9 @@ public class GembaKaizenRecord {
     public void setIsKaizenImplemented(String isKaizenImplemented) {
         this.isKaizenImplemented = isKaizenImplemented;
     }
+
+    public String getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
+    public String getAssignmentRemark() { return assignmentRemark; }
+    public void setAssignmentRemark(String assignmentRemark) { this.assignmentRemark = assignmentRemark; }
 }
