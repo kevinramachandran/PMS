@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Dashboard - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=table-sort-20260909">
+    <link rel="stylesheet" href="/css/dashboard.css?v=kpi-table-fit-20260816">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=table-sort-20260909">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
 <body class="modern-shell dashboard-bg kpi-tv-layout">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -25,10 +25,11 @@
                 <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
                 <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk dashboard"><i class="fas fa-chart-pie"></i><span>Gemba Walk dashboard</span></a>
+                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
-            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Report"><i class="fas fa-clipboard-list"></i><span>Abnormality Report</span></a>
+                <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
@@ -52,10 +53,10 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Report"><i class="fas fa-clipboard-list"></i><span>Abnormality Report</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
@@ -66,7 +67,6 @@
                         <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
                         <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                         <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
-                        <a href="/settings?config=master-designation" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Designation"><i class="fas fa-id-badge"></i><span>Designation</span></a>
                         <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
                         <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
                         <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
@@ -378,16 +378,16 @@
                     </div>
                     <div class="hs-cross-legend">
                         <div class="hs-legend-pair">
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-green"></div><span>- Zero Accidents</span></div>
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-red"></div><span>- Accidents</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- zero accident day</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-diag"></div><span>- accident with/without lost days</span></div>
                         </div>
                         <div class="hs-legend-pair">
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-red"></div><span>- Near Miss</span></div>
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-green"></div><span>- No Near Miss</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-green"></div><span>- Near Miss</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Near Miss</span></div>
                         </div>
                         <div class="hs-legend-pair">
                             <div class="hs-legend-item"><div class="hs-swatch hs-swatch-red"></div><span>- Safety Concern</span></div>
-                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-green"></div><span>- No Safety Concern</span></div>
+                            <div class="hs-legend-item"><div class="hs-swatch hs-swatch-empty"></div><span>- No Safety Concern</span></div>
                         </div>
                     </div>
                     <div class="hs-crosses-row">
@@ -527,30 +527,30 @@
                 const monthFilter = document.getElementById('kpiMonthFilter');
                 const value = monthFilter ? (monthFilter.value || '') : '';
                 const parts = value.split('-');
-                if (parts.length >= 2) {
+                if (parts.length === 2) {
                     const year = parseInt(parts[0], 10);
                     const month = parseInt(parts[1], 10);
                     if (!isNaN(year) && !isNaN(month)) {
-                        return { year, month, date: parts.length === 3 ? value : '' };
+                        return { year, month };
                     }
                 }
 
                 const today = new Date();
-                return { year: today.getFullYear(), month: today.getMonth() + 1, date: getLocalDateString() };
+                return { year: today.getFullYear(), month: today.getMonth() + 1 };
             }
 
             // Load all data on page load
             function loadAllData() {
                 const period = getSelectedKpiPeriod();
-                loadPrioritiesData(period.year, period.month, period.date);
-                loadWeeklyPrioritiesData(period.year, period.month, period.date);
-                loadAllDailyData(period.year, period.month, period.date);
+                loadPrioritiesData(period.year, period.month);
+                loadWeeklyPrioritiesData(period.year, period.month);
+                loadAllDailyData(period.year, period.month);
             }
 
             // Load TOP 3 Priorities
-            function loadPrioritiesData(year, month, dateValue) {
+            function loadPrioritiesData(year, month) {
                 $.ajax({
-                    url: `/api/priorities/type/TOP_3/month?month=${month}&year=${year}${dateValue ? `&asOf=${encodeURIComponent(dateValue)}` : ''}`,
+                    url: `/api/priorities/type/TOP_3/month?month=${month}&year=${year}`,
                     type: 'GET',
                     success: function(data) {
                         if (data && data.length > 0) {
@@ -573,9 +573,9 @@
             }
 
             // Load Weekly Priorities
-            function loadWeeklyPrioritiesData(year, month, dateValue) {
+            function loadWeeklyPrioritiesData(year, month) {
                 $.ajax({
-                    url: `/api/priorities/type/WEEKLY/month?month=${month}&year=${year}${dateValue ? `&asOf=${encodeURIComponent(dateValue)}` : ''}`,
+                    url: `/api/priorities/type/WEEKLY/month?month=${month}&year=${year}`,
                     type: 'GET',
                     success: function(data) {
                         if (data && data.length > 0) {
@@ -598,16 +598,16 @@
             }
 
             // Load daily data for all sections
-            function loadAllDailyData(year, month, dateValue) {
+            function loadAllDailyData(year, month) {
                 sections.forEach(section => {
-                    loadDailyDataForSection(section, year, month, dateValue);
+                    loadDailyDataForSection(section, year, month);
                 });
             }
 
             // Load data for a specific section
-            function loadDailyDataForSection(type, year, month, dateValue) {
+            function loadDailyDataForSection(type, year, month) {
                 $.ajax({
-                    url: `/api/daily-data/type/${type}/month?month=${month}&year=${year}${dateValue ? `&asOf=${encodeURIComponent(dateValue)}` : ''}`,
+                    url: `/api/daily-data/type/${type}/month?month=${month}&year=${year}`,
                     type: 'GET',
                     success: function(data) {
                         populateDailyTable(bodyIds[type], data);
@@ -862,21 +862,20 @@
             if (safetySummary) safetySummary.textContent = 'Occurrences: ' + safetyConcernTotal;
         }
 
-        function loadHsCross(year, month, dayLimit) {
-            const maxDays = Math.min(daysInMonth(year, month), dayLimit || daysInMonth(year, month));
+        function loadHsCross(year, month) {
+            const maxDays = daysInMonth(year, month);
             document.getElementById('hsCrossMonthLabel').textContent =
                 MONTH_NAMES[month - 1] + "'" + String(year).slice(2);
 
             fetch('/api/hs-daily/' + year + '/' + month)
                 .then(r => r.json())
                 .then(data => {
-                    const visibleData = (data || []).filter(item => Number(item.day) <= maxDays);
-                    buildCrossGrid('accidentsCrossGrid',         visibleData, 'accident',     maxDays);
-                    buildCrossGrid('nearMissCrossGrid',          visibleData, 'nearMiss',     maxDays);
-                    buildCrossGrid('safetyConcernCrossGrid',     visibleData, 'safetyConcern',maxDays);
-                    updateMiniHsCharts(visibleData, maxDays);
+                    buildCrossGrid('accidentsCrossGrid',         data, 'accident',     maxDays);
+                    buildCrossGrid('nearMissCrossGrid',          data, 'nearMiss',     maxDays);
+                    buildCrossGrid('safetyConcernCrossGrid',     data, 'safetyConcern',maxDays);
+                    updateMiniHsCharts(data, maxDays);
                     if (window.updateHsOverviewFromApi) {
-                        window.updateHsOverviewFromApi(visibleData, maxDays, year, month);
+                        window.updateHsOverviewFromApi(data, maxDays, year, month);
                     }
                 })
                 .catch(() => {
@@ -893,30 +892,28 @@
         function resolveActiveYearMonth() {
             const monthFilter = document.getElementById('kpiMonthFilter');
             const parts = ((monthFilter && monthFilter.value) ? monthFilter.value : '').split('-');
-            if (parts.length >= 2) {
+            if (parts.length === 2) {
                 const y = parseInt(parts[0], 10);
                 const m = parseInt(parts[1], 10);
-                const d = parts.length === 3 ? parseInt(parts[2], 10) : daysInMonth(y, m);
                 if (!isNaN(y) && !isNaN(m)) {
-                    return { year: y, month: m, day: !isNaN(d) ? d : daysInMonth(y, m) };
+                    return { year: y, month: m };
                 }
             }
             const now = new Date();
-            return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+            return { year: now.getFullYear(), month: now.getMonth() + 1 };
         }
 
         function initHsCross() {
             const active = resolveActiveYearMonth();
-            loadHsCross(active.year, active.month, active.day);
+            loadHsCross(active.year, active.month);
             const monthFilter = document.getElementById('kpiMonthFilter');
             if (monthFilter) {
                 monthFilter.addEventListener('change', function () {
                     const val = this.value || '';
                     const parts = val.split('-');
-                    if (parts.length >= 2) {
+                    if (parts.length === 2) {
                         const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
-                        const d = parts.length === 3 ? parseInt(parts[2], 10) : daysInMonth(y, m);
-                        if (!isNaN(y) && !isNaN(m)) loadHsCross(y, m, !isNaN(d) ? d : daysInMonth(y, m));
+                        if (!isNaN(y) && !isNaN(m)) loadHsCross(y, m);
                     }
                 });
             }
@@ -927,7 +924,7 @@
         window.addEventListener('storage', function (e) {
             if (e.key === 'hs-cross-update') {
                 const active = resolveActiveYearMonth();
-                loadHsCross(active.year, active.month, active.day);
+                loadHsCross(active.year, active.month);
             }
         });
     })();
@@ -1027,17 +1024,16 @@
             }
         }
 
-        function loadLsrTracking(year, month, dayLimit) {
-            const maxDays = Math.min(daysInMonth(year, month), dayLimit || daysInMonth(year, month));
+        function loadLsrTracking(year, month) {
+            const maxDays = daysInMonth(year, month);
             const lbl = document.getElementById('lsrMonthLabel');
             if (lbl) lbl.textContent = MONTH_NAMES[month - 1] + "'" + String(year).slice(2);
             fetch('/api/lsr-daily/' + year + '/' + month)
                 .then(r => r.json())
                 .then(data => {
-                    const visibleData = (data || []).filter(item => Number(item.day) <= maxDays);
-                    buildLsrTable(visibleData, maxDays);
+                    buildLsrTable(data, maxDays);
                     if (window.updateLsrOverviewFromApi) {
-                        window.updateLsrOverviewFromApi(visibleData, maxDays, year, month);
+                        window.updateLsrOverviewFromApi(data, maxDays, year, month);
                     }
                 })
                 .catch(() => {
@@ -1051,29 +1047,27 @@
         function resolveActiveYearMonth() {
             const monthFilter = document.getElementById('kpiMonthFilter');
             const parts = ((monthFilter && monthFilter.value) ? monthFilter.value : '').split('-');
-            if (parts.length >= 2) {
+            if (parts.length === 2) {
                 const y = parseInt(parts[0], 10);
                 const m = parseInt(parts[1], 10);
-                const d = parts.length === 3 ? parseInt(parts[2], 10) : daysInMonth(y, m);
                 if (!isNaN(y) && !isNaN(m)) {
-                    return { year: y, month: m, day: !isNaN(d) ? d : daysInMonth(y, m) };
+                    return { year: y, month: m };
                 }
             }
             const now = new Date();
-            return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+            return { year: now.getFullYear(), month: now.getMonth() + 1 };
         }
 
         function initLsr() {
             const active = resolveActiveYearMonth();
-            loadLsrTracking(active.year, active.month, active.day);
+            loadLsrTracking(active.year, active.month);
             const monthFilter = document.getElementById('kpiMonthFilter');
             if (monthFilter) {
                 monthFilter.addEventListener('change', function () {
                     const parts = (this.value || '').split('-');
-                    if (parts.length >= 2) {
+                    if (parts.length === 2) {
                         const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
-                        const d = parts.length === 3 ? parseInt(parts[2], 10) : daysInMonth(y, m);
-                        if (!isNaN(y) && !isNaN(m)) loadLsrTracking(y, m, !isNaN(d) ? d : daysInMonth(y, m));
+                        if (!isNaN(y) && !isNaN(m)) loadLsrTracking(y, m);
                     }
                 });
             }
@@ -1083,16 +1077,16 @@
         window.addEventListener('storage', function (e) {
             if (e.key === 'lsr-tracking-update') {
                 const active = resolveActiveYearMonth();
-                loadLsrTracking(active.year, active.month, active.day);
+                loadLsrTracking(active.year, active.month);
             }
         });
     })();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <script src="/js/dashboard.js?v=kpi-date-view-20260910"></script>
+    <script src="/js/dashboard.js?v=kpi-label-sync-20260821"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=sticky-table-header-20260910"></script>
+<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>
 
