@@ -213,6 +213,23 @@ public class ProductionMetricsService {
         return records;
     }
 
+    public List<ProductionMetrics> getRecordsByMonth(int month, int year, LocalDate asOf) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate monthStart = yearMonth.atDay(1);
+        LocalDate monthEnd = yearMonth.atEndOfMonth();
+        LocalDate selectedEnd = asOf == null ? monthEnd : asOf;
+
+        if (selectedEnd.isBefore(monthStart)) {
+            selectedEnd = monthStart;
+        } else if (selectedEnd.isAfter(monthEnd)) {
+            selectedEnd = monthEnd;
+        }
+
+        List<ProductionMetrics> records = buildNormalizedRecordsBetween(monthStart.minusDays(1), selectedEnd);
+        attachCustomMetricSnapshots(records);
+        return records;
+    }
+
     public List<CustomMetricDefinitionPayload> getCustomMetricDefinitions() {
         return customDefinitionRepository.findByActiveTrueOrderBySectionAscDisplayOrderAscIdAsc()
                 .stream()

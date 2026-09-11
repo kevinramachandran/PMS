@@ -1,61 +1,471 @@
 $(function() {
     const API = '/api/carlex-process-confirmation/records';
-    const observationFields = ['zm1Description','zm2Description','pm1Description','pm2Description','qm1Description','qm2Description'];
-    const imageFields = ['zm1ObservationImage','zm2ObservationImage','pm1ObservationImage','pm2ObservationImage','om1ObservationImage','qm1ObservationImage','qm2ObservationImage'];
-    const observationCategoryByField = {
-        zm1Description: 'ZM_OBSERVATION',
-        zm2Description: 'ZM_OBSERVATION',
-        pm1Description: 'PM_OBSERVATION',
-        pm2Description: 'PM_OBSERVATION',
-        om1Description: 'OM_OBSERVATION',
-        qm1Description: 'QM_OBSERVATION',
-        qm2Description: 'QM_OBSERVATION'
+    const OPTIONS_API = '/api/carlex-process-confirmation/options';
+    const GROUPS = {
+        zm: { label: 'ZM', category: 'ZM_OBSERVATION', jsonField: 'zmObservationsJson' },
+        pm: { label: 'PM', category: 'PM_OBSERVATION', jsonField: 'pmObservationsJson' },
+        qm: { label: 'QM', category: 'QM_OBSERVATION', jsonField: 'qmObservationsJson' }
     };
-    const fields = [
-        ['startTime','Start time','time'],['completionTime','Completion time','time'],['email','Email','email'],['name','Name','text'],['lastModifiedTime','Last modified time','datetime-local'],['processConfirmationDoneBy','Process Confirmation (PC) Done By','text'],['dateOfGwProcessConfirmationConducted','Date of the GW Process Confirmation conducted','date'],['gwPcWeek','GW PC week','text'],['areaOfGwProcessConfirmationConducted','Area of the GW Process Confirmation conducted','text'],['areaResponsibility','Area Responsibility','text'],['assignedTo','Assigned To','select'],['assignmentRemark','Assignment / Reassignment Remarks','textarea'],
-        ['zm1Description','ZM - Describe your observation number 1 - Issues','select'],['zm1CounterMeasureActions','ZM 1 - observation with Counter measure actions','textarea'],['zm1Status','ZM 1 Status','status'],['zm1ObservationImage','ZM 1 Observation Image','text'],['anotherZmObservation','Do you have another ZM observation','yesno'],['zm2Description','ZM 2 - Describe your observation number 2 - Issues','select'],['zm2CounterMeasureActions','ZM 2 - observation with Counter measure actions','textarea'],['zm2Status','ZM 2 Status','status'],['zm2ObservationImage','ZM 2 Observation Image','text'],
-        ['pm1Description','PM - Describe your observation number 1 - Issues','select'],['pm1CounterMeasureActions','PM 1 - observation with Counter measure actions','textarea'],['pm1Status','PM 1 Status','status'],['pm1ObservationImage','PM 1 Observation Image','text'],['anotherPmObservation','Do you have another PM observation','yesno'],['pm2Description','PM 2 - Describe your observation number 2 - Issues','select'],['pm2CounterMeasureActions','PM 2 - observation with Counter measure actions','textarea'],['pm2Status','PM 2 Status','status'],['pm2ObservationImage','PM 2 Observation Image','text'],
-        ['om1Description','OM - Describe your observation number 1 - Issues','select'],['om1CounterMeasureActions','OM 1 - observation with Counter measure actions','textarea'],['om1Status','OM 1 Status','status'],['om1ObservationImage','OM 1 Observation Image','text'],['qm1Description','QM - Describe your observation number 1 - Issues','select'],['qm1CounterMeasureActions','QM 1 - observation with Counter measure actions','textarea'],['qm1Status','QM 1 Status','status'],['qm1ObservationImage','QM 1 Observation Image','text'],['anotherQmObservation','Do you have another QM observation','yesno'],['qm2Description','QM 2 - Describe your observation number 2 - Issues','select'],['qm2CounterMeasureActions','QM 2 - observation with Counter measure actions','textarea'],['qm2Status','QM 2 Status','status'],['qm2ObservationImage','QM 2 Observation Image','text']
+    const LEGACY_FIELDS = {
+        zm: [
+            ['zm1Description', 'zm1CounterMeasureActions', 'zm1Status', 'zm1ObservationImage'],
+            ['zm2Description', 'zm2CounterMeasureActions', 'zm2Status', 'zm2ObservationImage']
+        ],
+        pm: [
+            ['pm1Description', 'pm1CounterMeasureActions', 'pm1Status', 'pm1ObservationImage'],
+            ['pm2Description', 'pm2CounterMeasureActions', 'pm2Status', 'pm2ObservationImage']
+        ],
+        qm: [
+            ['qm1Description', 'qm1CounterMeasureActions', 'qm1Status', 'qm1ObservationImage'],
+            ['qm2Description', 'qm2CounterMeasureActions', 'qm2Status', 'qm2ObservationImage']
+        ]
+    };
+    const imageFields = [
+        'zm1ObservationImage', 'zm2ObservationImage',
+        'pm1ObservationImage', 'pm2ObservationImage',
+        'qm1ObservationImage', 'qm2ObservationImage'
     ];
-    let records = [], readOnly = false, currentUserIdentity = {};
+    const baseFields = [
+        ['startTime', 'Start time', 'time'],
+        ['completionTime', 'Completion time', 'time'],
+        ['dateOfGwProcessConfirmationConducted', 'Date of the GW Process Confirmation conducted', 'date'],
+        ['gwPcWeek', 'GW PC week', 'text'],
+        ['department', 'Department', 'select'],
+        ['areaOfGwProcessConfirmationConducted', 'Area', 'select'],
+        ['areaResponsibility', 'Area / Department HOD', 'text'],
+        ['assignedTo', 'Assigned To', 'select'],
+        ['assignmentRemark', 'Assignment / Reassignment Remarks', 'textarea']
+    ];
 
-    function esc(value) { return $('<div>').text(value == null ? '' : value).html(); }
-    function nowTime() { const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
-    function today() { return new Date().toISOString().slice(0,10); }
+    let records = [];
+    let readOnly = false;
+    let currentUserIdentity = {};
+    let areaItems = [];
+    let departments = [];
+    let assignmentUsers = [];
+    let saveInFlight = false;
+    let observationOptions = { zm: [], pm: [], qm: [] };
+    let observationState = { zm: [emptyObservation()], pm: [emptyObservation()], qm: [emptyObservation()] };
+
+    function esc(value) {
+        return $('<div>').text(value == null ? '' : value).html();
+    }
+
+    function nowTime() {
+        const d = new Date();
+        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    function today() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function formatDate(value) {
+        if (!value) return '';
+        const parts = String(value).slice(0, 10).split('-');
+        if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+        return value;
+    }
+
+    function emptyObservation() {
+        return { description: '', counterMeasureActions: '', status: '', observationImage: '' };
+    }
+
+    function safeParse(value) {
+        if (!value) return [];
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+            return [];
+        }
+    }
+
     function fieldHtml(field) {
         const id = field[0], label = field[1], type = field[2];
-        const readOnlyAttr = id === 'name' || id === 'email' ? ' readonly' : '';
-        let input = type === 'textarea' ? '<textarea id="' + id + '" rows="2"></textarea>' : '<input id="' + id + '" type="' + (type === 'datetime-local' ? 'datetime-local' : type) + '"' + readOnlyAttr + '>';
+        let input = type === 'textarea'
+            ? '<textarea id="' + id + '" rows="2"></textarea>'
+            : '<input id="' + id + '" type="' + type + '">';
         if (type === 'select') input = '<select id="' + id + '"></select>';
-        if (type === 'status') input = '<select id="' + id + '"><option value="">-</option><option>P</option><option>D</option><option>C</option><option>A</option></select>';
-        if (type === 'yesno') input = '<select id="' + id + '"><option value=""></option><option value="true">YES</option><option value="false">NO</option></select>';
-        if (imageFields.includes(id)) input = '<input id="' + id + '" type="file" accept="image/*"><input type="hidden" id="' + id + 'Stored">';
-        return '<div class="carlex-form-group' + (type === 'textarea' ? ' carlex-wide' : '') + '"><label for="' + id + '">' + label + '</label>' + input + '</div>';
+        return '<div class="carlex-form-group' + (type === 'textarea' ? ' carlex-wide' : '') + '">' +
+            '<label for="' + id + '">' + label + '</label>' + input + '</div>';
     }
-    function buildForm() { $('#carlexFields').html(fields.map(fieldHtml).join('')); loadObservationOptions(); }
-    function applyCurrentUserIdentity(force) {
-        if (force || !$('#name').val()) {
-            $('#name').val(currentUserIdentity.label || currentUserIdentity.username || '');
-        }
-        if (force || !$('#email').val()) {
-            $('#email').val(currentUserIdentity.email || '');
-        }
-        $('#name, #email').prop('readonly', true);
+
+    function observationGroupHtml(key) {
+        const group = GROUPS[key];
+        return '<section class="carlex-observation-panel" data-group="' + key + '">' +
+            '<div class="carlex-observation-header">' +
+            '<h3>' + group.label + ' Observations</h3>' +
+            '<button type="button" class="carlex-add-observation" data-group="' + key + '">' +
+            '<i class="fas fa-plus"></i><span>Add ' + group.label + '</span></button>' +
+            '</div><div class="carlex-observation-list" id="' + key + 'ObservationList"></div></section>';
     }
-    function loadObservationOptions() { Object.keys(observationCategoryByField).forEach(function(id) { $.getJSON('/api/dashboard-config/process-master-data/' + observationCategoryByField[id], function(data) { const select = $('#' + id); const current = select.val(); select.html('<option value=""></option>' + (data.items || []).map(function(item) { return '<option>' + esc(item.name) + '</option>'; }).join('')); select.val(current || ''); }); }); $.getJSON('/api/carlex-process-confirmation/options', function(data) { const users=(data.assignmentUsers||[]); currentUserIdentity=data.currentUser||{}; $('#assignedTo').html('<option value=""></option>'+users.map(function(user){return '<option value="'+esc(user.username)+'">'+esc(user.label || user.username)+'</option>';}).join('')); applyCurrentUserIdentity(!$('#carlexId').val()); }); }
-    function setForm(record) { fields.forEach(function(field) { let value = (record || {})[field[0]]; if (field[2] === 'datetime-local' && value) value = String(value).slice(0,16); if (field[2] === 'yesno' && value != null) value = String(value); if (imageFields.includes(field[0])) { $('#' + field[0]).val(''); $('#' + field[0] + 'Stored').val(value == null ? '' : value); } else { $('#' + field[0]).val(value == null ? '' : value); } }); }
-    function payload() { const result = {}; fields.forEach(function(field) { let value = imageFields.includes(field[0]) ? $('#' + field[0] + 'Stored').val() : $('#' + field[0]).val(); if (field[2] === 'yesno') value = value === '' ? null : value === 'true'; result[field[0]] = value || (value === false ? false : null); }); return result; }
-    function render() { $('#carlexRecordsBody').html(records.map(function(r,i) { return '<tr><td>'+(i+1)+'</td><td>'+esc(r.id)+'</td><td>'+esc(r.dateOfGwProcessConfirmationConducted)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.areaOfGwProcessConfirmationConducted)+'</td><td>'+esc(r.areaResponsibility)+'</td><td>'+esc(r.assignedTo)+'</td><td>'+esc(r.zm1Description)+'</td><td>'+esc(r.pm1Description)+'</td><td>'+esc(r.qm1Description)+'</td><td>'+esc(r.zm1Status || r.pm1Status || r.qm1Status)+'</td><td>'+imageFields.map(function(field){return attachmentIcon('process-confirmation',r[field],r[field]);}).join(' ')+'</td><td class="assignment-history-cell" data-record-id="'+r.id+'">Loading...</td><td class="carlex-actions"><button class="carlex-view" data-id="'+r.id+'" title="View"><i class="fas fa-eye"></i></button><button class="carlex-edit" data-id="'+r.id+'" title="Edit"><i class="fas fa-pen"></i></button><button class="carlex-delete" data-id="'+r.id+'" title="Delete"><i class="fas fa-trash"></i></button></td></tr>'; }).join('') || '<tr><td colspan="14">No records found.</td></tr>'); $('.assignment-history-cell').each(function() { const cell=$(this); $.getJSON(API + '/' + cell.data('record-id') + '/history', function(entries) { cell.html(formatAssignmentHistory(entries)); }); }); }
-    function setSaveLoading(loading) { const btn=$('#carlexSaveBtn'); if(loading){ if(!btn.data('original-html')) btn.data('original-html',btn.html()); btn.prop('disabled',true).html('<i class="fas fa-spinner fa-spin"></i> Saving...'); $('#carlexCancelBtn,#carlexCloseBtn').prop('disabled',true); return; } btn.prop('disabled',false).html(btn.data('original-html') || '<i class="fas fa-save"></i> Save'); $('#carlexCancelBtn,#carlexCloseBtn').prop('disabled',false); }
-    function confirmDelete(options) { if (window.PmsConfirm && typeof window.PmsConfirm.open === 'function') return window.PmsConfirm.open(options); return Promise.resolve(window.confirm((options && options.message) || 'Delete this record?')); }
-    function load() { $.getJSON(API, function(data) { records=data||[]; render(); }).fail(function() { $('#carlexRecordsBody').html('<tr><td colspan="14">Unable to load records.</td></tr>'); }); }
-    function open(record, viewing) { readOnly=!!viewing; setForm(record || {startTime:nowTime(),completionTime:nowTime(),dateOfGwProcessConfirmationConducted:today()}); $('#carlexId').val(record ? record.id : ''); if (!record) applyCurrentUserIdentity(true); $('#carlexDrawerTitle').text(viewing ? 'View CarlEX Process Confirmation' : (record ? 'Edit CarlEX Process Confirmation' : 'Add CarlEX Process Confirmation')); $('#carlexSaveBtn').toggle(!readOnly); $('#carlexCancelBtn').text(readOnly ? 'Close' : 'Cancel'); $('#carlexFields input, #carlexFields select, #carlexFields textarea').prop('disabled', readOnly); $('#name, #email').prop('readonly', true); $('#carlexBackdrop, #carlexForm').attr('aria-hidden','false'); $('.carlex-config-page').addClass('carlex-drawer-open'); }
-    function close() { $('#carlexBackdrop, #carlexForm').attr('aria-hidden','true'); $('.carlex-config-page').removeClass('carlex-drawer-open'); }
-    $('#carlexForm').on('submit', function(e) { e.preventDefault(); if(readOnly) return; const id=$('#carlexId').val(); setSaveLoading(true); $.ajax({url:API+(id?'/'+id:''),type:id?'PUT':'POST',contentType:'application/json',data:JSON.stringify(payload()),success:function(){ close(); load(); },error:function(xhr){ $('#carlexMessage').text(xhr.responseJSON?.message || 'Unable to save record.').addClass('show error'); },complete:function(){ setSaveLoading(false); }}); });
-    $('#carlexAddBtn').on('click', function(){ open(null,false); }); $('#carlexCloseBtn, #carlexCancelBtn, #carlexBackdrop').on('click', close);
-    $(document).on('click','.carlex-view,.carlex-edit',function(){ const record=records.find(r=>String(r.id)===String($(this).data('id'))); open(record,$(this).hasClass('carlex-view')); });
-    $(document).on('click','.carlex-delete',function(){ const id=$(this).data('id'); confirmDelete({title:'Delete process confirmation?',message:'This process confirmation record will be permanently deleted.',confirmText:'Delete Record'}).then(function(confirmed){ if(confirmed) $.ajax({url:API+'/'+id,type:'DELETE',success:load}); }); });
-    $(document).on('change', imageFields.map(function(id) { return '#' + id; }).join(','), function() { const input=this; const file=input.files&&input.files[0]; if(!file) return; const hidden=$('#'+input.id+'Stored'); const formData=new FormData(); formData.append('file',file); if(hidden.val()) formData.append('replace',hidden.val()); $.ajax({url:'/api/attachments/process-confirmation/upload',type:'POST',data:formData,processData:false,contentType:false,success:function(data){hidden.val(data.storedName||'');},error:function(xhr){$('#carlexMessage').text(xhr.responseJSON?.error||'Image upload failed.').addClass('show error');}}); });
-    $('#hamburger').on('click',function(){ if(innerWidth<=768){$('#sidebar').toggleClass('active');$('#sidebarOverlay').toggleClass('active');}else{$('#sidebar').toggleClass('collapsed');$('.main-content').toggleClass('expanded');} });
-    buildForm(); load(); const edit=new URLSearchParams(location.search).get('edit'); if(edit) $.getJSON(API+'/'+edit,function(record){open(record,false);});
+
+    function buildForm() {
+        $('#carlexFields').html(baseFields.map(fieldHtml).join('') +
+            '<div class="carlex-observations-wide">' +
+            observationGroupHtml('zm') + observationGroupHtml('pm') + observationGroupHtml('qm') +
+            '</div>');
+        renderAllObservationGroups();
+        loadOptions();
+        loadObservationOptions();
+    }
+
+    function populateSelect(selector, values, current, placeholder) {
+        const options = ['<option value="">' + esc(placeholder || '') + '</option>']
+            .concat((values || []).map(function(value) {
+                return '<option value="' + esc(value) + '">' + esc(value) + '</option>';
+            }));
+        $(selector).html(options.join('')).val(current || '');
+    }
+
+    function populateDepartments() {
+        populateSelect('#department', departments, $('#department').val(), 'Select department');
+    }
+
+    function filteredAreas() {
+        const department = $('#department').val();
+        return areaItems
+            .filter(function(item) {
+                return !department || String(item.parentDepartment || '').trim().toLowerCase() === department.trim().toLowerCase();
+            })
+            .map(function(item) { return item.name; });
+    }
+
+    function populateAreas(current) {
+        populateSelect('#areaOfGwProcessConfirmationConducted', filteredAreas(), current || $('#areaOfGwProcessConfirmationConducted').val(), 'Select area');
+    }
+
+    function deriveDepartmentFromArea() {
+        const area = $('#areaOfGwProcessConfirmationConducted').val();
+        if (!area) return;
+        const item = areaItems.find(function(candidate) {
+            return String(candidate.name || '').trim().toLowerCase() === area.trim().toLowerCase();
+        });
+        if (item && item.parentDepartment) {
+            $('#department').val(item.parentDepartment);
+            populateAreas(area);
+        }
+    }
+
+    function loadOptions(callback) {
+        const params = {
+            department: $('#department').val() || '',
+            area: $('#areaOfGwProcessConfirmationConducted').val() || '',
+            recordId: $('#carlexId').val() || ''
+        };
+        $.getJSON(OPTIONS_API, params, function(data) {
+            const options = data.options || data || {};
+            currentUserIdentity = options.currentUser || {};
+            departments = options.departments || [];
+            areaItems = options.areaItems || [];
+            assignmentUsers = options.assignmentUsers || [];
+            populateDepartments();
+            populateAreas();
+            $('#assignedTo').html('<option value=""></option>' + assignmentUsers.map(function(user) {
+                return '<option value="' + esc(user.username) + '">' + esc(user.label || user.username) + '</option>';
+            }).join(''));
+            if (!$('#assignedTo').val() && options.defaultAssignedTo) {
+                $('#assignedTo').val(options.defaultAssignedTo);
+            }
+            if (typeof callback === 'function') callback();
+        });
+    }
+
+    function loadObservationOptions() {
+        Object.keys(GROUPS).forEach(function(groupKey) {
+            $.getJSON('/api/dashboard-config/process-master-data/' + GROUPS[groupKey].category, function(data) {
+                const items = data.items || [];
+                observationOptions[groupKey] = items.map(function(item) { return item.name; }).filter(Boolean);
+                renderObservationGroup(groupKey);
+            });
+        });
+    }
+
+    function renderAllObservationGroups() {
+        Object.keys(GROUPS).forEach(renderObservationGroup);
+    }
+
+    function renderObservationGroup(groupKey) {
+        const group = GROUPS[groupKey];
+        const rows = (observationState[groupKey] || [emptyObservation()]).map(function(item, index) {
+            const remove = index === 0 ? '' :
+                '<button type="button" class="carlex-remove-observation" data-group="' + groupKey + '" data-index="' + index + '" title="Remove ' + group.label + ' observation"><i class="fas fa-trash"></i></button>';
+            const options = '<option value=""></option>' + (observationOptions[groupKey] || []).map(function(name) {
+                return '<option value="' + esc(name) + '"' + (name === item.description ? ' selected' : '') + '>' + esc(name) + '</option>';
+            }).join('');
+            return '<div class="carlex-observation-row" data-group="' + groupKey + '" data-index="' + index + '">' +
+                '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Describe your observation number ' + (index + 1) + ' - Issues</label><select class="pc-observation-description">' + options + '</select></div>' +
+                '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' observation with Counter measure actions</label><textarea class="pc-observation-actions" rows="2">' + esc(item.counterMeasureActions) + '</textarea></div>' +
+                '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Status</label><select class="pc-observation-status">' +
+                '<option value=""></option><option value="P">P</option><option value="D">D</option><option value="C">C</option><option value="A">A</option></select></div>' +
+                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><input class="pc-observation-image" type="file" accept="image/*" capture="environment"><input class="pc-observation-image-stored" type="hidden" value="' + esc(item.observationImage) + '"></div>' +
+                '<div class="carlex-observation-actions">' + remove + '</div>' +
+                '</div>';
+        }).join('');
+        $('#' + groupKey + 'ObservationList').html(rows);
+        $('#' + groupKey + 'ObservationList .carlex-observation-row').each(function(index) {
+            $(this).find('.pc-observation-status').val((observationState[groupKey][index] || {}).status || '');
+        });
+    }
+
+    function readObservationsFromDom(groupKey) {
+        return $('#' + groupKey + 'ObservationList .carlex-observation-row').map(function() {
+            const row = $(this);
+            return {
+                description: row.find('.pc-observation-description').val() || '',
+                counterMeasureActions: row.find('.pc-observation-actions').val() || '',
+                status: row.find('.pc-observation-status').val() || '',
+                observationImage: row.find('.pc-observation-image-stored').val() || ''
+            };
+        }).get().filter(function(item, index) {
+            return index === 0 || item.description || item.counterMeasureActions || item.status || item.observationImage;
+        });
+    }
+
+    function syncStateFromDom() {
+        Object.keys(GROUPS).forEach(function(groupKey) {
+            observationState[groupKey] = readObservationsFromDom(groupKey);
+            if (!observationState[groupKey].length) observationState[groupKey] = [emptyObservation()];
+        });
+    }
+
+    function observationsFromRecord(record, groupKey) {
+        const jsonRows = safeParse(record[GROUPS[groupKey].jsonField]).map(function(item) {
+            return {
+                description: item.description || '',
+                counterMeasureActions: item.counterMeasureActions || '',
+                status: item.status || '',
+                observationImage: item.observationImage || ''
+            };
+        });
+        if (jsonRows.length) return jsonRows;
+        const legacyRows = LEGACY_FIELDS[groupKey].map(function(fields) {
+            return {
+                description: record[fields[0]] || '',
+                counterMeasureActions: record[fields[1]] || '',
+                status: record[fields[2]] || '',
+                observationImage: record[fields[3]] || ''
+            };
+        }).filter(function(item) {
+            return item.description || item.counterMeasureActions || item.status || item.observationImage;
+        });
+        return legacyRows.length ? legacyRows : [emptyObservation()];
+    }
+
+    function setForm(record) {
+        baseFields.forEach(function(field) {
+            let value = (record || {})[field[0]];
+            $('#' + field[0]).val(value == null ? '' : value);
+        });
+        observationState = {
+            zm: observationsFromRecord(record || {}, 'zm'),
+            pm: observationsFromRecord(record || {}, 'pm'),
+            qm: observationsFromRecord(record || {}, 'qm')
+        };
+        renderAllObservationGroups();
+        populateDepartments();
+        populateAreas((record || {}).areaOfGwProcessConfirmationConducted || '');
+        $('#department').val((record || {}).department || $('#department').val());
+        $('#areaOfGwProcessConfirmationConducted').val((record || {}).areaOfGwProcessConfirmationConducted || '');
+        loadOptions(function() {
+            $('#assignedTo').val((record || {}).assignedTo || $('#assignedTo').val());
+        });
+    }
+
+    function payload() {
+        syncStateFromDom();
+        const result = {};
+        baseFields.forEach(function(field) {
+            const value = $('#' + field[0]).val();
+            result[field[0]] = value || null;
+        });
+        Object.keys(GROUPS).forEach(function(groupKey) {
+            const observations = observationState[groupKey];
+            result[GROUPS[groupKey].jsonField] = JSON.stringify(observations);
+            LEGACY_FIELDS[groupKey].forEach(function(fields, index) {
+                const item = observations[index] || emptyObservation();
+                result[fields[0]] = item.description || null;
+                result[fields[1]] = item.counterMeasureActions || null;
+                result[fields[2]] = item.status || null;
+                result[fields[3]] = item.observationImage || null;
+            });
+            result['another' + groupKey.toUpperCase().slice(0, 1) + groupKey.slice(1) + 'Observation'] = observations.length > 1;
+        });
+        return result;
+    }
+
+    function render() {
+        $('#carlexRecordsBody').html(records.map(function(r, i) {
+            return '<tr><td>' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(formatDate(r.dateOfGwProcessConfirmationConducted)) + '</td>' +
+                '<td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.department) + '</td>' +
+                '<td>' + esc(r.areaOfGwProcessConfirmationConducted) + '</td><td>' + esc(r.areaResponsibility) + '</td><td>' + esc(r.assignedTo) + '</td>' +
+                '<td>' + esc(r.zm1Description) + '</td><td>' + esc(r.pm1Description) + '</td><td>' + esc(r.qm1Description) + '</td>' +
+                '<td>' + esc(r.zm1Status || r.pm1Status || r.qm1Status) + '</td><td>' + imageFields.map(function(field) {
+                    return attachmentIcon('process-confirmation', r[field], r[field]);
+                }).join(' ') + '</td><td class="assignment-history-cell" data-record-id="' + r.id + '">Loading...</td>' +
+                '<td class="carlex-actions"><button class="carlex-view" data-id="' + r.id + '" title="View"><i class="fas fa-eye"></i></button>' +
+                '<button class="carlex-edit" data-id="' + r.id + '" title="Edit"><i class="fas fa-pen"></i></button>' +
+                '<button class="carlex-delete" data-id="' + r.id + '" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
+        }).join('') || '<tr><td colspan="16">No records found.</td></tr>');
+        $('.assignment-history-cell').each(function() {
+            const cell = $(this);
+            $.getJSON(API + '/' + cell.data('record-id') + '/history', function(entries) {
+                cell.html(formatAssignmentHistory(entries));
+            });
+        });
+    }
+
+    function setSaveLoading(loading) {
+        const btn = $('#carlexSaveBtn');
+        if (loading) {
+            if (!btn.data('original-html')) btn.data('original-html', btn.html());
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            $('#carlexCancelBtn,#carlexCloseBtn').prop('disabled', true);
+            return;
+        }
+        btn.prop('disabled', false).html(btn.data('original-html') || '<i class="fas fa-save"></i> Save confirmation');
+        $('#carlexCancelBtn,#carlexCloseBtn').prop('disabled', false);
+    }
+
+    function confirmDelete(options) {
+        if (window.PmsConfirm && typeof window.PmsConfirm.open === 'function') return window.PmsConfirm.open(options);
+        return Promise.resolve(window.confirm((options && options.message) || 'Delete this record?'));
+    }
+
+    function load() {
+        $.getJSON(API, function(data) {
+            records = data.records || data || [];
+            render();
+        }).fail(function() {
+            $('#carlexRecordsBody').html('<tr><td colspan="16">Unable to load records.</td></tr>');
+        });
+    }
+
+    function open(record, viewing) {
+        readOnly = !!viewing;
+        $('#carlexMessage').removeClass('show error').text('');
+        $('#carlexId').val(record ? record.id : '');
+        setForm(record || {
+            startTime: nowTime(),
+            completionTime: nowTime(),
+            dateOfGwProcessConfirmationConducted: today()
+        });
+        $('#carlexDrawerTitle').text(viewing ? 'View CarlEX Process Confirmation' : (record ? 'Edit CarlEX Process Confirmation' : 'Add CarlEX Process Confirmation'));
+        $('#carlexSaveBtn').toggle(!readOnly);
+        $('#carlexCancelBtn').text(readOnly ? 'Close' : 'Cancel');
+        $('#carlexFields input, #carlexFields select, #carlexFields textarea, .carlex-add-observation, .carlex-remove-observation').prop('disabled', readOnly);
+        $('#carlexBackdrop, #carlexForm').attr('aria-hidden', 'false');
+        $('.carlex-config-page').addClass('carlex-drawer-open');
+    }
+
+    function close() {
+        $('#carlexBackdrop, #carlexForm').attr('aria-hidden', 'true');
+        $('.carlex-config-page').removeClass('carlex-drawer-open');
+    }
+
+    $('#carlexForm').on('submit', function(e) {
+        e.preventDefault();
+        if (readOnly || saveInFlight) return;
+        const id = $('#carlexId').val();
+        saveInFlight = true;
+        setSaveLoading(true);
+        $.ajax({
+            url: API + (id ? '/' + id : ''),
+            type: id ? 'PUT' : 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload()),
+            success: function(data) {
+                if (data && data.status === 'error') {
+                    $('#carlexMessage').text(data.message || 'Unable to save record.').addClass('show error');
+                    return;
+                }
+                close();
+                load();
+            },
+            error: function(xhr) {
+                $('#carlexMessage').text(xhr.responseJSON?.message || 'Unable to save record.').addClass('show error');
+            },
+            complete: function() {
+                saveInFlight = false;
+                setSaveLoading(false);
+            }
+        });
+    });
+
+    $('#carlexAddBtn').on('click', function() { open(null, false); });
+    $('#carlexCloseBtn, #carlexCancelBtn, #carlexBackdrop').on('click', close);
+    $(document).on('change', '#department', function() {
+        populateAreas('');
+        loadOptions();
+    });
+    $(document).on('change', '#areaOfGwProcessConfirmationConducted', function() {
+        deriveDepartmentFromArea();
+        loadOptions();
+    });
+    $(document).on('click', '.carlex-add-observation', function() {
+        syncStateFromDom();
+        const group = $(this).data('group');
+        observationState[group].push(emptyObservation());
+        renderObservationGroup(group);
+    });
+    $(document).on('click', '.carlex-remove-observation', function() {
+        syncStateFromDom();
+        const group = $(this).data('group');
+        observationState[group].splice(Number($(this).data('index')), 1);
+        if (!observationState[group].length) observationState[group] = [emptyObservation()];
+        renderObservationGroup(group);
+    });
+    $(document).on('click', '.carlex-view,.carlex-edit', function() {
+        const record = records.find(r => String(r.id) === String($(this).data('id')));
+        open(record, $(this).hasClass('carlex-view'));
+    });
+    $(document).on('click', '.carlex-delete', function() {
+        const id = $(this).data('id');
+        confirmDelete({
+            title: 'Delete process confirmation?',
+            message: 'This process confirmation record will be permanently deleted.',
+            confirmText: 'Delete Record'
+        }).then(function(confirmed) {
+            if (confirmed) $.ajax({ url: API + '/' + id, type: 'DELETE', success: load });
+        });
+    });
+    $(document).on('change', '.pc-observation-image', function() {
+        const input = this;
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const hidden = $(input).siblings('.pc-observation-image-stored');
+        const formData = new FormData();
+        formData.append('file', file);
+        if (hidden.val()) formData.append('replace', hidden.val());
+        $.ajax({
+            url: '/api/attachments/process-confirmation/upload',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(data) { hidden.val(data.storedName || ''); },
+            error: function(xhr) {
+                $('#carlexMessage').text(xhr.responseJSON?.error || 'Image upload failed.').addClass('show error');
+            }
+        });
+    });
+    $('#hamburger').on('click', function() {
+        if (innerWidth <= 768) {
+            $('#sidebar').toggleClass('active');
+            $('#sidebarOverlay').toggleClass('active');
+        } else {
+            $('#sidebar').toggleClass('collapsed');
+            $('.main-content').toggleClass('expanded');
+        }
+    });
+
+    buildForm();
+    load();
+    const edit = new URLSearchParams(location.search).get('edit');
+    if (edit) {
+        $.getJSON(API + '/' + edit, function(data) {
+            open(data.record || data, false);
+        });
+    }
 });

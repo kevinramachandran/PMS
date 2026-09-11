@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=table-sort-20260909">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=20260906-edit-lock">
+    <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=gk-cleanup-20260911">
     <link rel="stylesheet" href="/css/ui-shell.css?v=table-sort-20260909">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -27,11 +27,10 @@
             <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
             <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
             <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-            <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
+            <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk dashboard"><i class="fas fa-chart-pie"></i><span>Gemba Walk dashboard</span></a>
             <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
             <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
-            <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Report"><i class="fas fa-clipboard-list"></i><span>Abnormality Report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
             <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
             <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
@@ -55,7 +54,7 @@
                 </div>
             </div>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Report"><i class="fas fa-clipboard-list"></i><span>Abnormality Report</span></a>
             <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
             <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
@@ -69,6 +68,7 @@
                     <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
                     <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                     <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
+                        <a href="/settings?config=master-designation" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Designation"><i class="fas fa-id-badge"></i><span>Designation</span></a>
                     <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
                     <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
                     <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
@@ -108,10 +108,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>ID</th>
-                                <th>Name</th>
                                 <th>Last Modified Time</th>
-                                <th>Provider Name</th>
-                                <th>Employee ID / HO Number</th>
                                 <th>Department</th>
                                 <th>Classification</th>
                                 <th>Location</th>
@@ -126,7 +123,7 @@
                             </tr>
                         </thead>
                         <tbody id="gembaKaizenConfigRecordsBody">
-                            <tr><td colspan="15" class="gk-empty-cell">Loading records...</td></tr>
+                            <tr><td colspan="14" class="gk-empty-cell">Loading records...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -145,20 +142,8 @@
                 <div class="gk-drawer-body">
                     <div class="gk-form-grid">
                     <div class="gk-form-group">
-                        <label for="name">Name</label>
-                        <input type="text" id="name" readonly>
-                    </div>
-                    <div class="gk-form-group">
                         <label for="lastModifiedTime">Last Modified Time</label>
                         <input type="time" id="lastModifiedTime">
-                    </div>
-                    <div class="gk-form-group">
-                        <label for="gembaKaizenProviderName">Gemba Kaizen Provider Name</label>
-                        <input type="text" id="gembaKaizenProviderName">
-                    </div>
-                    <div class="gk-form-group">
-                        <label for="employeeIdHoNumber">Employee ID / HO Number</label>
-                        <input type="text" id="employeeIdHoNumber" readonly>
                     </div>
                     <div class="gk-form-group">
                         <label for="department">Department</label>
@@ -222,8 +207,8 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-kaizen-config.js?v=20260906-edit-lock"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-kaizen-config.js?v=gk-cleanup-20260911"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=table-sort-20260909"></script>
+<script src="/js/ui-shell.js?v=sticky-table-header-20260910"></script>
 </body>
 </html>

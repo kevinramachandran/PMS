@@ -1727,22 +1727,24 @@ function loadProductionCharts(month, year, dateValue) {
     const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
     const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
     const resolvedDate = dateValue || toLocalDateKey(new Date(safeYear, safeMonth - 1, 1));
+    const selectedDateKey = normalizeDateKey(resolvedDate);
+    const monthStartKey = safeYear + '-' + String(safeMonth).padStart(2, '0') + '-01';
 
     loadKpiDashboardMeta();
     updateSyncStatus('Syncing...');
-    loadDailyPerformanceSummary(safeMonth, safeYear);
+    loadDailyPerformanceSummary(safeMonth, safeYear, selectedDateKey);
     updateKpiDeckMonthLabel(safeMonth, safeYear);
 
     $.ajax({
-        url: '/api/production-metrics/month?month=' + safeMonth + '&year=' + safeYear,
+        url: '/api/production-metrics/month?month=' + safeMonth + '&year=' + safeYear + (selectedDateKey ? '&asOf=' + encodeURIComponent(selectedDateKey) : ''),
         type: 'GET',
         success: function(metrics) {
             const safeMetrics = Array.isArray(metrics) ? metrics : [];
 
             const chartMetrics = safeMetrics.filter(function(m) {
                 if (!m.date) return false;
-                const dt = new Date(m.date);
-                return (dt.getMonth() + 1) === safeMonth && dt.getFullYear() === safeYear;
+                const dateKey = normalizeDateKey(m.date);
+                return dateKey && dateKey >= monthStartKey && (!selectedDateKey || dateKey <= selectedDateKey);
             });
 
             renderAllCharts(chartMetrics);
@@ -2292,6 +2294,18 @@ function toLocalDateKey(date) {
     return year + '-' + month + '-' + day;
 }
 
+function normalizeDateKey(dateValue) {
+    if (!dateValue) {
+        return '';
+    }
+    const directMatch = String(dateValue).match(/^(\d{4}-\d{2}-\d{2})/);
+    if (directMatch) {
+        return directMatch[1];
+    }
+    const parsed = new Date(dateValue);
+    return Number.isNaN(parsed.getTime()) ? '' : toLocalDateKey(parsed);
+}
+
 function formatDisplayDate(dateValue) {
     if (!dateValue) {
         return '';
@@ -2305,12 +2319,13 @@ function formatDisplayDate(dateValue) {
     return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function loadDailyPerformanceSummary(month, year) {
+function loadDailyPerformanceSummary(month, year, dateValue) {
     const safeMonth = Number.isInteger(month) ? month : (new Date().getMonth() + 1);
     const safeYear = Number.isInteger(year) ? year : new Date().getFullYear();
+    const selectedDateKey = normalizeDateKey(dateValue);
 
     $.ajax({
-        url: '/api/daily-performance/month?month=' + safeMonth + '&year=' + safeYear,
+        url: '/api/daily-performance/month?month=' + safeMonth + '&year=' + safeYear + (selectedDateKey ? '&asOf=' + encodeURIComponent(selectedDateKey) : ''),
         type: 'GET',
         success: function(data) {
             renderDailyPerformanceSummary(data || null);

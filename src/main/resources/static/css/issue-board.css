@@ -222,6 +222,9 @@
 
 .issue-table-wrap {
     overflow: auto;
+    max-height: min(640px, calc(100vh - 230px));
+    min-height: 280px;
+    border-top: 1px solid #dfe5e2;
 }
 
 .issue-table {

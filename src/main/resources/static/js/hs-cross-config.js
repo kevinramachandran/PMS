@@ -104,10 +104,6 @@
     function applySelectStatusClass(selectEl, field, value) {
         if (!selectEl) return;
         selectEl.classList.remove('hs-status-notset', 'hs-status-safe', 'hs-status-issue');
-        if (field === 'accidentStatus') {
-            selectEl.classList.add('hs-status-notset');
-            return;
-        }
         selectEl.classList.add(getStatusClass(field, value));
     }
 

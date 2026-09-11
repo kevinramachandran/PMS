@@ -6,6 +6,8 @@ $(function() {
     const params = new URLSearchParams(window.location.search);
     let records = [];
     let currentUserIdentity = {};
+    let areaItems = [];
+    let saveInFlight = false;
     const EDIT_ALLOWED_FIELDS = '#pictureImage, #isKaizenImplemented, #assignedTo, #assignmentRemark';
 
     function escapeHtml(value) {
@@ -27,6 +29,12 @@ $(function() {
     function currentTime() {
         const now = new Date();
         return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    }
+
+    function displayDate(value) {
+        const text = String(value || '').trim();
+        const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        return iso ? iso[3] + '/' + iso[2] + '/' + iso[1] : text;
     }
 
     function setMessage(message, type) {
@@ -56,21 +64,6 @@ $(function() {
         $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
     }
 
-    function currentUserName() {
-        return currentUserIdentity.name || currentUserIdentity.username || '';
-    }
-
-    function applyCurrentUserIdentity(force) {
-        const userName = currentUserName();
-        const employeeId = currentUserIdentity.employeeId || '';
-        if (force || !$('#name').val()) {
-            $('#name').val(userName);
-        }
-        if (force || !$('#employeeIdHoNumber').val()) {
-            $('#employeeIdHoNumber').val(employeeId);
-        }
-    }
-
     function setEditLock(isEdit) {
         const $fields = $('#gembaKaizenConfigForm')
             .find('input:not([type="hidden"]), select, textarea')
@@ -81,10 +74,7 @@ $(function() {
 
     function payload() {
         return {
-            name: $('#name').val(),
             lastModifiedTime: $('#lastModifiedTime').val(),
-            gembaKaizenProviderName: $('#gembaKaizenProviderName').val(),
-            employeeIdHoNumber: $('#employeeIdHoNumber').val(),
             department: $('#department').val(),
             classificationOfKaizen: $('#classificationOfKaizen').val(),
             gembaKaizenLocation: $('#gembaKaizenLocation').val(),
@@ -101,10 +91,7 @@ $(function() {
     function setRecord(record) {
         const item = record || {};
         $('#gembaKaizenRecordId').val(item.id || '');
-        $('#name').val(item.name || $('#name').val() || '');
         $('#lastModifiedTime').val(item.lastModifiedTime || currentTime());
-        $('#gembaKaizenProviderName').val(item.gembaKaizenProviderName || '');
-        $('#employeeIdHoNumber').val(item.employeeIdHoNumber || $('#employeeIdHoNumber').val() || '');
         $('#department').val(item.department || '');
         $('#classificationOfKaizen').val(item.classificationOfKaizen || '');
         $('#gembaKaizenLocation').val(item.gembaKaizenLocation || '');
@@ -116,15 +103,12 @@ $(function() {
         $('#isKaizenImplemented').val(item.isKaizenImplemented || 'No');
         $('#assignedTo').val(item.assignedTo || '');
         $('#assignmentRemark').val('');
-        applyCurrentUserIdentity(false);
+        deriveDepartmentFromLocation(false);
     }
 
     function resetRecord() {
         $('#gembaKaizenRecordId').val('');
-        $('#name').val(currentUserName());
         $('#lastModifiedTime').val(currentTime());
-        $('#gembaKaizenProviderName').val('');
-        $('#employeeIdHoNumber').val(currentUserIdentity.employeeId || '');
         $('#department').val('');
         $('#classificationOfKaizen').val('');
         $('#gembaKaizenLocation').val('');
@@ -135,9 +119,22 @@ $(function() {
         $('#benefitsOfKaizen').val('');
         $('#isKaizenImplemented').val('No');
         setMessage('', 'success');
-        loadOptions().done(function() {
-            applyCurrentUserIdentity(true);
+        loadOptions();
+    }
+
+    function deriveDepartmentFromLocation(force) {
+        const location = $('#gembaKaizenLocation').val();
+        const area = areaItems.find(function(item) {
+            return String(item.name || '').trim().toLowerCase() === String(location || '').trim().toLowerCase();
         });
+        const derivedDepartment = area && area.parentDepartment ? area.parentDepartment : '';
+        if (derivedDepartment && (force || !$('#department').val())) {
+            $('#department').val(derivedDepartment);
+            $('#department').prop('disabled', true);
+            return derivedDepartment;
+        }
+        $('#department').prop('disabled', false);
+        return $('#department').val();
     }
 
     function renderTable() {
@@ -146,14 +143,11 @@ $(function() {
                 '<tr>' +
                 '<td class="gk-row-number">' + (index + 1) + '</td>' +
                 '<td>' + escapeHtml(record.id) + '</td>' +
-                '<td>' + escapeHtml(record.name) + '</td>' +
                 '<td>' + escapeHtml(record.lastModifiedTime) + '</td>' +
-                '<td>' + escapeHtml(record.gembaKaizenProviderName) + '</td>' +
-                '<td>' + escapeHtml(record.employeeIdHoNumber) + '</td>' +
                 '<td>' + escapeHtml(record.department) + '</td>' +
                 '<td>' + escapeHtml(record.classificationOfKaizen) + '</td>' +
                 '<td>' + escapeHtml(record.gembaKaizenLocation) + '</td>' +
-                '<td>' + escapeHtml(record.gembaKaizenGenerationDate) + '</td>' +
+                '<td>' + escapeHtml(displayDate(record.gembaKaizenGenerationDate)) + '</td>' +
                 '<td>' + escapeHtml(record.kaizenIdea) + '</td>' +
                 '<td>' + attachmentIcon('gemba-kaizen', record.pictureImage, record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.benefitsOfKaizen) + '</td>' +
@@ -163,7 +157,7 @@ $(function() {
                 '<td><button type="button" class="gk-table-action gk-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Kaizen"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="17" class="gk-empty-cell">No records found.</td></tr>');
+        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="14" class="gk-empty-cell">No records found.</td></tr>');
         records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -177,7 +171,7 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="15" class="gk-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="14" class="gk-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }
@@ -218,15 +212,23 @@ $(function() {
         return $.ajax({
             url: API + '/options',
             type: 'GET',
+            data: {
+                location: $('#gembaKaizenLocation').val() || '',
+                recordId: $('#gembaKaizenRecordId').val() || ''
+            },
             success: function(data) {
                 const options = data && data.options ? data.options : {};
                 currentUserIdentity = options.currentUser || {};
-                applyCurrentUserIdentity(false);
+                areaItems = options.areaItems || [];
                 populateSelect('#department', options.departments || [], $('#department').val());
                 populateSelect('#classificationOfKaizen', options.classifications || [], $('#classificationOfKaizen').val());
                 populateSelect('#gembaKaizenLocation', options.processAreas || [], $('#gembaKaizenLocation').val());
+                deriveDepartmentFromLocation(false);
                 const assignmentUsers = options.assignmentUsers || [];
                 populateSelect('#assignedTo', assignmentUsers.map(function(user) { return user.username; }), $('#assignedTo').val());
+                if (!$('#assignedTo').val() && options.defaultAssignedTo) {
+                    $('#assignedTo').val(options.defaultAssignedTo);
+                }
             },
             error: function() {
                 setMessage('Unable to load Gemba Kaizen data.', 'error');
@@ -235,7 +237,11 @@ $(function() {
     }
 
     function saveRecord() {
+        if (saveInFlight) {
+            return;
+        }
         const id = $('#gembaKaizenRecordId').val();
+        saveInFlight = true;
         setSaveLoading(true);
         $.ajax({
             url: API + '/records' + (id ? '/' + encodeURIComponent(id) : ''),
@@ -245,7 +251,7 @@ $(function() {
             success: function(data) {
                 if (data && data.status === 'success' && data.record) {
                     setRecord(data.record);
-                    setMessage('Submitted.', 'success');
+                    setMessage(id ? 'Gemba Kaizen updated successfully.' : 'Gemba Kaizen saved successfully.', 'success');
                     loadRecords();
                     closeDrawer();
                 } else {
@@ -256,6 +262,7 @@ $(function() {
                 setMessage(xhr.responseJSON?.message || 'Unable to submit.', 'error');
             },
             complete: function() {
+                saveInFlight = false;
                 setSaveLoading(false);
             }
         });
@@ -305,6 +312,11 @@ $(function() {
                 setMessage(xhr.responseJSON?.error || 'Image upload failed.', 'error');
             }
         });
+    });
+
+    $('#gembaKaizenLocation').on('change', function() {
+        deriveDepartmentFromLocation(true);
+        loadOptions();
     });
 
     $('#gembaKaizenConfigForm').on('submit', function(event) {

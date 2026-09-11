@@ -30,7 +30,7 @@ public class GembaWalkConfigController {
         if (!canView(session) && !canViewReporting(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("records", service.list()));
+        return ResponseEntity.ok(Map.of("records", service.listForUser(username(session), role(session))));
     }
 
     @GetMapping("/records/{id}")
@@ -38,7 +38,7 @@ public class GembaWalkConfigController {
         if (!canView(session) && !canViewReporting(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return service.find(id)
+        return service.findForUser(id, username(session), role(session))
                 .<ResponseEntity<Map<String, Object>>>map(record -> ResponseEntity.ok(Map.of("record", record)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
     }
@@ -46,6 +46,9 @@ public class GembaWalkConfigController {
     @GetMapping("/records/{id}/history")
     public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
         if (!canView(session) && !canViewReporting(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+        if (service.findForUser(id, username(session), role(session)).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found"));
+        }
         return ResponseEntity.ok(assignmentHistoryService.history("gemba-walk", id));
     }
 
@@ -55,7 +58,7 @@ public class GembaWalkConfigController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
-            GembaWalkRecord saved = service.create(record, username(session));
+            GembaWalkRecord saved = service.create(record, username(session), role(session));
             return ResponseEntity.ok(Map.of("status", "success", "record", saved));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", ex.getMessage()));
@@ -70,7 +73,7 @@ public class GembaWalkConfigController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
-            return service.update(id, record, username(session))
+            return service.update(id, record, username(session), role(session))
                     .<ResponseEntity<Map<String, Object>>>map(saved -> ResponseEntity.ok(Map.of("status", "success", "record", saved)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
         } catch (IllegalArgumentException ex) {
@@ -80,11 +83,12 @@ public class GembaWalkConfigController {
 
     @GetMapping("/options")
     public ResponseEntity<Map<String, Object>> options(@RequestParam(value = "location", required = false) String location,
+                                                       @RequestParam(value = "recordId", required = false) Long recordId,
                                                        HttpSession session) {
         if (!canView(session) && !canViewReporting(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("options", service.options(username(session), location)));
+        return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), location, recordId)));
     }
 
     private boolean canView(HttpSession session) {
@@ -99,6 +103,11 @@ public class GembaWalkConfigController {
 
     private String username(HttpSession session) {
         Object raw = session == null ? null : session.getAttribute("username");
+        return raw == null ? "" : String.valueOf(raw);
+    }
+
+    private String role(HttpSession session) {
+        Object raw = session == null ? null : session.getAttribute("role");
         return raw == null ? "" : String.valueOf(raw);
     }
 

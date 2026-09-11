@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class GembaKaizenConfigService {
@@ -49,13 +50,34 @@ public class GembaKaizenConfigService {
         return repository.findAllByOrderByGembaKaizenGenerationDateDescIdDesc();
     }
 
+    public List<GembaKaizenRecord> listForUser(String username, String role) {
+        List<GembaKaizenRecord> rows = list();
+        if (RoleAccess.isAdmin(role)) {
+            return rows;
+        }
+        Optional<AppUser> current = currentUser(username);
+        if (current.isEmpty()) {
+            return List.of();
+        }
+        AppUser user = current.get();
+        return rows.stream().filter(record -> canSeeRecord(record, user)).toList();
+    }
+
     public Optional<GembaKaizenRecord> find(Long id) {
         return repository.findById(id);
     }
 
+    public Optional<GembaKaizenRecord> findForUser(Long id, String username, String role) {
+        return find(id)
+                .filter(record -> RoleAccess.isAdmin(role)
+                        || currentUser(username).filter(user -> canSeeRecord(record, user)).isPresent());
+    }
+
     @Transactional
-    public GembaKaizenRecord create(GembaKaizenRecord record, String username) {
-        applyDefaults(record, username);
+    public GembaKaizenRecord create(GembaKaizenRecord record, String username, String role) {
+        applyDefaults(record, username, true);
+        validateAssignedTo(record.getAssignedTo(), record.getDepartment(), record.getGembaKaizenLocation(),
+                currentUser(username).orElse(null), role, "", null);
         GembaKaizenRecord saved = repository.save(record);
         assignmentHistoryService.record("gemba-kaizen", saved.getId(), "", saved.getAssignedTo(), saved.getAssignmentRemark(), username, saved.getGembaKaizenLocation());
         notifyHods(saved, username, "Gemba Kaizen Submitted: #" + saved.getId(), buildKaizenEmailBody("Gemba Kaizen Submitted", "A Gemba Kaizen idea has been submitted for review.", saved));
@@ -66,15 +88,22 @@ public class GembaKaizenConfigService {
     }
 
     @Transactional
-    public Optional<GembaKaizenRecord> update(Long id, GembaKaizenRecord incoming, String username) {
-        return repository.findById(id).map(existing -> {
+    public Optional<GembaKaizenRecord> update(Long id, GembaKaizenRecord incoming, String username, String role) {
+        return findForUser(id, username, role).map(existing -> {
+            AppUser actor = currentUser(username).orElse(null);
+            if (!RoleAccess.isAdmin(role) && !canUpdateRecord(existing, actor)) {
+                throw new IllegalArgumentException("You can update only Gemba Kaizens created by you or assigned to you");
+            }
             String previousAssignee = existing.getAssignedTo();
             boolean wasImplemented = isImplemented(existing);
             existing.setPictureImage(trim(incoming.getPictureImage()));
             existing.setIsKaizenImplemented(normalizeYesNo(incoming.getIsKaizenImplemented()));
-            existing.setAssignedTo(trim(incoming.getAssignedTo()));
+            String requestedAssignee = trim(incoming.getAssignedTo());
+            validateAssignedTo(requestedAssignee, existing.getDepartment(), existing.getGembaKaizenLocation(),
+                    actor, role, previousAssignee, existing);
+            existing.setAssignedTo(requestedAssignee);
             existing.setAssignmentRemark(incoming.getAssignmentRemark());
-            applyDefaults(existing, username);
+            applyDefaults(existing, username, false);
             GembaKaizenRecord saved = repository.save(existing);
             assignmentHistoryService.record("gemba-kaizen", saved.getId(), previousAssignee, saved.getAssignedTo(), incoming.getAssignmentRemark(), username, saved.getGembaKaizenLocation());
             if (!wasImplemented && isImplemented(saved)) {
@@ -84,13 +113,21 @@ public class GembaKaizenConfigService {
         });
     }
 
-    public Map<String, Object> options(String username) {
+    public Map<String, Object> options(String username, String role, String location, Long recordId) {
         Map<String, Object> options = new LinkedHashMap<>();
-        options.put("currentUser", currentUser(username).map(this::userOption).orElse(Map.of()));
+        Optional<AppUser> current = currentUser(username);
+        options.put("currentUser", current.map(this::userOption).orElse(Map.of()));
+        options.put("plants", plantMasterDataService.names(PlantMasterDataService.PLANT));
+        options.put("plantItems", plantMasterDataService.list(PlantMasterDataService.PLANT));
         options.put("departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT));
+        options.put("departmentItems", plantMasterDataService.list(PlantMasterDataService.DEPARTMENT));
         options.put("processAreas", plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA));
+        options.put("areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA));
         options.put("classifications", kaizenMasterDataService.names(GembaKaizenMasterDataService.CLASSIFICATION_OF_KAIZEN));
-        options.put("assignmentUsers", activeUsers().stream().filter(user -> isHod(user) || isAssignable(user)).map(this::userOption).toList());
+        GembaKaizenRecord record = recordId == null ? null : repository.findById(recordId).orElse(null);
+        String department = record == null ? deriveDepartment(location, "", current.map(AppUser::getDepartment).orElse("")) : record.getDepartment();
+        options.put("assignmentUsers", assignmentUsers(department, location, current.orElse(null), role, record));
+        options.put("defaultAssignedTo", defaultAreaHod(department, location).map(user -> firstNonBlank(user.getUsername(), user.getName())).orElse(""));
         return options;
     }
 
@@ -111,20 +148,29 @@ public class GembaKaizenConfigService {
         );
     }
 
-    private void applyDefaults(GembaKaizenRecord record, String username) {
+    private void applyDefaults(GembaKaizenRecord record, String username, boolean forceUserIdentity) {
         currentUser(username).ifPresent(user -> {
-            if (isBlank(record.getName())) {
+            if (forceUserIdentity || isBlank(record.getName())) {
                 record.setName(firstNonBlank(user.getName(), user.getUsername()));
             }
-            if (isBlank(record.getEmployeeIdHoNumber())) {
+            if (forceUserIdentity || isBlank(record.getEmployeeIdHoNumber())) {
                 record.setEmployeeIdHoNumber(trim(user.getEmployeeId()));
             }
         });
+        if (forceUserIdentity) {
+            record.setGembaKaizenProviderName("");
+        }
         if (isBlank(record.getLastModifiedTime())) {
             record.setLastModifiedTime(LocalTime.now().format(TIME_FORMATTER));
         }
         if (record.getGembaKaizenGenerationDate() == null) {
             record.setGembaKaizenGenerationDate(LocalDate.now());
+        }
+        record.setDepartment(deriveDepartment(record.getGembaKaizenLocation(), record.getDepartment(),
+                currentUser(username).map(AppUser::getDepartment).orElse("")));
+        if (isBlank(record.getAssignedTo())) {
+            defaultAreaHod(record.getDepartment(), record.getGembaKaizenLocation()).ifPresent(user ->
+                    record.setAssignedTo(firstNonBlank(user.getUsername(), user.getName())));
         }
         record.setIsKaizenImplemented(normalizeYesNo(record.getIsKaizenImplemented()));
         validateConfigured(record.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
@@ -210,25 +256,13 @@ public class GembaKaizenConfigService {
     }
 
     private List<String> areaHodEmails(GembaKaizenRecord record) {
-        String location = trim(record.getGembaKaizenLocation()).toLowerCase(Locale.ENGLISH);
-        String department = trim(record.getDepartment()).toLowerCase(Locale.ENGLISH);
         return activeUsers().stream()
                 .filter(this::isHod)
-                .filter(user -> matches(user, location, department))
+                .filter(user -> matchesScope(user, record.getDepartment(), record.getGembaKaizenLocation()))
                 .map(AppUser::getEmail)
                 .filter(email -> !isBlank(email))
                 .distinct()
                 .toList();
-    }
-
-    private boolean matches(AppUser user, String location, String department) {
-        if (location.isBlank() && department.isBlank()) {
-            return true;
-        }
-        String userArea = trim(user.getArea()).toLowerCase(Locale.ENGLISH);
-        String userDepartment = trim(user.getDepartment()).toLowerCase(Locale.ENGLISH);
-        return (!location.isBlank() && (location.equals(userArea) || location.equals(userDepartment)))
-                || (!department.isBlank() && department.equals(userDepartment));
     }
 
     private List<AppUser> activeUsers() {
@@ -252,6 +286,115 @@ public class GembaKaizenConfigService {
                 || designation.equals("OPERATOR");
     }
 
+    private List<Map<String, String>> assignmentUsers(String department, String location, AppUser actor, String role, GembaKaizenRecord record) {
+        List<AppUser> scoped = activeUsers().stream()
+                .filter(user -> matchesScope(user, department, location))
+                .toList();
+        List<AppUser> pool = scoped.isEmpty() ? activeUsers() : scoped;
+        if (!RoleAccess.isAdmin(role) && (record == null || isBlank(record.getAssignedTo()))) {
+            return pool.stream()
+                    .filter(this::isAreaHod)
+                    .map(this::userOption)
+                    .toList();
+        }
+        return pool.stream()
+                .map(this::userOption)
+                .toList();
+    }
+
+    private void validateAssignedTo(String value, String department, String location, AppUser actor, String role, String previousAssignee, GembaKaizenRecord record) {
+        String trimmed = trim(value);
+        if (trimmed.isBlank()) {
+            return;
+        }
+        boolean configured = assignmentUsers(department, location, actor, role, record).stream()
+                .anyMatch(user -> trim(user.get("username")).equalsIgnoreCase(trimmed)
+                        || trim(user.get("label")).equalsIgnoreCase(trimmed));
+        if (!configured) {
+            throw new IllegalArgumentException("Assigned To must be a permitted workflow user");
+        }
+    }
+
+    private Optional<AppUser> defaultAreaHod(String department, String location) {
+        return activeUsers().stream()
+                .filter(this::isAreaHod)
+                .filter(user -> matchesScope(user, department, location))
+                .findFirst();
+    }
+
+    private boolean isAreaHod(AppUser user) {
+        if (user == null) {
+            return false;
+        }
+        String role = RoleAccess.normalize(user.getRole());
+        String designation = trim(user.getDesignation()).toUpperCase(Locale.ENGLISH);
+        return RoleAccess.AREA_HOD.equals(role)
+                || designation.contains("AREA HOD")
+                || designation.contains("AREA_HOD")
+                || designation.contains("AREA HEAD")
+                || isHod(user);
+    }
+
+    private boolean canSeeRecord(GembaKaizenRecord record, AppUser user) {
+        if (record == null || user == null) {
+            return false;
+        }
+        return matchesUser(user, record.getName())
+                || matchesUser(user, record.getGembaKaizenProviderName())
+                || matchesUser(user, record.getEmployeeIdHoNumber())
+                || matchesUser(user, record.getAssignedTo());
+    }
+
+    private boolean canUpdateRecord(GembaKaizenRecord record, AppUser user) {
+        return canSeeRecord(record, user) && (matchesUser(user, record.getName())
+                || matchesUser(user, record.getEmployeeIdHoNumber())
+                || matchesUser(user, record.getGembaKaizenProviderName())
+                || matchesUser(user, record.getAssignedTo()));
+    }
+
+    private boolean matchesScope(AppUser user, String department, String location) {
+        if (user == null) {
+            return false;
+        }
+        String expectedDepartment = compact(department);
+        String expectedLocation = compact(location);
+        boolean departmentMatches = expectedDepartment.isBlank() || expectedDepartment.equals(compact(user.getDepartment()));
+        boolean locationMatches = expectedLocation.isBlank() || matchesAnyArea(user.getArea(), expectedLocation);
+        return departmentMatches && locationMatches;
+    }
+
+    private boolean matchesAnyArea(String userAreas, String expectedLocation) {
+        return List.of(trim(userAreas).split(",")).stream()
+                .map(this::compact)
+                .anyMatch(expectedLocation::equals);
+    }
+
+    private boolean matchesUser(AppUser user, String value) {
+        String expected = compactUser(value);
+        if (user == null || expected.isBlank()) {
+            return false;
+        }
+        return expected.equals(compactUser(user.getUsername()))
+                || expected.equals(compactUser(user.getName()))
+                || expected.equals(compactUser(user.getEmail()))
+                || expected.equals(compactUser(user.getEmployeeId()));
+    }
+
+    private String deriveDepartment(String location, String fallback, String userDepartment) {
+        String locationText = trim(location);
+        if (!locationText.isBlank()) {
+            Optional<String> byArea = plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA).stream()
+                    .filter(item -> trim(item.getName()).equalsIgnoreCase(locationText))
+                    .map(item -> trim(item.getParentDepartment()))
+                    .filter(value -> !value.isBlank())
+                    .findFirst();
+            if (byArea.isPresent()) {
+                return byArea.get();
+            }
+        }
+        return firstNonBlank(fallback, userDepartment);
+    }
+
     private Optional<AppUser> currentUser(String username) {
         if (isBlank(username)) {
             return Optional.empty();
@@ -272,7 +415,11 @@ public class GembaKaizenConfigService {
             "username", firstNonBlank(user.getUsername(), user.getEmail()),
                 "name", firstNonBlank(user.getName(), user.getUsername()),
             "label", firstNonBlank(user.getName(), user.getUsername()),
-                "employeeId", trim(user.getEmployeeId())
+                "employeeId", trim(user.getEmployeeId()),
+                "department", trim(user.getDepartment()),
+                "area", trim(user.getArea()),
+                "role", RoleAccess.normalize(user.getRole()),
+                "designation", trim(user.getDesignation())
         );
     }
 
@@ -294,7 +441,6 @@ public class GembaKaizenConfigService {
                 .append("</p>")
                 .append("<table cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:13px;'>")
                 .append("<tr>")
-                .append(headerCell("Name"))
                 .append(headerCell("Department"))
                 .append(headerCell("Classification of Kaizen"))
                 .append(headerCell("Gemba Kaizen Location"))
@@ -304,7 +450,6 @@ public class GembaKaizenConfigService {
 
         for (GembaKaizenRecord row : rows) {
             html.append("<tr>")
-                    .append(bodyCell(row.getName()))
                     .append(bodyCell(row.getDepartment()))
                     .append(bodyCell(row.getClassificationOfKaizen()))
                     .append(bodyCell(row.getGembaKaizenLocation()))
@@ -338,9 +483,6 @@ public class GembaKaizenConfigService {
                 .append("</p>")
                 .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:14px;'>")
                 .append(detailRow("Kaizen ID", record.getId() == null ? "-" : "#" + record.getId()))
-                .append(detailRow("Name", record.getName()))
-                .append(detailRow("Provider Name", record.getGembaKaizenProviderName()))
-                .append(detailRow("Employee ID / HO Number", record.getEmployeeIdHoNumber()))
                 .append(detailRow("Department", record.getDepartment()))
                 .append(detailRow("Classification", record.getClassificationOfKaizen()))
                 .append(detailRow("Location", record.getGembaKaizenLocation()))
@@ -387,6 +529,14 @@ public class GembaKaizenConfigService {
 
     private String trim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String compact(String value) {
+        return trim(value).toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+    }
+
+    private String compactUser(String value) {
+        return trim(value).toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9@.]", "");
     }
 
     private boolean isBlank(String value) {

@@ -200,11 +200,14 @@
 }
 
 .abnormality-reporting-page .ar-record-table {
-    min-width: 2640px;
+    min-width: 2520px;
     table-layout: auto;
 }
 
 .abnormality-reporting-page .ar-record-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     overflow: visible;
     text-overflow: clip;
     white-space: nowrap;
@@ -243,64 +246,56 @@
 
 .abnormality-reporting-page .ar-record-table th:nth-child(6),
 .abnormality-reporting-page .ar-record-table td:nth-child(6),
-.abnormality-reporting-page .ar-record-table th:nth-child(17),
-.abnormality-reporting-page .ar-record-table td:nth-child(17),
-.abnormality-reporting-page .ar-record-table th:nth-child(18),
-.abnormality-reporting-page .ar-record-table td:nth-child(18) {
+.abnormality-reporting-page .ar-record-table th:nth-child(16),
+.abnormality-reporting-page .ar-record-table td:nth-child(16) {
     width: 125px;
     min-width: 125px;
 }
 
 .abnormality-reporting-page .ar-record-table th:nth-child(7),
-.abnormality-reporting-page .ar-record-table td:nth-child(7) {
-    width: 100px;
-    min-width: 100px;
-}
-
-.abnormality-reporting-page .ar-record-table th:nth-child(8),
-.abnormality-reporting-page .ar-record-table td:nth-child(8),
-.abnormality-reporting-page .ar-record-table th:nth-child(15),
-.abnormality-reporting-page .ar-record-table td:nth-child(15) {
+.abnormality-reporting-page .ar-record-table td:nth-child(7),
+.abnormality-reporting-page .ar-record-table th:nth-child(14),
+.abnormality-reporting-page .ar-record-table td:nth-child(14) {
     width: 170px;
     min-width: 170px;
 }
 
+.abnormality-reporting-page .ar-record-table th:nth-child(8),
+.abnormality-reporting-page .ar-record-table td:nth-child(8),
 .abnormality-reporting-page .ar-record-table th:nth-child(9),
-.abnormality-reporting-page .ar-record-table td:nth-child(9),
-.abnormality-reporting-page .ar-record-table th:nth-child(10),
-.abnormality-reporting-page .ar-record-table td:nth-child(10) {
+.abnormality-reporting-page .ar-record-table td:nth-child(9) {
     width: 150px;
     min-width: 150px;
 }
 
-.abnormality-reporting-page .ar-record-table th:nth-child(11),
-.abnormality-reporting-page .ar-record-table td:nth-child(11),
-.abnormality-reporting-page .ar-record-table th:nth-child(14),
-.abnormality-reporting-page .ar-record-table td:nth-child(14),
-.abnormality-reporting-page .ar-record-table th:nth-child(16),
-.abnormality-reporting-page .ar-record-table td:nth-child(16) {
+.abnormality-reporting-page .ar-record-table th:nth-child(10),
+.abnormality-reporting-page .ar-record-table td:nth-child(10),
+.abnormality-reporting-page .ar-record-table th:nth-child(13),
+.abnormality-reporting-page .ar-record-table td:nth-child(13),
+.abnormality-reporting-page .ar-record-table th:nth-child(15),
+.abnormality-reporting-page .ar-record-table td:nth-child(15) {
     width: 130px;
     min-width: 130px;
 }
 
+.abnormality-reporting-page .ar-record-table th:nth-child(11),
+.abnormality-reporting-page .ar-record-table td:nth-child(11),
 .abnormality-reporting-page .ar-record-table th:nth-child(12),
-.abnormality-reporting-page .ar-record-table td:nth-child(12),
-.abnormality-reporting-page .ar-record-table th:nth-child(13),
-.abnormality-reporting-page .ar-record-table td:nth-child(13) {
+.abnormality-reporting-page .ar-record-table td:nth-child(12) {
     width: 180px;
     min-width: 180px;
 }
 
-.abnormality-reporting-page .ar-record-table th:nth-child(19),
-.abnormality-reporting-page .ar-record-table td:nth-child(19) {
+.abnormality-reporting-page .ar-record-table th:nth-child(17),
+.abnormality-reporting-page .ar-record-table td:nth-child(17) {
     width: 220px;
     min-width: 220px;
 }
 
-.abnormality-reporting-page .ar-record-table th:nth-child(20),
-.abnormality-reporting-page .ar-record-table td:nth-child(20) {
-    width: 80px;
-    min-width: 80px;
+.abnormality-reporting-page .ar-record-table th:nth-child(18),
+.abnormality-reporting-page .ar-record-table td:nth-child(18) {
+    width: 100px;
+    min-width: 100px;
 }
 
 .abnormality-reporting-page .ar-open-btn {

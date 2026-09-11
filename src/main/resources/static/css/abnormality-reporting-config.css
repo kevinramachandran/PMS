@@ -225,7 +225,7 @@
 }
 
 .abnormality-reporting-config-page .ar-table {
-    min-width: 2060px;
+    min-width: 1960px;
     table-layout: fixed;
 }
 
@@ -234,6 +234,14 @@
     padding: 12px 14px;
     line-height: 1.35;
     vertical-align: middle;
+}
+
+.abnormality-reporting-config-page .ar-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #0b7a34;
+    color: #ffffff;
 }
 
 .abnormality-reporting-config-page .ar-table th:first-child,

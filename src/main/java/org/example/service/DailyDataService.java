@@ -71,6 +71,28 @@ public class DailyDataService {
         return repo.findByTypeAndDate(type, latestDate);
     }
 
+    public List<DailyData> getLatestByTypeAndMonth(String type, int month, int year, LocalDate asOf) {
+        YearMonth selectedMonth = YearMonth.of(year, month);
+        LocalDate monthStart = selectedMonth.atDay(1);
+        LocalDate monthEnd = selectedMonth.atEndOfMonth();
+        LocalDate selectedEnd = asOf == null ? monthEnd : asOf;
+
+        if (selectedEnd.isBefore(monthStart)) {
+            selectedEnd = monthStart;
+        } else if (selectedEnd.isAfter(monthEnd)) {
+            selectedEnd = monthEnd;
+        }
+
+        LocalDate latestDate = repo.findLatestDateByTypeWithinRange(type, monthStart, selectedEnd);
+        if (latestDate == null) {
+            latestDate = repo.findLatestDateByTypeOnOrBefore(type, selectedEnd);
+        }
+        if (latestDate == null) {
+            return List.of();
+        }
+        return repo.findByTypeAndDate(type, latestDate);
+    }
+
     @Transactional
     public List<DailyData> replaceByTypeAndDate(String type, LocalDate date, List<DailyData> dataList) {
         repo.deleteByTypeAndDate(type, date);

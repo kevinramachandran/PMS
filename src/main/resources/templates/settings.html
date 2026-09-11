@@ -6,11 +6,11 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=table-sort-20260909">
-    <link rel="stylesheet" href="/css/settings.css?v=master-table-align-20260909">
+    <link rel="stylesheet" href="/css/settings.css?v=training-scheduler-fixes-20260910">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=table-sort-20260909">
 </head>
-<body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
+<body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -25,11 +25,10 @@
                 <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
                 <a href="/issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
                 <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
-                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
+                <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba Walk dashboard"><i class="fas fa-chart-pie"></i><span>Gemba Walk dashboard</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
-                <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
-            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
+            <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Report"><i class="fas fa-clipboard-list"></i><span>Abnormality Report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
                 <div class="nav-parent" th:if="${session.canViewPmsDataEntry}">
@@ -53,7 +52,7 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Report"><i class="fas fa-clipboard-list"></i><span>Abnormality Report</span></a>
             <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
             <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
@@ -67,6 +66,7 @@
                         <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
                         <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                         <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
+                        <a href="/settings?config=master-designation" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Designation"><i class="fas fa-id-badge"></i><span>Designation</span></a>
                         <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
                         <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
                         <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
@@ -613,19 +613,20 @@
                                             <label for="issueBoardNextReviewDate">Next Review Date</label>
                                             <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate" placeholder="Select next review date">
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div class="config-table-section issue-board-table-card">
-                                    <div class="issue-config-toolbar">
-                                        <div class="issue-config-search" role="search">
+                                        <div class="form-group issue-config-search-group">
+                                            <label for="issueBoardConfigSearch">Search</label>
+                                            <div class="issue-config-search" role="search">
                                             <i class="fas fa-search" aria-hidden="true"></i>
                                             <input type="search" id="issueBoardConfigSearch" placeholder="Search" aria-label="Search issue board data entry">
                                             <button type="button" id="issueBoardConfigSearchClear" class="issue-config-search-clear" aria-label="Clear issue board data entry search">
                                                 <i class="fas fa-times"></i>
                                             </button>
+                                            </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="config-table-section issue-board-table-card">
                                     <div class="daily-data-table issue-config-table-wrap">
                                         <table id="issueBoardConfigTable">
                                             <thead>
@@ -691,10 +692,7 @@
                                                     <option value="Low">Low</option>
                                                 </select>
                                             </div>
-                                            <div class="form-group">
-                                                <label for="issueConfigDrawerOwner">Name <span>*</span></label>
-                                                <input type="text" id="issueConfigDrawerOwner" required>
-                                            </div>
+                                            <input type="hidden" id="issueConfigDrawerOwner">
                                         </div>
                                         <div class="issue-drawer-grid">
                                             <div class="form-group">
@@ -745,10 +743,7 @@
                                                 <label for="issueConfigDrawerResponsible">Responsible <span>*</span></label>
                                                 <input type="text" id="issueConfigDrawerResponsible" list="issueBoardResponsibleUsersList" autocomplete="off" required>
                                             </div>
-                                            <div class="form-group">
-                                                <label for="issueConfigDrawerDueDays">Due Days</label>
-                                                <input type="number" id="issueConfigDrawerDueDays" readonly>
-                                            </div>
+                                            <input type="hidden" id="issueConfigDrawerDueDays">
                                         </div>
                                         <div class="issue-drawer-grid">
                                             <div class="form-group">
@@ -1740,6 +1735,39 @@
                                 </div>
                             </div>
 
+                            <div id="form-master-designation" class="form-section">
+                                <div class="kpi-rename-shell">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Designation</h2>
+                                    </div>
+
+                                    <div class="footer-btn-card master-plant-card" data-category="DESIGNATION">
+                                        <div class="footer-btn-card-header"><i class="fas fa-id-badge"></i> Designation<button type="button" class="master-plant-view-btn" data-category="DESIGNATION" title="View designations" aria-label="View designations"><i class="fas fa-eye"></i></button></div>
+                                        <div class="master-plant-entry">
+                                            <div class="form-group master-plant-parent-field">
+                                                <label for="masterDesignationPlantSelect">Plant <span class="field-required">*</span></label>
+                                                <select id="masterDesignationPlantSelect" class="master-plant-parent-select">
+                                                    <option value="">Select Plant</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="masterDesignationInput">Designation</label>
+                                                <div class="master-plant-suggest-wrap">
+                                                    <input type="text" id="masterDesignationInput" class="master-plant-input" autocomplete="off" maxlength="160" placeholder="Designation" aria-autocomplete="list" aria-controls="masterDesignationSuggestions">
+                                                    <div id="masterDesignationSuggestions" class="master-plant-suggestions" role="listbox"></div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-primary master-plant-add-btn" data-category="DESIGNATION">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                        <div class="master-plant-list-hint">Use View to search, edit, or delete designations.</div>
+                                    </div>
+
+                                    <div id="masterDesignationMessage" class="form-message"></div>
+                                </div>
+                            </div>
+
                             <div id="masterPlantViewModal" class="custom-modal master-plant-view-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="masterPlantViewTitle">
                                 <div class="custom-modal-content">
                                     <div class="custom-modal-header"><h3 id="masterPlantViewTitle">View master data</h3><button type="button" id="closeMasterPlantView" class="modal-close" aria-label="Close"><i class="fas fa-times"></i></button></div>
@@ -2041,11 +2069,11 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=kpi-visibility-20260816"></script>
-    <script src="/js/settings.js?v=delete-confirm-modal-20260909"></script>
-    <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
+    <script src="/js/settings.js?v=issue-board-responsible-validation-20260911"></script>
+    <script src="/js/hs-cross-config.js?v=hs-color-highlight-20260911"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=table-sort-20260909"></script>
+<script src="/js/ui-shell.js?v=sticky-table-header-20260910"></script>
 </body>
 </html>
 

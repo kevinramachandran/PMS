@@ -67,6 +67,25 @@ public class PrioritiesService {
                 .orElseGet(List::of);
     }
 
+    public List<Priorities> getLatestByTypeAndMonth(String type, int month, int year, LocalDate asOf) {
+        YearMonth selectedMonth = YearMonth.of(year, month);
+        LocalDate monthStart = selectedMonth.atDay(1);
+        LocalDate monthEnd = selectedMonth.atEndOfMonth();
+        LocalDate selectedEnd = asOf == null ? monthEnd : asOf;
+
+        if (selectedEnd.isBefore(monthStart)) {
+            selectedEnd = monthStart;
+        } else if (selectedEnd.isAfter(monthEnd)) {
+            selectedEnd = monthEnd;
+        }
+
+        LocalDate fallbackEnd = selectedEnd;
+        return repo.findTopByTypeAndDateBetweenOrderByDateDescIdDesc(type, monthStart, fallbackEnd)
+                .or(() -> repo.findTopByTypeAndDateLessThanEqualOrderByDateDescIdDesc(type, fallbackEnd))
+                .map(List::of)
+                .orElseGet(List::of);
+    }
+
     @Transactional
     public Priorities replaceByTypeAndDate(String type, LocalDate date, Priorities data) {
         repo.deleteByTypeAndDate(type, date);

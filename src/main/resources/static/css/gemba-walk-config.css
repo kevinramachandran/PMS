@@ -157,7 +157,7 @@
 
 .gemba-walk-config-page .gw-config-table {
     width: 100%;
-    min-width: 1540px;
+    min-width: 1680px;
     border-collapse: collapse;
     table-layout: fixed;
 }
@@ -178,11 +178,20 @@
 }
 
 .gemba-walk-config-page .gw-config-table th {
-    background: #ffffff;
-    color: #020617;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #0b7a34;
+    color: #ffffff;
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
+}
+
+.gemba-walk-config-page .gw-derived-department input[readonly] {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
 }
 
 .gemba-walk-config-page .gw-config-table th:first-child,

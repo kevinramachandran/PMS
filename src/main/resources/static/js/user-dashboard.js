@@ -157,27 +157,6 @@
         container.innerHTML = rows.map(mapper).join('');
     }
 
-    function renderGlimpse(id, rows, mapper, emptyMessage) {
-        const container = document.getElementById(id);
-        if (!container) {
-            return;
-        }
-        if (!rows || rows.length === 0) {
-            container.innerHTML = '<span class="user-glimpse-empty">' + safeHtml(emptyMessage || 'No notifications') + '</span>';
-            return;
-        }
-        container.innerHTML = rows.slice(0, 2).map(mapper).join('');
-    }
-
-    function glimpseRow(title, meta, pillText, pillClass) {
-        return '' +
-            '<span class="user-glimpse-row">' +
-                '<span class="user-glimpse-main">' + safeHtml(title || 'Notification') + '</span>' +
-                '<span class="user-glimpse-meta">' + safeHtml(meta || '-') + '</span>' +
-                (pillText ? '<span class="user-glimpse-pill ' + (pillClass || '') + '">' + safeHtml(pillText) + '</span>' : '') +
-            '</span>';
-    }
-
     function renderIssueSummary(rows, lookups) {
         rows = userScopedRows(rows, ['responsible', 'ownerName', 'assignTo', 'assignedTo', 'createdBy', 'raisedBy'], lookups);
         const openRows = rows.filter(function (row) {
@@ -196,12 +175,17 @@
             })
             .slice(0, 5);
 
-        renderGlimpse('userIssueGlimpse', sorted, function (row) {
+        renderList('userDueIssues', sorted, function (row) {
             const days = row._dueDays;
             const dueClass = days !== null && days < 0 ? 'is-overdue' : (days === 0 ? 'is-today' : '');
-            const dueText = days === null ? 'No target' : (days < 0 ? Math.abs(days) + 'd overdue' : (days === 0 ? 'Today' : days + 'd'));
-            return glimpseRow(row.problem || row.actions || 'Issue', row.responsible || row.ownerName || '-', dueText, dueClass);
-        }, 'No open issues');
+            const dueText = days === null ? 'No target date' : (days < 0 ? Math.abs(days) + ' days overdue' : (days === 0 ? 'Due today' : 'Due in ' + days + ' days'));
+            return '' +
+                '<a class="user-list-row" href="/issue-board">' +
+                '<span class="user-row-main">' + safeHtml(row.problem || row.actions || 'Issue') + '</span>' +
+                '<span class="user-row-meta">' + safeHtml(row.responsible || row.ownerName || '-') + '</span>' +
+                '<span class="user-row-pill ' + dueClass + '">' + safeHtml(dueText) + '</span>' +
+                '</a>';
+        }, 'No open issue actions.');
     }
 
     function renderKpiSnapshot(rows) {
@@ -246,14 +230,15 @@
     function renderGembaSummary(rows, lookups) {
         rows = userScopedRows(rows, ['responsibility', 'managerName', 'email', 'createdBy', 'assignedTo', 'assignTo'], lookups);
         setText('userGembaFindings', rows.length);
-        const sorted = sortByDateDesc(rows, ['dateOfLeadershipSafetyWalkConducted', 'gembaDate', 'walkDate', 'createdAt', 'updatedAt']).slice(0, 5);
-        renderGlimpse('userGembaGlimpse', sorted, function (row) {
-            return glimpseRow(
-                row.finding || row.observation || row.gembaWalkObservation || row.finalComments || row.locationOfMswConducted || 'Gemba walk',
-                row.responsibility || row.managerName || row.createdBy || '-',
-                formatDate(firstDateValue(row, ['dateOfLeadershipSafetyWalkConducted', 'gembaDate', 'walkDate', 'createdAt', 'updatedAt']))
-            );
-        }, 'No Gemba walks');
+        const sorted = sortByDateDesc(rows, ['gembaDate', 'walkDate', 'createdAt', 'updatedAt']).slice(0, 5);
+        renderList('userGembaList', sorted, function (row) {
+            return '' +
+                '<a class="user-list-row" href="/gemba-reporting">' +
+                '<span class="user-row-main">' + safeHtml(row.finding || row.observation || row.gembaWalkObservation || row.location || 'Gemba finding') + '</span>' +
+                '<span class="user-row-meta">' + safeHtml(row.responsible || row.ownerName || row.createdBy || '-') + '</span>' +
+                '<span class="user-row-pill">' + safeHtml(formatDate(firstDateValue(row, ['gembaDate', 'walkDate', 'createdAt', 'updatedAt']))) + '</span>' +
+                '</a>';
+        }, 'No Gemba findings recorded.');
     }
 
     function renderAbnormalitySummary(rows, lookups) {
@@ -263,14 +248,15 @@
             return !status || !(status.includes('closed') || status.includes('complete'));
         });
         setText('userOpenAbnormalities', openRows.length);
-        const sorted = sortByDateDesc(openRows.length ? openRows : rows, ['dateRaised', 'reportedDate', 'date', 'createdAt', 'updatedAt']).slice(0, 5);
-        renderGlimpse('userAbnormalityGlimpse', sorted, function (row) {
-            return glimpseRow(
-                row.abnormality || row.description || row.problem || row.abnormalityTagNumber || 'Abnormality',
-                row.department || row.areaMachine || '-',
-                formatDate(firstDateValue(row, ['dateRaised', 'reportedDate', 'date', 'createdAt', 'updatedAt']))
-            );
-        }, 'No abnormalities');
+        const sorted = sortByDateDesc(rows, ['reportedDate', 'date', 'createdAt', 'updatedAt']).slice(0, 5);
+        renderList('userAbnormalityList', sorted, function (row) {
+            return '' +
+                '<a class="user-list-row" href="/abnormality-reporting">' +
+                '<span class="user-row-main">' + safeHtml(row.abnormality || row.description || row.problem || row.department || 'Abnormality report') + '</span>' +
+                '<span class="user-row-meta">' + safeHtml(row.responsible || row.ownerName || row.department || '-') + '</span>' +
+                '<span class="user-row-pill">' + safeHtml(formatDate(firstDateValue(row, ['reportedDate', 'date', 'createdAt', 'updatedAt']))) + '</span>' +
+                '</a>';
+        }, 'No abnormality reports found.');
     }
 
     function renderKaizenSummary(rows, lookups) {
@@ -279,41 +265,6 @@
             return String(row.isKaizenImplemented || '').trim().toLowerCase() !== 'yes';
         });
         setText('userOpenKaizen', openRows.length);
-        const sorted = sortByDateDesc(openRows, ['gembaKaizenGenerationDate', 'createdAt', 'updatedAt']).slice(0, 5);
-        renderGlimpse('userKaizenGlimpse', sorted, function (row) {
-            return glimpseRow(
-                row.kaizenIdea || row.classificationOfKaizen || 'Kaizen idea',
-                row.gembaKaizenProviderName || row.department || '-',
-                formatDate(firstDateValue(row, ['gembaKaizenGenerationDate', 'createdAt', 'updatedAt']))
-            );
-        }, 'No open kaizen');
-    }
-
-    function processStatusOpen(row) {
-        const fields = ['zm1Status', 'zm2Status', 'pm1Status', 'pm2Status', 'om1Status', 'qm1Status', 'qm2Status'];
-        const statuses = fields.map(function (field) {
-            return String(row && row[field] || '').trim().toLowerCase();
-        }).filter(Boolean);
-        if (!statuses.length) {
-            return true;
-        }
-        return statuses.some(function (status) {
-            return !(status === 'closed' || status === 'close' || status === 'completed' || status === 'done');
-        });
-    }
-
-    function renderProcessConfirmationSummary(rows, lookups) {
-        rows = userScopedRows(rows, ['assignedTo', 'areaResponsibility', 'processConfirmationDoneBy', 'name', 'email'], lookups);
-        const openRows = rows.filter(processStatusOpen);
-        setText('userOpenProcessConfirmations', openRows.length);
-        const sorted = sortByDateDesc(openRows, ['dateOfGwProcessConfirmationConducted', 'lastModifiedTime']).slice(0, 5);
-        renderGlimpse('userProcessConfirmationGlimpse', sorted, function (row) {
-            return glimpseRow(
-                row.areaOfGwProcessConfirmationConducted || row.name || 'Process confirmation',
-                row.assignedTo || row.areaResponsibility || '-',
-                formatDate(firstDateValue(row, ['dateOfGwProcessConfirmationConducted', 'lastModifiedTime']))
-            );
-        }, 'No confirmations');
     }
 
     function extractRecords(payload) {
@@ -331,16 +282,18 @@
         setText('userDashboardSyncStatus', 'Syncing...');
         Promise.all([
             fetchJson('/api/issue-board/latest'),
+            fetchJson('/api/production-metrics/current-month'),
+            fetchJson('/api/training-schedule/latest'),
             fetchJson('/api/gemba-walk-config/records'),
             fetchJson('/api/abnormality-reporting-config/records'),
-            fetchJson('/api/gemba-kaizen-config/records'),
-            fetchJson('/api/carlex-process-confirmation/records')
+            fetchJson('/api/gemba-kaizen-config/records')
         ]).then(function (results) {
             renderIssueSummary(extractRecords(results[0]), lookups);
-            renderGembaSummary(extractRecords(results[1]), lookups);
-            renderAbnormalitySummary(extractRecords(results[2]), lookups);
-            renderKaizenSummary(extractRecords(results[3]), lookups);
-            renderProcessConfirmationSummary(extractRecords(results[4]), lookups);
+            renderKpiSnapshot(extractRecords(results[1]));
+            renderTrainingSummary(extractRecords(results[2]), lookups);
+            renderGembaSummary(extractRecords(results[3]), lookups);
+            renderAbnormalitySummary(extractRecords(results[4]), lookups);
+            renderKaizenSummary(extractRecords(results[5]), lookups);
             setText('userDashboardSyncStatus', 'Last synced: ' + new Date().toLocaleTimeString('en-GB'));
         }).catch(function () {
             setText('userDashboardSyncStatus', 'Sync failed');

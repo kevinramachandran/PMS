@@ -163,7 +163,7 @@ $(document).ready(function() {
     // ==================== DIRECT NAV CONFIGS ====================
     const directNavConfigs = ['issue-board', 'gemba-schedule', 'master-gemba-walk', 'abnormality-tracker', 'master-abnormality', 'leadership-gemba-tracker', 'master-gemba-kaizen',
                              'training-schedule', 'meeting-agenda', 'process-confirmation', 'master-process', 'hs-cross',
-                             'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color', 'kpi-rename-dashboard', 'kpi-plant-name'];
+                             'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color', 'kpi-rename-dashboard', 'kpi-plant-name', 'master-designation'];
     const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
     const readOnlyActionSelectors = [
         '.form-actions button',
@@ -391,6 +391,9 @@ $(document).ready(function() {
             loadKpiRenameDashboard();
         } else if (config === 'kpi-plant-name') {
             $('#form-master-plant').addClass('active');
+            loadMasterPlantConfig();
+        } else if (config === 'master-designation') {
+            $('#form-master-designation').addClass('active');
             loadMasterPlantConfig();
         } else if (config === 'license') {
             $('#form-license').addClass('active');
@@ -2571,6 +2574,16 @@ function regroupRows($container){
             String(today.getDate()).padStart(2, '0');
     }
 
+    function getLoggedInUsername() {
+        const bodyUsername = ($('body').attr('data-username') || '').trim();
+        if (bodyUsername) {
+            return bodyUsername;
+        }
+
+        const profileName = ($('.pms-profile-name, .profile-name').first().text() || '').trim();
+        return profileName && profileName.toLowerCase() !== 'user' ? profileName : '';
+    }
+
     // ==================== ISSUE BOARD CONFIGURATION ====================
     function initializeIssueBoardConfigDateField() {
         const today = getTodayDateString();
@@ -2617,18 +2630,14 @@ function regroupRows($container){
                     const name = (user.name || '').trim();
                     const employeeId = (user.employeeId || '').trim();
                     const email = (user.email || '').trim();
-                    if (username) {
-                        issueBoardAssignableLookup.set(username.toLowerCase(), user);
-                    }
-                    if (name) {
-                        issueBoardAssignableLookup.set(name.toLowerCase(), user);
-                    }
-                    if (employeeId) {
-                        issueBoardAssignableLookup.set(employeeId.toLowerCase(), user);
-                    }
-                    if (email) {
-                        issueBoardAssignableLookup.set(email.toLowerCase(), user);
-                    }
+                    const label = (user.label || '').trim();
+                    addIssueBoardResponsibleLookup(username, user);
+                    addIssueBoardResponsibleLookup(name, user);
+                    addIssueBoardResponsibleLookup(employeeId, user);
+                    addIssueBoardResponsibleLookup(email, user);
+                    addIssueBoardResponsibleLookup(label, user);
+                    addIssueBoardResponsibleLookup(name && email ? name + ' (' + email + ')' : '', user);
+                    addIssueBoardResponsibleLookup(username && email ? username + ' (' + email + ')' : '', user);
                 });
 
                 renderIssueBoardResponsibleUsers();
@@ -2668,12 +2677,26 @@ function regroupRows($container){
         });
     }
 
+    function normalizeIssueBoardLookupKey(value) {
+        return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function addIssueBoardResponsibleLookup(value, user) {
+        const key = normalizeIssueBoardLookupKey(value);
+        if (key) {
+            issueBoardAssignableLookup.set(key, user);
+        }
+    }
+
     function findIssueBoardResponsibleUser(value) {
-        const normalized = (value || '').trim().toLowerCase();
+        const normalized = normalizeIssueBoardLookupKey(value);
         if (!normalized) {
             return null;
         }
-        return issueBoardAssignableLookup.get(normalized) || null;
+        return issueBoardAssignableLookup.get(normalized)
+            || issueBoardAssignableLookup.get(normalized.replace(/\s*\(([^)]+)\)\s*$/, ''))
+            || issueBoardAssignableLookup.get(normalized.replace(/^.*\(([^)]+)\)\s*$/, '$1'))
+            || null;
     }
 
     function normalizeIssueBoardResponsibleField($field) {
@@ -3276,8 +3299,8 @@ function regroupRows($container){
             '<td class="ib-row-number"></td>' +
             textCell('ib-problem', safeItem.problem, 'Describe issue') +
             '<td class="ib-display-cell"><span class="ib-priority-pill ib-priority-' + escapeAttributeValue(String(safeItem.priority || '').toLowerCase()) + '">' + escapeHtml(safeItem.priority || '-') + '</span><input type="hidden" class="ib-priority" value="' + escapeAttributeValue(safeItem.priority || '') + '"></td>' +
-            textCell('ib-owner', safeItem.ownerName, 'Owner name') +
-            '<td class="ib-display-cell"><span class="ib-cell-text ib-issue-date-display">' + escapeHtml(safeItem.issueDate || '-') + '</span><input type="hidden" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
+            textCell('ib-owner', safeItem.ownerName || getLoggedInUsername(), 'Owner name') +
+            '<td class="ib-display-cell"><span class="ib-cell-text ib-issue-date-display">' + escapeHtml(formatIssueTableDateForDisplay(safeItem.issueDate)) + '</span><input type="hidden" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
             textCell('ib-root-cause', safeItem.rootCause, 'Root cause') +
             textCell('ib-actions', safeItem.actions, 'Action plan') +
             textCell('ib-responsible', safeItem.responsible, 'Responsible') +
@@ -3285,7 +3308,7 @@ function regroupRows($container){
             '<td><span class="ib-cell-text ib-due-days-display">' + escapeHtml(dueDays === '' ? '-' : dueDays) + '</span><input type="hidden" class="ib-due-days" value="' + escapeAttributeValue(dueDays) + '"></td>' +
             '<td class="ib-status-cell"><div class="ib-status-wrap"><div class="ib-progress-row"><div class="ib-pdca-circle" aria-hidden="true" style="--pdca-progress:0" data-stage="-"><span class="ib-pdca-quarter ib-pdca-p">P</span><span class="ib-pdca-quarter ib-pdca-d">D</span><span class="ib-pdca-quarter ib-pdca-c">C</span><span class="ib-pdca-quarter ib-pdca-a">A</span></div></div>' +
             '<select class="ib-status" aria-label="Issue progress status" hidden><option value="0%" ' + (status === '0%' ? 'selected' : '') + '>-</option><option value="25%" ' + (status === '25%' ? 'selected' : '') + '>P</option><option value="50%" ' + (status === '50%' ? 'selected' : '') + '>D</option><option value="75%" ' + (status === '75%' ? 'selected' : '') + '>C</option><option value="100%" ' + (status === '100%' ? 'selected' : '') + '>A</option></select></div></td>' +
-            '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(completedDate || '-') + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
+            '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(formatIssueTableDateForDisplay(completedDate)) + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
             '<td class="ib-history-cell"><button type="button" class="issue-config-history" ' + (safeItem.id ? '' : 'disabled ') + 'title="' + (safeItem.id ? 'View history' : 'History available after save') + '" aria-label="View issue history"><i class="fas fa-clock-rotate-left"></i></button></td>' +
             '<td class="ib-action-cell"><div class="ib-action-stack"><button type="button" class="issue-edit" title="Edit issue" aria-label="Edit issue"><i class="fas fa-pen-to-square"></i></button><button type="button" class="issue-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></div></td>' +
             '</tr>';
@@ -3330,6 +3353,7 @@ function regroupRows($container){
 
     function setIssueConfigRowData($row, data) {
         const safe = data || {};
+        const ownerName = safe.ownerName || getLoggedInUsername();
         const effectiveTarget = getIssueConfigEffectiveTarget(safe);
         const dueDays = calculateDueDaysFromTarget(effectiveTarget);
         const status = normalizeIssueStatus(safe.status);
@@ -3341,10 +3365,10 @@ function regroupRows($container){
             .removeClass('ib-priority-high ib-priority-medium ib-priority-low')
             .addClass('ib-priority-' + String(safe.priority || '').toLowerCase())
             .text(safe.priority || '-');
-        $row.find('.ib-owner').val(safe.ownerName || '');
-        $row.find('.ib-owner-display').text(safe.ownerName || '-');
+        $row.find('.ib-owner').val(ownerName);
+        $row.find('.ib-owner-display').text(ownerName || '-');
         $row.find('.ib-issue-date').val(safe.issueDate || '');
-        $row.find('.ib-issue-date-display').text(safe.issueDate || '-');
+        $row.find('.ib-issue-date-display').text(formatIssueTableDateForDisplay(safe.issueDate));
         $row.find('.ib-root-cause').val(safe.rootCause || '');
         $row.find('.ib-root-cause-display').text(safe.rootCause || '-');
         $row.find('.ib-actions').val(safe.actions || '');
@@ -3363,7 +3387,7 @@ function regroupRows($container){
         $row.find('.ib-due-days-display').text(dueDays === '' ? '-' : dueDays);
         $row.find('.ib-status').val(status);
         $row.find('.ib-completed-date').val(safe.completedDate || '');
-        $row.find('.ib-completed-date-display').text(safe.completedDate || '-');
+        $row.find('.ib-completed-date-display').text(formatIssueTableDateForDisplay(safe.completedDate));
 
         updateRowDueDays($row);
         updateCompletedDateRequirement($row);
@@ -3373,13 +3397,14 @@ function regroupRows($container){
 
     function fillIssueConfigDrawer(data, rowIndex) {
         const safe = data || {};
+        const ownerName = safe.ownerName || getLoggedInUsername();
         const isExistingIssue = !!safe.id;
         $('#issueConfigDrawerRowIndex').val(rowIndex === null || rowIndex === undefined ? '' : rowIndex);
         $('#issueConfigDrawerTitle').text(rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Edit Issue');
         $('#issueConfigDrawerSave').html('<i class="fas fa-check"></i> ' + (rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Update Issue'));
         $('#issueConfigDrawerProblem').val(safe.problem || '');
         $('#issueConfigDrawerPriority').val(safe.priority || '');
-        $('#issueConfigDrawerOwner').val(safe.ownerName || '');
+        $('#issueConfigDrawerOwner').val(ownerName);
         $('#issueConfigDrawerIssueDate').val(safe.issueDate || getTodayDateString());
         $('#issueConfigDrawerTargetDate').val(safe.targetDate || '');
         $('#issueConfigDrawerTargetDateRemark').val(safe.targetDateRemark || '');
@@ -3614,7 +3639,7 @@ function regroupRows($container){
         const payload = {
             problem: ($('#issueConfigDrawerProblem').val() || '').trim(),
             priority: $('#issueConfigDrawerPriority').val() || '',
-            ownerName: ($('#issueConfigDrawerOwner').val() || '').trim(),
+            ownerName: (($('#issueConfigDrawerOwner').val() || '').trim() || getLoggedInUsername()),
             issueDate: $('#issueConfigDrawerIssueDate').val() || '',
             rootCause: ($('#issueConfigDrawerRootCause').val() || '').trim(),
             actions: ($('#issueConfigDrawerActions').val() || '').trim(),
@@ -3811,7 +3836,7 @@ function regroupRows($container){
                 rowOrder: index + 1,
                 problem: problem,
                 priority: $(this).find('.ib-priority').val().trim(),
-                ownerName: $(this).find('.ib-owner').val().trim(),
+                ownerName: ($(this).find('.ib-owner').val().trim() || getLoggedInUsername()),
                 issueDate: $(this).find('.ib-issue-date').val().trim(),
                 rootCause: $(this).find('.ib-root-cause').val().trim(),
                 actions: actions,
@@ -5335,7 +5360,8 @@ function regroupRows($container){
         });
     }
 
-    $('#addTrainingScheduleRowBtn').on('click', function() {
+    $(document).off('click.trainingScheduleAddRow', '#addTrainingScheduleRowBtn').on('click.trainingScheduleAddRow', '#addTrainingScheduleRowBtn', function(event) {
+        event.preventDefault();
         $('#trainingScheduleConfigTableBody .placeholder-row').remove();
         $('#trainingScheduleConfigTableBody').append(createTrainingScheduleRow());
         bindTrainingScheduleDeleteButtons();
@@ -6594,6 +6620,12 @@ function regroupRows($container){
             label: 'Area',
             parentPlant: '#masterAreaPlantSelect',
             parentDepartment: '#masterAreaDepartmentSelect'
+        },
+        DESIGNATION: {
+            input: '#masterDesignationInput',
+            suggestions: '#masterDesignationSuggestions',
+            label: 'Designation',
+            parentPlant: '#masterDesignationPlantSelect'
         }
     };
     const masterPlantItems = {};
@@ -6601,7 +6633,8 @@ function regroupRows($container){
     let pendingMasterPlantDelete = null;
 
     function setMasterPlantMessage(message, type) {
-        const $message = $('#masterPlantMessage');
+        const $activeMessage = $('.form-section.active #masterPlantMessage, .form-section.active #masterDesignationMessage').first();
+        const $message = $activeMessage.length ? $activeMessage : $('#masterPlantMessage');
         if (!$message.length) return;
         if (!message) {
             $message.removeClass('show success error warning').text('');
@@ -6659,8 +6692,10 @@ function regroupRows($container){
         const plants = masterPlantItems.PLANT || [];
         const departmentPlant = $('#masterDepartmentPlantSelect').val() || '';
         const areaPlant = $('#masterAreaPlantSelect').val() || '';
+        const designationPlant = $('#masterDesignationPlantSelect').val() || '';
         $('#masterDepartmentPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(departmentPlant);
         $('#masterAreaPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(areaPlant);
+        $('#masterDesignationPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(designationPlant);
 
         const selectedAreaPlant = $('#masterAreaPlantSelect').val() || '';
         const areaDepartment = $('#masterAreaDepartmentSelect').val() || '';
@@ -6670,6 +6705,9 @@ function regroupRows($container){
         $('#masterAreaDepartmentSelect').html(masterPlantOptionHtml(departments, 'Select Department')).val(areaDepartment);
         if ($('#masterAreaDepartmentSelect').val() !== areaDepartment) {
             $('#masterAreaDepartmentSelect').val('');
+        }
+        if ($('#masterDesignationPlantSelect').val() !== designationPlant) {
+            $('#masterDesignationPlantSelect').val('');
         }
     }
 
@@ -7005,6 +7043,7 @@ function regroupRows($container){
         populateMasterPlantHierarchyControls();
         renderMasterPlantSuggestions('DEPARTMENT');
         renderMasterPlantSuggestions('PROCESS_AREA');
+        renderMasterPlantSuggestions('DESIGNATION');
     });
 
     function setKpiPlantNameMessage(message, type) {

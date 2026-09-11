@@ -37,7 +37,7 @@ public class AbnormalityReportingConfigController {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("status", "success", "records", service.list()));
+        return ResponseEntity.ok(Map.of("status", "success", "records", service.listForUser(username(session), role(session))));
     }
 
     @GetMapping("/records/{id}")
@@ -45,7 +45,7 @@ public class AbnormalityReportingConfigController {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return service.find(id)
+        return service.findForUser(id, username(session), role(session))
                 .<ResponseEntity<?>>map(item -> ResponseEntity.ok(Map.of("status", "success", "record", item)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found")));
     }
@@ -53,6 +53,9 @@ public class AbnormalityReportingConfigController {
     @GetMapping("/records/{id}/history")
     public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
         if (!canView(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+        if (service.findForUser(id, username(session), role(session)).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found"));
+        }
         return ResponseEntity.ok(assignmentHistoryService.history("abnormality-reporting", id));
     }
 
@@ -62,7 +65,7 @@ public class AbnormalityReportingConfigController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
-            return ResponseEntity.ok(Map.of("status", "success", "record", service.create(request, username(session))));
+            return ResponseEntity.ok(Map.of("status", "success", "record", service.create(request, username(session), role(session))));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(Map.of("status", "error", "message", ex.getMessage()));
         }
@@ -76,7 +79,7 @@ public class AbnormalityReportingConfigController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
-            return service.update(id, request, username(session))
+            return service.update(id, request, username(session), role(session))
                     .<ResponseEntity<?>>map(record -> ResponseEntity.ok(Map.of("status", "success", "record", record)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found")));
         } catch (IllegalArgumentException ex) {
@@ -85,20 +88,25 @@ public class AbnormalityReportingConfigController {
     }
 
     @GetMapping("/options")
-    public ResponseEntity<?> options(HttpSession session) {
+    public ResponseEntity<?> options(@RequestParam(value = "department", required = false) String department,
+                                     @RequestParam(value = "areaMachine", required = false) String areaMachine,
+                                     @RequestParam(value = "recordId", required = false) Long recordId,
+                                     HttpSession session) {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("status", "success", "options", service.options()));
+        return ResponseEntity.ok(Map.of("status", "success", "options", service.options(username(session), role(session), department, areaMachine, recordId)));
     }
 
     @GetMapping("/department-options")
     public ResponseEntity<?> departmentOptions(@RequestParam(value = "department", required = false) String department,
+                                               @RequestParam(value = "areaMachine", required = false) String areaMachine,
+                                               @RequestParam(value = "recordId", required = false) Long recordId,
                                                HttpSession session) {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("status", "success", "options", service.departmentOptions(department)));
+        return ResponseEntity.ok(Map.of("status", "success", "options", service.departmentOptions(username(session), role(session), department, areaMachine, recordId)));
     }
 
     private boolean canView(HttpSession session) {
@@ -113,6 +121,12 @@ public class AbnormalityReportingConfigController {
     }
 
     private String username(HttpSession session) {
-        return session == null ? "" : String.valueOf(session.getAttribute("username"));
+        Object raw = session == null ? null : session.getAttribute("username");
+        return raw == null ? "" : String.valueOf(raw);
+    }
+
+    private String role(HttpSession session) {
+        Object raw = session == null ? null : session.getAttribute("role");
+        return raw == null ? "" : String.valueOf(raw);
     }
 }

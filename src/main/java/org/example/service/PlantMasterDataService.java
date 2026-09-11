@@ -13,6 +13,7 @@ public class PlantMasterDataService {
     public static final String PLANT = "PLANT";
     public static final String DEPARTMENT = "DEPARTMENT";
     public static final String PROCESS_AREA = "PROCESS_AREA";
+    public static final String DESIGNATION = "DESIGNATION";
 
     private final PlantMasterDataItemRepository repository;
 
@@ -92,7 +93,7 @@ public class PlantMasterDataService {
 
     private String normalizeCategory(String category) {
         String normalized = category == null ? "" : category.trim().toUpperCase().replace('-', '_');
-        if (PLANT.equals(normalized) || DEPARTMENT.equals(normalized) || PROCESS_AREA.equals(normalized)) {
+        if (PLANT.equals(normalized) || DEPARTMENT.equals(normalized) || PROCESS_AREA.equals(normalized) || DESIGNATION.equals(normalized)) {
             return normalized;
         }
         throw new IllegalArgumentException("Unsupported category");
@@ -151,9 +152,11 @@ public class PlantMasterDataService {
 
     private void rejectDeleteWithChildren(PlantMasterDataItem item) {
         if (PLANT.equals(item.getCategory())) {
-            boolean hasChildren = list(DEPARTMENT).stream()
+            boolean hasDepartments = list(DEPARTMENT).stream()
                     .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(item.getName()));
-            if (hasChildren) {
+            boolean hasDesignations = list(DESIGNATION).stream()
+                    .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(item.getName()));
+            if (hasDepartments || hasDesignations) {
                 throw new IllegalArgumentException("Delete departments under this Plant before deleting the Plant");
             }
         }
@@ -173,6 +176,9 @@ public class PlantMasterDataService {
         }
         if (PROCESS_AREA.equals(category)) {
             return "Area";
+        }
+        if (DESIGNATION.equals(category)) {
+            return "Designation";
         }
         return "Plant";
     }

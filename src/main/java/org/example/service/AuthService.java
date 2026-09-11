@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -127,7 +128,7 @@ public class AuthService {
         String normalizedEmail = email.trim();
         String normalizedRole = RoleAccess.normalize(role);
         String normalizedStatus = normalizeStatus(status);
-        Optional<String> masterDataValidation = validateMasterDataProfile(department, area);
+        Optional<String> masterDataValidation = validateMasterDataProfile(department, area, plant, designation);
         if (masterDataValidation.isPresent()) {
             return masterDataValidation;
         }
@@ -202,7 +203,7 @@ public class AuthService {
         String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedRole = RoleAccess.normalize(role);
         String normalizedStatus = normalizeStatus(status);
-        Optional<String> masterDataValidation = validateMasterDataProfile(department, area);
+        Optional<String> masterDataValidation = validateMasterDataProfile(department, area, plant, designation);
         if (masterDataValidation.isPresent()) {
             return masterDataValidation;
         }
@@ -245,12 +246,37 @@ public class AuthService {
         return Optional.empty();
     }
 
-    public Map<String, List<String>> getUserMasterOptions() {
+    public Map<String, Object> getUserMasterOptions() {
         return Map.of(
                 "departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT),
+                "departmentItems", plantMasterDataService.list(PlantMasterDataService.DEPARTMENT).stream()
+                        .map(item -> {
+                            Map<String, String> row = new HashMap<>();
+                            row.put("name", trimToEmpty(item.getName()));
+                            row.put("parentPlant", trimToEmpty(item.getParentPlant()));
+                            return row;
+                        })
+                        .toList(),
                 "areas", plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA),
-                "plants", appUserRepository.findDistinctPlants(),
-                "designations", appUserRepository.findDistinctDesignations()
+                "areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA).stream()
+                        .map(item -> {
+                            Map<String, String> row = new HashMap<>();
+                            row.put("name", trimToEmpty(item.getName()));
+                            row.put("parentPlant", trimToEmpty(item.getParentPlant()));
+                            row.put("parentDepartment", trimToEmpty(item.getParentDepartment()));
+                            return row;
+                        })
+                        .toList(),
+                "plants", plantMasterDataService.names(PlantMasterDataService.PLANT),
+                "designations", plantMasterDataService.names(PlantMasterDataService.DESIGNATION),
+                "designationItems", plantMasterDataService.list(PlantMasterDataService.DESIGNATION).stream()
+                        .map(item -> {
+                            Map<String, String> row = new HashMap<>();
+                            row.put("name", trimToEmpty(item.getName()));
+                            row.put("parentPlant", trimToEmpty(item.getParentPlant()));
+                            return row;
+                        })
+                        .toList()
         );
     }
 
@@ -284,21 +310,108 @@ public class AuthService {
         user.setName(trimToEmpty(name));
         user.setEmployeeId(employeeId);
         user.setDepartment(trimToEmpty(department));
-        user.setArea(trimToEmpty(area));
+        user.setArea(normalizeAreaList(area));
         user.setPlant(trimToEmpty(plant));
         user.setDesignation(trimToEmpty(designation));
         user.setReportingManager(trimToEmpty(reportingManager));
         user.setStatus(normalizeStatus(status));
     }
 
-    private Optional<String> validateMasterDataProfile(String department, String area) {
+    private Optional<String> validateMasterDataProfile(String department, String area, String plant, String designation) {
+        if (!isConfiguredMasterValue(plant, PlantMasterDataService.PLANT)) {
+            return Optional.of("Plant must be configured in Master Data");
+        }
         if (!isConfiguredMasterValue(department, PlantMasterDataService.DEPARTMENT)) {
             return Optional.of("Department must be configured in Master Data");
         }
-        if (!isConfiguredMasterValue(area, PlantMasterDataService.PROCESS_AREA)) {
+        if (!isDepartmentUnderPlant(department, plant)) {
+            return Optional.of("Department must be under the selected Plant");
+        }
+        for (String areaValue : splitAreaValues(area)) {
+            if (!isConfiguredMasterValue(areaValue, PlantMasterDataService.PROCESS_AREA)) {
+                return Optional.of("Area must be configured in Master Data");
+            }
+            if (!isAreaUnderDepartment(areaValue, department)) {
+                return Optional.of("Area must be under the selected Department");
+            }
+        }
+        if (splitAreaValues(area).isEmpty() && !isConfiguredMasterValue(area, PlantMasterDataService.PROCESS_AREA)) {
             return Optional.of("Area must be configured in Master Data");
         }
+        if (requiresArea(designation) && splitAreaValues(area).isEmpty()) {
+            return Optional.of("Area is required for Engineer, Executive, Operator, and Area HOD users");
+        }
+        if (!isConfiguredMasterValue(designation, PlantMasterDataService.DESIGNATION)) {
+            return Optional.of("Designation must be configured in Master Data");
+        }
+        if (!isDesignationUnderPlant(designation, plant)) {
+            return Optional.of("Designation must be under the selected Plant");
+        }
         return Optional.empty();
+    }
+
+    private List<String> splitAreaValues(String area) {
+        String trimmed = trimToEmpty(area);
+        if (trimmed.isBlank()) {
+            return List.of();
+        }
+        return List.of(trimmed.split(",")).stream()
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private String normalizeAreaList(String area) {
+        return String.join(", ", splitAreaValues(area));
+    }
+
+    private boolean isAreaUnderDepartment(String area, String department) {
+        String areaValue = trimToEmpty(area);
+        String departmentValue = trimToEmpty(department);
+        if (areaValue.isBlank() || departmentValue.isBlank()) {
+            return true;
+        }
+        return plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA).stream()
+                .filter(item -> trimToEmpty(item.getName()).equalsIgnoreCase(areaValue))
+                .map(item -> trimToEmpty(item.getParentDepartment()))
+                .anyMatch(parentDepartment -> parentDepartment.isBlank() || parentDepartment.equalsIgnoreCase(departmentValue));
+    }
+
+    private boolean isDepartmentUnderPlant(String department, String plant) {
+        String departmentValue = trimToEmpty(department);
+        String plantValue = trimToEmpty(plant);
+        if (departmentValue.isBlank() || plantValue.isBlank()) {
+            return true;
+        }
+        return plantMasterDataService.list(PlantMasterDataService.DEPARTMENT).stream()
+                .filter(item -> trimToEmpty(item.getName()).equalsIgnoreCase(departmentValue))
+                .map(item -> trimToEmpty(item.getParentPlant()))
+                .anyMatch(parentPlant -> parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue));
+    }
+
+    private boolean isDesignationUnderPlant(String designation, String plant) {
+        String designationValue = trimToEmpty(designation);
+        String plantValue = trimToEmpty(plant);
+        if (designationValue.isBlank() || plantValue.isBlank()) {
+            return true;
+        }
+        return plantMasterDataService.list(PlantMasterDataService.DESIGNATION).stream()
+                .filter(item -> trimToEmpty(item.getName()).equalsIgnoreCase(designationValue))
+                .map(item -> trimToEmpty(item.getParentPlant()))
+                .anyMatch(parentPlant -> parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue));
+    }
+
+    private boolean requiresArea(String designation) {
+        String normalized = trimToEmpty(designation).toUpperCase().replaceAll("[\\s-]+", "_");
+        return normalized.equals("ENGINEER")
+                || normalized.equals("ENGG")
+                || normalized.equals("EXECUTIVE")
+                || normalized.equals("EXEC")
+                || normalized.equals("OPERATOR")
+                || normalized.equals("AREA_HOD")
+                || normalized.equals("AREA_HEAD")
+                || normalized.equals("AREA_HEAD_OF_DEPARTMENT");
     }
 
     private boolean isConfiguredMasterValue(String value, String category) {

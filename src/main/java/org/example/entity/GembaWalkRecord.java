@@ -28,6 +28,18 @@ public class GembaWalkRecord {
     @Column(length = 160)
     private String managerName;
 
+    @Column(length = 120)
+    private String department;
+
+    @Column(length = 160)
+    private String createdBy;
+
+    @Column(length = 120)
+    private String creatorDepartment;
+
+    @Column(length = 120)
+    private String creatorArea;
+
     private LocalDate dateOfLeadershipSafetyWalkConducted;
 
     @Column(length = 160)
@@ -95,6 +107,38 @@ public class GembaWalkRecord {
 
     public void setManagerName(String managerName) {
         this.managerName = managerName;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getCreatorDepartment() {
+        return creatorDepartment;
+    }
+
+    public void setCreatorDepartment(String creatorDepartment) {
+        this.creatorDepartment = creatorDepartment;
+    }
+
+    public String getCreatorArea() {
+        return creatorArea;
+    }
+
+    public void setCreatorArea(String creatorArea) {
+        this.creatorArea = creatorArea;
     }
 
     public LocalDate getDateOfLeadershipSafetyWalkConducted() {

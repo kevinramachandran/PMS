@@ -43,16 +43,9 @@ CREATE TABLE IF NOT EXISTS plant_master_data_items (
     id BIGINT NOT NULL AUTO_INCREMENT,
     category VARCHAR(40) NOT NULL,
     name VARCHAR(160) NOT NULL,
-    parent_plant VARCHAR(160) NULL,
-    parent_department VARCHAR(160) NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, name)
+    UNIQUE KEY uk_plant_master_category_name (category, name)
 );
-
-ALTER TABLE plant_master_data_items ADD COLUMN parent_plant VARCHAR(160) NULL;
-ALTER TABLE plant_master_data_items ADD COLUMN parent_department VARCHAR(160) NULL;
-ALTER TABLE plant_master_data_items DROP INDEX uk_plant_master_category_name;
-ALTER TABLE plant_master_data_items ADD UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, name);
 
 CREATE TABLE IF NOT EXISTS abnormality_master_data_items (
     id BIGINT NOT NULL AUTO_INCREMENT,
@@ -176,6 +169,7 @@ CREATE TABLE IF NOT EXISTS carlex_process_confirmations (
     process_confirmation_done_by VARCHAR(160) NULL,
     date_of_gw_process_confirmation_conducted DATE NULL,
     gw_pc_week VARCHAR(80) NULL,
+    department VARCHAR(160) NULL,
     area_of_gw_process_confirmation_conducted VARCHAR(160) NULL,
     area_responsibility VARCHAR(160) NULL,
     zm1_description TEXT NULL, zm1_counter_measure_actions TEXT NULL, zm1_status VARCHAR(40) NULL, zm1_observation_image VARCHAR(255) NULL, another_zm_observation BIT NULL,
@@ -186,6 +180,20 @@ CREATE TABLE IF NOT EXISTS carlex_process_confirmations (
     qm1_description TEXT NULL, qm1_counter_measure_actions TEXT NULL, qm1_status VARCHAR(40) NULL, qm1_observation_image VARCHAR(255) NULL, another_qm_observation BIT NULL,
     qm2_description TEXT NULL, qm2_counter_measure_actions TEXT NULL, qm2_status VARCHAR(40) NULL, qm2_observation_image VARCHAR(255) NULL,
     PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS carlex_process_confirmation_observations (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    confirmation_id BIGINT NOT NULL,
+    group_type VARCHAR(20) NULL,
+    observation_order INT NULL,
+    description TEXT NULL,
+    counter_measure_actions TEXT NULL,
+    status VARCHAR(40) NULL,
+    observation_image VARCHAR(255) NULL,
+    PRIMARY KEY (id),
+    INDEX idx_carlex_pc_observation_record (confirmation_id),
+    CONSTRAINT fk_carlex_pc_observation_record FOREIGN KEY (confirmation_id) REFERENCES carlex_process_confirmations(id)
 );
 
 UPDATE abnormality_tracker SET row_order = NULL WHERE row_order IS NOT NULL AND (TRIM(row_order) = '' OR TRIM(row_order) NOT REGEXP '^-?[0-9]+$');
@@ -271,7 +279,8 @@ ALTER TABLE app_users MODIFY COLUMN page_edit_permissions TEXT NULL;
 ALTER TABLE app_users ADD COLUMN name VARCHAR(160) NULL;
 ALTER TABLE app_users ADD COLUMN employee_id VARCHAR(80) NULL;
 ALTER TABLE app_users ADD COLUMN department VARCHAR(120) NULL;
-ALTER TABLE app_users ADD COLUMN area VARCHAR(120) NULL;
+ALTER TABLE app_users ADD COLUMN area VARCHAR(500) NULL;
+ALTER TABLE app_users MODIFY COLUMN area VARCHAR(500) NULL;
 ALTER TABLE app_users ADD COLUMN plant VARCHAR(120) NULL;
 ALTER TABLE app_users ADD COLUMN designation VARCHAR(120) NULL;
 ALTER TABLE app_users ADD COLUMN reporting_manager VARCHAR(160) NULL;

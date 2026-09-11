@@ -82,9 +82,13 @@ public class ProductionMetricsController {
     @GetMapping("/month")
     public ResponseEntity<List<ProductionMetrics>> getRecordsByMonth(
             @RequestParam int month,
-            @RequestParam int year) {
+            @RequestParam int year,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate asOf) {
         if (month < 1 || month > 12) {
             return ResponseEntity.badRequest().build();
+        }
+        if (asOf != null) {
+            return ResponseEntity.ok(service.getRecordsByMonth(month, year, asOf));
         }
         return ResponseEntity.ok(service.getRecordsByMonth(month, year));
     }

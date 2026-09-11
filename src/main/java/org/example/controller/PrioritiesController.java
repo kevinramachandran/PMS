@@ -2,6 +2,7 @@ package org.example.controller;
 
 import org.example.entity.Priorities;
 import org.example.service.PrioritiesService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -71,7 +72,11 @@ public class PrioritiesController {
     public List<Priorities> getLatestByTypeAndMonth(
             @PathVariable String type,
             @RequestParam int month,
-            @RequestParam int year) {
+            @RequestParam int year,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate asOf) {
+        if (asOf != null) {
+            return service.getLatestByTypeAndMonth(type, month, year, asOf);
+        }
         return service.getLatestByTypeAndMonth(type, month, year);
     }
 

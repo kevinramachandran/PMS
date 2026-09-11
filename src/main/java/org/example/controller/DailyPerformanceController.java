@@ -2,8 +2,11 @@ package org.example.controller;
 
 import org.example.entity.DailyPerformance;
 import org.example.service.DailyPerformanceService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/daily-performance")
@@ -44,12 +47,13 @@ public class DailyPerformanceController {
     @GetMapping("/month")
     public ResponseEntity<DailyPerformance> getMonthLatest(
             @RequestParam int month,
-            @RequestParam int year) {
+            @RequestParam int year,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate asOf) {
         if (month < 1 || month > 12) {
             return ResponseEntity.badRequest().build();
         }
 
-        return service.getLatestByMonth(month, year)
+        return service.getLatestByMonth(month, year, asOf)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }

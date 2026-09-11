@@ -22,12 +22,13 @@
 .pc-records-wrap,
 .carlex-table-wrap {
     overflow: auto;
+    max-height: calc(100vh - 255px);
 }
 
 .pc-records-table,
 .carlex-table {
     width: 100%;
-    min-width: 1520px;
+    min-width: 1780px;
     border-collapse: collapse;
     table-layout: fixed;
 }
@@ -45,8 +46,11 @@
 
 .pc-records-table th,
 .carlex-table th {
-    background: #f4f7f5;
-    color: #31564e;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #0b7a34;
+    color: #ffffff;
     font-size: 11px;
     line-height: 1.25;
     text-transform: uppercase;
@@ -83,14 +87,14 @@
 .carlex-table th:nth-child(6),
 .carlex-table td:nth-child(6),
 .carlex-table th:nth-child(7),
-.carlex-table td:nth-child(7) {
-    width: 145px;
-}
-
+.carlex-table td:nth-child(7),
 .carlex-table th:nth-child(8),
 .carlex-table td:nth-child(8),
 .carlex-table th:nth-child(9),
-.carlex-table td:nth-child(9),
+.carlex-table td:nth-child(9) {
+    width: 145px;
+}
+
 .carlex-table th:nth-child(10),
 .carlex-table td:nth-child(10),
 .carlex-table th:nth-child(11),
@@ -101,13 +105,17 @@
 }
 
 .carlex-table th:nth-child(13),
-.carlex-table td:nth-child(13) {
-    width: 165px;
+.carlex-table td:nth-child(13),
+.carlex-table th:nth-child(14),
+.carlex-table td:nth-child(14),
+.carlex-table th:nth-child(16),
+.carlex-table td:nth-child(16) {
+    width: 120px;
 }
 
-.carlex-table th:nth-child(14),
-.carlex-table td:nth-child(14) {
-    width: 120px;
+.carlex-table th:nth-child(15),
+.carlex-table td:nth-child(15) {
+    width: 190px;
 }
 
 .pc-table-action,
@@ -156,7 +164,7 @@
     z-index: 3000;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
-    width: min(1240px, calc(100vw - 54px));
+    width: min(1380px, calc(100vw - 54px));
     height: min(90vh, 840px);
     margin: 0;
     background: #ffffff;
@@ -223,6 +231,106 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 15px 16px;
+}
+
+.carlex-observations-wide {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 14px;
+}
+
+.carlex-observation-panel {
+    border: 1px solid #dfe5e2;
+    border-radius: 7px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.carlex-observation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    background: #f4f7f5;
+    border-bottom: 1px solid #dfe5e2;
+}
+
+.carlex-observation-header h3 {
+    margin: 0;
+    color: #0b7a34;
+    font-size: 15px;
+}
+
+.carlex-add-observation,
+.carlex-remove-observation {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 34px;
+    border: 1px solid #15803d;
+    border-radius: 5px;
+    padding: 0 12px;
+    background: #ffffff;
+    color: #0b7a34;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.carlex-add-observation:hover,
+.carlex-remove-observation:hover {
+    background: #eefaf2;
+}
+
+.carlex-remove-observation {
+    border-color: #fecaca;
+    color: #b42318;
+}
+
+.carlex-observation-list {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+}
+
+.carlex-observation-row {
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) minmax(360px, 2fr) minmax(150px, 0.8fr) 42px;
+    gap: 12px;
+    align-items: end;
+    padding: 0 0 12px;
+    border-bottom: 1px solid #eef2f0;
+}
+
+.carlex-observation-row .carlex-wide {
+    grid-column: auto;
+}
+
+.carlex-observation-row .carlex-observation-image-group {
+    grid-column: 1 / 4;
+}
+
+.carlex-observation-actions {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+}
+
+.carlex-observation-row .pc-observation-image {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.carlex-observation-row .carlex-form-group label {
+    min-height: 32px;
+    display: flex;
+    align-items: flex-end;
+    overflow-wrap: normal;
+    word-break: normal;
 }
 
 .carlex-form-group {

@@ -22,7 +22,7 @@ public class AppUser {
     @Column(length = 120)
     private String department;
 
-    @Column(length = 120)
+    @Column(length = 500)
     private String area;
 
     @Column(length = 120)

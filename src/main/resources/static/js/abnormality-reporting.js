@@ -28,6 +28,11 @@ $(function () {
         return normalize(value).toLowerCase();
     }
 
+    function matchesText(left, right) {
+        const expected = lower(right);
+        return expected && lower(left) === expected;
+    }
+
     function isClosed(record) {
         return lower(record && record.tagStatus) === 'closed';
     }
@@ -35,6 +40,19 @@ $(function () {
     function todayIso() {
         const now = new Date();
         return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
+    function displayDate(value) {
+        const text = normalize(value);
+        const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (iso) {
+            return iso[3] + '/' + iso[2] + '/' + iso[1];
+        }
+        const dashed = text.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (dashed) {
+            return dashed[1] + '/' + dashed[2] + '/' + dashed[3];
+        }
+        return text;
     }
 
     function filterAnchorParts() {
@@ -46,21 +64,65 @@ $(function () {
         };
     }
 
+    function itemName(item) {
+        return normalize(item && item.name);
+    }
+
+    function itemParentPlant(item) {
+        return normalize(item && (item.parentPlant || item.plant || item.plantName));
+    }
+
+    function itemParentDepartment(item) {
+        return normalize(item && (item.parentDepartment || item.department || item.departmentName));
+    }
+
+    function areaCandidates(record) {
+        const areaName = recordArea(record);
+        if (!areaName) {
+            return [];
+        }
+        return masterAreas.filter(function(item) {
+            return matchesText(itemName(item), areaName);
+        });
+    }
+
+    function areaForRecord(record) {
+        const candidates = areaCandidates(record);
+        if (!candidates.length) {
+            return null;
+        }
+        const directDepartment = normalize(record && record.department);
+        if (directDepartment) {
+            const departmentMatch = candidates.find(function(item) {
+                return matchesText(itemParentDepartment(item), directDepartment);
+            });
+            if (departmentMatch) {
+                return departmentMatch;
+            }
+        }
+        return candidates[0];
+    }
+
     function recordPlant(record) {
         const direct = normalize(record.plant || record.plantName || record.plantNameSuffix);
         if (direct) {
             return direct;
         }
-        const area = areaLookup.get(lower(recordArea(record)));
-        if (area && area.parentPlant) {
-            return normalize(area.parentPlant);
+        const area = areaForRecord(record) || areaLookup.get(lower(recordArea(record)));
+        if (area && itemParentPlant(area)) {
+            return itemParentPlant(area);
         }
         const department = departmentLookup.get(lower(recordDepartment(record)));
-        return normalize(department && department.parentPlant);
+        return itemParentPlant(department);
     }
 
     function recordDepartment(record) {
-        return normalize(record.department);
+        const direct = normalize(record.department);
+        if (direct) {
+            return direct;
+        }
+        const area = areaForRecord(record) || areaLookup.get(lower(recordArea(record)));
+        return itemParentDepartment(area);
     }
 
     function recordArea(record) {
@@ -121,11 +183,9 @@ $(function () {
             return [
                 record.typeOfTag,
                 record.priority,
-                record.abnormalityTagNumber,
                 record.tagRaisedBy,
                 record.dateRaised,
                 record.shift,
-                record.abnormalityRelatedTo,
                 record.department,
                 record.areaMachine,
                 record.component,
@@ -164,8 +224,9 @@ $(function () {
     function populateFilter(selector, values, current, allLabel) {
         const selected = current || $(selector).val() || 'all';
         const html = '<option value="all">' + escapeHtml(allLabel || 'All') + '</option>' + values.map(optionHtml).join('');
+        const matchingValue = values.find(function(value) { return lower(value) === lower(selected); });
         $(selector).html(html);
-        $(selector).val(values.some(function(value) { return lower(value) === lower(selected); }) ? selected : 'all');
+        $(selector).val(matchingValue || 'all');
     }
 
     function updateFilterOptions() {
@@ -180,8 +241,8 @@ $(function () {
             return matchesSelect(recordPlant(record), plant);
         });
         const departmentMasterValues = masterDepartments
-            .filter(function(item) { return matchesSelect(item.parentPlant, plant); })
-            .map(function(item) { return normalize(item.name); });
+            .filter(function(item) { return matchesSelect(itemParentPlant(item), plant); })
+            .map(itemName);
         populateFilter('#departmentFilter', uniqueList(uniqueValues(recordDepartment, plantRows).concat(departmentMasterValues)), $('#departmentFilter').val(), 'All');
 
         const department = $('#departmentFilter').val();
@@ -189,8 +250,8 @@ $(function () {
             return matchesSelect(recordDepartment(record), department);
         });
         const areaMasterValues = masterAreas
-            .filter(function(item) { return matchesSelect(item.parentPlant, plant) && matchesSelect(item.parentDepartment, department); })
-            .map(function(item) { return normalize(item.name); });
+            .filter(function(item) { return matchesSelect(itemParentPlant(item), plant) && matchesSelect(itemParentDepartment(item), department); })
+            .map(itemName);
         populateFilter('#areaFilter', uniqueList(uniqueValues(recordArea, departmentRows).concat(areaMasterValues)), $('#areaFilter').val(), 'All');
     }
 
@@ -223,7 +284,7 @@ $(function () {
         $('#closedPercent').text(closedPercent + '%');
         $('.ar-count-card').removeClass('active')
             .filter(function() {
-                return !$(this).find('#closedPercent').length
+                return !$(this).hasClass('ar-percent-card')
                     && String($(this).data('status-filter') || 'all') === ($('#statusFilter').val() || 'all');
             }).addClass('active');
         updateFilterSummary(reported);
@@ -365,7 +426,7 @@ $(function () {
             return;
         }
         if (!rows.length) {
-            $body.html('<tr><td colspan="20" class="empty-row">No abnormality reports found.</td></tr>');
+            $body.html('<tr><td colspan="18" class="empty-row">No abnormality reports found.</td></tr>');
             return;
         }
         $body.html(rows.map(function(record, index) {
@@ -373,11 +434,9 @@ $(function () {
                 '<td>' + (index + 1) + '</td>' +
                 '<td>' + escapeHtml(record.typeOfTag) + '</td>' +
                 '<td>' + escapeHtml(record.priority) + '</td>' +
-                '<td>' + escapeHtml(record.abnormalityTagNumber) + '</td>' +
                 '<td>' + escapeHtml(record.tagRaisedBy) + '</td>' +
-                '<td>' + escapeHtml(record.dateRaised) + '</td>' +
+                '<td>' + escapeHtml(displayDate(record.dateRaised)) + '</td>' +
                 '<td>' + escapeHtml(record.shift) + '</td>' +
-                '<td>' + escapeHtml(record.abnormalityRelatedTo) + '</td>' +
                 '<td>' + escapeHtml(record.department) + '</td>' +
                 '<td>' + escapeHtml(record.areaMachine) + '</td>' +
                 '<td>' + escapeHtml(record.component) + '</td>' +
@@ -386,7 +445,7 @@ $(function () {
                 '<td>' + attachmentIcon('abnormality-reporting', record.pictureImage, record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.abnormalityDefectType) + '</td>' +
                 '<td>' + escapeHtml(record.assignTo) + '</td>' +
-                '<td>' + escapeHtml(record.dateClosed) + '</td>' +
+                '<td>' + escapeHtml(displayDate(record.dateClosed)) + '</td>' +
                 '<td>' + escapeHtml(record.tagStatus) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="ar-open-btn" data-id="' + escapeHtml(record.id) + '" title="Open record" aria-label="Open abnormality record"><i class="fas fa-arrow-up-right-from-square"></i></button></td>' +

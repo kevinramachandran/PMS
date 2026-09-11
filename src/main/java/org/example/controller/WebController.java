@@ -129,6 +129,7 @@ public class WebController {
             case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
             case "kpi-rename-dashboard" -> settingsView(model, "kpi-rename-dashboard", "", "KPI Configuration");
             case "kpi-plant-name" -> settingsView(model, "kpi-plant-name", "", "Plant");
+            case "master-designation" -> settingsView(model, "master-designation", "", "Designation");
             case "license" -> settingsView(model, "license", "", "License Management");
             default -> "redirect:/pms/top-priorities";
         };

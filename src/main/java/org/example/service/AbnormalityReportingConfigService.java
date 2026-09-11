@@ -23,7 +23,7 @@ import java.util.Set;
 @Service
 public class AbnormalityReportingConfigService {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final Set<String> PRIORITIES = Set.of("HIGH", "MEDIUM", "LOW");
     private static final Set<String> SHIFTS = Set.of("A", "B", "C", "G");
     private static final Set<String> TAG_STATUSES = Set.of("OPEN", "CLOSED");
@@ -57,13 +57,29 @@ public class AbnormalityReportingConfigService {
         return id == null ? Optional.empty() : repository.findById(id);
     }
 
-    @Transactional
-    public AbnormalityReportingRecord create(AbnormalityReportingRecord request, String username) {
-        AbnormalityReportingRecord record = new AbnormalityReportingRecord();
-        apply(record, request);
-        if (isBlank(record.getTagRaisedBy())) {
-            record.setTagRaisedBy(defaultText(username, ""));
+    public List<AbnormalityReportingRecord> listForUser(String username, String role) {
+        List<AbnormalityReportingRecord> rows = list();
+        if (RoleAccess.isAdmin(role)) {
+            return rows;
         }
+        Optional<AppUser> current = currentUser(username);
+        if (current.isEmpty()) {
+            return List.of();
+        }
+        AppUser user = current.get();
+        return rows.stream().filter(record -> canSeeRecord(record, user)).toList();
+    }
+
+    public Optional<AbnormalityReportingRecord> findForUser(Long id, String username, String role) {
+        return find(id)
+                .filter(record -> RoleAccess.isAdmin(role)
+                        || currentUser(username).filter(user -> canSeeRecord(record, user)).isPresent());
+    }
+
+    @Transactional
+    public AbnormalityReportingRecord create(AbnormalityReportingRecord request, String username, String role) {
+        AbnormalityReportingRecord record = new AbnormalityReportingRecord();
+        apply(record, request, username, role, true);
         applyClosedDate(record);
         AbnormalityReportingRecord saved = repository.save(record);
         assignmentHistoryService.record("abnormality-reporting", saved.getId(), "", saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
@@ -72,16 +88,20 @@ public class AbnormalityReportingConfigService {
     }
 
     @Transactional
-    public Optional<AbnormalityReportingRecord> update(Long id, AbnormalityReportingRecord request, String username) {
-        Optional<AbnormalityReportingRecord> existing = find(id);
+    public Optional<AbnormalityReportingRecord> update(Long id, AbnormalityReportingRecord request, String username, String role) {
+        Optional<AbnormalityReportingRecord> existing = findForUser(id, username, role);
         if (existing.isEmpty()) {
             return Optional.empty();
         }
 
         AbnormalityReportingRecord record = existing.get();
+        AppUser actor = currentUser(username).orElse(null);
+        if (!RoleAccess.isAdmin(role) && !canUpdateRecord(record, actor)) {
+            throw new IllegalArgumentException("You can update only abnormalities raised by you, assigned to you, or within your permitted area");
+        }
         String previousAssignee = record.getAssignTo();
         boolean wasClosed = isClosed(record.getTagStatus());
-        apply(record, request);
+        apply(record, request, username, role, false);
         applyClosedDate(record);
         AbnormalityReportingRecord saved = repository.save(record);
         assignmentHistoryService.record("abnormality-reporting", saved.getId(), previousAssignee, saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
@@ -91,8 +111,9 @@ public class AbnormalityReportingConfigService {
         return Optional.of(saved);
     }
 
-    public Map<String, Object> options() {
+    public Map<String, Object> options(String username, String role, String department, String areaMachine, Long recordId) {
         Map<String, Object> payload = new LinkedHashMap<>();
+        Optional<AppUser> current = currentUser(username);
         payload.put("typeOfTags", abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE));
         payload.put("plants", plantMasterDataService.names(PlantMasterDataService.PLANT));
         payload.put("departments", plantMasterDataService.names(PlantMasterDataService.DEPARTMENT));
@@ -101,16 +122,19 @@ public class AbnormalityReportingConfigService {
         payload.put("departmentItems", plantMasterDataService.list(PlantMasterDataService.DEPARTMENT));
         payload.put("areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA));
         payload.put("abnormalityDefectTypes", abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE));
-        payload.put("hods", userOptions(findDepartmentHods(null)));
-        payload.put("assignableUsers", userOptions(findDepartmentHods(null)));
-        payload.put("reportingUsers", userOptions(activeUsers()));
+        AbnormalityReportingRecord record = recordId == null ? null : repository.findById(recordId).orElse(null);
+        payload.put("currentUser", current.map(this::userOption).orElse(Map.of()));
+        payload.put("assignableUsers", userOptions(assignableUsers(department, areaMachine, current.orElse(null), role, record)));
+        payload.put("defaultAssignee", defaultAreaHod(department, areaMachine).map(user -> defaultText(user.getUsername(), user.getName())).orElse(""));
         return payload;
     }
 
-    public Map<String, Object> departmentOptions(String department) {
+    public Map<String, Object> departmentOptions(String username, String role, String department, String areaMachine, Long recordId) {
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("hods", userOptions(findDepartmentHods(department)));
-        payload.put("assignableUsers", userOptions(findDepartmentHods(department)));
+        Optional<AppUser> current = currentUser(username);
+        AbnormalityReportingRecord record = recordId == null ? null : repository.findById(recordId).orElse(null);
+        payload.put("assignableUsers", userOptions(assignableUsers(department, areaMachine, current.orElse(null), role, record)));
+        payload.put("defaultAssignee", defaultAreaHod(department, areaMachine).map(user -> defaultText(user.getUsername(), user.getName())).orElse(""));
         return payload;
     }
 
@@ -130,32 +154,44 @@ public class AbnormalityReportingConfigService {
         );
     }
 
-    private void apply(AbnormalityReportingRecord record, AbnormalityReportingRecord request) {
+    private void apply(AbnormalityReportingRecord record, AbnormalityReportingRecord request, String username, String role, boolean forceCurrentUser) {
         if (request == null) {
             throw new IllegalArgumentException("Record is required");
         }
         validateConfigured(request.getTypeOfTag(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE), "Type of Tag");
         validateInSet(request.getPriority(), PRIORITIES, "Priority");
-        validateRequired(request.getAbnormalityTagNumber(), "Abnormality Tag Number");
-        validateRequired(request.getTagRaisedBy(), "Tag Raised By");
         validateRequired(request.getDateRaised(), "Date Raised");
         validateInSet(request.getShift(), SHIFTS, "Shift");
-        validateConfigured(request.getAbnormalityRelatedTo(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Abnormality Related To");
         validateConfigured(request.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
         validateConfigured(request.getAreaMachine(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area/Machine");
         validateRequired(request.getComponent(), "Component");
         validateRequired(request.getDescription(), "Description");
         validateRequired(request.getProposedAction(), "Proposed Action");
         validateConfigured(request.getAbnormalityDefectType(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE), "Abnormality/Defect Type");
-        validateDepartmentHod(request.getAssignTo(), request.getDepartment());
+        String requestedAssignee = trim(request.getAssignTo());
+        if (isBlank(requestedAssignee) && record.getId() == null) {
+            requestedAssignee = defaultAreaHod(request.getDepartment(), request.getAreaMachine())
+                    .map(user -> defaultText(user.getUsername(), user.getName()))
+                    .orElse("");
+        }
+        validateAssignee(requestedAssignee, request.getDepartment(), request.getAreaMachine(),
+                currentUser(username).orElse(null), role, record);
         validateInSet(request.getTagStatus(), TAG_STATUSES, "Tag Status");
         record.setTypeOfTag(trim(request.getTypeOfTag()));
         record.setPriority(trim(request.getPriority()));
-        record.setAbnormalityTagNumber(trim(request.getAbnormalityTagNumber()));
-        record.setTagRaisedBy(trim(request.getTagRaisedBy()));
+        if (record.getId() == null) {
+            record.setAbnormalityTagNumber("");
+        }
+        if (forceCurrentUser || isBlank(record.getTagRaisedBy())) {
+            record.setTagRaisedBy(currentUser(username)
+                    .map(user -> defaultText(user.getName(), user.getUsername()))
+                    .orElse(defaultText(username, "")));
+        }
         record.setDateRaised(request.getDateRaised());
         record.setShift(trim(request.getShift()));
-        record.setAbnormalityRelatedTo(trim(request.getAbnormalityRelatedTo()));
+        if (record.getId() == null) {
+            record.setAbnormalityRelatedTo("");
+        }
         record.setDepartment(trim(request.getDepartment()));
         record.setAreaMachine(trim(request.getAreaMachine()));
         record.setComponent(trim(request.getComponent()));
@@ -163,7 +199,7 @@ public class AbnormalityReportingConfigService {
         record.setProposedAction(trim(request.getProposedAction()));
         record.setPictureImage(trim(request.getPictureImage()));
         record.setAbnormalityDefectType(trim(request.getAbnormalityDefectType()));
-        record.setAssignTo(trim(request.getAssignTo()));
+        record.setAssignTo(requestedAssignee);
         record.setDateClosed(request.getDateClosed());
         record.setTagStatus(trim(request.getTagStatus()));
     }
@@ -211,15 +247,20 @@ public class AbnormalityReportingConfigService {
         }
     }
 
-    private void validateDepartmentHod(String username, String department) {
+    private void validateAssignee(String username, String department, String areaMachine, AppUser actor, String role, AbnormalityReportingRecord record) {
         validateRequired(username, "Assign To");
-        boolean valid = findDepartmentHods(department).stream()
+        String previousAssignee = record == null ? "" : trim(record.getAssignTo());
+        boolean assigneeChanged = !defaultText(previousAssignee, "").equalsIgnoreCase(defaultText(username, ""));
+        if (assigneeChanged && record != null && record.getId() != null && !RoleAccess.isAdmin(role) && !isAreaHod(actor)) {
+            throw new IllegalArgumentException("Only the Area HoD can reassign this Abnormality Report");
+        }
+        boolean valid = assignableUsers(department, areaMachine, actor, role, record).stream()
                 .anyMatch(user -> equalsIgnoreCase(user.getUsername(), username)
                         || equalsIgnoreCase(user.getName(), username)
                         || equalsIgnoreCase(user.getEmail(), username)
                         || equalsIgnoreCase(user.getEmployeeId(), username));
         if (!valid) {
-            throw new IllegalArgumentException("Assign To must be a HoD from the selected department");
+            throw new IllegalArgumentException("Assign To must be a permitted workflow user");
         }
     }
 
@@ -254,6 +295,50 @@ public class AbnormalityReportingConfigService {
         return scoped.isEmpty() ? hods : scoped;
     }
 
+    private List<AppUser> assignableUsers(String department, String areaMachine, AppUser actor, String role, AbnormalityReportingRecord record) {
+        List<AppUser> scoped = activeUsers().stream()
+                .filter(user -> matchesScope(user, department, areaMachine))
+                .toList();
+        List<AppUser> pool = scoped.isEmpty() ? activeUsers() : scoped;
+        if (RoleAccess.isAdmin(role)) {
+            return pool.stream()
+                    .filter(user -> isHod(user) || isOperational(user))
+                    .toList();
+        }
+        boolean existingAssignment = record != null && !isBlank(record.getAssignTo());
+        boolean actorIsAreaHod = isAreaHod(actor);
+        return pool.stream()
+                .filter(user -> {
+                    if (!existingAssignment) {
+                        return isAreaHod(user);
+                    }
+                    if (actorIsAreaHod) {
+                        return isOperational(user);
+                    }
+                    return matchesUser(user, record.getAssignTo());
+                })
+                .toList();
+    }
+
+    private Optional<AppUser> defaultAreaHod(String department, String areaMachine) {
+        return activeUsers().stream()
+                .filter(user -> matchesScope(user, department, areaMachine))
+                .filter(this::isAreaHod)
+                .findFirst();
+    }
+
+    private boolean canSeeRecord(AbnormalityReportingRecord record, AppUser user) {
+        if (record == null || user == null) {
+            return false;
+        }
+        return matchesUser(user, record.getTagRaisedBy()) || matchesUser(user, record.getAssignTo());
+    }
+
+    private boolean canUpdateRecord(AbnormalityReportingRecord record, AppUser user) {
+        return canSeeRecord(record, user)
+                && (isAreaHod(user) || matchesUser(user, record.getTagRaisedBy()) || matchesUser(user, record.getAssignTo()));
+    }
+
     private List<AppUser> activeUsers() {
         return appUserRepository.findAll().stream()
                 .filter(this::isActive)
@@ -261,6 +346,9 @@ public class AbnormalityReportingConfigService {
     }
 
     private boolean isHod(AppUser user) {
+        if (user == null) {
+            return false;
+        }
         String designation = normalize(user.getDesignation());
         return RoleAccess.isHod(user.getRole())
                 || designation.contains("HOD")
@@ -269,18 +357,43 @@ public class AbnormalityReportingConfigService {
                 || designation.contains("AREA_HEAD");
     }
 
+    private boolean isAreaHod(AppUser user) {
+        if (user == null) {
+            return false;
+        }
+        String role = RoleAccess.normalize(user.getRole());
+        String designation = normalize(user.getDesignation());
+        return RoleAccess.AREA_HOD.equals(role)
+                || designation.contains("AREA_HOD")
+                || designation.contains("AREA_HEAD");
+    }
+
+    private boolean isOperational(AppUser user) {
+        if (user == null) {
+            return false;
+        }
+        String role = RoleAccess.normalize(user.getRole());
+        String designation = normalize(user.getDesignation());
+        return RoleAccess.isAssignableOperationalRole(role)
+                || RoleAccess.isAssignableOperationalRole(designation);
+    }
+
     private List<Map<String, String>> userOptions(List<AppUser> users) {
         return users.stream()
-                .map(user -> {
-                    Map<String, String> option = new LinkedHashMap<>();
-                    option.put("username", defaultText(user.getUsername(), ""));
-                    option.put("name", defaultText(user.getName(), ""));
-                    option.put("email", defaultText(user.getEmail(), ""));
-                    option.put("department", defaultText(user.getDepartment(), ""));
-                    option.put("designation", defaultText(user.getDesignation(), ""));
-                    return option;
-                })
+                .map(this::userOption)
                 .toList();
+    }
+
+    private Map<String, String> userOption(AppUser user) {
+        Map<String, String> option = new LinkedHashMap<>();
+        option.put("username", defaultText(user.getUsername(), ""));
+        option.put("name", defaultText(user.getName(), ""));
+        option.put("email", defaultText(user.getEmail(), ""));
+        option.put("department", defaultText(user.getDepartment(), ""));
+        option.put("area", defaultText(user.getArea(), ""));
+        option.put("designation", defaultText(user.getDesignation(), ""));
+        option.put("role", RoleAccess.normalize(user.getRole()));
+        return option;
     }
 
     private List<String> emails(List<AppUser> users) {
@@ -305,6 +418,10 @@ public class AbnormalityReportingConfigService {
                 .findFirst();
     }
 
+    private Optional<AppUser> currentUser(String username) {
+        return resolveUser(username);
+    }
+
     private boolean isActive(AppUser user) {
         return user != null && !"INACTIVE".equals(normalize(user.getStatus()));
     }
@@ -327,11 +444,9 @@ public class AbnormalityReportingConfigService {
                 .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:14px;'>")
                 .append(row("Type of Tag", record.getTypeOfTag()))
                 .append(row("Priority", record.getPriority()))
-                .append(row("Abnormality Tag Number", record.getAbnormalityTagNumber()))
                 .append(row("Tag Raised By", record.getTagRaisedBy()))
                 .append(row("Date Raised", formatDate(record.getDateRaised())))
                 .append(row("Shift", record.getShift()))
-                .append(row("Abnormality Related To", record.getAbnormalityRelatedTo()))
                 .append(row("Department", record.getDepartment()))
                 .append(row("Area/Machine", record.getAreaMachine()))
                 .append(row("Component", record.getComponent()))
@@ -365,7 +480,6 @@ public class AbnormalityReportingConfigService {
                 .append("<table cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:13px;'>")
                 .append("<tr>")
                 .append(headerCell("Type of Tag"))
-                .append(headerCell("Abnormality Tag Number"))
                 .append(headerCell("Department"))
                 .append(headerCell("Date Raised"))
                 .append(headerCell("Tag Status"))
@@ -373,7 +487,6 @@ public class AbnormalityReportingConfigService {
         for (AbnormalityReportingRecord row : rows) {
             html.append("<tr>")
                     .append(bodyCell(row.getTypeOfTag()))
-                    .append(bodyCell(row.getAbnormalityTagNumber()))
                     .append(bodyCell(row.getDepartment()))
                     .append(bodyCell(formatDate(row.getDateRaised())))
                     .append(bodyCell(row.getTagStatus()))
@@ -417,12 +530,48 @@ public class AbnormalityReportingConfigService {
         return !first.isBlank() && !second.isBlank() && first.equals(second);
     }
 
+    private boolean matchesScope(AppUser user, String department, String areaMachine) {
+        if (user == null) {
+            return false;
+        }
+        String expectedDepartment = compact(department);
+        String expectedArea = compact(areaMachine);
+        boolean departmentMatches = expectedDepartment.isBlank() || expectedDepartment.equals(compact(user.getDepartment()));
+        boolean areaMatches = expectedArea.isBlank() || matchesAnyArea(user.getArea(), expectedArea);
+        return departmentMatches && areaMatches;
+    }
+
+    private boolean matchesAnyArea(String userAreas, String expectedArea) {
+        return List.of(trim(userAreas).split(",")).stream()
+                .map(this::compact)
+                .anyMatch(expectedArea::equals);
+    }
+
+    private boolean matchesUser(AppUser user, String value) {
+        String expected = compactUser(value);
+        if (user == null || expected.isBlank()) {
+            return false;
+        }
+        return expected.equals(compactUser(user.getUsername()))
+                || expected.equals(compactUser(user.getName()))
+                || expected.equals(compactUser(user.getEmail()))
+                || expected.equals(compactUser(user.getEmployeeId()));
+    }
+
     private String compact(String value) {
         String trimmed = trim(value);
         if (trimmed == null) {
             return "";
         }
         return trimmed.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+    }
+
+    private String compactUser(String value) {
+        String trimmed = trim(value);
+        if (trimmed == null) {
+            return "";
+        }
+        return trimmed.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9@.]", "");
     }
 
     private String normalize(String value) {

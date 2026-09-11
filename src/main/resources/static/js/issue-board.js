@@ -40,11 +40,20 @@ $(document).ready(function() {
             return rawDate;
         }
 
-        return dateObj.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
+        return dateObj.toLocaleDateString('en-GB');
+    }
+
+    function getLoggedInUsername() {
+        const bodyUsername = String(document.body && document.body.dataset.username || '').trim();
+        if (bodyUsername) {
+            return bodyUsername;
+        }
+        const avatarUsername = String($('.user-avatar').first().attr('data-username') || '').trim();
+        if (avatarUsername && avatarUsername.toLowerCase() !== 'user') {
+            return avatarUsername;
+        }
+        const profileName = String($('.pms-profile-name, .profile-name').first().text() || '').trim();
+        return profileName && profileName.toLowerCase() !== 'user' ? profileName : '';
     }
 
     function safeText(value) {
@@ -424,7 +433,7 @@ $(document).ready(function() {
         return {
             problem: ($('#drawerIssueProblem').val() || '').trim(),
             priority: $('#drawerIssuePriority').val() || '',
-            ownerName: ($('#drawerIssueOwner').val() || '').trim(),
+            ownerName: (($('#drawerIssueOwner').val() || '').trim() || getLoggedInUsername()),
             issueDate: $('#drawerIssueDate').val() || null,
             rootCause: ($('#drawerIssueRootCause').val() || '').trim(),
             actions: ($('#drawerIssueActions').val() || '').trim(),
@@ -463,13 +472,30 @@ $(document).ready(function() {
         });
     }
 
+    function normalizeIssueResponsibleLookupKey(value) {
+        return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
     function isIssueResponsibleValid(value) {
-        const normalized = (value || '').trim().toLowerCase();
+        const normalized = normalizeIssueResponsibleLookupKey(value);
         if (!normalized || issueBoardAssignableUsers.length === 0) {
             return !!normalized;
         }
         return issueBoardAssignableUsers.some(function(user) {
-            return String(user.username || '').toLowerCase() === normalized || String(user.label || '').toLowerCase() === normalized;
+            const keys = [
+                user.username,
+                user.name,
+                user.employeeId,
+                user.email,
+                user.label,
+                user.name && user.email ? user.name + ' (' + user.email + ')' : '',
+                user.username && user.email ? user.username + ' (' + user.email + ')' : ''
+            ].map(normalizeIssueResponsibleLookupKey).filter(Boolean);
+            const labelName = normalized.replace(/\s*\(([^)]+)\)\s*$/, '');
+            const labelEmail = normalized.replace(/^.*\(([^)]+)\)\s*$/, '$1');
+            return keys.indexOf(normalized) !== -1
+                || keys.indexOf(labelName) !== -1
+                || keys.indexOf(labelEmail) !== -1;
         });
     }
 
@@ -544,7 +570,7 @@ $(document).ready(function() {
         );
         $('#drawerIssueProblem').val(row.problem || '');
         $('#drawerIssuePriority').val(row.priority || '');
-        $('#drawerIssueOwner').val(row.ownerName || '');
+        $('#drawerIssueOwner').val(row.ownerName || getLoggedInUsername());
         $('#drawerIssueDate').val(row.issueDate || '');
         $('#drawerIssueRootCause').val(row.rootCause || '');
         $('#drawerIssueActions').val(row.actions || '');
@@ -709,10 +735,9 @@ $(document).ready(function() {
         if (!id || !getDrawerEffectiveTargetDate(row)) {
             return;
         }
-        if (!row.problem || !row.priority || !row.ownerName || !row.issueDate || !row.rootCause || !row.actions || !isIssueResponsibleValid(row.responsible)) {
+        if (!row.problem || !row.priority || !row.issueDate || !row.rootCause || !row.actions || !isIssueResponsibleValid(row.responsible)) {
             $('#drawerIssueProblem').toggleClass('issue-invalid', !row.problem);
             $('#drawerIssuePriority').toggleClass('issue-invalid', !row.priority);
-            $('#drawerIssueOwner').toggleClass('issue-invalid', !row.ownerName);
             $('#drawerIssueDate').toggleClass('issue-invalid', !row.issueDate);
             $('#drawerIssueRootCause').toggleClass('issue-invalid', !row.rootCause);
             $('#drawerIssueActions').toggleClass('issue-invalid', !row.actions);

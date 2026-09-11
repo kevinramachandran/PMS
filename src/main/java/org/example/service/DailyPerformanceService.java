@@ -44,9 +44,20 @@ public class DailyPerformanceService {
     }
 
     public Optional<DailyPerformance> getLatestByMonth(int month, int year) {
+        return getLatestByMonth(month, year, null);
+    }
+
+    public Optional<DailyPerformance> getLatestByMonth(int month, int year, LocalDate asOf) {
         YearMonth selectedMonth = YearMonth.of(year, month);
         LocalDate start = selectedMonth.atDay(1);
         LocalDate end = selectedMonth.atEndOfMonth();
+        if (asOf != null) {
+            if (asOf.isBefore(start)) {
+                end = start;
+            } else if (asOf.isBefore(end)) {
+                end = asOf;
+            }
+        }
         return repository.findTopByDateBetweenOrderByDateDesc(start, end);
     }
 }

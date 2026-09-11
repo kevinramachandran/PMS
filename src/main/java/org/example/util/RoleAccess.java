@@ -287,7 +287,7 @@ public final class RoleAccess {
             case "info-portal" -> PAGE_INFO_PORTAL;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
             case "kpi-rename-dashboard" -> PAGE_KPI_RENAME_DASHBOARD;
-            case "kpi-plant-name" -> PAGE_KPI_PLANT_NAME;
+            case "kpi-plant-name", "master-designation" -> PAGE_KPI_PLANT_NAME;
             case "license" -> PAGE_LICENSE_MANAGEMENT;
             default -> "";
         };
@@ -320,7 +320,7 @@ public final class RoleAccess {
             case "info-portal" -> PAGE_INFO_PORTAL;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
             case "kpi-rename-dashboard" -> PAGE_KPI_RENAME_DASHBOARD;
-            case "kpi-plant-name" -> PAGE_KPI_PLANT_NAME;
+            case "kpi-plant-name", "master-designation" -> PAGE_KPI_PLANT_NAME;
             case "license" -> PAGE_LICENSE_MANAGEMENT;
             default -> "";
         };

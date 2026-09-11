@@ -27,6 +27,11 @@ $(function() {
         return normalize(value).toLowerCase();
     }
 
+    function matchesText(left, right) {
+        const expected = lower(right);
+        return expected && lower(left) === expected;
+    }
+
     function todayIso() {
         const now = new Date();
         return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
@@ -45,13 +50,69 @@ $(function() {
         return normalize(record && record.dateOfLeadershipSafetyWalkConducted);
     }
 
+    function displayDate(value) {
+        const text = normalize(value);
+        const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (iso) {
+            return iso[3] + '/' + iso[2] + '/' + iso[1];
+        }
+        const dashed = text.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (dashed) {
+            return dashed[1] + '/' + dashed[2] + '/' + dashed[3];
+        }
+        return text;
+    }
+
+    function conductedBy(record) {
+        return normalize(record && (record.managerName || record.createdBy));
+    }
+
+    function itemName(item) {
+        return normalize(item && item.name);
+    }
+
+    function itemParentPlant(item) {
+        return normalize(item && (item.parentPlant || item.plant || item.plantName));
+    }
+
+    function itemParentDepartment(item) {
+        return normalize(item && (item.parentDepartment || item.department || item.departmentName));
+    }
+
+    function areaCandidates(record) {
+        const areaName = recordArea(record);
+        if (!areaName) {
+            return [];
+        }
+        return masterAreas.filter(function(item) {
+            return matchesText(itemName(item), areaName);
+        });
+    }
+
+    function areaForRecord(record) {
+        const candidates = areaCandidates(record);
+        if (!candidates.length) {
+            return null;
+        }
+        const directPlant = normalize(record && (record.plant || record.plantName || record.plantNameSuffix));
+        if (directPlant) {
+            const plantMatch = candidates.find(function(item) {
+                return matchesText(itemParentPlant(item), directPlant);
+            });
+            if (plantMatch) {
+                return plantMatch;
+            }
+        }
+        return candidates[0];
+    }
+
     function recordPlant(record) {
         const direct = normalize(record.plant || record.plantName || record.plantNameSuffix);
         if (direct) {
             return direct;
         }
-        const area = areaLookup.get(lower(recordArea(record)));
-        return normalize(area && area.parentPlant);
+        const area = areaForRecord(record) || areaLookup.get(lower(recordArea(record)));
+        return itemParentPlant(area);
     }
 
     function recordDepartment(record) {
@@ -59,8 +120,8 @@ $(function() {
         if (direct) {
             return direct;
         }
-        const area = areaLookup.get(lower(recordArea(record)));
-        return normalize(area && area.parentDepartment);
+        const area = areaForRecord(record) || areaLookup.get(lower(recordArea(record)));
+        return itemParentDepartment(area);
     }
 
     function recordArea(record) {
@@ -180,8 +241,9 @@ $(function() {
                     record.id,
                     record.startTime,
                     record.completionTime,
+                    recordDepartment(record),
                     record.email,
-                    record.managerName,
+                    conductedBy(record),
                     recordDate(record),
                     record.managementSafetyWalkWeek,
                     recordArea(record),
@@ -219,8 +281,9 @@ $(function() {
     function populateFilter(selector, values, current, allLabel) {
         const selected = current || $(selector).val() || 'all';
         const html = '<option value="all">' + escapeHtml(allLabel || 'All') + '</option>' + values.map(optionHtml).join('');
+        const matchingValue = values.find(function(value) { return lower(value) === lower(selected); });
         $(selector).html(html);
-        $(selector).val(values.some(function(value) { return lower(value) === lower(selected); }) ? selected : 'all');
+        $(selector).val(matchingValue || 'all');
     }
 
     function updateFilterOptions() {
@@ -235,8 +298,8 @@ $(function() {
             return matchesSelect(recordPlant(record), plant);
         });
         const departmentMasterValues = masterDepartments
-            .filter(function(item) { return matchesSelect(item.parentPlant, plant); })
-            .map(function(item) { return normalize(item.name); });
+            .filter(function(item) { return matchesSelect(itemParentPlant(item), plant); })
+            .map(itemName);
         populateFilter('#departmentFilter', uniqueList(uniqueValues(recordDepartment, plantRows).concat(departmentMasterValues)), $('#departmentFilter').val(), 'All');
 
         const department = $('#departmentFilter').val();
@@ -244,8 +307,8 @@ $(function() {
             return matchesSelect(recordDepartment(record), department);
         });
         const areaMasterValues = masterAreas
-            .filter(function(item) { return matchesSelect(item.parentPlant, plant) && matchesSelect(item.parentDepartment, department); })
-            .map(function(item) { return normalize(item.name); });
+            .filter(function(item) { return matchesSelect(itemParentPlant(item), plant) && matchesSelect(itemParentDepartment(item), department); })
+            .map(itemName);
         populateFilter('#areaFilter', uniqueList(uniqueValues(recordArea, departmentRows).concat(areaMasterValues)), $('#areaFilter').val(), 'All');
     }
 
@@ -422,23 +485,21 @@ $(function() {
             return;
         }
         if (!rows.length) {
-            $body.html('<tr><td colspan="15" class="empty-row">No Gemba Walk records found.</td></tr>');
+            $body.html('<tr><td colspan="13" class="empty-row">No Gemba Walk records found.</td></tr>');
             return;
         }
         $body.html(rows.map(function(record, index) {
             return '<tr>' +
                 '<td>' + (index + 1) + '</td>' +
-                '<td>' + escapeHtml(record.startTime) + '</td>' +
-                '<td>' + escapeHtml(record.completionTime) + '</td>' +
-                '<td>' + escapeHtml(record.email) + '</td>' +
-                '<td>' + escapeHtml(record.managerName) + '</td>' +
-                '<td>' + escapeHtml(recordDate(record)) + '</td>' +
-                '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
+                '<td>' + escapeHtml(recordDepartment(record)) + '</td>' +
                 '<td>' + escapeHtml(recordArea(record)) + '</td>' +
-                '<td>' + escapeHtml(record.responsibility) + '</td>' +
-                '<td>' + observations(record).map(function(observation) { return attachmentIcon('gemba-walk', observation.pictureImage, observation.pictureImage); }).join(' ') + '</td>' +
-                '<td>' + observationsSummaryWithAttachments(record) + '</td>' +
+                '<td>' + escapeHtml(conductedBy(record)) + '</td>' +
+                '<td>' + escapeHtml(record.email) + '</td>' +
+                '<td>' + escapeHtml(displayDate(recordDate(record))) + '</td>' +
+                '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
+                '<td><span class="gw-status-pill">' + observations(record).length + '</span></td>' +
                 '<td>' + escapeHtml(statusLabel(record)) + '</td>' +
+                '<td>' + escapeHtml(record.responsibility) + '</td>' +
                 '<td>' + escapeHtml(record.finalComments) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="gw-open-btn" data-id="' + escapeHtml(record.id) + '" title="Open record" aria-label="Open Gemba Walk record"><i class="fas fa-arrow-up-right-from-square"></i></button></td>' +

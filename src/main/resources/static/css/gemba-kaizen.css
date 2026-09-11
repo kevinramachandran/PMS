@@ -167,7 +167,7 @@
 }
 
 .gemba-kaizen-page .gk-record-table {
-    min-width: 1080px;
+    min-width: 1180px;
     table-layout: fixed;
 }
 
@@ -181,11 +181,197 @@
 }
 
 .gemba-kaizen-page .gk-record-table thead th {
-    background: #ffffff;
-    color: #111827;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #0b7a34;
+    color: #ffffff;
     letter-spacing: 0;
 }
 
 .gemba-kaizen-page .gk-open-btn {
     border: 0;
+}
+
+/* Gemba Walk report pattern */
+.gemba-kaizen-page .content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 28px;
+}
+
+.gemba-kaizen-page .gk-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.gemba-kaizen-page .gk-section-title h2 {
+    margin: 0;
+    color: #064e3b;
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.gemba-kaizen-page .gk-section-title p,
+.gemba-kaizen-page .gk-detail-note {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.gemba-kaizen-page .gk-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    padding: 18px 20px;
+}
+
+.gemba-kaizen-page .gk-filter-group {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gemba-kaizen-page .gk-filter-group select,
+.gemba-kaizen-page .gk-filter-group input {
+    height: 38px;
+    min-width: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    padding: 0 10px;
+}
+
+.gemba-kaizen-page .gk-report-counts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.gemba-kaizen-page .gk-chart-grid,
+.gemba-kaizen-page .gk-summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.gemba-kaizen-page .gk-report-card,
+.gemba-kaizen-page .gk-summary-card,
+.gemba-kaizen-page .gk-detail-card {
+    margin: 0;
+}
+
+.gemba-kaizen-page .gk-chart-wrap {
+    display: block;
+    height: 310px;
+    padding: 18px;
+}
+
+.gemba-kaizen-page .gk-summary-table table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.gemba-kaizen-page .gk-summary-table th,
+.gemba-kaizen-page .gk-summary-table td {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 11px 12px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.gemba-kaizen-page .gk-summary-table th {
+    background: #f8fafc;
+    color: #31564e;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+.gemba-kaizen-page .gk-summary-empty {
+    padding: 16px 20px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.gemba-kaizen-page .gk-detail-card .issue-board-title-row {
+    align-items: center;
+    gap: 14px;
+}
+
+.gemba-kaizen-page .gk-detail-card .issue-search {
+    margin-left: auto;
+}
+
+.gemba-kaizen-page .gk-secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    border: 1px solid #a7f3d0;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #047434;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.gemba-kaizen-page .gk-secondary-button:hover,
+.gemba-kaizen-page .gk-secondary-button:focus {
+    background: #ecfdf5;
+    outline: none;
+}
+
+.gemba-kaizen-page .gk-detail-table-wrap[hidden] {
+    display: none;
+}
+
+.gemba-kaizen-page .gk-record-table {
+    min-width: 1740px;
+    table-layout: auto;
+}
+
+@media (max-width: 1280px) {
+    .gemba-kaizen-page .gk-filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 920px) {
+    .gemba-kaizen-page .gk-report-counts,
+    .gemba-kaizen-page .gk-chart-grid,
+    .gemba-kaizen-page .gk-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .gemba-kaizen-page .gk-section-title,
+    .gemba-kaizen-page .gk-detail-card .issue-board-title-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .gemba-kaizen-page .gk-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gemba-kaizen-page .gk-detail-card .issue-search,
+    .gemba-kaizen-page .gk-secondary-button,
+    .gemba-kaizen-page .gk-filter-card .issue-add-button {
+        width: 100%;
+        margin-left: 0;
+    }
 }

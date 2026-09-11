@@ -220,6 +220,19 @@
     cursor: pointer;
 }
 
+.gemba-reporting-page .gw-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    border-radius: 4px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
 .gemba-reporting-page .gw-open-btn:hover,
 .gemba-reporting-page .gw-open-btn:focus {
     background: #ecfdf5;

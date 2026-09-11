@@ -7,11 +7,13 @@ $(function() {
     let gembaCategories = [];
     let lifeSaverRules = [];
     let processAreas = [];
+    let areaItems = [];
     let records = [];
     let currentUserIdentity = {};
 
     const EDIT_ALLOWED_SELECTOR = [
         '#responsibility',
+        '#department',
         '#assignmentRemark',
         '#finalComments',
         '.gw-picture-image',
@@ -35,9 +37,30 @@ $(function() {
         return '<option value="' + username + '">' + label + '</option>';
     }
 
+    function normalize(value) {
+        return String(value || '').trim();
+    }
+
+    function lower(value) {
+        return normalize(value).toLowerCase();
+    }
+
     function todayDate() {
         const now = new Date();
         return String(now.getFullYear()) + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
+    function displayDate(value) {
+        const text = normalize(value);
+        const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (iso) {
+            return iso[3] + '/' + iso[2] + '/' + iso[1];
+        }
+        const dashed = text.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (dashed) {
+            return dashed[1] + '/' + dashed[2] + '/' + dashed[3];
+        }
+        return text;
     }
 
     function currentTime() {
@@ -75,6 +98,29 @@ $(function() {
 
     function populateSelect(selector, values, selected) {
         $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
+    }
+
+    function derivedDepartment(location) {
+        const selected = lower(location);
+        if (!selected) {
+            return '';
+        }
+        const match = (areaItems || []).find(function(item) {
+            return lower(item && item.name) === selected;
+        });
+        return normalize(match && match.parentDepartment);
+    }
+
+    function updateDepartmentFromLocation() {
+        const derived = derivedDepartment($('#locationOfMswConducted').val());
+        const $department = $('#department');
+        if (derived) {
+            $department.val(derived).prop('readonly', true);
+            $('#departmentFieldGroup').addClass('gw-derived-department');
+            return;
+        }
+        $department.prop('readonly', false);
+        $('#departmentFieldGroup').removeClass('gw-derived-department');
     }
 
     function isEditMode() {
@@ -163,6 +209,7 @@ $(function() {
             dateOfLeadershipSafetyWalkConducted: $('#dateConducted').val() || null,
             managementSafetyWalkWeek: $('#managementSafetyWalkWeek').val(),
             locationOfMswConducted: $('#locationOfMswConducted').val(),
+            department: $('#department').val(),
             responsibility: $('#responsibility').val(),
             assignmentRemark: $('#assignmentRemark').val(),
             finalComments: $('#finalComments').val(),
@@ -190,6 +237,8 @@ $(function() {
         $('#dateConducted').val(item.dateOfLeadershipSafetyWalkConducted || todayDate());
         $('#managementSafetyWalkWeek').val(item.managementSafetyWalkWeek || params.get('week') || '');
         $('#locationOfMswConducted').val(item.locationOfMswConducted || params.get('location') || '');
+        $('#department').val(item.department || '');
+        updateDepartmentFromLocation();
         $('#responsibility').val(item.responsibility || $('#responsibility').val() || '');
         $('#assignmentRemark').val('');
         $('#finalComments').val(item.finalComments || '');
@@ -208,6 +257,7 @@ $(function() {
         $('#dateConducted').val(todayDate());
         $('#managementSafetyWalkWeek').val(params.get('week') || '');
         $('#locationOfMswConducted').val(params.get('location') || '');
+        $('#department').val('');
         $('#responsibility').val('');
         $('#finalComments').val('');
         $('#gembaWalkObservations').empty();
@@ -225,9 +275,8 @@ $(function() {
                 '<td class="gw-row-number">' + (index + 1) + '</td>' +
                 '<td>' + escapeHtml(record.startTime) + '</td>' +
                 '<td>' + escapeHtml(record.completionTime) + '</td>' +
-                '<td>' + escapeHtml(record.managerName) + '</td>' +
-                '<td>' + escapeHtml(record.email) + '</td>' +
-                '<td>' + escapeHtml(record.dateOfLeadershipSafetyWalkConducted) + '</td>' +
+                '<td>' + escapeHtml(record.department || derivedDepartment(record.locationOfMswConducted)) + '</td>' +
+                '<td>' + escapeHtml(displayDate(record.dateOfLeadershipSafetyWalkConducted)) + '</td>' +
                 '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
                 '<td>' + escapeHtml(record.locationOfMswConducted) + '</td>' +
                 '<td>' + escapeHtml(record.responsibility) + '</td>' +
@@ -238,7 +287,7 @@ $(function() {
                 '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="14" class="gw-empty-cell">No records found.</td></tr>');
+        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="13" class="gw-empty-cell">No records found.</td></tr>');
         records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -252,7 +301,7 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="14" class="gw-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="13" class="gw-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }
@@ -280,7 +329,9 @@ $(function() {
             success: function(data) {
                 if (data && data.record) {
                     setRecord(data.record);
-                    openDrawer(data.record);
+                    loadOptions(data.record.id).always(function() {
+                        openDrawer(data.record);
+                    });
                 }
             },
             error: function() {
@@ -289,19 +340,24 @@ $(function() {
         });
     }
 
-    function loadOptions() {
+    function loadOptions(recordId) {
         return $.ajax({
             url: API + '/options',
             type: 'GET',
-            data: { location: $('#locationOfMswConducted').val() || params.get('location') || '' },
+            data: {
+                location: $('#locationOfMswConducted').val() || params.get('location') || '',
+                recordId: recordId || $('#gembaWalkRecordId').val() || ''
+            },
             success: function(data) {
                 const options = data && data.options ? data.options : {};
                 gembaCategories = options.gembaCategories || [];
                 lifeSaverRules = options.lifeSaverRules || [];
                 processAreas = options.processAreas || [];
+                areaItems = options.areaItems || [];
                 populateSelect('#locationOfMswConducted', processAreas, $('#locationOfMswConducted').val() || params.get('location') || '');
                 currentUserIdentity = options.currentUser || {};
                 applyCurrentUserIdentity(false);
+                updateDepartmentFromLocation();
                 populateResponsibility(options.responsibilityUsers || [], $('#responsibility').val() || options.defaultResponsibility || '');
                 const existing = $('#gembaWalkObservations .gw-observation').map(function() {
                     const $section = $(this);
@@ -372,6 +428,7 @@ $(function() {
     }
 
     $('#locationOfMswConducted').on('change input', function() {
+        updateDepartmentFromLocation();
         loadOptions();
     });
 

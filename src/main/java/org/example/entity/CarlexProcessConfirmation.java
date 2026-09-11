@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "carlex_process_confirmations")
@@ -21,6 +23,7 @@ public class CarlexProcessConfirmation {
     @Column(length = 160) public String processConfirmationDoneBy;
     public LocalDate dateOfGwProcessConfirmationConducted;
     @Column(length = 80) public String gwPcWeek;
+    @Column(length = 160) public String department;
     @Column(length = 160) public String areaOfGwProcessConfirmationConducted;
     @Column(length = 160) public String areaResponsibility;
     @Column(length = 160) public String assignedTo;
@@ -60,4 +63,12 @@ public class CarlexProcessConfirmation {
     @Column(name = "qm2_counter_measure_actions", columnDefinition = "TEXT") public String qm2CounterMeasureActions;
     @Column(name = "qm2_status", length = 40) public String qm2Status;
     @Column(name = "qm2_observation_image", length = 255) public String qm2ObservationImage;
+
+    @Transient public String zmObservationsJson;
+    @Transient public String pmObservationsJson;
+    @Transient public String qmObservationsJson;
+
+    @OneToMany(mappedBy = "confirmation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("groupType ASC, observationOrder ASC, id ASC")
+    public List<CarlexProcessConfirmationObservation> observations = new ArrayList<>();
 }

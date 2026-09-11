@@ -1,19 +1,18 @@
 package org.example.controller;
 
-import org.example.entity.CarlexProcessConfirmation;
-import org.example.entity.AppUser;
-import org.example.repository.AppUserRepository;
-import org.example.service.CarlexProcessConfirmationService;
+import jakarta.servlet.http.HttpSession;
 import org.example.entity.AssignmentHistory;
+import org.example.entity.CarlexProcessConfirmation;
 import org.example.service.AssignmentHistoryService;
+import org.example.service.CarlexProcessConfirmationService;
 import org.example.util.RoleAccess;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpSession;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/carlex-process-confirmation")
@@ -21,94 +20,117 @@ import java.util.Map;
 public class CarlexProcessConfirmationController {
     private final CarlexProcessConfirmationService service;
     private final AssignmentHistoryService assignmentHistoryService;
-    private final AppUserRepository appUserRepository;
 
     public CarlexProcessConfirmationController(CarlexProcessConfirmationService service,
-                                               AssignmentHistoryService assignmentHistoryService,
-                                               AppUserRepository appUserRepository) {
+                                               AssignmentHistoryService assignmentHistoryService) {
         this.service = service;
         this.assignmentHistoryService = assignmentHistoryService;
-        this.appUserRepository = appUserRepository;
     }
 
     @GetMapping("/records")
-    public List<CarlexProcessConfirmation> list() { return service.list(); }
+    public ResponseEntity<Map<String, Object>> list(HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(Map.of("records", service.listForUser(username(session), role(session))));
+    }
 
     @GetMapping("/options")
-    public java.util.Map<String, Object> options(HttpSession session) {
-        return Map.of(
-                "assignmentUsers", hodUserOptions(),
-                "currentUser", currentUserOption(username(session))
-        );
+    public ResponseEntity<Map<String, Object>> options(@RequestParam(value = "department", required = false) String department,
+                                                       @RequestParam(value = "area", required = false) String area,
+                                                       @RequestParam(value = "recordId", required = false) Long recordId,
+                                                       HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), department, area, recordId)));
     }
 
     @GetMapping("/records/{id}/history")
-    public List<AssignmentHistory> history(@PathVariable Long id) { return assignmentHistoryService.history("carlex-process-confirmation", id); }
+    public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        if (service.getForUser(id, username(session), role(session)).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found"));
+        }
+        List<AssignmentHistory> rows = assignmentHistoryService.history("carlex-process-confirmation", id);
+        return ResponseEntity.ok(rows);
+    }
 
     @GetMapping("/records/{id}")
-    public ResponseEntity<CarlexProcessConfirmation> get(@PathVariable Long id) {
-        return service.get(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Map<String, Object>> get(@PathVariable Long id, HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        return service.getForUser(id, username(session), role(session))
+                .<ResponseEntity<Map<String, Object>>>map(record -> ResponseEntity.ok(Map.of("record", record)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
     }
 
     @PostMapping("/records")
-    public CarlexProcessConfirmation create(@RequestBody CarlexProcessConfirmation record, HttpSession session) { return service.create(record, username(session)); }
+    public ResponseEntity<Map<String, Object>> create(@RequestBody CarlexProcessConfirmation record, HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        try {
+            return ResponseEntity.ok(Map.of("status", "success", "record", service.create(record, username(session), role(session))));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", ex.getMessage()));
+        }
+    }
 
     @PutMapping("/records/{id}")
-    public ResponseEntity<CarlexProcessConfirmation> update(@PathVariable Long id, @RequestBody CarlexProcessConfirmation record, HttpSession session) {
-        return service.update(id, record, username(session)).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
+                                                      @RequestBody CarlexProcessConfirmation record,
+                                                      HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        try {
+            return service.update(id, record, username(session), role(session))
+                    .<ResponseEntity<Map<String, Object>>>map(saved -> ResponseEntity.ok(Map.of("status", "success", "record", saved)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", ex.getMessage()));
+        }
     }
 
     @DeleteMapping("/records/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        return service.delete(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id, HttpSession session) {
+        if (!canView(session)) {
+            return forbidden();
+        }
+        try {
+            return service.delete(id, username(session), role(session))
+                    ? ResponseEntity.ok(Map.of("status", "success"))
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", ex.getMessage()));
+        }
+    }
+
+    private ResponseEntity<Map<String, Object>> forbidden() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+    }
+
+    private boolean canView(HttpSession session) {
+        return RoleAccess.canViewPage(role(session), permissions(session), RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION);
     }
 
     private String username(HttpSession session) {
         Object value = session == null ? null : session.getAttribute("username");
-        return value == null ? "system" : String.valueOf(value);
+        return value == null ? "" : String.valueOf(value);
     }
 
-    private List<Map<String, String>> hodUserOptions() {
-        return appUserRepository.findAll().stream()
-                .filter(this::isActive)
-                .filter(this::isHod)
-                .map(this::userOption)
-                .toList();
+    private String role(HttpSession session) {
+        Object value = session == null ? null : session.getAttribute("role");
+        return value == null ? "" : String.valueOf(value);
     }
 
-    private java.util.Map<String, String> currentUserOption(String username) {
-        return appUserRepository.findByUsernameIgnoreCase(username)
-                .map(this::userOption)
-                .orElse(Map.of("username", username, "label", username, "email", ""));
-    }
-
-    private java.util.Map<String, String> userOption(AppUser user) {
-        String username = firstNonBlank(user.getUsername(), user.getEmail());
-        String label = firstNonBlank(user.getName(), user.getUsername());
-        return java.util.Map.of(
-                "username", username,
-                "label", label,
-                "email", trim(user.getEmail())
-        );
-    }
-
-    private boolean isActive(AppUser user) {
-        return user != null && !"INACTIVE".equalsIgnoreCase(trim(user.getStatus()));
-    }
-
-    private boolean isHod(AppUser user) {
-        String designation = trim(user.getDesignation()).toUpperCase(Locale.ENGLISH);
-        return RoleAccess.isHod(user.getRole())
-                || designation.contains("HOD")
-                || designation.contains("HEAD_OF_DEPARTMENT");
-    }
-
-    private String firstNonBlank(String first, String second) {
-        String trimmedFirst = trim(first);
-        return trimmedFirst.isBlank() ? trim(second) : trimmedFirst;
-    }
-
-    private String trim(String value) {
-        return value == null ? "" : value.trim();
+    @SuppressWarnings("unchecked")
+    private Set<String> permissions(HttpSession session) {
+        Object value = session == null ? null : session.getAttribute("viewPermissions");
+        return value instanceof Set<?> ? (Set<String>) value : Set.of();
     }
 }

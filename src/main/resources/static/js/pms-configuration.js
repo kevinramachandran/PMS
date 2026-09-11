@@ -53,7 +53,16 @@
     let pendingDeleteUserId = null;
     const canEditUserManagement = String(document.body.getAttribute('data-can-edit-user-management') || '').toLowerCase() === 'true';
 
-    const DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
+    const DEFAULT_DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
+    let userMasterOptions = {
+        departments: [],
+        departmentItems: [],
+        areas: [],
+        areaItems: [],
+        plants: [],
+        designations: DEFAULT_DESIGNATION_VALUES.slice(),
+        designationItems: []
+    };
 
     const PERMISSION_GROUPS = [
         {
@@ -90,6 +99,11 @@
                     key: 'PRODUCTION_METRICS_DATA_COST',
                     label: 'Production KPI Data - Cost',
                     description: 'Cost section of production metrics entry and updates.'
+                },
+                {
+                    key: 'INFO_PORTAL',
+                    label: 'Info Portal',
+                    description: 'Info Portal page access and button configuration.'
                 }
             ]
         },
@@ -101,13 +115,12 @@
                 { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board', description: 'Issue board templates and assignment setup.' },
                 { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Schedule', description: 'Schedules and settings for gemba walk planning.' },
                 { key: 'GEMBA_WALK_FINDINGS', label: 'Gemba Walk Findings', description: 'Findings captured from gemba walk activity.' },
-                { key: 'GEMBA_WALK_REPORTING', label: 'Gemba walk report', description: 'Reporting pages for gemba walk activity.' },
+                { key: 'GEMBA_WALK_REPORTING', label: 'Gemba Walk dashboard', description: 'Reporting pages for gemba walk activity.' },
                 { key: 'USER_DASHBOARD', label: 'User Dashboard', description: 'User dashboard overview page.' },
                 { key: 'LEADERSHIP_GEMBA_TRACKER_CONFIGURATION', label: 'Gemba Kaizen / Ideas', description: 'Gemba Kaizen dashboard, reporting form, and master-data setup.' },
                 { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Scheduler', description: 'Training schedule periods and configuration data.' },
                 { key: 'MEETING_AGENDA_CONFIGURATION', label: 'PMS Agenda', description: 'PMS agenda configuration and save actions.' },
                 { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality report', description: 'Abnormality tracker lists and save actions.' },
-                { key: 'INFO_PORTAL', label: 'Info Portal', description: 'Footer button labels, URLs, and uploads.' },
                 { key: 'PROCESS_CONFIRMATION_CONFIGURATION', label: 'CarlEx Process Confirmation', description: 'Process confirmation configuration and save actions.' },
                 { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily', description: 'Health and safety daily cross settings.' },
                 { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking', description: 'LSR daily tracking settings and updates.' },
@@ -182,7 +195,8 @@
     }
 
     function normalizeDesignation(designation) {
-        const value = String(designation || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+        const rawValue = String(designation || '').trim();
+        const value = rawValue.toUpperCase().replace(/[\s-]+/g, '_');
         if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
             return 'HOD';
         }
@@ -198,7 +212,7 @@
         if (value === 'OPERATOR') {
             return 'OPERATOR';
         }
-        return DESIGNATION_VALUES.includes(value) ? value : '';
+        return rawValue;
     }
 
     function designationLabel(designation) {
@@ -288,6 +302,45 @@
             .replace(/>/g, '&gt;');
     }
 
+    function itemName(item) {
+        return String(item && item.name || '').trim();
+    }
+
+    function itemParentPlant(item) {
+        return String(item && item.parentPlant || '').trim();
+    }
+
+    function itemParentDepartment(item) {
+        return String(item && item.parentDepartment || '').trim();
+    }
+
+    function itemMatchesPlant(item, plant) {
+        const selectedPlant = String(plant || '').trim();
+        if (!selectedPlant) {
+            return true;
+        }
+        const parentPlant = itemParentPlant(item);
+        return !parentPlant || parentPlant.toLowerCase() === selectedPlant.toLowerCase();
+    }
+
+    function departmentOptionsForPlant(plant) {
+        const departmentItems = Array.isArray(userMasterOptions.departmentItems) ? userMasterOptions.departmentItems : [];
+        const names = departmentItems
+            .filter(function(item) { return itemMatchesPlant(item, plant); })
+            .map(itemName)
+            .filter(Boolean);
+        return names.length || String(plant || '').trim() ? names : userMasterOptions.departments;
+    }
+
+    function designationOptionsForPlant(plant) {
+        const designationItems = Array.isArray(userMasterOptions.designationItems) ? userMasterOptions.designationItems : [];
+        const names = designationItems
+            .filter(function(item) { return itemMatchesPlant(item, plant); })
+            .map(itemName)
+            .filter(Boolean);
+        return names.length || String(plant || '').trim() ? names : userMasterOptions.designations;
+    }
+
     function setDatalistOptions(id, values) {
         const list = document.getElementById(id);
         if (!list || !Array.isArray(values)) {
@@ -298,15 +351,109 @@
         }).join('');
     }
 
-    function setSelectOptions(select, values, selectedValue) {
+    function selectOptionLabel(value) {
+        const normalized = normalizeDesignation(value);
+        return ROLE_LABELS[normalized] || String(value || '');
+    }
+
+    function uniqueOptionValues(values, selectedValue) {
+        const seen = new Set();
+        const optionValues = [];
+        (values || []).concat(selectedValue ? [selectedValue] : []).forEach(function(value) {
+            const safeValue = String(value || '').trim();
+            const key = safeValue.toLowerCase();
+            if (safeValue && !seen.has(key)) {
+                seen.add(key);
+                optionValues.push(safeValue);
+            }
+        });
+        return optionValues;
+    }
+
+    function setSelectOptions(select, values, selectedValue, placeholder, labelMapper) {
         if (!select || !Array.isArray(values)) {
             return;
         }
         const selected = String(selectedValue || select.value || '').trim();
-        select.innerHTML = '<option value=""></option>' + values.map(function(value) {
+        select.innerHTML = '<option value="">' + escapeHtml(placeholder || '') + '</option>' + uniqueOptionValues(values, selected).map(function(value) {
             const safe = escapeAttribute(value);
-            return '<option value="' + safe + '"' + (String(value || '').trim() === selected ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
+            const label = labelMapper ? labelMapper(value) : value;
+            return '<option value="' + safe + '"' + (String(value || '').trim() === selected ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
         }).join('');
+    }
+
+    function splitAreaValues(value) {
+        return String(value || '')
+            .split(',')
+            .map(function(item) { return item.trim(); })
+            .filter(Boolean);
+    }
+
+    function getSelectedValues(select) {
+        if (!select) {
+            return [];
+        }
+        return Array.from(select.selectedOptions || [])
+            .map(function(option) { return String(option.value || '').trim(); })
+            .filter(Boolean);
+    }
+
+    function selectedAreaCsv(select) {
+        return Array.from(new Set(getSelectedValues(select))).join(', ');
+    }
+
+    function areaMatchesDepartment(item, department) {
+        const selectedDepartment = String(department || '').trim();
+        if (!selectedDepartment) {
+            return true;
+        }
+        const parentDepartment = itemParentDepartment(item);
+        return !parentDepartment || parentDepartment.toLowerCase() === selectedDepartment.toLowerCase();
+    }
+
+    function areaOptionsForDepartment(department) {
+        const areaItems = Array.isArray(userMasterOptions.areaItems) ? userMasterOptions.areaItems : [];
+        const selectedDepartment = String(department || '').trim();
+        const names = areaItems
+            .filter(function(item) { return areaMatchesDepartment(item, department); })
+            .map(itemName)
+            .filter(Boolean);
+        return names.length || selectedDepartment ? names : userMasterOptions.areas;
+    }
+
+    function setMultiSelectOptions(select, values, selectedValues) {
+        if (!select || !Array.isArray(values)) {
+            return;
+        }
+        const optionValues = uniqueOptionValues((values || []).concat(selectedValues || []), '');
+        const selected = new Set((selectedValues || []).map(function(value) {
+            return String(value || '').trim().toLowerCase();
+        }));
+        select.innerHTML = optionValues.map(function(value) {
+            const safe = escapeAttribute(value);
+            const isSelected = selected.has(String(value || '').trim().toLowerCase());
+            return '<option value="' + safe + '"' + (isSelected ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
+        }).join('');
+        select.disabled = optionValues.length === 0;
+    }
+
+    function refreshAreaOptions(areaSelect, departmentSelect, selectedAreaValue) {
+        const selectedAreas = selectedAreaValue !== undefined
+            ? splitAreaValues(selectedAreaValue)
+            : getSelectedValues(areaSelect);
+        setMultiSelectOptions(areaSelect, areaOptionsForDepartment(departmentSelect ? departmentSelect.value : ''), selectedAreas);
+    }
+
+    function refreshDepartmentAndDesignationOptions(plantSelect, departmentSelect, areaSelect, designationSelect, selectedDepartment, selectedAreas, selectedDesignation) {
+        const plant = plantSelect ? plantSelect.value : '';
+        setSelectOptions(departmentSelect, departmentOptionsForPlant(plant), selectedDepartment, '');
+        refreshAreaOptions(areaSelect, departmentSelect, selectedAreas);
+        setSelectOptions(designationSelect, designationOptionsForPlant(plant), selectedDesignation, 'Select designation', selectOptionLabel);
+    }
+
+    function isOperationalDesignation(value) {
+        const normalized = normalizeDesignation(value);
+        return normalized === 'ENGINEER' || normalized === 'EXECUTIVE' || normalized === 'OPERATOR' || normalized === 'AREA_HOD';
     }
 
     function loadMasterOptions() {
@@ -314,12 +461,22 @@
             .then(parseJsonResponse)
             .then(function (data) {
                 const options = data.options || {};
-                setSelectOptions(departmentEl, options.departments || []);
-                setSelectOptions(areaEl, options.areas || []);
-                setSelectOptions(editDepartmentEl, options.departments || []);
-                setSelectOptions(editAreaEl, options.areas || []);
-                setDatalistOptions('plantOptions', options.plants || []);
-                setDatalistOptions('designationOptions', options.designations || []);
+                const designations = (options.designations && options.designations.length) ? options.designations : DEFAULT_DESIGNATION_VALUES;
+                userMasterOptions = {
+                    departments: options.departments || [],
+                    departmentItems: options.departmentItems || [],
+                    areas: options.areas || [],
+                    areaItems: options.areaItems || [],
+                    plants: options.plants || [],
+                    designations: designations,
+                    designationItems: options.designationItems || []
+                };
+                setSelectOptions(plantEl, userMasterOptions.plants, null, 'Select plant');
+                refreshDepartmentAndDesignationOptions(plantEl, departmentEl, areaEl, designationEl, null, '', null);
+                setSelectOptions(editPlantEl, userMasterOptions.plants, null, 'Select plant');
+                refreshDepartmentAndDesignationOptions(editPlantEl, editDepartmentEl, editAreaEl, editDesignationEl, null, '', null);
+                setDatalistOptions('plantOptions', userMasterOptions.plants);
+                setDatalistOptions('designationOptions', designations);
             })
             .catch(function () {
                 // Dropdown suggestions are helpful, but the form can still save typed values.
@@ -581,7 +738,7 @@
         const employeeId = (employeeIdEl.value || '').trim();
         const username = (usernameEl.value || '').trim();
         const department = (departmentEl.value || '').trim();
-        const area = (areaEl.value || '').trim();
+        const area = selectedAreaCsv(areaEl);
         const plant = (plantEl.value || '').trim();
         const designation = normalizeDesignation(designationEl.value || '');
         const reportingManager = (reportingManagerEl.value || '').trim();
@@ -595,6 +752,14 @@
 
         if (!name || !username || !email || !password) {
             showMessage(messageEl, 'Please fill name, username, email, and password.', 'warning');
+            return;
+        }
+        if (!department || !designation) {
+            showMessage(messageEl, 'Please select department and designation.', 'warning');
+            return;
+        }
+        if (isOperationalDesignation(designation) && !area) {
+            showMessage(messageEl, 'Please select at least one area for this designation.', 'warning');
             return;
         }
 
@@ -682,10 +847,9 @@
         editUserIdEl.value = user.id;
         editNameEl.value = user.name || '';
         editEmployeeIdEl.value = user.employeeId || '';
-        editDepartmentEl.value = user.department || '';
-        editAreaEl.value = user.area || '';
-        editPlantEl.value = user.plant || '';
-        editDesignationEl.value = normalizeDesignation(user.designation || '');
+        setSelectOptions(editPlantEl, userMasterOptions.plants, user.plant || '', 'Select plant');
+        refreshDepartmentAndDesignationOptions(editPlantEl, editDepartmentEl, editAreaEl, editDesignationEl,
+            user.department || '', user.area || '', normalizeDesignation(user.designation || ''));
         editReportingManagerEl.value = user.reportingManager || '';
         editEmailEl.value = user.email || '';
         editRoleEl.value = normalizeRole(user.role || 'USER');
@@ -727,7 +891,7 @@
         const name = (editNameEl.value || '').trim();
         const employeeId = (editEmployeeIdEl.value || '').trim();
         const department = (editDepartmentEl.value || '').trim();
-        const area = (editAreaEl.value || '').trim();
+        const area = selectedAreaCsv(editAreaEl);
         const plant = (editPlantEl.value || '').trim();
         const designation = normalizeDesignation(editDesignationEl.value || '');
         const reportingManager = (editReportingManagerEl.value || '').trim();
@@ -741,6 +905,14 @@
 
         if (!id || !name || !email) {
             showMessage(editMessageEl, 'Name and email are required.', 'warning');
+            return;
+        }
+        if (!department || !designation) {
+            showMessage(editMessageEl, 'Please select department and designation.', 'warning');
+            return;
+        }
+        if (isOperationalDesignation(designation) && !area) {
+            showMessage(editMessageEl, 'Please select at least one area for this designation.', 'warning');
             return;
         }
 
@@ -869,6 +1041,30 @@
 
     if (saveEditBtn) {
         saveEditBtn.addEventListener('click', saveEdit);
+    }
+
+    if (departmentEl) {
+        departmentEl.addEventListener('change', function () {
+            refreshAreaOptions(areaEl, departmentEl, '');
+        });
+    }
+
+    if (plantEl) {
+        plantEl.addEventListener('change', function () {
+            refreshDepartmentAndDesignationOptions(plantEl, departmentEl, areaEl, designationEl, '', '', '');
+        });
+    }
+
+    if (editDepartmentEl) {
+        editDepartmentEl.addEventListener('change', function () {
+            refreshAreaOptions(editAreaEl, editDepartmentEl, '');
+        });
+    }
+
+    if (editPlantEl) {
+        editPlantEl.addEventListener('change', function () {
+            refreshDepartmentAndDesignationOptions(editPlantEl, editDepartmentEl, editAreaEl, editDesignationEl, '', '', '');
+        });
     }
 
     function bindPermissionRules(scope) {
