@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface PlantMasterDataItemRepository extends JpaRepository<PlantMasterDataItem, Long> {
 
-    List<PlantMasterDataItem> findByCategoryOrderByParentPlantAscParentDepartmentAscNameAsc(String category);
+    List<PlantMasterDataItem> findByCategoryOrderByParentPlantAscParentDepartmentAscParentProcessAreaAscNameAsc(String category);
 
     Optional<PlantMasterDataItem> findFirstByCategoryAndNameIgnoreCase(String category, String name);
 }

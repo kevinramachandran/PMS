@@ -7,6 +7,7 @@ $(function() {
     let records = [];
     let currentUserIdentity = {};
     let areaItems = [];
+    let departments = [];
     let saveInFlight = false;
     const EDIT_ALLOWED_FIELDS = '#pictureImage, #isKaizenImplemented, #assignedTo, #assignmentRemark';
 
@@ -64,6 +65,47 @@ $(function() {
         $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
     }
 
+    function normalize(value) {
+        return String(value || '').trim();
+    }
+
+    function lower(value) {
+        return normalize(value).toLowerCase();
+    }
+
+    function filteredLocations(department) {
+        const selectedDepartment = lower(department);
+        if (!selectedDepartment) {
+            return [];
+        }
+        return (areaItems || [])
+            .filter(function(item) {
+                return lower(item && item.parentDepartment) === selectedDepartment;
+            })
+            .map(function(item) {
+                return normalize(item && item.name);
+            })
+            .filter(Boolean);
+    }
+
+    function refreshLocationOptions(selected) {
+        populateSelect('#gembaKaizenLocation', filteredLocations($('#department').val()), selected === undefined ? $('#gembaKaizenLocation').val() : selected);
+        if (!$('#department').val()) {
+            $('#gembaKaizenLocation').val('');
+        }
+    }
+
+    function departmentForLocation(location) {
+        const selectedLocation = lower(location);
+        if (!selectedLocation) {
+            return '';
+        }
+        const area = areaItems.find(function(item) {
+            return lower(item && item.name) === selectedLocation;
+        });
+        return normalize(area && area.parentDepartment);
+    }
+
     function setEditLock(isEdit) {
         const $fields = $('#gembaKaizenConfigForm')
             .find('input:not([type="hidden"]), select, textarea')
@@ -92,9 +134,9 @@ $(function() {
         const item = record || {};
         $('#gembaKaizenRecordId').val(item.id || '');
         $('#lastModifiedTime').val(item.lastModifiedTime || currentTime());
-        $('#department').val(item.department || '');
+        $('#department').val(item.department || departmentForLocation(item.gembaKaizenLocation || ''));
         $('#classificationOfKaizen').val(item.classificationOfKaizen || '');
-        $('#gembaKaizenLocation').val(item.gembaKaizenLocation || '');
+        refreshLocationOptions(item.gembaKaizenLocation || '');
         $('#gembaKaizenGenerationDate').val(item.gembaKaizenGenerationDate || todayDate());
         $('#kaizenIdea').val(item.kaizenIdea || '');
         $('#pictureImage').val('');
@@ -103,7 +145,6 @@ $(function() {
         $('#isKaizenImplemented').val(item.isKaizenImplemented || 'No');
         $('#assignedTo').val(item.assignedTo || '');
         $('#assignmentRemark').val('');
-        deriveDepartmentFromLocation(false);
     }
 
     function resetRecord() {
@@ -118,23 +159,9 @@ $(function() {
         $('#pictureImageStored').val('');
         $('#benefitsOfKaizen').val('');
         $('#isKaizenImplemented').val('No');
+        $('#assignedTo').val('');
         setMessage('', 'success');
         loadOptions();
-    }
-
-    function deriveDepartmentFromLocation(force) {
-        const location = $('#gembaKaizenLocation').val();
-        const area = areaItems.find(function(item) {
-            return String(item.name || '').trim().toLowerCase() === String(location || '').trim().toLowerCase();
-        });
-        const derivedDepartment = area && area.parentDepartment ? area.parentDepartment : '';
-        if (derivedDepartment && (force || !$('#department').val())) {
-            $('#department').val(derivedDepartment);
-            $('#department').prop('disabled', true);
-            return derivedDepartment;
-        }
-        $('#department').prop('disabled', false);
-        return $('#department').val();
     }
 
     function renderTable() {
@@ -213,6 +240,7 @@ $(function() {
             url: API + '/options',
             type: 'GET',
             data: {
+                department: $('#department').val() || '',
                 location: $('#gembaKaizenLocation').val() || '',
                 recordId: $('#gembaKaizenRecordId').val() || ''
             },
@@ -220,10 +248,10 @@ $(function() {
                 const options = data && data.options ? data.options : {};
                 currentUserIdentity = options.currentUser || {};
                 areaItems = options.areaItems || [];
-                populateSelect('#department', options.departments || [], $('#department').val());
+                departments = options.departments || [];
+                populateSelect('#department', departments, $('#department').val());
                 populateSelect('#classificationOfKaizen', options.classifications || [], $('#classificationOfKaizen').val());
-                populateSelect('#gembaKaizenLocation', options.processAreas || [], $('#gembaKaizenLocation').val());
-                deriveDepartmentFromLocation(false);
+                refreshLocationOptions($('#gembaKaizenLocation').val());
                 const assignmentUsers = options.assignmentUsers || [];
                 populateSelect('#assignedTo', assignmentUsers.map(function(user) { return user.username; }), $('#assignedTo').val());
                 if (!$('#assignedTo').val() && options.defaultAssignedTo) {
@@ -314,8 +342,15 @@ $(function() {
         });
     });
 
+    $('#department').on('change', function() {
+        $('#gembaKaizenLocation').val('');
+        $('#assignedTo').val('');
+        refreshLocationOptions('');
+        loadOptions();
+    });
+
     $('#gembaKaizenLocation').on('change', function() {
-        deriveDepartmentFromLocation(true);
+        $('#assignedTo').val('');
         loadOptions();
     });
 

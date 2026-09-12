@@ -57,18 +57,7 @@ public class GembaWalkConfigService {
     }
 
     public List<GembaWalkRecord> listForUser(String username, String role) {
-        List<GembaWalkRecord> rows = repository.findAll();
-        if (RoleAccess.isAdmin(role)) {
-            return rows;
-        }
-        Optional<AppUser> currentUser = currentUser(username);
-        if (currentUser.isEmpty()) {
-            return List.of();
-        }
-        AppUser user = currentUser.get();
-        return rows.stream()
-                .filter(record -> canSeeRecord(record, user))
-                .toList();
+        return repository.findAll();
     }
 
     public Optional<GembaWalkRecord> findForUser(Long id, String username, String role) {
@@ -79,7 +68,7 @@ public class GembaWalkConfigService {
     @Transactional
     public GembaWalkRecord create(GembaWalkRecord record, String username, String role) {
         applyDefaults(record, username, true);
-        validateResponsibility(record.getResponsibility(), record.getLocationOfMswConducted(),
+        validateResponsibility(record.getResponsibility(), record.getDepartment(), record.getLocationOfMswConducted(),
                 currentUser(username).orElse(null), "", role, null);
         replaceObservations(record, record.getObservations());
         GembaWalkRecord saved = repository.save(record);
@@ -98,7 +87,7 @@ public class GembaWalkConfigService {
             String previousAssignee = existing.getResponsibility();
             boolean hadOpenObservation = hasOpenObservation(existing);
             String requestedAssignee = trim(incoming.getResponsibility());
-            validateResponsibility(requestedAssignee, existing.getLocationOfMswConducted(), actor, previousAssignee, role, existing);
+            validateResponsibility(requestedAssignee, existing.getDepartment(), existing.getLocationOfMswConducted(), actor, previousAssignee, role, existing);
             existing.setResponsibility(requestedAssignee);
             existing.setAssignmentRemark(trim(incoming.getAssignmentRemark()));
             existing.setFinalComments(trim(incoming.getFinalComments()));
@@ -114,9 +103,14 @@ public class GembaWalkConfigService {
         });
     }
 
-    public Map<String, Object> options(String username, String role, String location, Long recordId) {
+    public Map<String, Object> options(String username, String role, String department, String location, Long recordId) {
         Map<String, Object> options = new LinkedHashMap<>();
         Optional<AppUser> currentUser = currentUser(username);
+        GembaWalkRecord record = recordId == null ? null : repository.findById(recordId).orElse(null);
+        String resolvedLocation = record == null ? location : record.getLocationOfMswConducted();
+        String resolvedDepartment = record == null
+                ? deriveDepartment(location, department, currentUser.map(AppUser::getDepartment).orElse(""))
+                : record.getDepartment();
         options.put("currentUser", currentUser.map(this::userOption).orElse(Map.of()));
         options.put("gembaCategories", masterDataService.names(GembaWalkMasterDataService.GEMBA_CATEGORY));
         options.put("lifeSaverRules", masterDataService.names(GembaWalkMasterDataService.LIFE_SAVER_RULE));
@@ -126,9 +120,8 @@ public class GembaWalkConfigService {
         options.put("plantItems", plantMasterDataService.list(PlantMasterDataService.PLANT));
         options.put("departmentItems", plantMasterDataService.list(PlantMasterDataService.DEPARTMENT));
         options.put("areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA));
-        GembaWalkRecord record = recordId == null ? null : repository.findById(recordId).orElse(null);
-        options.put("responsibilityUsers", responsibilityUsers(location, currentUser.orElse(null), role, record));
-        options.put("defaultResponsibility", defaultResponsibility(location).orElse(""));
+        options.put("responsibilityUsers", responsibilityUsers(resolvedDepartment, resolvedLocation, currentUser.orElse(null), role, record));
+        options.put("defaultResponsibility", defaultResponsibility(resolvedDepartment, resolvedLocation).orElse(""));
         return options;
     }
 
@@ -177,7 +170,7 @@ public class GembaWalkConfigService {
         }
         record.setDepartment(deriveDepartment(record.getLocationOfMswConducted(), record.getDepartment(), record.getCreatorDepartment()));
         if (isBlank(record.getResponsibility())) {
-            defaultResponsibility(record.getLocationOfMswConducted()).ifPresent(record::setResponsibility);
+            defaultResponsibility(record.getDepartment(), record.getLocationOfMswConducted()).ifPresent(record::setResponsibility);
         }
         record.setFinalComments(trim(record.getFinalComments()));
         validateConfigured(record.getLocationOfMswConducted(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Location of MSW Conducted");
@@ -238,12 +231,12 @@ public class GembaWalkConfigService {
         }
     }
 
-    private void validateResponsibility(String value, String location, AppUser actor, String previousAssignee, String actorRole, GembaWalkRecord record) {
+    private void validateResponsibility(String value, String department, String location, AppUser actor, String previousAssignee, String actorRole, GembaWalkRecord record) {
         String trimmed = trim(value);
         if (trimmed.isBlank()) {
             return;
         }
-        boolean configured = responsibilityUsers(location, actor, actorRole, record).stream()
+        boolean configured = responsibilityUsers(department, location, actor, actorRole, record).stream()
                 .anyMatch(user -> trim(user.get("username")).equalsIgnoreCase(trimmed)
                         || trim(user.get("label")).equalsIgnoreCase(trimmed));
         if (!configured) {
@@ -252,7 +245,7 @@ public class GembaWalkConfigService {
     }
 
     private void notifyClosed(GembaWalkRecord record) {
-        List<String> recipients = new ArrayList<>(areaHodEmails(record.getLocationOfMswConducted()));
+        List<String> recipients = new ArrayList<>(areaHodEmails(record.getDepartment(), record.getLocationOfMswConducted()));
         if (!isBlank(record.getEmail()) && !recipients.contains(record.getEmail())) {
             recipients.add(record.getEmail());
         }
@@ -269,7 +262,7 @@ public class GembaWalkConfigService {
     }
 
     private List<String> gembaWalkRecipients(GembaWalkRecord record) {
-        List<String> recipients = new ArrayList<>(areaHodEmails(record.getLocationOfMswConducted()));
+        List<String> recipients = new ArrayList<>(areaHodEmails(record.getDepartment(), record.getLocationOfMswConducted()));
         responsibilityEmail(record.getResponsibility()).ifPresent(email -> {
             if (!recipients.contains(email)) {
                 recipients.add(email);
@@ -291,9 +284,9 @@ public class GembaWalkConfigService {
                 .filter(email -> !isBlank(email));
     }
 
-    private List<String> areaHodEmails(String location) {
+    private List<String> areaHodEmails(String department, String location) {
         return activeUsers().stream()
-                .filter(user -> isAreaMatch(user, location))
+                .filter(user -> matchesScope(user, department, location))
                 .filter(this::isAreaHod)
                 .map(AppUser::getEmail)
                 .filter(email -> !isBlank(email))
@@ -301,19 +294,20 @@ public class GembaWalkConfigService {
                 .toList();
     }
 
-    private Optional<String> defaultResponsibility(String location) {
+    private Optional<String> defaultResponsibility(String department, String location) {
         return activeUsers().stream()
-                .filter(user -> isAreaMatch(user, location))
+                .filter(user -> matchesScope(user, department, location))
                 .filter(this::isAreaHod)
                 .map(user -> firstNonBlank(user.getUsername(), user.getName()))
                 .findFirst();
     }
 
-    private List<Map<String, String>> responsibilityUsers(String location, AppUser actor, String actorRole, GembaWalkRecord record) {
+    private List<Map<String, String>> responsibilityUsers(String department, String location, AppUser actor, String actorRole, GembaWalkRecord record) {
         List<AppUser> scopedPool = activeUsers().stream()
-                .filter(user -> isAreaMatch(user, location))
+                .filter(user -> matchesScope(user, department, location))
                 .toList();
-        List<AppUser> pool = scopedPool.isEmpty() ? activeUsers() : scopedPool;
+        boolean hasScope = !isBlank(department) || !isBlank(location);
+        List<AppUser> pool = hasScope ? scopedPool : activeUsers();
         return pool.stream()
                 .map(this::userOption)
                 .toList();
@@ -341,6 +335,17 @@ public class GembaWalkConfigService {
                 .map(value -> value.trim().toLowerCase(Locale.ENGLISH))
                 .anyMatch(normalizedLocation::equals)
                 || trim(user.getDepartment()).toLowerCase(Locale.ENGLISH).equals(normalizedLocation);
+    }
+
+    private boolean matchesScope(AppUser user, String department, String location) {
+        if (user == null) {
+            return false;
+        }
+        String expectedDepartment = compact(department);
+        String expectedLocation = compact(location);
+        boolean departmentMatches = expectedDepartment.isBlank() || expectedDepartment.equals(compact(user.getDepartment()));
+        boolean locationMatches = expectedLocation.isBlank() || matchesAnyArea(user.getArea(), expectedLocation);
+        return departmentMatches && locationMatches;
     }
 
     private boolean isHod(AppUser user) {

@@ -7,6 +7,7 @@ $(function () {
     let allUsers = [];
     let records = [];
     let currentUser = {};
+    let areaItems = [];
     let saveInFlight = false;
 
     function escapeHtml(value) {
@@ -50,6 +51,26 @@ $(function () {
         return String(value || '').trim();
     }
 
+    function lower(value) {
+        return normalize(value).toLowerCase();
+    }
+
+    function optionName(item) {
+        return normalize(item && item.name);
+    }
+
+    function uniqueValues(values) {
+        const seen = new Set();
+        return (values || []).map(normalize).filter(function(value) {
+            const key = lower(value);
+            if (!value || seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
+    }
+
     function displayDate(value) {
         const text = normalize(value);
         const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -63,9 +84,31 @@ $(function () {
         return text;
     }
 
-    function populateSelect(selector, values) {
-        const html = ['<option value=""></option>'].concat((values || []).map(optionHtml)).join('');
-        $(selector).html(html);
+    function populateSelect(selector, values, selected) {
+        const current = selected === undefined ? $(selector).val() : selected;
+        const options = uniqueValues((values || []).concat(current ? [current] : []));
+        const html = ['<option value=""></option>'].concat(options.map(optionHtml)).join('');
+        $(selector).html(html).val(current || '');
+    }
+
+    function filteredAreaMachines(department) {
+        const selectedDepartment = lower(department);
+        if (!selectedDepartment) {
+            return [];
+        }
+        return uniqueValues((areaItems || [])
+            .filter(function(item) {
+                return lower(item && item.parentDepartment) === selectedDepartment;
+            })
+            .map(optionName));
+    }
+
+    function refreshAreaMachineOptions(selectedArea) {
+        const areas = filteredAreaMachines($('#department').val());
+        populateSelect('#areaMachine', areas, selectedArea === undefined ? $('#areaMachine').val() : selectedArea);
+        if (!$('#department').val()) {
+            $('#areaMachine').val('');
+        }
     }
 
     function userLabel(user) {
@@ -102,10 +145,11 @@ $(function () {
             success: function(data) {
                 const options = data && data.options ? data.options : {};
                 currentUser = options.currentUser || {};
-                populateSelect('#typeOfTag', options.typeOfTags || []);
-                populateSelect('#department', options.departments || []);
-                populateSelect('#areaMachine', options.areaMachines || []);
-                populateSelect('#abnormalityDefectType', options.abnormalityDefectTypes || []);
+                areaItems = options.areaItems || [];
+                populateSelect('#typeOfTag', options.typeOfTags || [], $('#typeOfTag').val());
+                populateSelect('#department', options.departments || [], $('#department').val());
+                refreshAreaMachineOptions($('#areaMachine').val());
+                populateSelect('#abnormalityDefectType', options.abnormalityDefectTypes || [], $('#abnormalityDefectType').val());
                 populateAssignTo(options.assignableUsers || []);
                 if (!$('#assignTo').val() && options.defaultAssignee) {
                     $('#assignTo').val(options.defaultAssignee);
@@ -121,6 +165,7 @@ $(function () {
     }
 
     function loadDepartmentOptions(department) {
+        refreshAreaMachineOptions($('#areaMachine').val());
         $.ajax({
             url: API + '/department-options',
             type: 'GET',
@@ -215,6 +260,7 @@ $(function () {
         $('#shift').val(item.shift || '');
         $('#department').val(item.department || '');
         $('#areaMachine').val(item.areaMachine || '');
+        refreshAreaMachineOptions(item.areaMachine || '');
         $('#component').val(item.component || '');
         $('#description').val(item.description || '');
         $('#proposedAction').val(item.proposedAction || '');
@@ -328,16 +374,19 @@ $(function () {
             data: JSON.stringify(record),
             success: function(data) {
                 if (data && data.status === 'success') {
-                    setMessage('Saved.', 'success');
-                    resetForm();
+                    setMessage(id ? 'Abnormality Report updated successfully.' : 'Abnormality Report saved successfully.', 'success');
                     loadRecords();
-                    closeDrawer();
+                    setTimeout(function() {
+                        resetForm();
+                        closeDrawer();
+                    }, 650);
                 } else {
                     setMessage((data && data.message) || 'Unable to save.', 'error');
                 }
             },
             error: function(xhr) {
-                setMessage(xhr.responseJSON?.message || 'Unable to save.', 'error');
+                const message = xhr.responseJSON?.message || xhr.responseJSON?.error || xhr.responseText || 'Unable to save.';
+                setMessage(message, 'error');
             },
             complete: function() {
                 saveInFlight = false;
@@ -365,6 +414,7 @@ $(function () {
     });
 
     $('#department').on('change', function() {
+        $('#areaMachine').val('');
         loadDepartmentOptions($(this).val());
     });
 

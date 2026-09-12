@@ -235,7 +235,7 @@ public class AuthController {
         boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
         boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
-        boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewKpiPlantName
+        boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewLicenseManagement || canViewKpiPlantName
                 || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
                 || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditUserManagement = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
@@ -362,7 +362,7 @@ public class AuthController {
     }
 
     private Map<String, Object> toUserResponse(AppUser user) {
-        String normalizedRole = RoleAccess.normalize(user.getRole());
+        String normalizedRole = RoleAccess.isAdmin(user.getRole()) ? RoleAccess.ADMIN : RoleAccess.USER;
         Set<String> viewPermissions = toPermissionSet(user.getPageViewPermissions());
         Set<String> editPermissions = toPermissionSet(user.getPageEditPermissions());
         if (RoleAccess.isAdmin(normalizedRole)) {
@@ -382,7 +382,7 @@ public class AuthController {
         row.put("reportingManager", user.getReportingManager());
         row.put("email", user.getEmail());
         row.put("role", normalizedRole);
-        row.put("roleLabel", RoleAccess.displayName(user.getRole()));
+        row.put("roleLabel", RoleAccess.displayName(normalizedRole));
         row.put("viewPermissions", viewPermissions);
         row.put("editPermissions", editPermissions);
         row.put("status", user.getStatus() == null || user.getStatus().isBlank() ? "ACTIVE" : user.getStatus());

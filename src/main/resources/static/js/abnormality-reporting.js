@@ -12,7 +12,7 @@ $(function () {
     let searchTerm = '';
     let statusChart = null;
     let departmentChart = null;
-    let detailsVisible = false;
+    let detailsVisible = $('#toggleDetailsBtn').length === 0;
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function (ch) {
@@ -299,7 +299,7 @@ $(function () {
     function renderStatusChart(rows) {
         const closed = rows.filter(isClosed).length;
         const open = rows.length - closed;
-        const context = document.getElementById('abnormalityStatusChart');
+        const context = document.getElementById('abnormalityStatusChart') || document.getElementById('abnormalityReportingChart');
         if (!context || typeof Chart === 'undefined') {
             return;
         }

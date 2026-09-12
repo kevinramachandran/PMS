@@ -7,6 +7,7 @@ $(function() {
     let gembaCategories = [];
     let lifeSaverRules = [];
     let processAreas = [];
+    let departments = [];
     let areaItems = [];
     let records = [];
     let currentUserIdentity = {};
@@ -100,6 +101,28 @@ $(function() {
         $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
     }
 
+    function filteredProcessAreas(department) {
+        const selectedDepartment = lower(department);
+        if (!selectedDepartment) {
+            return [];
+        }
+        return (areaItems || [])
+            .filter(function(item) {
+                return lower(item && item.parentDepartment) === selectedDepartment;
+            })
+            .map(function(item) {
+                return normalize(item && item.name);
+            })
+            .filter(Boolean);
+    }
+
+    function refreshLocationOptions(selected) {
+        populateSelect('#locationOfMswConducted', filteredProcessAreas($('#department').val()), selected === undefined ? $('#locationOfMswConducted').val() : selected);
+        if (!$('#department').val()) {
+            $('#locationOfMswConducted').val('');
+        }
+    }
+
     function derivedDepartment(location) {
         const selected = lower(location);
         if (!selected) {
@@ -111,15 +134,18 @@ $(function() {
         return normalize(match && match.parentDepartment);
     }
 
+    function departmentFromLocation(location) {
+        return derivedDepartment(location);
+    }
+
     function updateDepartmentFromLocation() {
         const derived = derivedDepartment($('#locationOfMswConducted').val());
         const $department = $('#department');
         if (derived) {
-            $department.val(derived).prop('readonly', true);
+            $department.val(derived);
             $('#departmentFieldGroup').addClass('gw-derived-department');
             return;
         }
-        $department.prop('readonly', false);
         $('#departmentFieldGroup').removeClass('gw-derived-department');
     }
 
@@ -236,9 +262,8 @@ $(function() {
         $('#managerName').val(item.managerName || '');
         $('#dateConducted').val(item.dateOfLeadershipSafetyWalkConducted || todayDate());
         $('#managementSafetyWalkWeek').val(item.managementSafetyWalkWeek || params.get('week') || '');
-        $('#locationOfMswConducted').val(item.locationOfMswConducted || params.get('location') || '');
-        $('#department').val(item.department || '');
-        updateDepartmentFromLocation();
+        $('#department').val(item.department || departmentFromLocation(item.locationOfMswConducted || params.get('location') || ''));
+        refreshLocationOptions(item.locationOfMswConducted || params.get('location') || '');
         $('#responsibility').val(item.responsibility || $('#responsibility').val() || '');
         $('#assignmentRemark').val('');
         $('#finalComments').val(item.finalComments || '');
@@ -256,8 +281,8 @@ $(function() {
         $('#managerName').val('');
         $('#dateConducted').val(todayDate());
         $('#managementSafetyWalkWeek').val(params.get('week') || '');
-        $('#locationOfMswConducted').val(params.get('location') || '');
-        $('#department').val('');
+        $('#department').val(departmentFromLocation(params.get('location') || ''));
+        refreshLocationOptions(params.get('location') || '');
         $('#responsibility').val('');
         $('#finalComments').val('');
         $('#gembaWalkObservations').empty();
@@ -345,6 +370,7 @@ $(function() {
             url: API + '/options',
             type: 'GET',
             data: {
+                department: $('#department').val() || '',
                 location: $('#locationOfMswConducted').val() || params.get('location') || '',
                 recordId: recordId || $('#gembaWalkRecordId').val() || ''
             },
@@ -352,12 +378,13 @@ $(function() {
                 const options = data && data.options ? data.options : {};
                 gembaCategories = options.gembaCategories || [];
                 lifeSaverRules = options.lifeSaverRules || [];
+                departments = options.departments || [];
                 processAreas = options.processAreas || [];
                 areaItems = options.areaItems || [];
-                populateSelect('#locationOfMswConducted', processAreas, $('#locationOfMswConducted').val() || params.get('location') || '');
+                populateSelect('#department', departments, $('#department').val() || departmentFromLocation($('#locationOfMswConducted').val() || params.get('location') || ''));
+                refreshLocationOptions($('#locationOfMswConducted').val() || params.get('location') || '');
                 currentUserIdentity = options.currentUser || {};
                 applyCurrentUserIdentity(false);
-                updateDepartmentFromLocation();
                 populateResponsibility(options.responsibilityUsers || [], $('#responsibility').val() || options.defaultResponsibility || '');
                 const existing = $('#gembaWalkObservations .gw-observation').map(function() {
                     const $section = $(this);
@@ -427,8 +454,15 @@ $(function() {
         $('.main-content').addClass('expanded');
     }
 
+    $('#department').on('change', function() {
+        $('#locationOfMswConducted').val('');
+        refreshLocationOptions('');
+        $('#responsibility').val('');
+        loadOptions();
+    });
+
     $('#locationOfMswConducted').on('change input', function() {
-        updateDepartmentFromLocation();
+        $('#responsibility').val('');
         loadOptions();
     });
 

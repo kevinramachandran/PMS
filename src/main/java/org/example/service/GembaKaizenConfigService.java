@@ -51,16 +51,7 @@ public class GembaKaizenConfigService {
     }
 
     public List<GembaKaizenRecord> listForUser(String username, String role) {
-        List<GembaKaizenRecord> rows = list();
-        if (RoleAccess.isAdmin(role)) {
-            return rows;
-        }
-        Optional<AppUser> current = currentUser(username);
-        if (current.isEmpty()) {
-            return List.of();
-        }
-        AppUser user = current.get();
-        return rows.stream().filter(record -> canSeeRecord(record, user)).toList();
+        return list();
     }
 
     public Optional<GembaKaizenRecord> find(Long id) {
@@ -113,7 +104,7 @@ public class GembaKaizenConfigService {
         });
     }
 
-    public Map<String, Object> options(String username, String role, String location, Long recordId) {
+    public Map<String, Object> options(String username, String role, String department, String location, Long recordId) {
         Map<String, Object> options = new LinkedHashMap<>();
         Optional<AppUser> current = currentUser(username);
         options.put("currentUser", current.map(this::userOption).orElse(Map.of()));
@@ -125,9 +116,12 @@ public class GembaKaizenConfigService {
         options.put("areaItems", plantMasterDataService.list(PlantMasterDataService.PROCESS_AREA));
         options.put("classifications", kaizenMasterDataService.names(GembaKaizenMasterDataService.CLASSIFICATION_OF_KAIZEN));
         GembaKaizenRecord record = recordId == null ? null : repository.findById(recordId).orElse(null);
-        String department = record == null ? deriveDepartment(location, "", current.map(AppUser::getDepartment).orElse("")) : record.getDepartment();
-        options.put("assignmentUsers", assignmentUsers(department, location, current.orElse(null), role, record));
-        options.put("defaultAssignedTo", defaultAreaHod(department, location).map(user -> firstNonBlank(user.getUsername(), user.getName())).orElse(""));
+        String resolvedLocation = record == null ? location : record.getGembaKaizenLocation();
+        String resolvedDepartment = record == null
+                ? deriveDepartment(location, department, current.map(AppUser::getDepartment).orElse(""))
+                : record.getDepartment();
+        options.put("assignmentUsers", assignmentUsers(resolvedDepartment, resolvedLocation, current.orElse(null), role, record));
+        options.put("defaultAssignedTo", defaultAreaHod(resolvedDepartment, resolvedLocation).map(user -> firstNonBlank(user.getUsername(), user.getName())).orElse(""));
         return options;
     }
 
@@ -290,7 +284,8 @@ public class GembaKaizenConfigService {
         List<AppUser> scoped = activeUsers().stream()
                 .filter(user -> matchesScope(user, department, location))
                 .toList();
-        List<AppUser> pool = scoped.isEmpty() ? activeUsers() : scoped;
+        boolean hasScope = !isBlank(department) || !isBlank(location);
+        List<AppUser> pool = hasScope ? scoped : activeUsers();
         if (!RoleAccess.isAdmin(role) && (record == null || isBlank(record.getAssignedTo()))) {
             return pool.stream()
                     .filter(this::isAreaHod)

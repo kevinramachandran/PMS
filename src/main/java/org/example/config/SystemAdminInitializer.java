@@ -30,6 +30,7 @@ public class SystemAdminInitializer {
     @EventListener(ApplicationReadyEvent.class)
     public void ensureSystemAdminUser() {
         ensurePermissionColumnsCanStoreAllPages();
+        ensureCarlexProcessConfirmationColumns();
         ensureAdminUser(SYSTEM_ADMIN_USERNAME, DEFAULT_EMAIL, DEFAULT_PASSWORD, true);
     }
 
@@ -40,6 +41,35 @@ public class SystemAdminInitializer {
         } catch (DataAccessException ex) {
             throw new IllegalStateException("Unable to widen app_users permission columns before creating admin users", ex);
         }
+    }
+
+    private void ensureCarlexProcessConfirmationColumns() {
+        if (!tableExists("carlex_process_confirmations")) {
+            return;
+        }
+        addColumnIfMissing("carlex_process_confirmations", "assigned_to", "TEXT NULL");
+    }
+
+    private boolean tableExists(String tableName) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?",
+                Integer.class,
+                tableName
+        );
+        return count != null && count > 0;
+    }
+
+    private void addColumnIfMissing(String tableName, String columnName, String definition) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?",
+                Integer.class,
+                tableName,
+                columnName
+        );
+        if (count != null && count > 0) {
+            return;
+        }
+        jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + definition);
     }
 
     private void ensureAdminUser(String username, String email, String password, boolean resetPasswordOnStartup) {

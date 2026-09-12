@@ -23,10 +23,10 @@ public class CarlexProcessConfirmation {
     @Column(length = 160) public String processConfirmationDoneBy;
     public LocalDate dateOfGwProcessConfirmationConducted;
     @Column(length = 80) public String gwPcWeek;
-    @Column(length = 160) public String department;
+    @Transient public String department;
     @Column(length = 160) public String areaOfGwProcessConfirmationConducted;
     @Column(length = 160) public String areaResponsibility;
-    @Column(length = 160) public String assignedTo;
+    @Column(columnDefinition = "TEXT") public String assignedTo;
     @Transient public String assignmentRemark;
 
     @Column(name = "zm1_description", columnDefinition = "TEXT") public String zm1Description;

@@ -22,7 +22,7 @@ public class PlantMasterDataService {
     }
 
     public List<PlantMasterDataItem> list(String category) {
-        return repository.findByCategoryOrderByParentPlantAscParentDepartmentAscNameAsc(normalizeCategory(category));
+        return repository.findByCategoryOrderByParentPlantAscParentDepartmentAscParentProcessAreaAscNameAsc(normalizeCategory(category));
     }
 
     public List<String> names(String category) {
@@ -32,29 +32,39 @@ public class PlantMasterDataService {
     }
 
     public PlantMasterDataItem add(String category, String name) {
-        return add(category, name, "", "");
+        return add(category, name, "", "", "");
     }
 
     public PlantMasterDataItem add(String category, String name, String parentPlant, String parentDepartment) {
+        return add(category, name, parentPlant, parentDepartment, "");
+    }
+
+    public PlantMasterDataItem add(String category, String name, String parentPlant, String parentDepartment, String parentProcessArea) {
         String normalizedCategory = normalizeCategory(category);
         String normalizedName = normalizeName(name);
         String normalizedParentPlant = normalizeParentPlant(normalizedCategory, parentPlant);
         String normalizedParentDepartment = normalizeParentDepartment(normalizedCategory, normalizedParentPlant, parentDepartment);
-        rejectDuplicate(normalizedCategory, normalizedName, normalizedParentPlant, normalizedParentDepartment, null);
+        String normalizedParentProcessArea = normalizeParentProcessArea(normalizedCategory, normalizedParentPlant, normalizedParentDepartment, parentProcessArea);
+        rejectDuplicate(normalizedCategory, normalizedName, normalizedParentPlant, normalizedParentDepartment, normalizedParentProcessArea, null);
 
         PlantMasterDataItem item = new PlantMasterDataItem();
         item.setCategory(normalizedCategory);
         item.setName(normalizedName);
         item.setParentPlant(emptyToNull(normalizedParentPlant));
         item.setParentDepartment(emptyToNull(normalizedParentDepartment));
+        item.setParentProcessArea(emptyToNull(normalizedParentProcessArea));
         return repository.save(item);
     }
 
     public Optional<PlantMasterDataItem> update(Long id, String name) {
-        return update(id, name, null, null);
+        return update(id, name, null, null, null);
     }
 
     public Optional<PlantMasterDataItem> update(Long id, String name, String parentPlant, String parentDepartment) {
+        return update(id, name, parentPlant, parentDepartment, null);
+    }
+
+    public Optional<PlantMasterDataItem> update(Long id, String name, String parentPlant, String parentDepartment, String parentProcessArea) {
         if (id == null) {
             return Optional.empty();
         }
@@ -71,10 +81,14 @@ public class PlantMasterDataService {
         String normalizedParentDepartment = parentDepartment == null
                 ? trim(item.getParentDepartment())
                 : normalizeParentDepartment(item.getCategory(), normalizedParentPlant, parentDepartment);
-        rejectDuplicate(item.getCategory(), normalizedName, normalizedParentPlant, normalizedParentDepartment, id);
+        String normalizedParentProcessArea = parentProcessArea == null
+                ? trim(item.getParentProcessArea())
+                : normalizeParentProcessArea(item.getCategory(), normalizedParentPlant, normalizedParentDepartment, parentProcessArea);
+        rejectDuplicate(item.getCategory(), normalizedName, normalizedParentPlant, normalizedParentDepartment, normalizedParentProcessArea, id);
         item.setName(normalizedName);
         item.setParentPlant(emptyToNull(normalizedParentPlant));
         item.setParentDepartment(emptyToNull(normalizedParentDepartment));
+        item.setParentProcessArea(emptyToNull(normalizedParentProcessArea));
         return Optional.of(repository.save(item));
     }
 
@@ -118,35 +132,54 @@ public class PlantMasterDataService {
     }
 
     private String normalizeParentDepartment(String category, String parentPlant, String parentDepartment) {
-        if (!PROCESS_AREA.equals(category)) {
+        if (!PROCESS_AREA.equals(category) && !DESIGNATION.equals(category)) {
             return "";
         }
         String normalized = normalizeName(parentDepartment);
         if (!exists(DEPARTMENT, normalized, parentPlant, "")) {
-            throw new IllegalArgumentException("Department must be configured under the selected Plant before adding Area");
+            throw new IllegalArgumentException("Department must be configured under the selected Plant before adding " + label(category));
+        }
+        return normalized;
+    }
+
+    private String normalizeParentProcessArea(String category, String parentPlant, String parentDepartment, String parentProcessArea) {
+        if (!DESIGNATION.equals(category)) {
+            return "";
+        }
+        String normalized = normalizeName(parentProcessArea);
+        if (!exists(PROCESS_AREA, normalized, parentPlant, parentDepartment, "")) {
+            throw new IllegalArgumentException("Process Area must be configured under the selected Department before adding Designation");
         }
         return normalized;
     }
 
     private boolean exists(String category, String name, String parentPlant, String parentDepartment) {
+        return exists(category, name, parentPlant, parentDepartment, "");
+    }
+
+    private boolean exists(String category, String name, String parentPlant, String parentDepartment, String parentProcessArea) {
         String expectedPlant = trim(parentPlant);
         String expectedDepartment = trim(parentDepartment);
+        String expectedProcessArea = trim(parentProcessArea);
         return list(category).stream().anyMatch(item ->
                 item.getName().equalsIgnoreCase(name)
                         && trim(item.getParentPlant()).equalsIgnoreCase(expectedPlant)
-                        && trim(item.getParentDepartment()).equalsIgnoreCase(expectedDepartment));
+                        && trim(item.getParentDepartment()).equalsIgnoreCase(expectedDepartment)
+                        && trim(item.getParentProcessArea()).equalsIgnoreCase(expectedProcessArea));
     }
 
-    private void rejectDuplicate(String category, String name, String parentPlant, String parentDepartment, Long allowedId) {
+    private void rejectDuplicate(String category, String name, String parentPlant, String parentDepartment, String parentProcessArea, Long allowedId) {
         String expectedPlant = trim(parentPlant);
         String expectedDepartment = trim(parentDepartment);
+        String expectedProcessArea = trim(parentProcessArea);
         Optional<PlantMasterDataItem> duplicate = list(category).stream()
                 .filter(item -> item.getName().equalsIgnoreCase(name))
                 .filter(item -> trim(item.getParentPlant()).equalsIgnoreCase(expectedPlant))
                 .filter(item -> trim(item.getParentDepartment()).equalsIgnoreCase(expectedDepartment))
+                .filter(item -> trim(item.getParentProcessArea()).equalsIgnoreCase(expectedProcessArea))
                 .findFirst();
         if (duplicate.isPresent() && (allowedId == null || !duplicate.get().getId().equals(allowedId))) {
-            throw new IllegalArgumentException("Name already exists");
+            throw new IllegalArgumentException(label(category) + " already exists. Use a different name.");
         }
     }
 
@@ -161,11 +194,23 @@ public class PlantMasterDataService {
             }
         }
         if (DEPARTMENT.equals(item.getCategory())) {
-            boolean hasChildren = list(PROCESS_AREA).stream()
+            boolean hasAreas = list(PROCESS_AREA).stream()
                     .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(trim(item.getParentPlant()))
                             && trim(child.getParentDepartment()).equalsIgnoreCase(item.getName()));
-            if (hasChildren) {
+            boolean hasDesignations = list(DESIGNATION).stream()
+                    .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(trim(item.getParentPlant()))
+                            && trim(child.getParentDepartment()).equalsIgnoreCase(item.getName()));
+            if (hasAreas || hasDesignations) {
                 throw new IllegalArgumentException("Delete areas under this Department before deleting the Department");
+            }
+        }
+        if (PROCESS_AREA.equals(item.getCategory())) {
+            boolean hasDesignations = list(DESIGNATION).stream()
+                    .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(trim(item.getParentPlant()))
+                            && trim(child.getParentDepartment()).equalsIgnoreCase(trim(item.getParentDepartment()))
+                            && trim(child.getParentProcessArea()).equalsIgnoreCase(item.getName()));
+            if (hasDesignations) {
+                throw new IllegalArgumentException("Delete designations under this Process Area before deleting the Process Area");
             }
         }
     }
