@@ -92,7 +92,7 @@ public class GembaWalkConfigService {
             existing.setAssignmentRemark(trim(incoming.getAssignmentRemark()));
             existing.setFinalComments(trim(incoming.getFinalComments()));
             existing.setDepartment(deriveDepartment(existing.getLocationOfMswConducted(), incoming.getDepartment(), existing.getCreatorDepartment()));
-            applyDefaults(existing, username, false);
+            applyDefaults(existing, username, true);
             updateEditableObservationFields(existing, incoming.getObservations());
             GembaWalkRecord saved = repository.save(existing);
             assignmentHistoryService.record("gemba-walk", saved.getId(), previousAssignee, saved.getResponsibility(), incoming.getAssignmentRemark(), username, saved.getLocationOfMswConducted());

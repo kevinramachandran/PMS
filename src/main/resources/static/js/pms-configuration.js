@@ -109,7 +109,7 @@
             description: 'Setup screens that control daily boards, trackers, and KPI modules.',
             items: [
                 { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board', description: 'Issue board templates and assignment setup.' },
-                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Schedule', description: 'Schedules and settings for gemba walk planning.' },
+                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Scheduler', description: 'Schedules and settings for gemba walk planning.' },
                 { key: 'GEMBA_WALK_FINDINGS', label: 'Gemba Walk Findings', description: 'Findings captured from gemba walk activity.' },
                 { key: 'GEMBA_WALK_REPORTING', label: 'Gemba walk report', description: 'Reporting pages for gemba walk activity.' },
                 { key: 'USER_DASHBOARD', label: 'User Dashboard', description: 'User dashboard overview page.' },
@@ -211,6 +211,27 @@
         setTimeout(function () {
             targetEl.className = 'form-message';
             targetEl.textContent = '';
+        }, 3500);
+    }
+
+    function showUserToast(text, type) {
+        let toast = document.getElementById('pmsUserToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'pmsUserToast';
+            toast.className = 'dashboard-toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = text;
+        toast.style.background = type === 'error'
+            ? 'rgba(153, 27, 27, 0.94)'
+            : type === 'warning'
+                ? 'rgba(146, 64, 14, 0.94)'
+                : 'rgba(22, 101, 52, 0.94)';
+        toast.classList.add('show');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(function() {
+            toast.classList.remove('show');
         }, 3500);
     }
 
@@ -334,6 +355,14 @@
         return getSelectedValues(select).join(', ');
     }
 
+    function syncAreaDropdownToSelect(select) {
+        const parts = areaDropdownParts(select);
+        if (select && parts.menu) {
+            syncAreaSelectFromCheckboxes(select, parts.menu, false);
+        }
+        return getSelectedAreaValue(select);
+    }
+
     function areaDropdownParts(select) {
         if (select === editAreaEl) {
             return { toggle: editAreaToggleEl, menu: editAreaCheckboxesEl };
@@ -361,7 +390,7 @@
         parts.toggle.title = selectedValues.join(', ');
     }
 
-    function syncAreaSelectFromCheckboxes(select, menu) {
+    function syncAreaSelectFromCheckboxes(select, menu, shouldDispatch) {
         if (!select || !menu) {
             return;
         }
@@ -371,7 +400,9 @@
             option.selected = selected.has(String(option.value || '').trim().toLowerCase());
         });
         updateAreaDropdownLabel(select);
-        select.dispatchEvent(new Event('change', { bubbles: true }));
+        if (shouldDispatch !== false) {
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     function renderAreaCheckboxDropdown(select) {
@@ -790,9 +821,9 @@
         const employeeId = (employeeIdEl.value || '').trim();
         const username = (usernameEl.value || '').trim();
         const department = (departmentEl.value || '').trim();
-        const area = getSelectedAreaValue(areaEl);
+        const area = syncAreaDropdownToSelect(areaEl);
         const plant = (plantEl.value || '').trim();
-        const designation = normalizeDesignation(designationEl.value || '');
+        const designation = (designationEl.value || '').trim();
         const reportingManager = (reportingManagerEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
@@ -835,6 +866,7 @@
                 if (data.status === 'success') {
                     showMessage(messageEl, 'User added successfully.', 'success');
                     showMessage(tableMessageEl, 'User created successfully.', 'success');
+                    showUserToast('User created successfully.', 'success');
                     form.reset();
                     refreshUserHierarchy('new', { plant: '', department: '', area: '', designation: '' });
                     roleEl.value = 'USER';
@@ -846,10 +878,12 @@
                     loadUsers();
                 } else {
                     showMessage(messageEl, data.message || 'Failed to add user.', 'error');
+                    showUserToast(data.message || 'Failed to add user.', 'error');
                 }
             })
             .catch(function () {
                 showMessage(messageEl, 'Server error while adding user.', 'error');
+                showUserToast('Server error while adding user.', 'error');
             })
             .finally(function () {
                 addBtn.disabled = false;
@@ -897,7 +931,7 @@
             plant: user.plant || '',
             department: user.department || '',
             area: user.area || '',
-            designation: normalizeDesignation(user.designation || '')
+            designation: user.designation || ''
         });
         editReportingManagerEl.value = user.reportingManager || '';
         editEmailEl.value = user.email || '';
@@ -940,9 +974,9 @@
         const name = (editNameEl.value || '').trim();
         const employeeId = (editEmployeeIdEl.value || '').trim();
         const department = (editDepartmentEl.value || '').trim();
-        const area = getSelectedAreaValue(editAreaEl);
+        const area = syncAreaDropdownToSelect(editAreaEl);
         const plant = (editPlantEl.value || '').trim();
-        const designation = normalizeDesignation(editDesignationEl.value || '');
+        const designation = (editDesignationEl.value || '').trim();
         const reportingManager = (editReportingManagerEl.value || '').trim();
         const email = (editEmailEl.value || '').trim();
         const role = normalizeRole(editRoleEl.value || 'USER');
@@ -983,15 +1017,18 @@
             .then(function (data) {
                 if (data.status === 'success') {
                     showMessage(tableMessageEl, 'User updated successfully.', 'success');
+                    showUserToast('User updated successfully.', 'success');
                     closeEditModal();
                     loadMasterOptions();
                     loadUsers();
                 } else {
                     showMessage(editMessageEl, data.message || 'Failed to update user.', 'error');
+                    showUserToast(data.message || 'Failed to update user.', 'error');
                 }
             })
             .catch(function () {
                 showMessage(editMessageEl, 'Server error while updating user.', 'error');
+                showUserToast('Server error while updating user.', 'error');
             })
             .finally(function () {
                 saveEditBtn.disabled = false;

@@ -332,14 +332,12 @@ $(document).ready(function() {
         } else if (config === 'gemba-schedule') {
             console.log('   -> Setting gemba-schedule form ACTIVE');
             $('#form-gemba-schedule').addClass('active');
-            loadPlantMasterDataOptions(function() {
-                if ($('#gembaScheduleDate').attr('data-load-latest-on-open') === '1') {
-                    $('#gembaScheduleDate').attr('data-load-latest-on-open', '0');
-                    loadLatestGembaScheduleConfig();
-                } else {
-                    loadGembaScheduleByDate($('#gembaScheduleDate').val());
-                }
-            });
+            if ($('#gembaScheduleDate').attr('data-load-latest-on-open') === '1') {
+                $('#gembaScheduleDate').attr('data-load-latest-on-open', '0');
+                loadLatestGembaScheduleConfig();
+            } else {
+                loadGembaScheduleByDate($('#gembaScheduleDate').val());
+            }
         } else if (config === 'master-gemba-walk') {
             $('#form-master-gemba-walk').addClass('active');
             loadMasterGembaWalkConfig();
@@ -3932,7 +3930,7 @@ function regroupRows($container){
     }
 
     function populateGembaFormFromRow($row) {
-        $('#gsFormFunctionType').val($row.find('.gs-function-type').val() || '');
+        $('#gsFormFunctionType').val($row.find('.gs-function-type').val() || 'Packaging');
         $('#gsFormAssociateName').val($row.find('.gs-associate-name').val() || '');
         $('#gsFormWeek1').val($row.find('.gs-week1').val() || '');
         $('#gsFormWeek2').val($row.find('.gs-week2').val() || '');
@@ -3941,23 +3939,35 @@ function regroupRows($container){
     }
 
     function resetGembaFormInputs() {
-        $('#gsFormFunctionType').val('');
+        $('#gsFormFunctionType').val('Packaging');
         $('#gsFormAssociateName, #gsFormWeek1, #gsFormWeek2, #gsFormWeek3, #gsFormWeek4').val('');
     }
 
     function createGembaConfigRow(item) {
         const safeItem = item || {};
-        const functionType = safeItem.functionType || '';
+        const functionType = safeItem.functionType || 'Packaging';
         const associateName = safeItem.associateName || safeItem.functionName || '';
 
         return '' +
             '<tr>' +
-            '<td>' + masterDataSelectHtml('gs-function-type', plantMasterDataOptions.departments, functionType) + '</td>' +
+            '<td>' +
+            '<select class="gs-function-type">' +
+            '<option value="Packaging" ' + (functionType === 'Packaging' ? 'selected' : '') + '>Packaging</option>' +
+            '<option value="Quality" ' + (functionType === 'Quality' ? 'selected' : '') + '>Quality</option>' +
+            '<option value="HR & Admin" ' + (functionType === 'HR & Admin' ? 'selected' : '') + '>HR & Admin</option>' +
+            '<option value="Utility & Maintenance" ' + (functionType === 'Utility & Maintenance' ? 'selected' : '') + '>Utility & Maintenance</option>' +
+            '<option value="Customer Supply" ' + (functionType === 'Customer Supply' ? 'selected' : '') + '>Customer Supply</option>' +
+            '<option value="B&P" ' + (functionType === 'B&P' ? 'selected' : '') + '>B&P</option>' +
+            '<option value="Finance" ' + (functionType === 'Finance' ? 'selected' : '') + '>Finance</option>' +
+            '<option value="Health & Safety" ' + (functionType === 'Health & Safety' ? 'selected' : '') + '>Health & Safety</option>' +
+            '<option value="Carlsberg Excellence" ' + (functionType === 'Carlsberg Excellence' ? 'selected' : '') + '>Carlsberg Excellence</option>' +
+            '</select>' +
+            '</td>' +
             '<td><input type="text" class="gs-associate-name" value="' + escapeAttributeValue(associateName) + '" placeholder="Associate Name"></td>' +
-            '<td>' + masterDataSelectHtml('gs-week1', plantMasterDataOptions.processAreas, safeItem.week1 || '') + '</td>' +
-            '<td>' + masterDataSelectHtml('gs-week2', plantMasterDataOptions.processAreas, safeItem.week2 || '') + '</td>' +
-            '<td>' + masterDataSelectHtml('gs-week3', plantMasterDataOptions.processAreas, safeItem.week3 || '') + '</td>' +
-            '<td>' + masterDataSelectHtml('gs-week4', plantMasterDataOptions.processAreas, safeItem.week4 || '') + '</td>' +
+            '<td><input type="text" class="gs-week1" value="' + escapeAttributeValue(safeItem.week1 || '') + '" placeholder="Week #1"></td>' +
+            '<td><input type="text" class="gs-week2" value="' + escapeAttributeValue(safeItem.week2 || '') + '" placeholder="Week #2"></td>' +
+            '<td><input type="text" class="gs-week3" value="' + escapeAttributeValue(safeItem.week3 || '') + '" placeholder="Week #3"></td>' +
+            '<td><input type="text" class="gs-week4" value="' + escapeAttributeValue(safeItem.week4 || '') + '" placeholder="Week #4"></td>' +
             '<td class="ib-action-cell"><button type="button" class="issue-delete gemba-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></td>' +
             '</tr>';
     }

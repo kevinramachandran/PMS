@@ -54,6 +54,7 @@
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
             <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
             <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
             <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
@@ -792,6 +793,9 @@
                             <div id="form-gemba-schedule" class="form-section issue-board-enterprise">
 
                                 <div class="config-form-section issue-board-form-card">
+                                    <div class="kpi-rename-page-header">
+                                        <h2>Gemba Walk Scheduler</h2>
+                                    </div>
                                     <div class="issue-board-meta-grid form-grid">
                                         <div class="form-group gemba-last-updated-field">
                                             <label for="gembaScheduleDate">Last Updated</label>
@@ -834,7 +838,7 @@
                                         <i class="fas fa-ban"></i> Cancel
                                     </button>
                                     <button id="saveGembaScheduleBtn" type="button" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Save Gemba Schedule
+                                        <i class="fas fa-save"></i> Save Gemba Walk Scheduler
                                     </button>
                                 </div>
                                 <div id="gembaScheduleMessage" class="form-message"></div>
