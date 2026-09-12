@@ -154,12 +154,10 @@ $(function() {
     }
 
     function applyCurrentUserIdentity(force) {
-        if (force || !$('#email').val()) {
-            $('#email').val(currentUserIdentity.email || '');
-        }
-        if (force || !$('#managerName').val()) {
-            $('#managerName').val(currentUserIdentity.label || currentUserIdentity.username || '');
-        }
+        return {
+            email: currentUserIdentity.email || '',
+            managerName: currentUserIdentity.label || currentUserIdentity.username || ''
+        };
     }
 
     function setEditLock(locked) {
@@ -171,7 +169,6 @@ $(function() {
             const editableInUpdate = $field.is(EDIT_ALLOWED_SELECTOR);
             $field.prop('disabled', locked && !editableInUpdate);
         });
-        $('#email, #managerName').prop('readonly', true);
         $('#addObservationBtn').toggle(!locked);
     }
 
@@ -230,8 +227,6 @@ $(function() {
             scheduleItemId: $('#scheduleItemId').val() || null,
             startTime: $('#startTime').val(),
             completionTime: $('#completionTime').val(),
-            email: $('#email').val(),
-            managerName: $('#managerName').val(),
             dateOfLeadershipSafetyWalkConducted: $('#dateConducted').val() || null,
             managementSafetyWalkWeek: $('#managementSafetyWalkWeek').val(),
             locationOfMswConducted: $('#locationOfMswConducted').val(),
@@ -258,8 +253,6 @@ $(function() {
         $('#scheduleItemId').val(item.scheduleItemId || params.get('scheduleId') || '');
         $('#startTime').val(item.startTime || currentTime());
         $('#completionTime').val(item.completionTime || currentTime());
-        $('#email').val(item.email || '');
-        $('#managerName').val(item.managerName || '');
         $('#dateConducted').val(item.dateOfLeadershipSafetyWalkConducted || todayDate());
         $('#managementSafetyWalkWeek').val(item.managementSafetyWalkWeek || params.get('week') || '');
         $('#department').val(item.department || departmentFromLocation(item.locationOfMswConducted || params.get('location') || ''));
@@ -277,8 +270,6 @@ $(function() {
         $('#scheduleItemId').val(params.get('scheduleId') || '');
         $('#startTime').val(currentTime());
         $('#completionTime').val(currentTime());
-        $('#email').val('');
-        $('#managerName').val('');
         $('#dateConducted').val(todayDate());
         $('#managementSafetyWalkWeek').val(params.get('week') || '');
         $('#department').val(departmentFromLocation(params.get('location') || ''));
@@ -298,9 +289,11 @@ $(function() {
             return '' +
                 '<tr>' +
                 '<td class="gw-row-number">' + (index + 1) + '</td>' +
+                '<td>' + escapeHtml(record.serialNumber || record.id) + '</td>' +
                 '<td>' + escapeHtml(record.startTime) + '</td>' +
                 '<td>' + escapeHtml(record.completionTime) + '</td>' +
-                '<td>' + escapeHtml(record.department || derivedDepartment(record.locationOfMswConducted)) + '</td>' +
+                '<td>' + escapeHtml(record.managerName) + '</td>' +
+                '<td>' + escapeHtml(record.email) + '</td>' +
                 '<td>' + escapeHtml(displayDate(record.dateOfLeadershipSafetyWalkConducted)) + '</td>' +
                 '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
                 '<td>' + escapeHtml(record.locationOfMswConducted) + '</td>' +
@@ -312,7 +305,7 @@ $(function() {
                 '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="13" class="gw-empty-cell">No records found.</td></tr>');
+        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gw-empty-cell">No records found.</td></tr>');
         records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -326,7 +319,7 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="13" class="gw-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="15" class="gw-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }

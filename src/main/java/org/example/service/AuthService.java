@@ -358,10 +358,8 @@ public class AuthService {
         if (!trimToEmpty(designation).isBlank() && splitAreaValues(area).isEmpty()) {
             return Optional.of("Process Area is required for Designation");
         }
-        for (String areaValue : splitAreaValues(area)) {
-            if (!isDesignationUnderProcessArea(designation, plant, department, areaValue)) {
-                return Optional.of("Designation must be under the selected Process Area");
-            }
+        if (!isDesignationUnderSelectedProcessAreas(designation, plant, department, splitAreaValues(area))) {
+            return Optional.of("Designation must be under the selected Process Area");
         }
         return Optional.empty();
     }
@@ -406,12 +404,11 @@ public class AuthService {
                 .anyMatch(parentPlant -> parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue));
     }
 
-    private boolean isDesignationUnderProcessArea(String designation, String plant, String department, String area) {
+    private boolean isDesignationUnderSelectedProcessAreas(String designation, String plant, String department, List<String> areas) {
         String designationValue = trimToEmpty(designation);
         String plantValue = trimToEmpty(plant);
         String departmentValue = trimToEmpty(department);
-        String areaValue = trimToEmpty(area);
-        if (designationValue.isBlank() || plantValue.isBlank() || departmentValue.isBlank() || areaValue.isBlank()) {
+        if (designationValue.isBlank() || plantValue.isBlank() || departmentValue.isBlank() || areas == null || areas.isEmpty()) {
             return true;
         }
         return plantMasterDataService.list(PlantMasterDataService.DESIGNATION).stream()
@@ -420,9 +417,11 @@ public class AuthService {
                     String parentPlant = trimToEmpty(item.getParentPlant());
                     String parentDepartment = trimToEmpty(item.getParentDepartment());
                     String parentProcessArea = trimToEmpty(item.getParentProcessArea());
-                    return (parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue))
-                            && (parentDepartment.isBlank() || parentDepartment.equalsIgnoreCase(departmentValue))
-                            && (parentProcessArea.isBlank() || parentProcessArea.equalsIgnoreCase(areaValue));
+                    boolean plantMatches = parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue);
+                    boolean departmentMatches = parentDepartment.isBlank() || parentDepartment.equalsIgnoreCase(departmentValue);
+                    boolean areaMatches = parentProcessArea.isBlank()
+                            || areas.stream().anyMatch(areaValue -> parentProcessArea.equalsIgnoreCase(trimToEmpty(areaValue)));
+                    return plantMatches && departmentMatches && areaMatches;
                 });
     }
 

@@ -606,6 +606,7 @@
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="PMS4 Deck V0 Data"><i class="fas fa-database"></i><span>PMS4 Deck V0 Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
                         <a href="/settings?config=issue-board" class="nav-item nav-child" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
+                        <a href="/settings?config=gemba-schedule" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
                         <a href="/settings?config=training-schedule" class="nav-item nav-child" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                         <a href="/settings?config=meeting-agenda" class="nav-item nav-child" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
                     </div>

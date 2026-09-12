@@ -114,7 +114,7 @@ public class WebController {
             case "metrics-data" -> settingsView(model, "metrics-data", "", "Production KPI Data");
             case "issue-board" -> settingsView(model, "issue-board", "", "Issue Board");
             case "master-gemba-walk" -> settingsView(model, "master-gemba-walk", "", "Gemba Walk");
-            case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk");
+            case "gemba-schedule" -> settingsView(model, "gemba-schedule", "", "Gemba Walk Scheduler");
             case "master-gemba-kaizen" -> settingsView(model, "master-gemba-kaizen", "", "Gemba Kaizen");
             case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker");
             case "training-schedule" -> settingsView(model, "training-schedule", "", "Training Schedule");
@@ -182,7 +182,7 @@ public class WebController {
 
     @GetMapping("/config/gemba-walk")
     public String gembaWalkPage(Model model) {
-        return settingsView(model, "gemba-schedule", "", "Gemba Walk");
+        return settingsView(model, "gemba-schedule", "", "Gemba Walk Scheduler");
     }
 
     @GetMapping("/config/safety-gemba")
