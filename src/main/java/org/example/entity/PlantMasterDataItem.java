@@ -11,7 +11,7 @@ import jakarta.persistence.UniqueConstraint;
 @Entity
 @Table(
         name = "plant_master_data_items",
-        uniqueConstraints = @UniqueConstraint(name = "uk_plant_master_hierarchy_name", columnNames = {"category", "parent_plant", "parent_department", "name"})
+        uniqueConstraints = @UniqueConstraint(name = "uk_plant_master_hierarchy_name", columnNames = {"category", "parent_plant", "parent_department", "parent_process_area", "name"})
 )
 public class PlantMasterDataItem {
 
@@ -30,6 +30,9 @@ public class PlantMasterDataItem {
 
     @Column(name = "parent_department", length = 160)
     private String parentDepartment;
+
+    @Column(name = "parent_process_area", length = 160)
+    private String parentProcessArea;
 
     public Long getId() {
         return id;
@@ -69,5 +72,13 @@ public class PlantMasterDataItem {
 
     public void setParentDepartment(String parentDepartment) {
         this.parentDepartment = parentDepartment;
+    }
+
+    public String getParentProcessArea() {
+        return parentProcessArea;
+    }
+
+    public void setParentProcessArea(String parentProcessArea) {
+        this.parentProcessArea = parentProcessArea;
     }
 }

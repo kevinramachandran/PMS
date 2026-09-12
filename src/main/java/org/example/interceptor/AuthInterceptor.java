@@ -152,7 +152,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
         boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
-        boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewKpiPlantName
+        boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewLicenseManagement || canViewKpiPlantName
                 || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
                 || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);

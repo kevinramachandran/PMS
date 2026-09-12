@@ -2866,6 +2866,91 @@ body.modern-shell .footer p {
     cursor: not-allowed;
 }
 
+.pms-multi-select {
+    display: none;
+}
+
+.pms-checkbox-dropdown {
+    position: relative;
+}
+
+.pms-checkbox-dropdown-toggle {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111827;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pms-checkbox-dropdown-toggle span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pms-checkbox-dropdown-toggle:focus {
+    outline: none;
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+}
+
+.pms-checkbox-dropdown-menu {
+    display: none;
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 190px;
+    overflow-y: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    padding: 6px;
+}
+
+.pms-checkbox-dropdown.open .pms-checkbox-dropdown-menu {
+    display: block;
+}
+
+.pms-checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 9px;
+    border-radius: 6px;
+    color: #111827;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pms-checkbox-option:hover {
+    background: #f0fdf4;
+}
+
+.pms-checkbox-option input {
+    width: 16px;
+    height: 16px;
+    accent-color: #15803d;
+}
+
+.pms-checkbox-empty {
+    padding: 10px;
+    color: #64748b;
+    font-size: 13px;
+}
+
 .pms-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

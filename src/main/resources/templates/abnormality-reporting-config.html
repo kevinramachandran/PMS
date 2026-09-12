@@ -29,7 +29,6 @@
             <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
             <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
             <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
-            <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
             <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
             <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
@@ -72,10 +71,10 @@
                     <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
                     <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                     <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
+                    <a href="/smtp-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
+                    <a href="/settings?config=license" class="nav-item nav-child" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
                 </div>
             </div>
-            <a href="/smtp-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
-                <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
         </nav>
         <div class="sidebar-footer">
             <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -109,11 +108,9 @@
                                 <th>#</th>
                                 <th>Type of Tag</th>
                                 <th>Priority</th>
-                                <th>Tag Number</th>
                                 <th>Raised By</th>
                                 <th>Date Raised</th>
                                 <th>Shift</th>
-                                <th>Related To</th>
                                 <th>Department</th>
                                 <th>Area/Machine</th>
                                 <th>Component</th>
@@ -129,7 +126,7 @@
                             </tr>
                         </thead>
                         <tbody id="abnormalityReportingRecordsBody">
-                            <tr><td colspan="19" class="ar-empty">Loading records...</td></tr>
+                            <tr><td colspan="18" class="ar-empty">Loading records...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -145,6 +142,14 @@
                 <div class="ar-drawer-body">
                     <div class="ar-grid">
                     <div class="form-group">
+                        <label for="department">Department</label>
+                        <select id="department" name="department"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="areaMachine">Area/Machine</label>
+                        <select id="areaMachine" name="areaMachine"></select>
+                    </div>
+                    <div class="form-group">
                         <label for="typeOfTag">Type of Tag</label>
                         <select id="typeOfTag" name="typeOfTag"></select>
                     </div>
@@ -156,10 +161,6 @@
                             <option value="Medium">Medium</option>
                             <option value="Low">Low</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="abnormalityTagNumber">Abnormality Tag Number</label>
-                        <input type="text" id="abnormalityTagNumber" name="abnormalityTagNumber">
                     </div>
                     <div class="form-group">
                         <label for="tagRaisedBy">Tag Raised By</label>
@@ -178,18 +179,6 @@
                             <option value="C">C</option>
                             <option value="G">G</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="abnormalityRelatedTo">Abnormality Related To</label>
-                        <select id="abnormalityRelatedTo" name="abnormalityRelatedTo"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="department">Department</label>
-                        <select id="department" name="department"></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="areaMachine">Area/Machine</label>
-                        <select id="areaMachine" name="areaMachine"></select>
                     </div>
                     <div class="form-group">
                         <label for="component">Component</label>
@@ -249,7 +238,7 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20260905-required-hod"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20260912-department-scope"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

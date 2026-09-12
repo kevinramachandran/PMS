@@ -45,7 +45,7 @@ public class AbnormalityReportingConfigController {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return service.findForUser(id, username(session), role(session))
+        return service.find(id)
                 .<ResponseEntity<?>>map(item -> ResponseEntity.ok(Map.of("status", "success", "record", item)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found")));
     }
@@ -53,7 +53,7 @@ public class AbnormalityReportingConfigController {
     @GetMapping("/records/{id}/history")
     public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
         if (!canView(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
-        if (service.findForUser(id, username(session), role(session)).isEmpty()) {
+        if (service.find(id).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found"));
         }
         return ResponseEntity.ok(assignmentHistoryService.history("abnormality-reporting", id));

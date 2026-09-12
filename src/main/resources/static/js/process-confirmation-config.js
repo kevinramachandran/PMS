@@ -26,12 +26,12 @@ $(function() {
         'qm1ObservationImage', 'qm2ObservationImage'
     ];
     const baseFields = [
+        ['department', 'Department', 'select'],
+        ['areaOfGwProcessConfirmationConducted', 'Area', 'select'],
         ['startTime', 'Start time', 'time'],
         ['completionTime', 'Completion time', 'time'],
         ['dateOfGwProcessConfirmationConducted', 'Date of the GW Process Confirmation conducted', 'date'],
         ['gwPcWeek', 'GW PC week', 'text'],
-        ['department', 'Department', 'select'],
-        ['areaOfGwProcessConfirmationConducted', 'Area', 'select'],
         ['areaResponsibility', 'Area / Department HOD', 'text'],
         ['assignedTo', 'Assigned To', 'select'],
         ['assignmentRemark', 'Assignment / Reassignment Remarks', 'textarea']
@@ -397,10 +397,11 @@ $(function() {
     $('#carlexCloseBtn, #carlexCancelBtn, #carlexBackdrop').on('click', close);
     $(document).on('change', '#department', function() {
         populateAreas('');
+        $('#assignedTo').val('');
         loadOptions();
     });
     $(document).on('change', '#areaOfGwProcessConfirmationConducted', function() {
-        deriveDepartmentFromArea();
+        $('#assignedTo').val('');
         loadOptions();
     });
     $(document).on('click', '.carlex-add-observation', function() {

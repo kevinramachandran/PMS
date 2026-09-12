@@ -43,9 +43,17 @@ CREATE TABLE IF NOT EXISTS plant_master_data_items (
     id BIGINT NOT NULL AUTO_INCREMENT,
     category VARCHAR(40) NOT NULL,
     name VARCHAR(160) NOT NULL,
+    parent_plant VARCHAR(160) NULL,
+    parent_department VARCHAR(160) NULL,
+    parent_process_area VARCHAR(160) NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_plant_master_category_name (category, name)
+    UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, parent_process_area, name)
 );
+
+ALTER TABLE plant_master_data_items ADD COLUMN parent_process_area VARCHAR(160) NULL;
+ALTER TABLE plant_master_data_items DROP INDEX uk_plant_master_category_name;
+ALTER TABLE plant_master_data_items DROP INDEX uk_plant_master_hierarchy_name;
+ALTER TABLE plant_master_data_items ADD UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, parent_process_area, name);
 
 CREATE TABLE IF NOT EXISTS abnormality_master_data_items (
     id BIGINT NOT NULL AUTO_INCREMENT,
@@ -169,9 +177,10 @@ CREATE TABLE IF NOT EXISTS carlex_process_confirmations (
     process_confirmation_done_by VARCHAR(160) NULL,
     date_of_gw_process_confirmation_conducted DATE NULL,
     gw_pc_week VARCHAR(80) NULL,
-    department VARCHAR(160) NULL,
+    department TEXT NULL,
     area_of_gw_process_confirmation_conducted VARCHAR(160) NULL,
     area_responsibility VARCHAR(160) NULL,
+    assigned_to TEXT NULL,
     zm1_description TEXT NULL, zm1_counter_measure_actions TEXT NULL, zm1_status VARCHAR(40) NULL, zm1_observation_image VARCHAR(255) NULL, another_zm_observation BIT NULL,
     zm2_description TEXT NULL, zm2_counter_measure_actions TEXT NULL, zm2_status VARCHAR(40) NULL, zm2_observation_image VARCHAR(255) NULL,
     pm1_description TEXT NULL, pm1_counter_measure_actions TEXT NULL, pm1_status VARCHAR(40) NULL, pm1_observation_image VARCHAR(255) NULL, another_pm_observation BIT NULL,

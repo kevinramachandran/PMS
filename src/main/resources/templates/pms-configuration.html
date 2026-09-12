@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMS Configuration � Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=user-master-links-20260905">
+    <link rel="stylesheet" href="/css/dashboard.css?v=user-area-checkbox-dropdown-20260912">
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
 </head>
@@ -27,7 +27,6 @@
                 <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
                 <a href="/training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Schedule"><i class="fas fa-calendar-days"></i><span>Training Schedule</span></a>
                 <a href="/meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-clipboard-check"></i><span>PMS Agenda</span></a>
-                <a href="/abnormality-tracker" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Tracker"><i class="fas fa-triangle-exclamation"></i><span>Abnormality Tracker</span></a>
             <a href="/abnormality-reporting" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report"><i class="fas fa-clipboard-list"></i><span>Abnormality report</span></a>
             <a href="/gemba-kaizen" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                 <a href="/process-confirmation" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx Process Confirmation"><i class="fas fa-list-check"></i><span>CarlEx Process Confirmation</span></a>
@@ -70,10 +69,10 @@
                         <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
                         <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
                         <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
+                        <a href="/smtp-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
+                        <a href="/settings?config=license" class="nav-item nav-child" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
                     </div>
                 </div>
-                <a href="/smtp-configuration" class="nav-item" th:if="${session.canViewEmailConfiguration}" data-tooltip="SMTP Config"><i class="fas fa-server"></i><span>SMTP Config</span></a>
-                <a href="/settings?config=license" class="nav-item" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
             </nav>
             <div class="sidebar-footer">
                 <img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo">
@@ -186,6 +185,10 @@
                                             <input type="text" id="newUsername" class="form-select" placeholder="Enter username">
                                         </div>
                                         <div class="form-group">
+                                            <label class="form-label">Plant</label>
+                                            <select id="newPlant" class="form-select"></select>
+                                        </div>
+                                        <div class="form-group">
                                             <div class="um-master-field-label">
                                                 <label class="form-label">Department</label>
                                                 <a class="um-master-link" href="/settings?config=kpi-plant-name" target="_blank" rel="noopener" title="Add a new department"><i class="fas fa-plus"></i> New department</a>
@@ -194,25 +197,21 @@
                                         </div>
                                         <div class="form-group">
                                             <div class="um-master-field-label">
-                                                <label class="form-label">Area</label>
+                                                <label class="form-label">Process Area</label>
                                                 <a class="um-master-link" href="/settings?config=kpi-plant-name" target="_blank" rel="noopener" title="Add a new area"><i class="fas fa-plus"></i> New area</a>
                                             </div>
-                                            <select id="newArea" class="form-select"></select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Plant</label>
-                                            <input type="text" id="newPlant" class="form-select" list="plantOptions" placeholder="Select plant">
+                                            <select id="newArea" class="form-select pms-multi-select" multiple size="4"></select>
+                                            <div class="pms-checkbox-dropdown" data-area-dropdown="new">
+                                                <button type="button" class="pms-checkbox-dropdown-toggle" id="newAreaToggle">
+                                                    <span>Select process areas</span>
+                                                    <i class="fas fa-chevron-down"></i>
+                                                </button>
+                                                <div class="pms-checkbox-dropdown-menu" id="newAreaCheckboxes"></div>
+                                            </div>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">Designation</label>
-                                            <select id="newDesignation" class="form-select">
-                                                <option value="">Select designation</option>
-                                                <option value="HOD">HoD</option>
-                                                <option value="AREA_HOD">Area HoD</option>
-                                                <option value="ENGINEER">Engineer</option>
-                                                <option value="EXECUTIVE">Executive</option>
-                                                <option value="OPERATOR">Operator</option>
-                                            </select>
+                                            <select id="newDesignation" class="form-select"></select>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label">Reporting Manager</label>
@@ -231,11 +230,6 @@
                                             <select id="newRole" class="form-select">
                                                 <option value="ADMIN">Admin</option>
                                                 <option value="USER" selected>User</option>
-                                                <option value="HOD">HoD</option>
-                                                <option value="AREA_HOD">Area HoD</option>
-                                                <option value="ENGINEER">Engineer</option>
-                                                <option value="EXECUTIVE">Executive</option>
-                                                <option value="OPERATOR">Operator</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
@@ -316,27 +310,27 @@
                         <input type="text" id="editEmployeeId" class="form-select" placeholder="Enter employee ID">
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Plant</label>
+                        <select id="editPlant" class="form-select"></select>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Department</label>
                         <select id="editDepartment" class="form-select"></select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Area</label>
-                        <select id="editArea" class="form-select"></select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Plant</label>
-                        <input type="text" id="editPlant" class="form-select" list="plantOptions" placeholder="Select plant">
+                        <label class="form-label">Process Area</label>
+                        <select id="editArea" class="form-select pms-multi-select" multiple size="4"></select>
+                        <div class="pms-checkbox-dropdown" data-area-dropdown="edit">
+                            <button type="button" class="pms-checkbox-dropdown-toggle" id="editAreaToggle">
+                                <span>Select process areas</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="pms-checkbox-dropdown-menu" id="editAreaCheckboxes"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Designation</label>
-                        <select id="editDesignation" class="form-select">
-                            <option value="">Select designation</option>
-                            <option value="HOD">HoD</option>
-                            <option value="AREA_HOD">Area HoD</option>
-                            <option value="ENGINEER">Engineer</option>
-                            <option value="EXECUTIVE">Executive</option>
-                            <option value="OPERATOR">Operator</option>
-                        </select>
+                        <select id="editDesignation" class="form-select"></select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Reporting Manager</label>
@@ -351,11 +345,6 @@
                         <select id="editRole" class="form-select">
                             <option value="ADMIN">Admin</option>
                             <option value="USER">User</option>
-                            <option value="HOD">HoD</option>
-                            <option value="AREA_HOD">Area HoD</option>
-                            <option value="ENGINEER">Engineer</option>
-                            <option value="EXECUTIVE">Executive</option>
-                            <option value="OPERATOR">Operator</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -421,11 +410,9 @@
 
     <datalist id="departmentOptions"></datalist>
     <datalist id="areaOptions"></datalist>
-    <datalist id="plantOptions"></datalist>
-    <datalist id="designationOptions"></datalist>
 
     <script src="/js/dashboard.js"></script>
-    <script src="/js/pms-configuration.js?v=user-drawer-designation-20260903"></script>
+    <script src="/js/pms-configuration.js?v=user-area-checkbox-dropdown-20260912"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

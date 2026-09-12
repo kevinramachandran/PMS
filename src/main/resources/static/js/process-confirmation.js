@@ -12,7 +12,7 @@ $(function() {
     let searchTerm = '';
     let statusChart = null;
     let departmentChart = null;
-    let detailsVisible = false;
+    let detailsVisible = $('#toggleDetailsBtn').length === 0 || $('#pcRecordsBody').length > 0;
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -432,13 +432,40 @@ $(function() {
     }
 
     function renderRows(rows) {
-        const $body = $('#pcReportingTableBody');
+        const legacyRecordsTable = $('#pcRecordsBody').length > 0;
+        const $body = legacyRecordsTable ? $('#pcRecordsBody') : $('#pcReportingTableBody');
         if (!detailsVisible) {
             $body.empty();
             return;
         }
         if (!rows.length) {
-            $body.html('<tr><td colspan="14" class="empty-row">No CarlEX Process Confirmation records found.</td></tr>');
+            $body.html('<tr><td colspan="' + (legacyRecordsTable ? 13 : 14) + '" class="empty-row">No CarlEX Process Confirmation records found.</td></tr>');
+            return;
+        }
+        if (legacyRecordsTable) {
+            $body.html(rows.map(function(record, index) {
+                return '<tr>' +
+                    '<td>' + (index + 1) + '</td>' +
+                    '<td>' + escapeHtml(record.id) + '</td>' +
+                    '<td>' + escapeHtml(displayDate(recordDate(record))) + '</td>' +
+                    '<td>' + escapeHtml(record.name) + '</td>' +
+                    '<td>' + escapeHtml(recordArea(record)) + '</td>' +
+                    '<td>' + escapeHtml(record.areaResponsibility) + '</td>' +
+                    '<td>' + escapeHtml(record.assignedTo) + '</td>' +
+                    '<td>' + escapeHtml(record.processConfirmationDoneBy) + '</td>' +
+                    '<td>' + escapeHtml(record.startTime) + '</td>' +
+                    '<td>' + escapeHtml(record.completionTime) + '</td>' +
+                    '<td>' + IMAGE_FIELDS.map(function(field) { return attachmentIcon('process-confirmation', record[field], record[field]); }).join(' ') + '</td>' +
+                    '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
+                    '<td><button type="button" class="gw-open-btn" data-id="' + escapeHtml(record.id) + '" title="Open record" aria-label="Open Process Confirmation record"><i class="fas fa-arrow-up-right-from-square"></i></button></td>' +
+                '</tr>';
+            }).join(''));
+            $('.assignment-history-cell').each(function() {
+                const cell = $(this);
+                $.getJSON(API + '/records/' + cell.data('record-id') + '/history', function(entries) {
+                    cell.html(formatAssignmentHistory(entries));
+                });
+            });
             return;
         }
         $body.html(rows.map(function(record, index) {
@@ -583,7 +610,7 @@ $(function() {
         $('#pcReportingSearch').val('').trigger('input').trigger('focus');
     });
 
-    $('#pcReportingTableBody').on('click', '.gw-open-btn', function() {
+    $('#pcReportingTableBody, #pcRecordsBody').on('click', '.gw-open-btn', function() {
         window.location.href = '/process-confirmation-config?edit=' + encodeURIComponent($(this).data('id'));
     });
 

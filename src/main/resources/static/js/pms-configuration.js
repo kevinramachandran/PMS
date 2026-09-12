@@ -13,6 +13,8 @@
     const usernameEl = document.getElementById('newUsername');
     const departmentEl = document.getElementById('newDepartment');
     const areaEl = document.getElementById('newArea');
+    const areaToggleEl = document.getElementById('newAreaToggle');
+    const areaCheckboxesEl = document.getElementById('newAreaCheckboxes');
     const plantEl = document.getElementById('newPlant');
     const designationEl = document.getElementById('newDesignation');
     const reportingManagerEl = document.getElementById('newReportingManager');
@@ -31,6 +33,8 @@
     const editEmployeeIdEl = document.getElementById('editEmployeeId');
     const editDepartmentEl = document.getElementById('editDepartment');
     const editAreaEl = document.getElementById('editArea');
+    const editAreaToggleEl = document.getElementById('editAreaToggle');
+    const editAreaCheckboxesEl = document.getElementById('editAreaCheckboxes');
     const editPlantEl = document.getElementById('editPlant');
     const editDesignationEl = document.getElementById('editDesignation');
     const editReportingManagerEl = document.getElementById('editReportingManager');
@@ -54,6 +58,12 @@
     const canEditUserManagement = String(document.body.getAttribute('data-can-edit-user-management') || '').toLowerCase() === 'true';
 
     const DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
+    const masterDataOptions = {
+        plants: [],
+        departmentItems: [],
+        areaItems: [],
+        designationItems: []
+    };
 
     const PERMISSION_GROUPS = [
         {
@@ -145,7 +155,10 @@
 
     const ROLE_LABELS = {
         ADMIN: 'Admin',
-        USER: 'User',
+        USER: 'User'
+    };
+
+    const DESIGNATION_LABELS = {
         HOD: 'HoD',
         AREA_HOD: 'Area HoD',
         ENGINEER: 'Engineer',
@@ -158,21 +171,6 @@
         if (value === 'ADMIN') {
             return 'ADMIN';
         }
-        if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
-            return 'HOD';
-        }
-        if (value === 'AREA_HOD' || value === 'AREA_HEAD' || value === 'AREA_HEAD_OF_DEPARTMENT') {
-            return 'AREA_HOD';
-        }
-        if (value === 'ENGINEER' || value === 'ENGG') {
-            return 'ENGINEER';
-        }
-        if (value === 'EXECUTIVE' || value === 'EXEC') {
-            return 'EXECUTIVE';
-        }
-        if (value === 'OPERATOR') {
-            return 'OPERATOR';
-        }
         return 'USER';
     }
 
@@ -181,7 +179,8 @@
     }
 
     function normalizeDesignation(designation) {
-        const value = String(designation || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+        const original = String(designation || '').trim();
+        const value = original.toUpperCase().replace(/[\s-]+/g, '_');
         if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
             return 'HOD';
         }
@@ -197,12 +196,12 @@
         if (value === 'OPERATOR') {
             return 'OPERATOR';
         }
-        return DESIGNATION_VALUES.includes(value) ? value : '';
+        return original;
     }
 
     function designationLabel(designation) {
         const normalized = normalizeDesignation(designation);
-        return normalized ? ROLE_LABELS[normalized] : (designation || '-');
+        return normalized ? (DESIGNATION_LABELS[normalized] || normalized) : (designation || '-');
     }
 
     function showMessage(targetEl, text, type) {
@@ -232,10 +231,6 @@
     function userIcon(role) {
         const normalized = normalizeRole(role);
         if (normalized === 'ADMIN') return 'fa-user-shield';
-        if (normalized === 'HOD' || normalized === 'AREA_HOD') return 'fa-user-tie';
-        if (normalized === 'ENGINEER') return 'fa-helmet-safety';
-        if (normalized === 'EXECUTIVE') return 'fa-briefcase';
-        if (normalized === 'OPERATOR') return 'fa-user-gear';
         return 'fa-user';
     }
 
@@ -302,10 +297,225 @@
             return;
         }
         const selected = String(selectedValue || select.value || '').trim();
-        select.innerHTML = '<option value=""></option>' + values.map(function(value) {
+        const optionValues = values.slice();
+        if (selected && !optionValues.some(function(value) { return sameValue(value, selected); })) {
+            optionValues.push(selected);
+        }
+        select.innerHTML = '<option value=""></option>' + optionValues.map(function(value) {
             const safe = escapeAttribute(value);
-            return '<option value="' + safe + '"' + (String(value || '').trim() === selected ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
+            return '<option value="' + safe + '"' + (sameValue(value, selected) ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
         }).join('');
+    }
+
+    function sameValue(left, right) {
+        return String(left || '').trim().toLowerCase() === String(right || '').trim().toLowerCase();
+    }
+
+    function splitAreaValues(value) {
+        if (Array.isArray(value)) {
+            return value.map(function(item) { return String(item || '').trim(); }).filter(Boolean);
+        }
+        return String(value || '')
+            .split(',')
+            .map(function(item) { return item.trim(); })
+            .filter(Boolean);
+    }
+
+    function getSelectedValues(select) {
+        if (!select) {
+            return [];
+        }
+        return Array.from(select.selectedOptions || [])
+            .map(function(option) { return String(option.value || '').trim(); })
+            .filter(Boolean);
+    }
+
+    function getSelectedAreaValue(select) {
+        return getSelectedValues(select).join(', ');
+    }
+
+    function areaDropdownParts(select) {
+        if (select === editAreaEl) {
+            return { toggle: editAreaToggleEl, menu: editAreaCheckboxesEl };
+        }
+        return { toggle: areaToggleEl, menu: areaCheckboxesEl };
+    }
+
+    function updateAreaDropdownLabel(select) {
+        const parts = areaDropdownParts(select);
+        if (!parts.toggle) {
+            return;
+        }
+        const label = parts.toggle.querySelector('span');
+        const selectedValues = getSelectedValues(select);
+        if (!label) {
+            return;
+        }
+        if (!selectedValues.length) {
+            label.textContent = 'Select process areas';
+        } else if (selectedValues.length <= 2) {
+            label.textContent = selectedValues.join(', ');
+        } else {
+            label.textContent = selectedValues.slice(0, 2).join(', ') + ' +' + (selectedValues.length - 2);
+        }
+        parts.toggle.title = selectedValues.join(', ');
+    }
+
+    function syncAreaSelectFromCheckboxes(select, menu) {
+        if (!select || !menu) {
+            return;
+        }
+        const selected = new Set(Array.from(menu.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(function(input) { return String(input.value || '').trim().toLowerCase(); }));
+        Array.from(select.options || []).forEach(function(option) {
+            option.selected = selected.has(String(option.value || '').trim().toLowerCase());
+        });
+        updateAreaDropdownLabel(select);
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function renderAreaCheckboxDropdown(select) {
+        const parts = areaDropdownParts(select);
+        if (!select || !parts.menu) {
+            return;
+        }
+        const selectedKeys = new Set(getSelectedValues(select).map(function(value) { return value.toLowerCase(); }));
+        const options = Array.from(select.options || []);
+        if (!options.length) {
+            parts.menu.innerHTML = '<div class="pms-checkbox-empty">No process areas</div>';
+            updateAreaDropdownLabel(select);
+            return;
+        }
+        parts.menu.innerHTML = options.map(function(option) {
+            const value = String(option.value || '').trim();
+            const id = select.id + 'Check' + value.replace(/[^a-z0-9]+/gi, '_');
+            return '<label class="pms-checkbox-option" for="' + escapeAttribute(id) + '">' +
+                '<input type="checkbox" id="' + escapeAttribute(id) + '" value="' + escapeAttribute(value) + '"' + (selectedKeys.has(value.toLowerCase()) ? ' checked' : '') + '>' +
+                '<span>' + escapeHtml(value) + '</span>' +
+            '</label>';
+        }).join('');
+        updateAreaDropdownLabel(select);
+    }
+
+    function setMultiSelectOptions(select, values, selectedValue) {
+        if (!select || !Array.isArray(values)) {
+            return;
+        }
+        const selectedValues = splitAreaValues(selectedValue || getSelectedAreaValue(select));
+        const selectedKeys = new Set(selectedValues.map(function(value) { return value.toLowerCase(); }));
+        const optionValues = values.slice();
+        selectedValues.forEach(function(value) {
+            if (value && !optionValues.some(function(option) { return sameValue(option, value); })) {
+                optionValues.push(value);
+            }
+        });
+        select.innerHTML = optionValues.map(function(value) {
+            const safe = escapeAttribute(value);
+            return '<option value="' + safe + '"' + (selectedKeys.has(String(value || '').trim().toLowerCase()) ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
+        }).join('');
+        renderAreaCheckboxDropdown(select);
+    }
+
+    function toggleAreaDropdown(select, forceOpen) {
+        const parts = areaDropdownParts(select);
+        if (!parts.toggle || !parts.menu) {
+            return;
+        }
+        const wrapper = parts.toggle.closest('.pms-checkbox-dropdown');
+        if (!wrapper) {
+            return;
+        }
+        const shouldOpen = forceOpen !== undefined ? forceOpen : !wrapper.classList.contains('open');
+        document.querySelectorAll('.pms-checkbox-dropdown.open').forEach(function(dropdown) {
+            if (dropdown !== wrapper) {
+                dropdown.classList.remove('open');
+            }
+        });
+        wrapper.classList.toggle('open', shouldOpen);
+    }
+
+    function bindAreaDropdown(select) {
+        const parts = areaDropdownParts(select);
+        if (!select || !parts.toggle || !parts.menu) {
+            return;
+        }
+        parts.toggle.addEventListener('click', function() {
+            toggleAreaDropdown(select);
+        });
+        parts.menu.addEventListener('change', function(event) {
+            if (event.target && event.target.matches('input[type="checkbox"]')) {
+                syncAreaSelectFromCheckboxes(select, parts.menu);
+            }
+        });
+    }
+
+    function selectedOrCurrent(selected, key, fallback) {
+        if (selected && Object.prototype.hasOwnProperty.call(selected, key)) {
+            return String(selected[key] || '').trim();
+        }
+        return String(fallback || '').trim();
+    }
+
+    function itemNames(items) {
+        const seen = new Set();
+        return (items || []).map(function(item) {
+            return String((item && item.name) || '').trim();
+        }).filter(function(name) {
+            const key = name.toLowerCase();
+            if (!name || seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
+    }
+
+    function filteredDepartments(plant) {
+        if (!plant) {
+            return [];
+        }
+        return itemNames((masterDataOptions.departmentItems || []).filter(function(item) {
+            return sameValue(item.parentPlant, plant);
+        }));
+    }
+
+    function filteredAreas(plant, department) {
+        if (!plant || !department) {
+            return [];
+        }
+        return itemNames((masterDataOptions.areaItems || []).filter(function(item) {
+            return sameValue(item.parentPlant, plant) && sameValue(item.parentDepartment, department);
+        }));
+    }
+
+    function filteredDesignations(plant, department, area) {
+        const areas = splitAreaValues(area).map(function(value) { return value.toLowerCase(); });
+        if (!plant || !department || areas.length === 0) {
+            return [];
+        }
+        return itemNames((masterDataOptions.designationItems || []).filter(function(item) {
+            return sameValue(item.parentPlant, plant)
+                && sameValue(item.parentDepartment, department)
+                && areas.indexOf(String(item.parentProcessArea || '').trim().toLowerCase()) !== -1;
+        }));
+    }
+
+    function refreshUserHierarchy(scope, selected) {
+        selected = selected || {};
+        const fields = scope === 'edit'
+            ? { plant: editPlantEl, department: editDepartmentEl, area: editAreaEl, designation: editDesignationEl }
+            : { plant: plantEl, department: departmentEl, area: areaEl, designation: designationEl };
+        const plant = selectedOrCurrent(selected, 'plant', fields.plant && fields.plant.value);
+        setSelectOptions(fields.plant, masterDataOptions.plants || [], plant);
+
+        const department = selectedOrCurrent(selected, 'department', fields.department && fields.department.value);
+        setSelectOptions(fields.department, filteredDepartments(fields.plant ? fields.plant.value : ''), department);
+
+        const area = selected.area !== undefined ? selected.area : getSelectedAreaValue(fields.area);
+        setMultiSelectOptions(fields.area, filteredAreas(fields.plant ? fields.plant.value : '', fields.department ? fields.department.value : ''), area);
+
+        const designation = selectedOrCurrent(selected, 'designation', fields.designation && fields.designation.value);
+        setSelectOptions(fields.designation, filteredDesignations(fields.plant ? fields.plant.value : '', fields.department ? fields.department.value : '', getSelectedAreaValue(fields.area)), designation);
     }
 
     function loadMasterOptions() {
@@ -313,12 +523,12 @@
             .then(parseJsonResponse)
             .then(function (data) {
                 const options = data.options || {};
-                setSelectOptions(departmentEl, options.departments || []);
-                setSelectOptions(areaEl, options.areas || []);
-                setSelectOptions(editDepartmentEl, options.departments || []);
-                setSelectOptions(editAreaEl, options.areas || []);
-                setDatalistOptions('plantOptions', options.plants || []);
-                setDatalistOptions('designationOptions', options.designations || []);
+                masterDataOptions.plants = options.plants || [];
+                masterDataOptions.departmentItems = options.departmentItems || [];
+                masterDataOptions.areaItems = options.areaItems || [];
+                masterDataOptions.designationItems = options.designationItems || [];
+                refreshUserHierarchy('new');
+                refreshUserHierarchy('edit');
             })
             .catch(function () {
                 // Dropdown suggestions are helpful, but the form can still save typed values.
@@ -580,7 +790,7 @@
         const employeeId = (employeeIdEl.value || '').trim();
         const username = (usernameEl.value || '').trim();
         const department = (departmentEl.value || '').trim();
-        const area = (areaEl.value || '').trim();
+        const area = getSelectedAreaValue(areaEl);
         const plant = (plantEl.value || '').trim();
         const designation = normalizeDesignation(designationEl.value || '');
         const reportingManager = (reportingManagerEl.value || '').trim();
@@ -626,6 +836,7 @@
                     showMessage(messageEl, 'User added successfully.', 'success');
                     showMessage(tableMessageEl, 'User created successfully.', 'success');
                     form.reset();
+                    refreshUserHierarchy('new', { plant: '', department: '', area: '', designation: '' });
                     roleEl.value = 'USER';
                     if (statusEl) statusEl.value = 'ACTIVE';
                     resetPermissions('new');
@@ -681,10 +892,13 @@
         editUserIdEl.value = user.id;
         editNameEl.value = user.name || '';
         editEmployeeIdEl.value = user.employeeId || '';
-        editDepartmentEl.value = user.department || '';
-        editAreaEl.value = user.area || '';
         editPlantEl.value = user.plant || '';
-        editDesignationEl.value = normalizeDesignation(user.designation || '');
+        refreshUserHierarchy('edit', {
+            plant: user.plant || '',
+            department: user.department || '',
+            area: user.area || '',
+            designation: normalizeDesignation(user.designation || '')
+        });
         editReportingManagerEl.value = user.reportingManager || '';
         editEmailEl.value = user.email || '';
         editRoleEl.value = normalizeRole(user.role || 'USER');
@@ -726,7 +940,7 @@
         const name = (editNameEl.value || '').trim();
         const employeeId = (editEmployeeIdEl.value || '').trim();
         const department = (editDepartmentEl.value || '').trim();
-        const area = (editAreaEl.value || '').trim();
+        const area = getSelectedAreaValue(editAreaEl);
         const plant = (editPlantEl.value || '').trim();
         const designation = normalizeDesignation(editDesignationEl.value || '');
         const reportingManager = (editReportingManagerEl.value || '').trim();
@@ -938,6 +1152,16 @@
     bindPermissionRules('edit');
     bindPermissionBulkActions(newPermissionsMatrixEl, 'new');
     bindPermissionBulkActions(editPermissionsMatrixEl, 'edit');
+    bindAreaDropdown(areaEl);
+    bindAreaDropdown(editAreaEl);
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.pms-checkbox-dropdown')) {
+            document.querySelectorAll('.pms-checkbox-dropdown.open').forEach(function(dropdown) {
+                dropdown.classList.remove('open');
+            });
+        }
+    });
 
     if (roleEl) {
         roleEl.addEventListener('change', function () {
@@ -948,6 +1172,42 @@
     if (editRoleEl) {
         editRoleEl.addEventListener('change', function () {
             togglePermissionSection(editRoleEl, editPermissionsSectionEl);
+        });
+    }
+
+    if (plantEl) {
+        plantEl.addEventListener('change', function () {
+            refreshUserHierarchy('new', { plant: plantEl.value, department: '', area: '', designation: '' });
+        });
+    }
+
+    if (departmentEl) {
+        departmentEl.addEventListener('change', function () {
+            refreshUserHierarchy('new', { plant: plantEl.value, department: departmentEl.value, area: '', designation: '' });
+        });
+    }
+
+    if (areaEl) {
+        areaEl.addEventListener('change', function () {
+            refreshUserHierarchy('new', { plant: plantEl.value, department: departmentEl.value, area: getSelectedAreaValue(areaEl), designation: '' });
+        });
+    }
+
+    if (editPlantEl) {
+        editPlantEl.addEventListener('change', function () {
+            refreshUserHierarchy('edit', { plant: editPlantEl.value, department: '', area: '', designation: '' });
+        });
+    }
+
+    if (editDepartmentEl) {
+        editDepartmentEl.addEventListener('change', function () {
+            refreshUserHierarchy('edit', { plant: editPlantEl.value, department: editDepartmentEl.value, area: '', designation: '' });
+        });
+    }
+
+    if (editAreaEl) {
+        editAreaEl.addEventListener('change', function () {
+            refreshUserHierarchy('edit', { plant: editPlantEl.value, department: editDepartmentEl.value, area: getSelectedAreaValue(editAreaEl), designation: '' });
         });
     }
 

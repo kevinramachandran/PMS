@@ -2,6 +2,7 @@ package org.example.controller;
 
 import org.example.entity.PlantMasterDataItem;
 import org.example.service.PlantMasterDataService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,9 +40,12 @@ public class PlantMasterDataController {
                     category,
                     asString(request.get("name")),
                     asString(request.get("parentPlant")),
-                    asString(request.get("parentDepartment"))));
+                    asString(request.get("parentDepartment")),
+                    asString(request.get("parentProcessArea"))));
         } catch (IllegalArgumentException ex) {
             return error(ex.getMessage());
+        } catch (DataIntegrityViolationException ex) {
+            return error("Name already exists. Use a different name.");
         }
     }
 
@@ -52,11 +56,14 @@ public class PlantMasterDataController {
                             id,
                             asString(request.get("name")),
                             request.containsKey("parentPlant") ? asString(request.get("parentPlant")) : null,
-                            request.containsKey("parentDepartment") ? asString(request.get("parentDepartment")) : null)
+                            request.containsKey("parentDepartment") ? asString(request.get("parentDepartment")) : null,
+                            request.containsKey("parentProcessArea") ? asString(request.get("parentProcessArea")) : null)
                     .<Map<String, Object>>map(this::success)
                     .orElseGet(() -> error("Item not found"));
         } catch (IllegalArgumentException ex) {
             return error(ex.getMessage());
+        } catch (DataIntegrityViolationException ex) {
+            return error("Name already exists. Use a different name.");
         }
     }
 

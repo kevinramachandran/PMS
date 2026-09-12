@@ -58,16 +58,7 @@ public class AbnormalityReportingConfigService {
     }
 
     public List<AbnormalityReportingRecord> listForUser(String username, String role) {
-        List<AbnormalityReportingRecord> rows = list();
-        if (RoleAccess.isAdmin(role)) {
-            return rows;
-        }
-        Optional<AppUser> current = currentUser(username);
-        if (current.isEmpty()) {
-            return List.of();
-        }
-        AppUser user = current.get();
-        return rows.stream().filter(record -> canSeeRecord(record, user)).toList();
+        return list();
     }
 
     public Optional<AbnormalityReportingRecord> findForUser(Long id, String username, String role) {
@@ -189,9 +180,7 @@ public class AbnormalityReportingConfigService {
         }
         record.setDateRaised(request.getDateRaised());
         record.setShift(trim(request.getShift()));
-        if (record.getId() == null) {
-            record.setAbnormalityRelatedTo("");
-        }
+        record.setAbnormalityRelatedTo(trim(request.getAbnormalityRelatedTo()));
         record.setDepartment(trim(request.getDepartment()));
         record.setAreaMachine(trim(request.getAreaMachine()));
         record.setComponent(trim(request.getComponent()));
@@ -299,7 +288,8 @@ public class AbnormalityReportingConfigService {
         List<AppUser> scoped = activeUsers().stream()
                 .filter(user -> matchesScope(user, department, areaMachine))
                 .toList();
-        List<AppUser> pool = scoped.isEmpty() ? activeUsers() : scoped;
+        boolean hasScope = !isBlank(department) || !isBlank(areaMachine);
+        List<AppUser> pool = hasScope ? scoped : activeUsers();
         if (RoleAccess.isAdmin(role)) {
             return pool.stream()
                     .filter(user -> isHod(user) || isOperational(user))

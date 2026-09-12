@@ -161,6 +161,9 @@ $(document).ready(function() {
     const readOnlyActionSelectors = [
         '.form-actions button',
         '#addRowBtn',
+        '#addTrainingScheduleRowBtn',
+        '#cancelTrainingScheduleBtn',
+        '#saveTrainingScheduleBtn',
         '.issue-delete',
         '.issue-edit',
         '.issue-add-row-btn',
@@ -171,6 +174,8 @@ $(document).ready(function() {
         '#saveKpiCrossColor',
         '#saveKpiPlantNameBtn',
         '#resetKpiPlantNameBtn',
+        '#openMasterPlantAddModal',
+        '#saveMasterPlantAdd',
         '.master-plant-add-btn',
         '.master-plant-edit-btn',
         '.master-plant-save-btn',
@@ -5273,19 +5278,27 @@ function regroupRows($container){
         });
     }
 
-    $('#addTrainingScheduleRowBtn').on('click', function() {
+    $(document).off('click.trainingScheduleAddRow').on('click.trainingScheduleAddRow', '#addTrainingScheduleRowBtn', function() {
+        if (!canEditCurrentPage) {
+            showMessage('trainingScheduleMessage', 'You have view-only access for this page.', 'error');
+            return;
+        }
         $('#trainingScheduleConfigTableBody .placeholder-row').remove();
         $('#trainingScheduleConfigTableBody').append(createTrainingScheduleRow());
         bindTrainingScheduleDeleteButtons();
     });
 
-    $('#cancelTrainingScheduleBtn').on('click', function() {
+    $(document).off('click.trainingScheduleCancel').on('click.trainingScheduleCancel', '#cancelTrainingScheduleBtn', function() {
         const saveDate = $('#trainingConfigDate').val() || getTodayDateString();
         loadTrainingScheduleByDate(saveDate);
         showMessage('trainingScheduleMessage', 'Changes discarded.', 'success');
     });
 
-    $('#saveTrainingScheduleBtn').on('click', function() {
+    $(document).off('click.trainingScheduleSave').on('click.trainingScheduleSave', '#saveTrainingScheduleBtn', function() {
+        if (!canEditCurrentPage) {
+            showMessage('trainingScheduleMessage', 'You have view-only access for this page.', 'error');
+            return;
+        }
         const saveDate = $('#trainingConfigDate').val();
         if (!saveDate) {
             showMessage('trainingScheduleMessage', 'Please select a last updated date.', 'error');
@@ -5649,6 +5662,7 @@ function regroupRows($container){
     const PROCESS_OBSERVATION_CATEGORIES = [
         { key: 'ZM_OBSERVATION', label: 'ZM Describe Your Observation' },
         { key: 'PM_OBSERVATION', label: 'PM Describe Your Observation' },
+        { key: 'OM_OBSERVATION', label: 'OM Describe Your Observation' },
         { key: 'QM_OBSERVATION', label: 'QM Describe Your Observation' }
     ];
 
@@ -6076,6 +6090,11 @@ function regroupRows($container){
             input: '#masterPmObservationInput',
             body: '#masterPmObservationTableBody',
             label: 'PM Describe Your Observation'
+        },
+        OM_OBSERVATION: {
+            input: '#masterOmObservationInput',
+            body: '#masterOmObservationTableBody',
+            label: 'OM Describe Your Observation'
         },
         QM_OBSERVATION: {
             input: '#masterQmObservationInput',
@@ -6509,15 +6528,30 @@ function regroupRows($container){
     });
 
     const MASTER_PLANT_CONFIG = {
+        PLANT: {
+            input: '#masterPlantModalInput',
+            label: 'Plant'
+        },
         DEPARTMENT: {
             input: '#masterDepartmentInput',
             suggestions: '#masterDepartmentSuggestions',
-            label: 'Department'
+            label: 'Department',
+            parentPlant: '#masterDepartmentPlantSelect'
         },
         PROCESS_AREA: {
             input: '#masterProcessAreaInput',
             suggestions: '#masterProcessAreaSuggestions',
-            label: 'Process Area'
+            label: 'Process Area',
+            parentPlant: '#masterProcessAreaPlantSelect',
+            parentDepartment: '#masterProcessAreaDepartmentSelect'
+        },
+        DESIGNATION: {
+            input: '#masterDesignationInput',
+            suggestions: '#masterDesignationSuggestions',
+            label: 'Designation',
+            parentPlant: '#masterDesignationPlantSelect',
+            parentDepartment: '#masterDesignationDepartmentSelect',
+            parentProcessArea: '#masterDesignationProcessAreaSelect'
         }
     };
     const masterPlantItems = {};
@@ -6534,14 +6568,125 @@ function regroupRows($container){
         $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
     }
 
+    function setMasterPlantAddMessage(message, type) {
+        const $message = $('#masterPlantAddMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
     function masterPlantUrl(category) {
         return '/api/dashboard-config/master-data/' + encodeURIComponent(category);
     }
 
     function masterPlantItemNames(category) {
-        return (masterPlantItems[category] || []).map(function(item) {
+        const config = MASTER_PLANT_CONFIG[category] || {};
+        const parentPlant = config.parentPlant ? ($(config.parentPlant).val() || '').trim().toLowerCase() : '';
+        const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim().toLowerCase() : '';
+        const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim().toLowerCase() : '';
+        return (masterPlantItems[category] || []).filter(function(item) {
+            const plantMatches = !parentPlant || String(item.parentPlant || '').trim().toLowerCase() === parentPlant;
+            const departmentMatches = !parentDepartment || String(item.parentDepartment || '').trim().toLowerCase() === parentDepartment;
+            const processAreaMatches = !parentProcessArea || String(item.parentProcessArea || '').trim().toLowerCase() === parentProcessArea;
+            return plantMatches && departmentMatches && processAreaMatches;
+        }).map(function(item) {
             return item && item.name ? String(item.name) : '';
         }).filter(Boolean);
+    }
+
+    function normalizeMasterPlantKey(value) {
+        return String(value || '').trim().toLowerCase();
+    }
+
+    function findMasterPlantDuplicate(category, name, parentPlant, parentDepartment, parentProcessArea, allowedId) {
+        const expectedName = normalizeMasterPlantKey(name);
+        const expectedPlant = normalizeMasterPlantKey(parentPlant);
+        const expectedDepartment = normalizeMasterPlantKey(parentDepartment);
+        const expectedProcessArea = normalizeMasterPlantKey(parentProcessArea);
+        return (masterPlantItems[category] || []).find(function(item) {
+            if (allowedId && String(item.id || '') === String(allowedId)) {
+                return false;
+            }
+            return normalizeMasterPlantKey(item.name) === expectedName
+                && normalizeMasterPlantKey(item.parentPlant) === expectedPlant
+                && normalizeMasterPlantKey(item.parentDepartment) === expectedDepartment
+                && normalizeMasterPlantKey(item.parentProcessArea) === expectedProcessArea;
+        }) || null;
+    }
+
+    function masterPlantDuplicateMessage(config) {
+        return config.label + ' already exists. Use a different name.';
+    }
+
+    function masterPlantOptionsHtml(items, placeholder) {
+        return '<option value="">' + escapeHtml(placeholder) + '</option>' + (items || []).map(function(item) {
+            const name = item && item.name ? String(item.name) : '';
+            return name ? '<option value="' + escapeAttributeValue(name) + '">' + escapeHtml(name) + '</option>' : '';
+        }).join('');
+    }
+
+    function refreshMasterPlantParentSelects() {
+        const plants = masterPlantItems.PLANT || [];
+        const selectedPlant = $('#masterPlantSelect').val() || '';
+        const departmentPlant = $('#masterDepartmentPlantSelect').val() || '';
+        const processPlant = $('#masterProcessAreaPlantSelect').val() || '';
+        const processDepartment = $('#masterProcessAreaDepartmentSelect').val() || '';
+        const designationPlant = $('#masterDesignationPlantSelect').val() || '';
+        const designationDepartment = $('#masterDesignationDepartmentSelect').val() || '';
+        const designationProcessArea = $('#masterDesignationProcessAreaSelect').val() || '';
+        $('#masterPlantSelect, #masterDepartmentPlantSelect, #masterProcessAreaPlantSelect, #masterDesignationPlantSelect').html(masterPlantOptionsHtml(plants, 'Select Plant'));
+        $('#masterPlantSelect').val(selectedPlant);
+        $('#masterDepartmentPlantSelect').val(departmentPlant);
+        $('#masterProcessAreaPlantSelect').val(processPlant);
+        $('#masterDesignationPlantSelect').val(designationPlant);
+        refreshMasterPlantDepartmentSelect(processDepartment);
+        refreshMasterDesignationDepartmentSelect(designationDepartment);
+        refreshMasterDesignationProcessAreaSelect(designationProcessArea);
+    }
+
+    function selectMasterPlant(plantName) {
+        const value = plantName || $('#masterPlantSelect').val() || '';
+        $('#masterPlantSelect').val(value);
+        $('#masterDepartmentPlantSelect, #masterProcessAreaPlantSelect, #masterDesignationPlantSelect').val(value);
+        refreshMasterPlantDepartmentSelect('');
+        refreshMasterDesignationDepartmentSelect('');
+        refreshMasterDesignationProcessAreaSelect('');
+    }
+
+    function refreshMasterPlantDepartmentSelect(selectedValue) {
+        const plant = $('#masterProcessAreaPlantSelect').val() || '';
+        const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
+            return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
+        });
+        $('#masterProcessAreaDepartmentSelect')
+            .html(masterPlantOptionsHtml(departments, 'Select Department'))
+            .val(selectedValue || '');
+    }
+
+    function refreshMasterDesignationDepartmentSelect(selectedValue) {
+        const plant = $('#masterDesignationPlantSelect').val() || '';
+        const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
+            return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
+        });
+        $('#masterDesignationDepartmentSelect')
+            .html(masterPlantOptionsHtml(departments, 'Select Department'))
+            .val(selectedValue || '');
+    }
+
+    function refreshMasterDesignationProcessAreaSelect(selectedValue) {
+        const plant = $('#masterDesignationPlantSelect').val() || '';
+        const department = $('#masterDesignationDepartmentSelect').val() || '';
+        const processAreas = (masterPlantItems.PROCESS_AREA || []).filter(function(item) {
+            const plantMatches = !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
+            const departmentMatches = !department || String(item.parentDepartment || '').toLowerCase() === department.toLowerCase();
+            return plantMatches && departmentMatches;
+        });
+        $('#masterDesignationProcessAreaSelect')
+            .html(masterPlantOptionsHtml(processAreas, 'Select Process Area'))
+            .val(selectedValue || '');
     }
 
     function renderMasterPlantSuggestions(category) {
@@ -6575,9 +6720,10 @@ function regroupRows($container){
     function masterPlantRowHtml(category, item) {
         const safeItem = item || {};
         const name = safeItem.name || '';
+        const meta = [safeItem.parentPlant, safeItem.parentDepartment, safeItem.parentProcessArea].filter(Boolean).join(' / ');
         return '' +
-            '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
-                '<span class="master-plant-name">' + escapeHtml(name) + '</span>' +
+            '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '" data-name="' + escapeAttributeValue(name) + '">' +
+                '<span class="master-plant-name">' + escapeHtml(name) + (meta ? '<small>' + escapeHtml(meta) + '</small>' : '') + '</span>' +
                 '<div>' +
                     '<div class="kpi-rename-actions">' +
                         '<button type="button" class="master-plant-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
@@ -6605,6 +6751,7 @@ function regroupRows($container){
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         masterPlantItems[category] = Array.isArray(items) ? items : [];
+        refreshMasterPlantParentSelects();
         renderMasterPlantSuggestions(category);
         if (masterPlantViewCategory === category) {
             renderMasterPlantView();
@@ -6637,7 +6784,8 @@ function regroupRows($container){
         masterPlantViewCategory = '';
     }
 
-    function loadMasterPlantCategory(category) {
+    function loadMasterPlantCategory(category, afterLoad) {
+        afterLoad = typeof afterLoad === 'function' ? afterLoad : null;
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         $.ajax({
@@ -6646,14 +6794,23 @@ function regroupRows($container){
             success: function(data) {
                 if (data && data.status === 'success') {
                     renderMasterPlantCategory(category, data.items || []);
+                    if (afterLoad) {
+                        afterLoad(data.items || []);
+                    }
                 } else {
                     renderMasterPlantCategory(category, []);
                     setMasterPlantMessage((data && data.message) || 'Unable to load ' + config.label + '.', 'error');
+                    if (afterLoad) {
+                        afterLoad([]);
+                    }
                 }
             },
             error: function(xhr) {
                 renderMasterPlantCategory(category, []);
                 setMasterPlantMessage('Unable to load ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+                if (afterLoad) {
+                    afterLoad([]);
+                }
             }
         });
     }
@@ -6666,15 +6823,44 @@ function regroupRows($container){
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         const value = ($(config.input).val() || '').trim();
+        const parentPlant = config.parentPlant ? ($(config.parentPlant).val() || '').trim() : '';
+        const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim() : '';
+        const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim() : '';
         if (!value) {
             setMasterPlantMessage(config.label + ' is required.', 'warning');
             return;
+        }
+        if (config.parentPlant && !parentPlant) {
+            setMasterPlantMessage('Plant is required.', 'warning');
+            return;
+        }
+        if (config.parentDepartment && !parentDepartment) {
+            setMasterPlantMessage('Department is required.', 'warning');
+            return;
+        }
+        if (config.parentProcessArea && !parentProcessArea) {
+            setMasterPlantMessage('Process Area is required.', 'warning');
+            return;
+        }
+        if (findMasterPlantDuplicate(category, value, parentPlant, parentDepartment, parentProcessArea, null)) {
+            setMasterPlantMessage(masterPlantDuplicateMessage(config), 'warning');
+            return;
+        }
+        const payload = { name: value };
+        if (config.parentPlant) {
+            payload.parentPlant = parentPlant;
+        }
+        if (config.parentDepartment) {
+            payload.parentDepartment = parentDepartment;
+        }
+        if (config.parentProcessArea) {
+            payload.parentProcessArea = parentProcessArea;
         }
         $.ajax({
             url: masterPlantUrl(category),
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ name: value }),
+            data: JSON.stringify(payload),
             success: function(data) {
                 if (data && data.status === 'success') {
                     $(config.input).val('');
@@ -6698,6 +6884,13 @@ function regroupRows($container){
         if (!id || !config) return;
         if (!value) {
             setMasterPlantMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        const existing = (masterPlantItems[category] || []).find(function(item) {
+            return String(item.id || '') === String(id);
+        }) || {};
+        if (findMasterPlantDuplicate(category, value, existing.parentPlant || '', existing.parentDepartment || '', existing.parentProcessArea || '', id)) {
+            setMasterPlantMessage(masterPlantDuplicateMessage(config), 'warning');
             return;
         }
         $.ajax({
@@ -6744,7 +6937,7 @@ function regroupRows($container){
     function openMasterPlantDeleteConfirm($row) {
         const category = $row.data('category');
         const config = MASTER_PLANT_CONFIG[category];
-        const itemName = $row.find('.master-plant-name').text() || 'this item';
+        const itemName = $row.data('name') || $row.find('.master-plant-name').clone().children().remove().end().text() || 'this item';
         pendingMasterPlantDelete = $row;
         $('#masterPlantDeleteConfirmText').text('Delete "' + itemName + '"? Undo is not possible.');
         $('#masterPlantDeleteConfirmModal').css('display', 'flex');
@@ -6759,8 +6952,94 @@ function regroupRows($container){
         pendingMasterPlantDelete = null;
     }
 
+    function openMasterPlantAddModal() {
+        $('#masterPlantModalInput').val('');
+        setMasterPlantAddMessage('', '');
+        $('#masterPlantAddModal').css('display', 'flex');
+        $('#masterPlantModalInput').trigger('focus');
+    }
+
+    function closeMasterPlantAddModal() {
+        $('#masterPlantAddModal').hide();
+        $('#masterPlantModalInput').val('');
+        setMasterPlantAddMessage('', '');
+    }
+
+    function saveMasterPlantFromModal() {
+        const value = ($('#masterPlantModalInput').val() || '').trim();
+        if (!value) {
+            setMasterPlantAddMessage('Plant name is required.', 'warning');
+            return;
+        }
+        if (findMasterPlantDuplicate('PLANT', value, '', '', '', null)) {
+            setMasterPlantAddMessage('Plant already exists. Use a different name.', 'warning');
+            return;
+        }
+        const $button = $('#saveMasterPlantAdd');
+        $button.prop('disabled', true);
+        $.ajax({
+            url: masterPlantUrl('PLANT'),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    closeMasterPlantAddModal();
+                    setMasterPlantMessage('Plant added.', 'success');
+                    loadMasterPlantCategory('PLANT', function() {
+                        selectMasterPlant((data.item && data.item.name) || value);
+                    });
+                } else {
+                    setMasterPlantAddMessage((data && data.message) || 'Unable to add Plant.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterPlantAddMessage('Unable to add Plant: ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            },
+            complete: function() {
+                $button.prop('disabled', false);
+            }
+        });
+    }
+
     $('.master-plant-add-btn').on('click', function() {
         saveMasterPlantCategory($(this).data('category'));
+    });
+
+    $('#openMasterPlantAddModal').on('click', openMasterPlantAddModal);
+
+    $('#saveMasterPlantAdd').on('click', saveMasterPlantFromModal);
+
+    $('#masterPlantModalInput').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterPlantFromModal();
+        }
+        if (event.key === 'Escape') {
+            closeMasterPlantAddModal();
+        }
+    });
+
+    $('#closeMasterPlantAddModal, #cancelMasterPlantAdd, #masterPlantAddModal').on('click', function(event) {
+        if (event.target === this) {
+            closeMasterPlantAddModal();
+        }
+    });
+
+    $('#masterPlantSelect').on('change', function() {
+        selectMasterPlant($(this).val() || '');
+    });
+
+    $('#masterProcessAreaPlantSelect').on('change', function() {
+        refreshMasterPlantDepartmentSelect('');
+    });
+
+    $('#masterDesignationPlantSelect').on('change', function() {
+        refreshMasterDesignationDepartmentSelect('');
+        refreshMasterDesignationProcessAreaSelect('');
+    });
+
+    $('#masterDesignationDepartmentSelect').on('change', function() {
+        refreshMasterDesignationProcessAreaSelect('');
     });
 
     $('.master-plant-input').on('keydown', function(event) {
@@ -6798,7 +7077,7 @@ function regroupRows($container){
         const category = $row.data('category');
         const item = {
             id: $row.data('id'),
-            name: $row.find('.master-plant-name').text()
+            name: $row.data('name') || $row.find('.master-plant-name').clone().children().remove().end().text()
         };
         $row.replaceWith(masterPlantEditRowHtml(category, item));
     });

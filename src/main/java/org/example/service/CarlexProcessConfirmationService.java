@@ -58,16 +58,7 @@ public class CarlexProcessConfirmationService {
     }
 
     public List<CarlexProcessConfirmation> listForUser(String username, String role) {
-        List<CarlexProcessConfirmation> rows = list();
-        if (RoleAccess.isAdmin(role)) {
-            return rows;
-        }
-        Optional<AppUser> current = currentUser(username);
-        if (current.isEmpty()) {
-            return List.of();
-        }
-        AppUser user = current.get();
-        return rows.stream().filter(record -> canSeeRecord(record, user)).toList();
+        return list();
     }
 
     public Optional<CarlexProcessConfirmation> get(Long id) {
@@ -347,7 +338,8 @@ public class CarlexProcessConfirmationService {
         List<AppUser> scoped = activeUsers().stream()
                 .filter(user -> matchesScope(user, department, area))
                 .toList();
-        List<AppUser> pool = scoped.isEmpty() ? activeUsers() : scoped;
+        boolean hasScope = !isBlank(department) || !isBlank(area);
+        List<AppUser> pool = hasScope ? scoped : activeUsers();
         if (RoleAccess.isAdmin(role)) {
             return pool.stream().map(this::userOption).toList();
         }

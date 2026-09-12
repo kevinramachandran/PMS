@@ -11,7 +11,7 @@ $(function() {
     let searchTerm = '';
     let statusChart = null;
     let departmentChart = null;
-    let detailsVisible = false;
+    let detailsVisible = $('#toggleDetailsBtn').length === 0;
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -265,7 +265,7 @@ $(function() {
     function renderStatusChart(rows) {
         const closed = rows.filter(isClosed).length;
         const open = rows.length - closed;
-        const context = document.getElementById('gembaKaizenStatusChart');
+        const context = document.getElementById('gembaKaizenStatusChart') || document.getElementById('gembaKaizenChart');
         if (!context || typeof Chart === 'undefined') {
             return;
         }
@@ -353,13 +353,16 @@ $(function() {
             return;
         }
         if (!rows.length) {
-            $body.html('<tr><td colspan="13" class="empty-row">No Gemba Kaizen records found.</td></tr>');
+            $body.html('<tr><td colspan="16" class="empty-row">No Gemba Kaizen records found.</td></tr>');
             return;
         }
         $body.html(rows.map(function(record) {
             return '<tr>' +
                 '<td>' + escapeHtml(record.id) + '</td>' +
+                '<td>' + escapeHtml(record.name) + '</td>' +
                 '<td>' + escapeHtml(record.lastModifiedTime) + '</td>' +
+                '<td>' + escapeHtml(record.gembaKaizenProviderName) + '</td>' +
+                '<td>' + escapeHtml(record.employeeIdHoNumber) + '</td>' +
                 '<td>' + escapeHtml(recordDepartment(record)) + '</td>' +
                 '<td>' + escapeHtml(record.classificationOfKaizen) + '</td>' +
                 '<td>' + escapeHtml(recordArea(record)) + '</td>' +
@@ -367,7 +370,7 @@ $(function() {
                 '<td>' + escapeHtml(record.kaizenIdea) + '</td>' +
                 '<td>' + attachmentIcon('gemba-kaizen', record.pictureImage, record.pictureImage) + '</td>' +
                 '<td>' + escapeHtml(record.benefitsOfKaizen) + '</td>' +
-                '<td>' + escapeHtml(statusLabel(record)) + '</td>' +
+                '<td>' + escapeHtml(record.isKaizenImplemented || statusLabel(record)) + '</td>' +
                 '<td>' + escapeHtml(record.assignedTo) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
                 '<td><button type="button" class="gk-open-btn" data-id="' + escapeHtml(record.id) + '" title="Open record" aria-label="Open Gemba Kaizen record"><i class="fas fa-arrow-up-right-from-square"></i></button></td>' +

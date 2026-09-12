@@ -38,7 +38,7 @@ public class GembaWalkConfigController {
         if (!canView(session) && !canViewReporting(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return service.findForUser(id, username(session), role(session))
+        return service.find(id)
                 .<ResponseEntity<Map<String, Object>>>map(record -> ResponseEntity.ok(Map.of("record", record)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
     }
@@ -46,7 +46,7 @@ public class GembaWalkConfigController {
     @GetMapping("/records/{id}/history")
     public ResponseEntity<?> history(@PathVariable Long id, HttpSession session) {
         if (!canView(session) && !canViewReporting(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
-        if (service.findForUser(id, username(session), role(session)).isEmpty()) {
+        if (service.find(id).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found"));
         }
         return ResponseEntity.ok(assignmentHistoryService.history("gemba-walk", id));
@@ -82,13 +82,14 @@ public class GembaWalkConfigController {
     }
 
     @GetMapping("/options")
-    public ResponseEntity<Map<String, Object>> options(@RequestParam(value = "location", required = false) String location,
+    public ResponseEntity<Map<String, Object>> options(@RequestParam(value = "department", required = false) String department,
+                                                       @RequestParam(value = "location", required = false) String location,
                                                        @RequestParam(value = "recordId", required = false) Long recordId,
                                                        HttpSession session) {
         if (!canView(session) && !canViewReporting(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), location, recordId)));
+        return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), department, location, recordId)));
     }
 
     private boolean canView(HttpSession session) {

@@ -121,12 +121,12 @@ public class AuthService {
         if (name == null || name.trim().isEmpty()) return Optional.of("Name is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
         if (password == null || password.trim().isEmpty()) return Optional.of("Password is required");
-        if (!RoleAccess.isSupported(role)) return Optional.of("Role is not supported");
+        if (!isAccountRoleSupported(role)) return Optional.of("Role must be Admin or User");
 
         String normalizedUsername = username.trim();
         String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedEmail = email.trim();
-        String normalizedRole = RoleAccess.normalize(role);
+        String normalizedRole = normalizeAccountRole(role);
         String normalizedStatus = normalizeStatus(status);
         Optional<String> masterDataValidation = validateMasterDataProfile(department, area, plant, designation);
         if (masterDataValidation.isPresent()) {
@@ -189,7 +189,7 @@ public class AuthService {
         if (id == null) return Optional.of("User id is required");
         if (name == null || name.trim().isEmpty()) return Optional.of("Name is required");
         if (email == null || email.trim().isEmpty()) return Optional.of("Email is required");
-        if (!RoleAccess.isSupported(role)) return Optional.of("Role is not supported");
+        if (!isAccountRoleSupported(role)) return Optional.of("Role must be Admin or User");
 
         Optional<AppUser> maybeUser = appUserRepository.findById(id);
         if (maybeUser.isEmpty()) return Optional.of("User not found");
@@ -201,7 +201,7 @@ public class AuthService {
 
         String normalizedEmail = email.trim();
         String normalizedEmployeeId = normalizeOptional(employeeId);
-        String normalizedRole = RoleAccess.normalize(role);
+        String normalizedRole = normalizeAccountRole(role);
         String normalizedStatus = normalizeStatus(status);
         Optional<String> masterDataValidation = validateMasterDataProfile(department, area, plant, designation);
         if (masterDataValidation.isPresent()) {
@@ -274,6 +274,8 @@ public class AuthService {
                             Map<String, String> row = new HashMap<>();
                             row.put("name", trimToEmpty(item.getName()));
                             row.put("parentPlant", trimToEmpty(item.getParentPlant()));
+                            row.put("parentDepartment", trimToEmpty(item.getParentDepartment()));
+                            row.put("parentProcessArea", trimToEmpty(item.getParentProcessArea()));
                             return row;
                         })
                         .toList()
@@ -281,7 +283,7 @@ public class AuthService {
     }
 
     private UserInfo toUserInfo(AppUser user) {
-        String role = RoleAccess.normalize(user.getRole());
+        String role = RoleAccess.isAdmin(user.getRole()) ? RoleAccess.ADMIN : RoleAccess.USER;
         Set<String> viewPermissions = parsePermissionCsv(user.getPageViewPermissions());
         Set<String> editPermissions = parsePermissionCsv(user.getPageEditPermissions());
         if (RoleAccess.isAdmin(role)) {
@@ -296,6 +298,15 @@ public class AuthService {
 
     private boolean isActiveUser(AppUser user) {
         return STATUS_ACTIVE.equals(normalizeStatus(user.getStatus()));
+    }
+
+    private boolean isAccountRoleSupported(String role) {
+        String normalized = RoleAccess.normalize(role);
+        return RoleAccess.ADMIN.equals(normalized) || RoleAccess.USER.equals(normalized);
+    }
+
+    private String normalizeAccountRole(String role) {
+        return RoleAccess.ADMIN.equals(RoleAccess.normalize(role)) ? RoleAccess.ADMIN : RoleAccess.USER;
     }
 
     private void applyEmployeeProfile(AppUser user,
@@ -344,8 +355,13 @@ public class AuthService {
         if (!isConfiguredMasterValue(designation, PlantMasterDataService.DESIGNATION)) {
             return Optional.of("Designation must be configured in Master Data");
         }
-        if (!isDesignationUnderPlant(designation, plant)) {
-            return Optional.of("Designation must be under the selected Plant");
+        if (!trimToEmpty(designation).isBlank() && splitAreaValues(area).isEmpty()) {
+            return Optional.of("Process Area is required for Designation");
+        }
+        for (String areaValue : splitAreaValues(area)) {
+            if (!isDesignationUnderProcessArea(designation, plant, department, areaValue)) {
+                return Optional.of("Designation must be under the selected Process Area");
+            }
         }
         return Optional.empty();
     }
@@ -390,16 +406,24 @@ public class AuthService {
                 .anyMatch(parentPlant -> parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue));
     }
 
-    private boolean isDesignationUnderPlant(String designation, String plant) {
+    private boolean isDesignationUnderProcessArea(String designation, String plant, String department, String area) {
         String designationValue = trimToEmpty(designation);
         String plantValue = trimToEmpty(plant);
-        if (designationValue.isBlank() || plantValue.isBlank()) {
+        String departmentValue = trimToEmpty(department);
+        String areaValue = trimToEmpty(area);
+        if (designationValue.isBlank() || plantValue.isBlank() || departmentValue.isBlank() || areaValue.isBlank()) {
             return true;
         }
         return plantMasterDataService.list(PlantMasterDataService.DESIGNATION).stream()
                 .filter(item -> trimToEmpty(item.getName()).equalsIgnoreCase(designationValue))
-                .map(item -> trimToEmpty(item.getParentPlant()))
-                .anyMatch(parentPlant -> parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue));
+                .anyMatch(item -> {
+                    String parentPlant = trimToEmpty(item.getParentPlant());
+                    String parentDepartment = trimToEmpty(item.getParentDepartment());
+                    String parentProcessArea = trimToEmpty(item.getParentProcessArea());
+                    return (parentPlant.isBlank() || parentPlant.equalsIgnoreCase(plantValue))
+                            && (parentDepartment.isBlank() || parentDepartment.equalsIgnoreCase(departmentValue))
+                            && (parentProcessArea.isBlank() || parentProcessArea.equalsIgnoreCase(areaValue));
+                });
     }
 
     private boolean requiresArea(String designation) {
