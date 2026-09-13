@@ -6,13 +6,14 @@
     <title>CarlEX Process Confirmation - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/process-confirmation.css?v=carlex-records-20260903">
+    <link rel="stylesheet" href="/css/process-confirmation.css?v=filters-20260913">
     <link rel="stylesheet" href="/css/pms-attachment.css?v=20260830">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg process-confirmation-page">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -54,11 +55,11 @@
                         <a href="/settings?config=lsr-tracking" class="nav-item nav-child" th:if="${session.canViewLsrTrackingConfiguration}" data-tooltip="LSR Tracking"><i class="fas fa-graduation-cap"></i><span>LSR Tracking</span></a>
                     </div>
                 </div>            <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Reporting"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -97,12 +98,100 @@
         </header>
 
         <div class="content-area">
-            <section class="pc-card carlex-records-card">
-                <div class="pc-page-toolbar">
-                    <div><h2>CarlEX Process Confirmation</h2><p>Review completed process confirmation records.</p></div>
-                    <a class="issue-add-button" href="/process-confirmation-config"><i class="fas fa-sliders"></i><span>Configuration</span></a>
+            <section class="pc-report-counts" aria-label="CarlEX Process Confirmation counts">
+                <button type="button" class="gw-count-card active" data-status-filter="all">
+                    <span>Reported</span>
+                    <strong id="reportedCount">0</strong>
+                </button>
+                <button type="button" class="gw-count-card" data-status-filter="open">
+                    <span>Open</span>
+                    <strong id="openCount">0</strong>
+                </button>
+                <button type="button" class="gw-count-card" data-status-filter="closed">
+                    <span>Closed</span>
+                    <strong id="closedCount">0</strong>
+                </button>
+                <button type="button" class="gw-count-card gw-percent-card">
+                    <span>% Closed</span>
+                    <strong id="closedPercent">0%</strong>
+                </button>
+            </section>
+
+            <section class="pc-card pc-report-card">
+                <div class="pc-section-title">
+                    <div>
+                        <h2>CarlEX Process Confirmation</h2>
+                        <p id="pcFilterSummary">All periods | 0 records</p>
+                    </div>
+                    <a class="issue-add-button" href="/process-confirmation-config"><i class="fas fa-plus"></i><span>New Record</span></a>
                 </div>
-                <div class="pc-records-wrap"><table class="pc-records-table"><thead><tr><th>#</th><th>ID</th><th>Date of GW Process Confirmation</th><th>Name</th><th>Area</th><th>Responsibility</th><th>Assigned To</th><th>Done By</th><th>Start time</th><th>Completion time</th><th>Pictures</th><th>Assignment History</th><th>Actions</th></tr></thead><tbody id="pcRecordsBody"><tr><td colspan="13">Loading records...</td></tr></tbody></table></div>
+                <div class="pc-filter-grid">
+                    <div class="pc-filter-group">
+                        <label for="periodFilter">Report</label>
+                        <select id="periodFilter">
+                            <option value="ALL">All</option>
+                            <option value="FTD">FTD</option>
+                            <option value="MTD">MTD</option>
+                            <option value="YTD">YTD</option>
+                        </select>
+                    </div>
+                    <div class="pc-filter-group">
+                        <label for="anchorDateFilter">Date</label>
+                        <input type="date" id="anchorDateFilter">
+                    </div>
+                    <div class="pc-filter-group">
+                        <label for="plantFilter">Plant</label>
+                        <select id="plantFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="pc-filter-group">
+                        <label for="departmentFilter">Department</label>
+                        <select id="departmentFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="pc-filter-group">
+                        <label for="areaFilter">Area</label>
+                        <select id="areaFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="pc-filter-group">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter">
+                            <option value="all">All</option>
+                            <option value="open">Open</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pc-chart-grid">
+                    <div class="pc-chart-wrap">
+                        <canvas id="pcStatusChart" aria-label="CarlEX Process Confirmation status chart"></canvas>
+                    </div>
+                    <div class="pc-chart-wrap">
+                        <canvas id="pcDepartmentChart" aria-label="CarlEX Process Confirmation department chart"></canvas>
+                    </div>
+                </div>
+                <div class="pc-summary-grid">
+                    <div class="pc-summary-table" id="departmentSummaryTable"></div>
+                    <div class="pc-summary-table" id="areaSummaryTable"></div>
+                </div>
+            </section>
+
+            <section class="pc-card carlex-records-card pc-detail-card">
+                <div class="pc-page-toolbar">
+                    <div><h2>Records</h2></div>
+                    <div class="issue-search" role="search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="search" id="pcReportingSearch" placeholder="Search" aria-label="Search CarlEX Process Confirmation records">
+                        <button type="button" id="pcReportingSearchClear" class="issue-search-clear" aria-label="Clear CarlEX Process Confirmation search">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="pc-records-wrap gw-detail-table-wrap"><table class="pc-records-table"><thead><tr><th>#</th><th>Department</th><th>Area</th><th>Name</th><th>Email</th><th>Date</th><th>GW PC Week</th><th>Observations</th><th>Status</th><th>Assigned To</th><th>Responsibility</th><th>Pictures</th><th>Assignment History</th><th>Open</th></tr></thead><tbody id="pcReportingTableBody"><tr><td colspan="14">Loading records...</td></tr></tbody></table></div>
             </section>
             <section class="pc-card pc-legacy-view" aria-hidden="true">
                 <div class="pc-meta-row">
@@ -156,7 +245,7 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation.js?v=reporting-visible-20260912"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation.js?v=filters-20260913"></script>
 <script src="/js/pms-attachment.js?v=20260830"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>

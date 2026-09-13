@@ -132,7 +132,7 @@ public class PlantMasterDataService {
     }
 
     private String normalizeParentDepartment(String category, String parentPlant, String parentDepartment) {
-        if (!PROCESS_AREA.equals(category) && !DESIGNATION.equals(category)) {
+        if (!PROCESS_AREA.equals(category)) {
             return "";
         }
         String normalized = normalizeName(parentDepartment);
@@ -143,14 +143,7 @@ public class PlantMasterDataService {
     }
 
     private String normalizeParentProcessArea(String category, String parentPlant, String parentDepartment, String parentProcessArea) {
-        if (!DESIGNATION.equals(category)) {
-            return "";
-        }
-        String normalized = normalizeName(parentProcessArea);
-        if (!exists(PROCESS_AREA, normalized, parentPlant, parentDepartment, "")) {
-            throw new IllegalArgumentException("Process Area must be configured under the selected Department before adding Designation");
-        }
-        return normalized;
+        return "";
     }
 
     private boolean exists(String category, String name, String parentPlant, String parentDepartment) {
@@ -197,20 +190,8 @@ public class PlantMasterDataService {
             boolean hasAreas = list(PROCESS_AREA).stream()
                     .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(trim(item.getParentPlant()))
                             && trim(child.getParentDepartment()).equalsIgnoreCase(item.getName()));
-            boolean hasDesignations = list(DESIGNATION).stream()
-                    .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(trim(item.getParentPlant()))
-                            && trim(child.getParentDepartment()).equalsIgnoreCase(item.getName()));
-            if (hasAreas || hasDesignations) {
+            if (hasAreas) {
                 throw new IllegalArgumentException("Delete areas under this Department before deleting the Department");
-            }
-        }
-        if (PROCESS_AREA.equals(item.getCategory())) {
-            boolean hasDesignations = list(DESIGNATION).stream()
-                    .anyMatch(child -> trim(child.getParentPlant()).equalsIgnoreCase(trim(item.getParentPlant()))
-                            && trim(child.getParentDepartment()).equalsIgnoreCase(trim(item.getParentDepartment()))
-                            && trim(child.getParentProcessArea()).equalsIgnoreCase(item.getName()));
-            if (hasDesignations) {
-                throw new IllegalArgumentException("Delete designations under this Process Area before deleting the Process Area");
             }
         }
     }

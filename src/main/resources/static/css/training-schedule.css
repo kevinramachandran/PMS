@@ -17,15 +17,32 @@
 
 .ts-table-wrap {
     overflow: auto;
+    max-height: min(640px, calc(100vh - 230px));
 }
 
 .ts-table {
     width: 100%;
     min-width: 1500px;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.ts-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.ts-table thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 31;
 }
 
 .ts-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 32;
     background: #f9fafb;
     color: #374151;
     padding: 10px 8px;

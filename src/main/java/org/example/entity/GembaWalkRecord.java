@@ -3,6 +3,7 @@ package org.example.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,12 +55,38 @@ public class GembaWalkRecord {
     @Column(length = 1000)
     private String finalComments;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @Transient
     private String assignmentRemark;
+
+    @Transient
+    private String displayManagerName;
+
+    @Transient
+    private String displayEmail;
 
     @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("observationOrder ASC, id ASC")
     private List<GembaWalkObservation> observations = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -181,8 +208,40 @@ public class GembaWalkRecord {
         this.finalComments = finalComments;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public String getAssignmentRemark() { return assignmentRemark; }
     public void setAssignmentRemark(String assignmentRemark) { this.assignmentRemark = assignmentRemark; }
+
+    public String getDisplayManagerName() {
+        return displayManagerName;
+    }
+
+    public void setDisplayManagerName(String displayManagerName) {
+        this.displayManagerName = displayManagerName;
+    }
+
+    public String getDisplayEmail() {
+        return displayEmail;
+    }
+
+    public void setDisplayEmail(String displayEmail) {
+        this.displayEmail = displayEmail;
+    }
 
     public List<GembaWalkObservation> getObservations() {
         return observations;

@@ -49,15 +49,15 @@ public class GembaWalkConfigService {
     }
 
     public Optional<GembaWalkRecord> find(Long id) {
-        return repository.findById(id);
+        return repository.findById(id).map(this::withDisplayIdentity);
     }
 
     public List<GembaWalkRecord> list() {
-        return repository.findAll();
+        return withDisplayIdentity(repository.findAll());
     }
 
     public List<GembaWalkRecord> listForUser(String username, String role) {
-        return repository.findAll();
+        return withDisplayIdentity(repository.findAll());
     }
 
     public Optional<GembaWalkRecord> findForUser(Long id, String username, String role) {
@@ -176,6 +176,28 @@ public class GembaWalkConfigService {
         validateConfigured(record.getLocationOfMswConducted(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Location of MSW Conducted");
     }
 
+    private List<GembaWalkRecord> withDisplayIdentity(List<GembaWalkRecord> records) {
+        records.forEach(this::withDisplayIdentity);
+        return records;
+    }
+
+    private GembaWalkRecord withDisplayIdentity(GembaWalkRecord record) {
+        if (record == null) {
+            return null;
+        }
+        String manager = firstNonBlank(record.getManagerName(), record.getCreatedBy());
+        String email = firstNonBlank(record.getEmail(), "");
+        Optional<AppUser> creator = resolveUser(record.getCreatedBy());
+        if (creator.isPresent()) {
+            AppUser user = creator.get();
+            manager = firstNonBlank(record.getManagerName(), user.getName(), user.getUsername(), record.getCreatedBy());
+            email = firstNonBlank(record.getEmail(), user.getEmail());
+        }
+        record.setDisplayManagerName(manager);
+        record.setDisplayEmail(email);
+        return record;
+    }
+
     private void replaceObservations(GembaWalkRecord record, List<GembaWalkObservation> observations) {
         if (record.getObservations() == null) {
             record.setObservations(new ArrayList<>());
@@ -272,16 +294,20 @@ public class GembaWalkConfigService {
     }
 
     private Optional<String> responsibilityEmail(String responsibility) {
-        String value = trim(responsibility);
-        if (value.isBlank()) {
-            return Optional.empty();
-        }
-        return userRepository.findByUsernameIgnoreCase(value)
-                .or(() -> userRepository.findByEmailIgnoreCase(value))
-                .or(() -> userRepository.findByNameIgnoreCase(value))
-                .or(() -> userRepository.findByEmployeeIdIgnoreCase(value))
+        return resolveUser(responsibility)
                 .map(AppUser::getEmail)
                 .filter(email -> !isBlank(email));
+    }
+
+    private Optional<AppUser> resolveUser(String value) {
+        String normalized = trim(value);
+        if (normalized.isBlank()) {
+            return Optional.empty();
+        }
+        return userRepository.findByUsernameIgnoreCase(normalized)
+                .or(() -> userRepository.findByEmailIgnoreCase(normalized))
+                .or(() -> userRepository.findByNameIgnoreCase(normalized))
+                .or(() -> userRepository.findByEmployeeIdIgnoreCase(normalized));
     }
 
     private List<String> areaHodEmails(String department, String location) {
@@ -603,6 +629,19 @@ public class GembaWalkConfigService {
 
     private String firstNonBlank(String first, String second) {
         return isBlank(first) ? trim(second) : trim(first);
+    }
+
+    private String firstNonBlank(String first, String second, String... rest) {
+        String selected = firstNonBlank(first, second);
+        if (!isBlank(selected)) {
+            return selected;
+        }
+        for (String value : rest) {
+            if (!isBlank(value)) {
+                return trim(value);
+            }
+        }
+        return "";
     }
 
     private String trim(String value) {

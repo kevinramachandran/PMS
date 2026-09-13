@@ -126,13 +126,6 @@ $(function () {
         $('#assignTo').html(html);
     }
 
-    function populateRaisedByUsers(users) {
-        const html = (users || []).map(function(user) {
-            return '<option value="' + escapeAttr(user.username || '') + '">' + escapeHtml(userLabel(user)) + '</option>';
-        }).join('');
-        $('#reportingUsersList').html(html);
-    }
-
     function loadOptions() {
         return $.ajax({
             url: API + '/options',
@@ -153,9 +146,6 @@ $(function () {
                 populateAssignTo(options.assignableUsers || []);
                 if (!$('#assignTo').val() && options.defaultAssignee) {
                     $('#assignTo').val(options.defaultAssignee);
-                }
-                if (!$('#tagRaisedBy').val()) {
-                    $('#tagRaisedBy').val(currentUser.name || currentUser.username || username);
                 }
             },
             error: function() {
@@ -188,7 +178,6 @@ $(function () {
         return {
             typeOfTag: $('#typeOfTag').val(),
             priority: $('#priority').val(),
-            tagRaisedBy: $('#tagRaisedBy').val(),
             dateRaised: $('#dateRaised').val() || null,
             shift: $('#shift').val(),
             department: $('#department').val(),
@@ -255,7 +244,6 @@ $(function () {
         $('#abnormalityReportingId').val(item.id || '');
         $('#typeOfTag').val(item.typeOfTag || '');
         $('#priority').val(item.priority || '');
-        $('#tagRaisedBy').val(item.tagRaisedBy || username || '');
         $('#dateRaised').val(item.dateRaised || '');
         $('#shift').val(item.shift || '');
         $('#department').val(item.department || '');

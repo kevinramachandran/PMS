@@ -32,7 +32,6 @@ $(function() {
         ['completionTime', 'Completion time', 'time'],
         ['dateOfGwProcessConfirmationConducted', 'Date of the GW Process Confirmation conducted', 'date'],
         ['gwPcWeek', 'GW PC week', 'text'],
-        ['areaResponsibility', 'Area / Department HOD', 'text'],
         ['assignedTo', 'Assigned To', 'select'],
         ['assignmentRemark', 'Assignment / Reassignment Remarks', 'textarea']
     ];
@@ -102,7 +101,8 @@ $(function() {
     }
 
     function buildForm() {
-        $('#carlexFields').html(baseFields.map(fieldHtml).join('') +
+        $('#carlexFields').html('<input type="hidden" id="areaResponsibility">' +
+            baseFields.map(fieldHtml).join('') +
             '<div class="carlex-observations-wide">' +
             observationGroupHtml('zm') + observationGroupHtml('pm') + observationGroupHtml('qm') +
             '</div>');
@@ -112,43 +112,103 @@ $(function() {
     }
 
     function populateSelect(selector, values, current, placeholder) {
+        const selected = String(current || '').trim();
+        const list = (values || []).slice();
+        if (selected && !list.some(function(value) { return String(value || '').trim().toLowerCase() === selected.toLowerCase(); })) {
+            list.push(selected);
+        }
         const options = ['<option value="">' + esc(placeholder || '') + '</option>']
-            .concat((values || []).map(function(value) {
+            .concat(list.map(function(value) {
                 return '<option value="' + esc(value) + '">' + esc(value) + '</option>';
             }));
-        $(selector).html(options.join('')).val(current || '');
+        $(selector).html(options.join('')).val(selected);
     }
 
     function populateDepartments() {
         populateSelect('#department', departments, $('#department').val(), 'Select department');
     }
 
-    function filteredAreas() {
+    function filteredAreaItems() {
         const department = $('#department').val();
-        return areaItems
-            .filter(function(item) {
-                return !department || String(item.parentDepartment || '').trim().toLowerCase() === department.trim().toLowerCase();
-            })
-            .map(function(item) { return item.name; });
+        if (!department) {
+            return areaItems;
+        }
+        return areaItems.filter(function(item) {
+                return String(item.parentDepartment || '').trim().toLowerCase() === department.trim().toLowerCase();
+            });
+    }
+
+    function filteredAreas() {
+        return filteredAreaItems().map(function(item) { return item.name; });
     }
 
     function populateAreas(current) {
         populateSelect('#areaOfGwProcessConfirmationConducted', filteredAreas(), current || $('#areaOfGwProcessConfirmationConducted').val(), 'Select area');
     }
 
-    function deriveDepartmentFromArea() {
+    function syncDepartmentFromArea() {
         const area = $('#areaOfGwProcessConfirmationConducted').val();
         if (!area) return;
-        const item = areaItems.find(function(candidate) {
-            return String(candidate.name || '').trim().toLowerCase() === area.trim().toLowerCase();
+        const areaItem = areaItems.find(function(item) {
+            return String(item.name || '').trim().toLowerCase() === area.trim().toLowerCase();
         });
-        if (item && item.parentDepartment) {
-            $('#department').val(item.parentDepartment);
+        if (areaItem && areaItem.parentDepartment) {
+            $('#department').val(areaItem.parentDepartment);
             populateAreas(area);
+            $('#areaOfGwProcessConfirmationConducted').val(area);
         }
     }
 
-    function loadOptions(callback) {
+    function areaHodLabel(user) {
+        if (!user) return '';
+        return user.label || user.name || user.username || '';
+    }
+
+    function userMatchesDepartment(user, department) {
+        return !department || String(user.department || '').trim().toLowerCase() === department.trim().toLowerCase();
+    }
+
+    function isHodUser(user) {
+        const designation = String(user.designation || '').toUpperCase();
+        const role = String(user.role || '').toUpperCase();
+        return designation.indexOf('AREA HOD') !== -1
+            || designation.indexOf('AREA_HOD') !== -1
+            || designation.indexOf('AREA HEAD') !== -1
+            || designation.indexOf('HOD') !== -1
+            || role === 'AREA_HOD'
+            || role === 'HOD';
+    }
+
+    function departmentHod() {
+        const department = $('#department').val();
+        return assignmentUsers.find(function(user) {
+            return isHodUser(user) && userMatchesDepartment(user, department);
+        });
+    }
+
+    function assignedUser() {
+        const selected = $('#assignedTo').val();
+        return assignmentUsers.find(function(user) {
+            return String(user.username || '').trim().toLowerCase() === String(selected || '').trim().toLowerCase();
+        });
+    }
+
+    function syncAreaResponsibility() {
+        const user = assignedUser() || departmentHod();
+        $('#areaResponsibility').val(areaHodLabel(user));
+    }
+
+    function syncAssignedTo(defaultAssignedTo, forceDefault) {
+        const current = $('#assignedTo').val();
+        const hod = departmentHod();
+        const target = defaultAssignedTo || (hod && hod.username) || '';
+        if ((forceDefault || !current) && target) {
+            $('#assignedTo').val(target);
+        }
+        syncAreaResponsibility();
+    }
+
+    function loadOptions(callback, forceDefaultAssignee) {
         const params = {
             department: $('#department').val() || '',
             area: $('#areaOfGwProcessConfirmationConducted').val() || '',
@@ -160,14 +220,18 @@ $(function() {
             departments = options.departments || [];
             areaItems = options.areaItems || [];
             assignmentUsers = options.assignmentUsers || [];
+            const currentAssignedTo = $('#assignedTo').val();
             populateDepartments();
             populateAreas();
             $('#assignedTo').html('<option value=""></option>' + assignmentUsers.map(function(user) {
                 return '<option value="' + esc(user.username) + '">' + esc(user.label || user.username) + '</option>';
             }).join(''));
-            if (!$('#assignedTo').val() && options.defaultAssignedTo) {
-                $('#assignedTo').val(options.defaultAssignedTo);
+            if (currentAssignedTo && assignmentUsers.some(function(user) {
+                return String(user.username || '').trim().toLowerCase() === currentAssignedTo.trim().toLowerCase();
+            })) {
+                $('#assignedTo').val(currentAssignedTo);
             }
+            syncAssignedTo(options.defaultAssignedTo, !!forceDefaultAssignee);
             if (typeof callback === 'function') callback();
         });
     }
@@ -195,8 +259,8 @@ $(function() {
                 return '<option value="' + esc(name) + '"' + (name === item.description ? ' selected' : '') + '>' + esc(name) + '</option>';
             }).join('');
             return '<div class="carlex-observation-row" data-group="' + groupKey + '" data-index="' + index + '">' +
-                '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Describe your observation number ' + (index + 1) + ' - Issues</label><select class="pc-observation-description">' + options + '</select></div>' +
-                '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' observation with Counter measure actions</label><textarea class="pc-observation-actions" rows="2">' + esc(item.counterMeasureActions) + '</textarea></div>' +
+                '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Describe observation ' + (index + 1) + ' - Issues</label><select class="pc-observation-description">' + options + '</select></div>' +
+                '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' Counter measure actions</label><textarea class="pc-observation-actions" rows="2">' + esc(item.counterMeasureActions) + '</textarea></div>' +
                 '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Status</label><select class="pc-observation-status">' +
                 '<option value=""></option><option value="P">P</option><option value="D">D</option><option value="C">C</option><option value="A">A</option></select></div>' +
                 '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><input class="pc-observation-image" type="file" accept="image/*" capture="environment"><input class="pc-observation-image-stored" type="hidden" value="' + esc(item.observationImage) + '"></div>' +
@@ -221,6 +285,39 @@ $(function() {
         }).get().filter(function(item, index) {
             return index === 0 || item.description || item.counterMeasureActions || item.status || item.observationImage;
         });
+    }
+
+    function isObservationTouched(item) {
+        return !!(item && (item.description || item.counterMeasureActions || item.status || item.observationImage));
+    }
+
+    function isObservationComplete(item) {
+        return !!(item && item.description && item.counterMeasureActions && item.status);
+    }
+
+    function validatePayload(data) {
+        if (!data.department) return 'Department is required.';
+        if (!data.areaOfGwProcessConfirmationConducted) return 'Area is required.';
+        let completeCount = 0;
+        let partialLabel = '';
+        Object.keys(GROUPS).forEach(function(groupKey) {
+            (observationState[groupKey] || []).forEach(function(item, index) {
+                if (isObservationComplete(item)) {
+                    completeCount += 1;
+                    return;
+                }
+                if (!partialLabel && isObservationTouched(item)) {
+                    partialLabel = GROUPS[groupKey].label + ' ' + (index + 1);
+                }
+            });
+        });
+        if (partialLabel) {
+            return partialLabel + ' must include description, counter measure actions, and status.';
+        }
+        if (!completeCount) {
+            return 'Enter at least one ZM, PM, or QM observation before saving.';
+        }
+        return '';
     }
 
     function syncStateFromDom() {
@@ -264,12 +361,15 @@ $(function() {
             qm: observationsFromRecord(record || {}, 'qm')
         };
         renderAllObservationGroups();
-        populateDepartments();
-        populateAreas((record || {}).areaOfGwProcessConfirmationConducted || '');
+        $('#areaResponsibility').val((record || {}).areaResponsibility || '');
         $('#department').val((record || {}).department || $('#department').val());
+        populateDepartments();
+        $('#department').val((record || {}).department || $('#department').val());
+        populateAreas((record || {}).areaOfGwProcessConfirmationConducted || '');
         $('#areaOfGwProcessConfirmationConducted').val((record || {}).areaOfGwProcessConfirmationConducted || '');
         loadOptions(function() {
             $('#assignedTo').val((record || {}).assignedTo || $('#assignedTo').val());
+            syncAreaResponsibility();
         });
     }
 
@@ -280,6 +380,8 @@ $(function() {
             const value = $('#' + field[0]).val();
             result[field[0]] = value || null;
         });
+        syncAreaResponsibility();
+        result.areaResponsibility = $('#areaResponsibility').val() || null;
         Object.keys(GROUPS).forEach(function(groupKey) {
             const observations = observationState[groupKey];
             result[GROUPS[groupKey].jsonField] = JSON.stringify(observations);
@@ -368,13 +470,19 @@ $(function() {
         e.preventDefault();
         if (readOnly || saveInFlight) return;
         const id = $('#carlexId').val();
+        const data = payload();
+        const validationMessage = validatePayload(data);
+        if (validationMessage) {
+            $('#carlexMessage').text(validationMessage).addClass('show error');
+            return;
+        }
         saveInFlight = true;
         setSaveLoading(true);
         $.ajax({
             url: API + (id ? '/' + id : ''),
             type: id ? 'PUT' : 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(payload()),
+            data: JSON.stringify(data),
             success: function(data) {
                 if (data && data.status === 'error') {
                     $('#carlexMessage').text(data.message || 'Unable to save record.').addClass('show error');
@@ -397,12 +505,16 @@ $(function() {
     $('#carlexCloseBtn, #carlexCancelBtn, #carlexBackdrop').on('click', close);
     $(document).on('change', '#department', function() {
         populateAreas('');
+        $('#areaResponsibility').val('');
         $('#assignedTo').val('');
-        loadOptions();
+        loadOptions(null, true);
     });
     $(document).on('change', '#areaOfGwProcessConfirmationConducted', function() {
-        $('#assignedTo').val('');
-        loadOptions();
+        syncDepartmentFromArea();
+        loadOptions(null, true);
+    });
+    $(document).on('change', '#assignedTo', function() {
+        syncAreaResponsibility();
     });
     $(document).on('click', '.carlex-add-observation', function() {
         syncStateFromDom();

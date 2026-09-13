@@ -303,6 +303,46 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.issue-config-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.issue-config-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0b6b2e;
+    font-size: 15px;
+    font-weight: 800;
+    min-width: 0;
+}
+
+.issue-config-search {
+    margin-left: auto;
+}
+
+#form-issue-board .issue-config-table-wrap {
+    max-height: min(620px, calc(100vh - 300px));
+    overflow: auto;
+}
+
+#form-issue-board #issueBoardConfigTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+}
+
+#form-issue-board #issueBoardConfigTable thead th:first-child,
+#form-issue-board #issueBoardConfigTable tbody td:first-child {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+}
+
 .metrics-export-dialog select {
     width: 100%;
 }
@@ -984,7 +1024,8 @@
 }
 
 #form-issue-board.issue-board-enterprise .issue-board-meta-card .issue-board-meta-grid.form-grid {
-    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    grid-template-columns: 150px 150px 150px minmax(220px, 1fr);
+    gap: 10px;
     align-items: end;
 }
 
@@ -1003,12 +1044,12 @@
 
 #form-issue-board.issue-board-enterprise .issue-config-toolbar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     margin-bottom: 10px;
 }
 
 #form-issue-board.issue-board-enterprise .issue-config-search {
-    width: min(360px, 100%);
+    width: 100%;
     height: 36px;
     display: flex;
     align-items: center;
@@ -2430,7 +2471,20 @@ padding:4px 8px;
 #trainingScheduleConfigTable {
     width: 100%;
     min-width: 1500px;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#trainingScheduleConfigTable thead {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+#trainingScheduleConfigTable thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 31;
 }
 
 #trainingScheduleConfigTable thead th {
@@ -2446,7 +2500,7 @@ padding:4px 8px;
     white-space: nowrap;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 32;
 }
 
 #trainingScheduleConfigTable tbody td {
@@ -2653,6 +2707,7 @@ padding:4px 8px;
 
 .master-plant-entry .btn {
     min-height: 38px;
+    white-space: nowrap;
 }
 
 .master-plant-entry .form-group,
@@ -4575,8 +4630,24 @@ table select {
 }
 
 #form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid {
-    grid-template-columns: repeat(3, minmax(220px, 1fr));
-    gap: 18px 32px;
+    grid-template-columns: 150px 150px 150px minmax(220px, 1fr);
+    gap: 10px;
+    align-items: end;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-search-field {
+    min-width: 0;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid .form-group {
+    min-width: 0;
+}
+
+#form-issue-board.issue-board-enterprise .issue-board-meta-grid.form-grid input[type="date"] {
+    min-width: 0;
+    width: 100%;
+    padding: 0 8px;
+    font-size: 12px;
 }
 
 #form-issue-board.issue-board-enterprise .issue-board-table-card {
@@ -4589,17 +4660,27 @@ table select {
 }
 
 #form-issue-board.issue-board-enterprise .issue-config-toolbar {
-    justify-content: flex-end;
-    padding: 0 18px 18px;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px 12px;
     margin: 0;
-    min-height: 44px;
-    pointer-events: none;
+    min-height: 36px;
 }
 
 #form-issue-board.issue-board-enterprise .issue-config-search {
-    width: min(430px, 100%);
     height: 38px;
-    pointer-events: auto;
+    margin-left: 0;
+}
+
+#form-issue-board.issue-board-enterprise .issue-config-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0b6b2e;
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
 }
 
 #form-issue-board.issue-board-enterprise .issue-config-table-wrap {
@@ -4619,6 +4700,9 @@ table select {
 }
 
 #form-issue-board #issueBoardConfigTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 15;
     height: 54px;
     padding: 0 12px;
     background: #ffffff;
@@ -4641,9 +4725,9 @@ table select {
 #form-issue-board #issueBoardConfigTable thead th:first-child,
 #form-issue-board #issueBoardConfigTable tbody td:first-child,
 #form-issue-board #issueBoardConfigTable tfoot td:first-child {
-    width: 60px;
-    min-width: 60px;
-    max-width: 60px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
     text-align: center;
 }
 
@@ -4942,6 +5026,30 @@ table select {
 #hsCrossConfigTable tbody tr:hover td,
 #lsrConfigTable tbody tr:hover td {
     background: #ffffff;
+}
+
+#trainingScheduleConfigTable {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#trainingScheduleConfigTable thead,
+#trainingScheduleConfigTable thead tr,
+#trainingScheduleConfigTable thead th {
+    position: sticky;
+    top: 0;
+}
+
+#trainingScheduleConfigTable thead {
+    z-index: 30;
+}
+
+#trainingScheduleConfigTable thead tr {
+    z-index: 31;
+}
+
+#trainingScheduleConfigTable thead th {
+    z-index: 32;
 }
 
 #form-gemba-schedule.issue-board-enterprise .sticky-save-bar,

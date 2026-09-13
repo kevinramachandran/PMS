@@ -51,7 +51,7 @@ public class CarlexProcessConfirmationController {
         if (!canView(session)) {
             return forbidden();
         }
-        if (service.get(id).isEmpty()) {
+        if (service.getForUser(id, username(session), role(session)).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found"));
         }
         List<AssignmentHistory> rows = assignmentHistoryService.history("carlex-process-confirmation", id);
@@ -63,7 +63,7 @@ public class CarlexProcessConfirmationController {
         if (!canView(session)) {
             return forbidden();
         }
-        return service.get(id)
+        return service.getForUser(id, username(session), role(session))
                 .<ResponseEntity<Map<String, Object>>>map(record -> ResponseEntity.ok(Map.of("record", record)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found")));
     }

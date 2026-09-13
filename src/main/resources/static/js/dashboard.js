@@ -1251,7 +1251,7 @@ function loadKpiDashboardMeta() {
             return response.json();
         })
         .then(function(config) {
-            setElementText('pmsDeckTitle', config.deckTitle);
+            setElementText('pmsDeckTitle', config.plantName);
             setElementText('lsrTargetText', config.lsrOverviewTarget);
             setElementText('lsr12Target', config.lsrTarget12);
             setElementText('lsr5Target', config.lsrTarget5);

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abnormality report Configuration - Carlsberg Brewery</title>
+    <title>Abnormality Reporting - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=user-chip-20260814">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
-    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260905-required-hod">
+    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=tag-raised-table-only-20260913">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="modern-shell dashboard-bg abnormality-reporting-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
@@ -54,11 +54,11 @@
                 </div>
             </div>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Reporting"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-list-ul"></i><span>PMS Agenda</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -89,7 +89,7 @@
                 <button id="sidebarToggle" class="sidebar-toggle-btn" type="button" aria-label="Toggle sidebar">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Abnormality report Configuration</h1>
+                <h1>Abnormality Reporting</h1>
             </div>
             <div class="header-right">
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -165,10 +165,6 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="tagRaisedBy">Tag Raised By</label>
-                        <input type="text" id="tagRaisedBy" name="tagRaisedBy" list="reportingUsersList">
-                    </div>
-                    <div class="form-group">
                         <label for="dateRaised">Date Raised</label>
                         <input type="date" id="dateRaised" name="dateRaised">
                     </div>
@@ -224,7 +220,6 @@
                         </select>
                     </div>
                 </div>
-                <datalist id="reportingUsersList"></datalist>
                 <div id="abnormalityReportingMessage" class="form-message"></div>
                 </div>
                 <div class="ar-drawer-actions">
@@ -240,7 +235,7 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20260912-department-scope"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=tag-raised-table-only-20260913"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

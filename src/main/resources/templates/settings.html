@@ -6,9 +6,9 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
-    <link rel="stylesheet" href="/css/settings.css?v=button-click-fix-20260913">
+    <link rel="stylesheet" href="/css/settings.css?v=training-sticky-header-20260913">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
 </head>
 <body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -53,11 +53,11 @@
                     </div>
                 </div>
                 <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Reporting"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
                 <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
                 <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-list-ul"></i><span>PMS Agenda</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -614,17 +614,24 @@
                                             <label for="issueBoardNextReviewDate">Next Review Date</label>
                                             <input type="date" id="issueBoardNextReviewDate" name="issueBoardNextReviewDate" placeholder="Select next review date">
                                         </div>
+                                        <div class="form-group issue-board-search-field">
+                                            <label for="issueBoardConfigSearch">Search</label>
+                                            <div class="issue-config-search" role="search">
+                                                <i class="fas fa-search" aria-hidden="true"></i>
+                                                <input type="search" id="issueBoardConfigSearch" placeholder="Search" aria-label="Search issue board data entry">
+                                                <button type="button" id="issueBoardConfigSearchClear" class="issue-config-search-clear" aria-label="Clear issue board data entry search">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="config-table-section issue-board-table-card">
                                     <div class="issue-config-toolbar">
-                                        <div class="issue-config-search" role="search">
-                                            <i class="fas fa-search" aria-hidden="true"></i>
-                                            <input type="search" id="issueBoardConfigSearch" placeholder="Search" aria-label="Search issue board data entry">
-                                            <button type="button" id="issueBoardConfigSearchClear" class="issue-config-search-clear" aria-label="Clear issue board data entry search">
-                                                <i class="fas fa-times"></i>
-                                            </button>
+                                        <div class="issue-config-title">
+                                            <i class="fas fa-table-list"></i>
+                                            <span>Issue Board Reporting</span>
                                         </div>
                                     </div>
                                     <div class="daily-data-table issue-config-table-wrap">
@@ -680,12 +687,12 @@
                                         <input type="hidden" id="issueConfigDrawerRowIndex">
                                         <div class="issue-drawer-grid">
                                             <div class="form-group issue-drawer-wide">
-                                                <label for="issueConfigDrawerProblem">Problem <span>*</span></label>
-                                                <input type="text" id="issueConfigDrawerProblem" required>
+                                                <label for="issueConfigDrawerProblem">Problem</label>
+                                                <input type="text" id="issueConfigDrawerProblem">
                                             </div>
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerPriority">Priority <span>*</span></label>
-                                                <select id="issueConfigDrawerPriority" required>
+                                                <label for="issueConfigDrawerPriority">Priority</label>
+                                                <select id="issueConfigDrawerPriority">
                                                     <option value="">Select priority</option>
                                                     <option value="High">High</option>
                                                     <option value="Medium">Medium</option>
@@ -693,24 +700,24 @@
                                                 </select>
                                             </div>
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerOwner">Name <span>*</span></label>
-                                                <input type="text" id="issueConfigDrawerOwner" required>
+                                                <label for="issueConfigDrawerOwner">Name</label>
+                                                <input type="text" id="issueConfigDrawerOwner">
                                             </div>
                                         </div>
                                         <div class="issue-drawer-grid">
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerIssueDate">Date <span>*</span></label>
-                                                <input type="date" id="issueConfigDrawerIssueDate" required>
+                                                <label for="issueConfigDrawerIssueDate">Date</label>
+                                                <input type="date" id="issueConfigDrawerIssueDate">
                                             </div>
                                         </div>
                                         <div class="issue-target-pair-row">
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerTargetDate">Target Date <span>*</span></label>
-                                                <input type="date" id="issueConfigDrawerTargetDate" required>
+                                                <label for="issueConfigDrawerTargetDate">Target Date</label>
+                                                <input type="date" id="issueConfigDrawerTargetDate">
                                             </div>
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerTargetDateRemark">Remarks <span>*</span></label>
-                                                <input type="text" id="issueConfigDrawerTargetDateRemark" class="issue-target-remark-input" placeholder="Remarks" maxlength="500" required>
+                                                <label for="issueConfigDrawerTargetDateRemark">Remarks</label>
+                                                <input type="text" id="issueConfigDrawerTargetDateRemark" class="issue-target-remark-input" placeholder="Remarks" maxlength="500">
                                             </div>
                                         </div>
                                         <div class="issue-target-pair-row">
@@ -734,27 +741,23 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="issueConfigDrawerRootCause">Root Cause <span>*</span></label>
-                                            <textarea id="issueConfigDrawerRootCause" rows="3" required></textarea>
+                                            <label for="issueConfigDrawerRootCause">Root Cause</label>
+                                            <textarea id="issueConfigDrawerRootCause" rows="3"></textarea>
                                         </div>
                                         <div class="form-group">
-                                            <label for="issueConfigDrawerActions">Actions <span>*</span></label>
-                                            <textarea id="issueConfigDrawerActions" rows="3" required></textarea>
+                                            <label for="issueConfigDrawerActions">Actions</label>
+                                            <textarea id="issueConfigDrawerActions" rows="3"></textarea>
                                         </div>
                                         <div class="issue-drawer-grid">
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerResponsible">Responsible <span>*</span></label>
-                                                <input type="text" id="issueConfigDrawerResponsible" list="issueBoardResponsibleUsersList" autocomplete="off" required>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="issueConfigDrawerDueDays">Due Days</label>
-                                                <input type="number" id="issueConfigDrawerDueDays" readonly>
+                                                <label for="issueConfigDrawerResponsible">Responsible</label>
+                                                <input type="text" id="issueConfigDrawerResponsible" list="issueBoardResponsibleUsersList" autocomplete="off">
                                             </div>
                                         </div>
                                         <div class="issue-drawer-grid">
                                             <div class="form-group">
-                                                <label for="issueConfigDrawerStatus">Status <span>*</span></label>
-                                                <select id="issueConfigDrawerStatus" required>
+                                                <label for="issueConfigDrawerStatus">Status</label>
+                                                <select id="issueConfigDrawerStatus">
                                                     <option value="0%">-</option>
                                                     <option value="25%">P</option>
                                                     <option value="50%">D</option>
@@ -1673,19 +1676,16 @@
                                             <button type="button" id="openMasterPlantAddModal" class="btn btn-primary">
                                                 <i class="fas fa-plus"></i> Add Plant
                                             </button>
+                                            <button type="button" id="confirmMasterPlantSelection" class="btn btn-primary">
+                                                <i class="fas fa-check"></i> OK
+                                            </button>
                                         </div>
-                                        <div class="master-plant-list-hint">Use View to search, edit, or delete plants.</div>
+                                        <div class="master-plant-list-hint">Select a plant and click OK to show it on the KPI Dashboard.</div>
                                     </div>
 
                                     <div class="footer-btn-card master-plant-card" data-category="DEPARTMENT">
                                         <div class="footer-btn-card-header"><i class="fas fa-building"></i> Department<button type="button" class="master-plant-view-btn" data-category="DEPARTMENT" title="View departments" aria-label="View departments"><i class="fas fa-eye"></i></button></div>
                                         <div class="master-plant-entry">
-                                            <div class="form-group">
-                                                <label for="masterDepartmentPlantSelect">Plant</label>
-                                                <select id="masterDepartmentPlantSelect" class="master-plant-parent-select">
-                                                    <option value="">Select Plant</option>
-                                                </select>
-                                            </div>
                                             <div class="form-group">
                                                 <label for="masterDepartmentInput">Department</label>
                                                 <div class="master-plant-suggest-wrap">
@@ -1703,12 +1703,6 @@
                                     <div class="footer-btn-card master-plant-card" data-category="PROCESS_AREA">
                                         <div class="footer-btn-card-header"><i class="fas fa-diagram-project"></i> Process Area<button type="button" class="master-plant-view-btn" data-category="PROCESS_AREA" title="View process areas" aria-label="View process areas"><i class="fas fa-eye"></i></button></div>
                                         <div class="master-plant-entry">
-                                            <div class="form-group">
-                                                <label for="masterProcessAreaPlantSelect">Plant</label>
-                                                <select id="masterProcessAreaPlantSelect" class="master-plant-parent-select">
-                                                    <option value="">Select Plant</option>
-                                                </select>
-                                            </div>
                                             <div class="form-group">
                                                 <label for="masterProcessAreaDepartmentSelect">Department</label>
                                                 <select id="masterProcessAreaDepartmentSelect" class="master-plant-parent-select">
@@ -1732,24 +1726,6 @@
                                     <div class="footer-btn-card master-plant-card" data-category="DESIGNATION">
                                         <div class="footer-btn-card-header"><i class="fas fa-id-badge"></i> Designation<button type="button" class="master-plant-view-btn" data-category="DESIGNATION" title="View designations" aria-label="View designations"><i class="fas fa-eye"></i></button></div>
                                         <div class="master-plant-entry">
-                                            <div class="form-group">
-                                                <label for="masterDesignationPlantSelect">Plant</label>
-                                                <select id="masterDesignationPlantSelect" class="master-plant-parent-select">
-                                                    <option value="">Select Plant</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="masterDesignationDepartmentSelect">Department</label>
-                                                <select id="masterDesignationDepartmentSelect" class="master-plant-parent-select">
-                                                    <option value="">Select Department</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="masterDesignationProcessAreaSelect">Process Area</label>
-                                                <select id="masterDesignationProcessAreaSelect" class="master-plant-parent-select">
-                                                    <option value="">Select Process Area</option>
-                                                </select>
-                                            </div>
                                             <div class="form-group">
                                                 <label for="masterDesignationInput">Designation</label>
                                                 <div class="master-plant-suggest-wrap">
@@ -1812,31 +1788,7 @@
                             <div id="form-kpi-rename-dashboard" class="form-section">
                                 <div class="kpi-rename-shell">
                                     <div class="kpi-rename-page-header">
-                                        <h2>KPI Dashboard Configuration</h2>
-                                    </div>
-
-                                    <div class="footer-btn-card kpi-rename-plant-card">
-                                        <div class="footer-btn-card-header"><i class="fas fa-industry"></i> Rename Plant Name</div>
-                                        <div class="kpi-rename-plant-grid">
-                                            <div class="form-group">
-                                                <label>Fixed Prefix</label>
-                                                <input type="text" id="kpiDeckTitlePrefix" value="PMS 4 deck V0_" readonly>
-                                            </div>
-                                            <div class="form-group">
-                                                <label for="kpiPlantNameInput">Plant Name <span class="field-required">*</span></label>
-                                                <input type="text" id="kpiPlantNameInput" maxlength="120" placeholder="Plant name">
-                                            </div>
-                                            <div class="kpi-rename-plant-actions">
-                                                <button id="resetKpiPlantNameBtn" type="button" class="btn btn-secondary">
-                                                    <i class="fas fa-rotate-left"></i> Reset
-                                                </button>
-                                                <button id="saveKpiPlantNameBtn" type="button" class="btn btn-primary">
-                                                    <i class="fas fa-save"></i> Save Plant Name
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="metrics-dashboard-note">Only the plant name suffix is editable. The KPI dashboard will display the full title using the fixed prefix and this value.</div>
-                                        <div id="kpiPlantNameMessage" class="form-message"></div>
+                                        <h2>KPI Dashboard Reporting</h2>
                                     </div>
 
                                     <div class="metrics-tabs kpi-rename-tabs" id="kpiRenameTabs">
@@ -2110,8 +2062,8 @@
             dateElement.textContent = `${day}-${month}-${year}`;
         })();
     </script>
-    <script src="/js/dashboard.js?v=kpi-visibility-20260816"></script>
-    <script src="/js/settings.js?v=plant-select-dashboard-title-20260913"></script>
+    <script src="/js/dashboard.js?v=plant-name-only-header-20260913"></script>
+    <script src="/js/settings.js?v=issue-board-fast-save-20260913"></script>
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">

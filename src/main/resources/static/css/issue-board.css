@@ -229,16 +229,29 @@
 
 .issue-table {
     width: 100%;
-    border-collapse: collapse;
-    min-width: 1580px;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1460px;
     font-size: 12px;
     table-layout: fixed;
+}
+
+.issue-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.issue-table thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 31;
 }
 
 .issue-table thead th {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 32;
     background: #0b6b2e;
     color: #ffffff;
     padding: 10px 8px;
@@ -279,7 +292,7 @@
 
 .issue-table th:nth-child(1),
 .issue-table td:nth-child(1) {
-    width: 40px;
+    width: 36px;
     text-align: center;
 }
 

@@ -58,7 +58,16 @@ public class CarlexProcessConfirmationService {
     }
 
     public List<CarlexProcessConfirmation> listForUser(String username, String role) {
-        return list();
+        if (RoleAccess.isAdmin(role)) {
+            return list();
+        }
+        Optional<AppUser> current = currentUser(username);
+        if (current.isEmpty()) {
+            return List.of();
+        }
+        return list().stream()
+                .filter(record -> canSeeRecord(record, current.get()))
+                .toList();
     }
 
     public Optional<CarlexProcessConfirmation> get(Long id) {
@@ -83,6 +92,7 @@ public class CarlexProcessConfirmationService {
         validateConfigured(record.areaOfGwProcessConfirmationConducted, plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area");
         validateAssignedTo(record.assignedTo, record.department, record.areaOfGwProcessConfirmationConducted, actor, role, "", null);
         replaceDynamicObservations(record);
+        validateRequiredObservations(record);
         CarlexProcessConfirmation saved = repository.save(record);
         assignmentHistoryService.record("carlex-process-confirmation", saved.id, "", saved.assignedTo,
                 saved.assignmentRemark, username, assignmentScope(saved));
@@ -109,6 +119,7 @@ public class CarlexProcessConfirmationService {
             validateAssignedTo(existing.assignedTo, existing.department, existing.areaOfGwProcessConfirmationConducted,
                     actor, role, previousAssignee, existing);
             replaceDynamicObservations(existing);
+            validateRequiredObservations(existing);
             CarlexProcessConfirmation saved = repository.save(existing);
             assignmentHistoryService.record("carlex-process-confirmation", saved.id, previousAssignee, saved.assignedTo,
                     incoming.assignmentRemark, username, assignmentScope(saved));
@@ -150,7 +161,7 @@ public class CarlexProcessConfirmationService {
                 ? deriveDepartment(area, department, current.map(AppUser::getDepartment).orElse(""))
                 : record.department;
         options.put("assignmentUsers", assignmentUsers(resolvedDepartment, resolvedArea, current.orElse(null), role, record));
-        options.put("defaultAssignedTo", defaultAreaHod(resolvedDepartment, resolvedArea)
+        options.put("defaultAssignedTo", defaultDepartmentHod(resolvedDepartment, resolvedArea)
                 .map(user -> firstNonBlank(user.getUsername(), user.getName())).orElse(""));
         return options;
     }
@@ -245,6 +256,12 @@ public class CarlexProcessConfirmationService {
                 if (description.isBlank() && actions.isBlank() && status.isBlank() && image.isBlank()) {
                     continue;
                 }
+                if (description.isBlank() || actions.isBlank() || status.isBlank()) {
+                    throw new IllegalArgumentException(groupType + " " + order + " must include description, counter measure actions, and status");
+                }
+                if (!Set.of("P", "D", "C", "A").contains(status.toUpperCase(Locale.ENGLISH))) {
+                    throw new IllegalArgumentException(groupType + " " + order + " status must be P, D, C, or A");
+                }
                 CarlexProcessConfirmationObservation row = new CarlexProcessConfirmationObservation();
                 row.setGroupType(groupType);
                 row.setObservationOrder(order++);
@@ -313,9 +330,25 @@ public class CarlexProcessConfirmationService {
         if (record.dateOfGwProcessConfirmationConducted == null) record.dateOfGwProcessConfirmationConducted = LocalDate.now();
         record.department = deriveDepartment(record.areaOfGwProcessConfirmationConducted, record.department,
                 current.map(AppUser::getDepartment).orElse(""));
+        if (isBlank(record.areaResponsibility)) {
+            defaultDepartmentHod(record.department, record.areaOfGwProcessConfirmationConducted)
+                    .ifPresent(user -> record.areaResponsibility = firstNonBlank(user.getUsername(), user.getName()));
+        }
         if (isBlank(record.assignedTo)) {
-            defaultAreaHod(record.department, record.areaOfGwProcessConfirmationConducted)
+            defaultDepartmentHod(record.department, record.areaOfGwProcessConfirmationConducted)
                     .ifPresent(user -> record.assignedTo = firstNonBlank(user.getUsername(), user.getName()));
+        }
+    }
+
+    private void validateRequiredObservations(CarlexProcessConfirmation record) {
+        boolean hasDynamicRows = record.observations != null && !record.observations.isEmpty();
+        boolean hasLegacyRows = List.of(trim(record.zm1Description), trim(record.zm2Description),
+                        trim(record.pm1Description), trim(record.pm2Description),
+                        trim(record.qm1Description), trim(record.qm2Description))
+                .stream()
+                .anyMatch(value -> !value.isBlank());
+        if (!hasDynamicRows && !hasLegacyRows) {
+            throw new IllegalArgumentException("Enter at least one ZM, PM, or QM observation before saving");
         }
     }
 
@@ -336,7 +369,7 @@ public class CarlexProcessConfirmationService {
     private List<Map<String, String>> assignmentUsers(String department, String area, AppUser actor, String role,
                                                       CarlexProcessConfirmation record) {
         List<AppUser> scoped = activeUsers().stream()
-                .filter(user -> matchesScope(user, department, area))
+                .filter(user -> matchesAssignmentScope(user, department, area))
                 .toList();
         boolean hasScope = !isBlank(department) || !isBlank(area);
         List<AppUser> pool = hasScope ? scoped : activeUsers();
@@ -344,21 +377,28 @@ public class CarlexProcessConfirmationService {
             return pool.stream().map(this::userOption).toList();
         }
         boolean existingAssignment = record != null && !isBlank(record.assignedTo);
+        boolean actorIsAreaHod = isStrictAreaHod(actor);
         return pool.stream()
                 .filter(user -> {
                     if (!existingAssignment) {
                         return isAreaHod(user);
                     }
-                    return true;
+                    if (actorIsAreaHod) {
+                        return isOperational(user);
+                    }
+                    if (isHod(actor)) {
+                        return isAreaHod(user);
+                    }
+                    return isOperational(user);
                 })
                 .map(this::userOption)
                 .toList();
     }
 
-    private Optional<AppUser> defaultAreaHod(String department, String area) {
+    private Optional<AppUser> defaultDepartmentHod(String department, String area) {
         return activeUsers().stream()
                 .filter(this::isAreaHod)
-                .filter(user -> matchesScope(user, department, area))
+                .filter(user -> matchesAssignmentScope(user, department, area))
                 .findFirst();
     }
 
@@ -551,6 +591,18 @@ public class CarlexProcessConfirmationService {
                 || isHod(user);
     }
 
+    private boolean isStrictAreaHod(AppUser user) {
+        if (user == null) {
+            return false;
+        }
+        String role = RoleAccess.normalize(user.getRole());
+        String designation = trim(user.getDesignation()).toUpperCase(Locale.ENGLISH);
+        return RoleAccess.AREA_HOD.equals(role)
+                || designation.contains("AREA HOD")
+                || designation.contains("AREA_HOD")
+                || designation.contains("AREA HEAD");
+    }
+
     private boolean isOperational(AppUser user) {
         if (user == null) {
             return false;
@@ -570,6 +622,18 @@ public class CarlexProcessConfirmationService {
         boolean departmentMatches = expectedDepartment.isBlank() || expectedDepartment.equals(compact(user.getDepartment()));
         boolean areaMatches = expectedArea.isBlank() || matchesAnyArea(user.getArea(), expectedArea);
         return departmentMatches && areaMatches;
+    }
+
+    private boolean matchesAssignmentScope(AppUser user, String department, String area) {
+        if (user == null) {
+            return false;
+        }
+        String expectedDepartment = compact(department);
+        if (!expectedDepartment.isBlank()) {
+            return expectedDepartment.equals(compact(user.getDepartment()));
+        }
+        String expectedArea = compact(area);
+        return expectedArea.isBlank() || matchesAnyArea(user.getArea(), expectedArea);
     }
 
     private boolean matchesAnyArea(String userAreas, String expectedArea) {

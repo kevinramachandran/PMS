@@ -11,7 +11,7 @@ $(function() {
     let searchTerm = '';
     let statusChart = null;
     let departmentChart = null;
-    let detailsVisible = false;
+    let detailsVisible = true;
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {

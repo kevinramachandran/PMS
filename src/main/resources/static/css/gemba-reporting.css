@@ -201,6 +201,9 @@
 }
 
 .gemba-reporting-page .gw-record-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
     overflow: visible;
     text-overflow: clip;
     white-space: nowrap;

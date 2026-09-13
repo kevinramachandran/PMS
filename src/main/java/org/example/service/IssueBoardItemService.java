@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class IssueBoardItemService {
@@ -178,11 +179,7 @@ public class IssueBoardItemService {
         if (!history.isEmpty()) {
             historyRepository.saveAll(history);
         }
-        try {
-            notificationService.sendAssignmentNotification(saved.getBoardDate(), saved.getRowOrder(), previousSnapshot, saved);
-        } catch (Exception ex) {
-            log.error("Failed to send assignment notification for issueId={} - save was still successful", saved.getId(), ex);
-        }
+        sendAssignmentNotificationAsync(saved.getBoardDate(), saved.getRowOrder(), previousSnapshot, saved);
         return saved;
     }
 
@@ -241,12 +238,34 @@ public class IssueBoardItemService {
         }
         List<IssueBoardItem> savedItems = repository.findByBoardDateOrderByUpdatedAtDescIdDesc(boardDate);
 
-        try {
-            notificationService.sendAssignmentNotifications(boardDate, mapByRowOrder(existingItems), mapByRowOrder(savedItems));
-        } catch (Exception ex) {
-            log.error("Failed to send assignment notifications for boardDate={} — save was still successful", boardDate, ex);
-        }
+        sendAssignmentNotificationsAsync(boardDate, mapByRowOrder(existingItems), mapByRowOrder(savedItems));
         return savedItems;
+    }
+
+    private void sendAssignmentNotificationAsync(LocalDate boardDate,
+                                                 Integer rowOrder,
+                                                 IssueBoardItem previousItem,
+                                                 IssueBoardItem currentItem) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                notificationService.sendAssignmentNotification(boardDate, rowOrder, previousItem, currentItem);
+            } catch (Exception ex) {
+                log.error("Failed to send assignment notification for issueId={} - save was still successful",
+                        currentItem == null ? null : currentItem.getId(), ex);
+            }
+        });
+    }
+
+    private void sendAssignmentNotificationsAsync(LocalDate boardDate,
+                                                  Map<Integer, IssueBoardItem> previousItems,
+                                                  Map<Integer, IssueBoardItem> currentItems) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                notificationService.sendAssignmentNotifications(boardDate, previousItems, currentItems);
+            } catch (Exception ex) {
+                log.error("Failed to send assignment notifications for boardDate={} - save was still successful", boardDate, ex);
+            }
+        });
     }
 
     private void copyIssueBoardFields(IssueBoardItem source, IssueBoardItem target) {

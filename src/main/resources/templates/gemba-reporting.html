@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/gemba-reporting.css?v=20260830">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
+    <link rel="stylesheet" href="/css/gemba-reporting.css?v=department-filter-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -56,11 +56,11 @@
                 </div>
             </div>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Reporting"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -105,28 +105,83 @@
                     <span>Reported</span>
                     <strong id="reportedCount">0</strong>
                 </button>
+                <button type="button" class="gw-count-card" data-status-filter="open">
+                    <span>Open</span>
+                    <strong id="openCount">0</strong>
+                </button>
                 <button type="button" class="gw-count-card" data-status-filter="closed">
                     <span>Closed</span>
                     <strong id="closedCount">0</strong>
                 </button>
+                <button type="button" class="gw-count-card gw-percent-card">
+                    <span>% Closed</span>
+                    <strong id="closedPercent">0%</strong>
+                </button>
             </section>
 
             <section class="issue-board-card gw-report-card">
-                <div class="issue-board-title-row gw-filter-row">
+                <div class="gw-section-title">
+                    <div>
+                        <h2>Gemba Walk Report</h2>
+                        <p id="gembaFilterSummary">All periods | 0 records</p>
+                    </div>
+                    <a href="/gemba-walk-config" class="issue-add-button" th:if="${session.canViewGembaWalkConfiguration}">
+                        <i class="fas fa-plus"></i>
+                        <span>New Record</span>
+                    </a>
+                </div>
+                <div class="gw-filter-grid">
+                    <div class="gw-filter-group">
+                        <label for="periodFilter">Report</label>
+                        <select id="periodFilter">
+                            <option value="ALL">All</option>
+                            <option value="FTD">FTD</option>
+                            <option value="MTD">MTD</option>
+                            <option value="YTD">YTD</option>
+                        </select>
+                    </div>
+                    <div class="gw-filter-group">
+                        <label for="anchorDateFilter">Date</label>
+                        <input type="date" id="anchorDateFilter">
+                    </div>
+                    <div class="gw-filter-group">
+                        <label for="plantFilter">Plant</label>
+                        <select id="plantFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="gw-filter-group">
+                        <label for="departmentFilter">Department</label>
+                        <select id="departmentFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="gw-filter-group">
+                        <label for="areaFilter">Area</label>
+                        <select id="areaFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
                     <div class="gw-filter-group">
                         <label for="statusFilter">Status</label>
                         <select id="statusFilter">
                             <option value="all">All</option>
+                            <option value="open">Open</option>
                             <option value="closed">Closed</option>
                         </select>
                     </div>
-                    <a href="/gemba-walk-config" class="issue-add-button" th:if="${session.canViewGembaWalkConfiguration}">
-                        <i class="fas fa-plus"></i>
-                        <span>Gemba Walk Config</span>
-                    </a>
                 </div>
-                <div class="gw-chart-wrap">
-                    <canvas id="gembaReportingChart" aria-label="Gemba Walk reporting graph"></canvas>
+                <div class="gw-chart-grid">
+                    <div class="gw-chart-wrap">
+                        <canvas id="gembaStatusChart" aria-label="Gemba Walk status chart"></canvas>
+                    </div>
+                    <div class="gw-chart-wrap">
+                        <canvas id="gembaDepartmentChart" aria-label="Gemba Walk department chart"></canvas>
+                    </div>
+                </div>
+                <div class="gw-summary-grid">
+                    <div class="gw-summary-table" id="departmentSummaryTable"></div>
+                    <div class="gw-summary-table" id="areaSummaryTable"></div>
                 </div>
             </section>
 
@@ -145,25 +200,23 @@
                     <table class="issue-table gw-record-table" id="gembaReportingTable">
                         <thead>
                         <tr>
-                            <th>ID / Serial Number</th>
-                            <th>Start Time</th>
-                            <th>Completion Time</th>
-                            <th>Email</th>
+                            <th>#</th>
+                            <th>Department</th>
+                            <th>Area</th>
                             <th>Manager Name</th>
+                            <th>Email</th>
                             <th>Date of Leadership Safety Walk Conducted</th>
                             <th>Management Safety Walk Week</th>
-                            <th>Location of MSW Conducted</th>
-                            <th>Responsibility</th>
-                            <th>Pictures</th>
                             <th>Observations</th>
                             <th>Observation Status</th>
+                            <th>Responsibility</th>
                             <th>Remarks / Final Comments</th>
                             <th>Assignment History</th>
                             <th>Open</th>
                         </tr>
                         </thead>
                         <tbody id="gembaReportingTableBody">
-                        <tr><td colspan="14" class="empty-row">No Gemba Walk records found.</td></tr>
+                        <tr><td colspan="13" class="empty-row">No Gemba Walk records found.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -179,7 +232,7 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-reporting.js?v=20260903-field-audit"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-reporting.js?v=department-filter-20260913"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

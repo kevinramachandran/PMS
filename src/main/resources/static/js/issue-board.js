@@ -30,6 +30,13 @@ $(document).ready(function() {
         $('#issueBoardSyncStatus').text(label);
     }
 
+    function getTodayDateString() {
+        const today = new Date();
+        return today.getFullYear() + '-' +
+            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+            String(today.getDate()).padStart(2, '0');
+    }
+
     function formatDisplayDate(rawDate) {
         if (!rawDate) {
             return '-';
@@ -40,7 +47,7 @@ $(document).ready(function() {
             return rawDate;
         }
 
-        return dateObj.toLocaleDateString('en-GB');
+        return dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     function getLoggedInUsername() {
@@ -501,6 +508,7 @@ $(document).ready(function() {
 
     function validateIssueDrawerTargetRemarks() {
         const pairs = [
+            { date: '#drawerIssueTargetDate', remark: '#drawerIssueTargetDateRemark' },
             { date: '#drawerIssueTargetExt1', remark: '#drawerIssueTargetExt1Remark' },
             { date: '#drawerIssueTargetExt2', remark: '#drawerIssueTargetExt2Remark' }
         ];
@@ -570,8 +578,8 @@ $(document).ready(function() {
         );
         $('#drawerIssueProblem').val(row.problem || '');
         $('#drawerIssuePriority').val(row.priority || '');
-        $('#drawerIssueOwner').val(row.ownerName || getLoggedInUsername());
-        $('#drawerIssueDate').val(row.issueDate || '');
+        $('#drawerIssueOwner').val(row.ownerName || getLoggedInUsername()).prop('readonly', true);
+        $('#drawerIssueDate').val(row.issueDate || getTodayDateString());
         $('#drawerIssueRootCause').val(row.rootCause || '');
         $('#drawerIssueActions').val(row.actions || '');
         $('#drawerIssueResponsible').val(row.responsible || '');
@@ -735,10 +743,13 @@ $(document).ready(function() {
         if (!id || !getDrawerEffectiveTargetDate(row)) {
             return;
         }
-        if (!row.problem || !row.priority || !row.issueDate || !row.rootCause || !row.actions || !isIssueResponsibleValid(row.responsible)) {
+        if (!row.problem || !row.priority || !row.ownerName || !row.issueDate || !row.targetDate || !row.targetDateRemark || !row.rootCause || !row.actions || !isIssueResponsibleValid(row.responsible)) {
             $('#drawerIssueProblem').toggleClass('issue-invalid', !row.problem);
             $('#drawerIssuePriority').toggleClass('issue-invalid', !row.priority);
+            $('#drawerIssueOwner').toggleClass('issue-invalid', !row.ownerName);
             $('#drawerIssueDate').toggleClass('issue-invalid', !row.issueDate);
+            $('#drawerIssueTargetDate').toggleClass('issue-invalid', !row.targetDate);
+            $('#drawerIssueTargetDateRemark').toggleClass('issue-invalid', !row.targetDateRemark);
             $('#drawerIssueRootCause').toggleClass('issue-invalid', !row.rootCause);
             $('#drawerIssueActions').toggleClass('issue-invalid', !row.actions);
             $('#drawerIssueResponsible').toggleClass('issue-invalid', !isIssueResponsibleValid(row.responsible));

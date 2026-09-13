@@ -530,6 +530,9 @@ $(function () {
     });
 
     $('.ar-count-card').on('click', function() {
+        if ($(this).hasClass('ar-percent-card')) {
+            return;
+        }
         $('#statusFilter').val($(this).data('status-filter') || 'all');
         applyView(true);
     });

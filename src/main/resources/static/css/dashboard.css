@@ -5739,13 +5739,14 @@ body.user-management-page #deleteUserModal {
 
 .user-dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
     gap: 12px;
     margin: 18px 0;
 }
 
 .user-dashboard-stat {
-    display: flex;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     min-height: 86px;
@@ -5790,17 +5791,20 @@ body.user-management-page #deleteUserModal {
     color: #4b5563;
     font-size: 12px;
     font-weight: 700;
+    line-height: 1.25;
+    white-space: normal;
 }
 
 .stat-copy strong {
     color: #111827;
     font-size: 26px;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 
 .user-dashboard-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(380px, 0.9fr);
     gap: 14px;
 }
 
@@ -5877,7 +5881,7 @@ body.user-management-page #deleteUserModal {
 
 .user-kpi-row {
     display: grid;
-    grid-template-columns: minmax(150px, 1fr) minmax(80px, auto) minmax(90px, auto);
+    grid-template-columns: minmax(150px, 1fr) minmax(80px, 90px) minmax(92px, 112px);
     align-items: center;
     gap: 12px;
 }
@@ -5909,8 +5913,9 @@ body.user-management-page #deleteUserModal {
 
 .user-list-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(80px, auto);
-    gap: 4px 12px;
+    grid-template-columns: minmax(0, 1fr) minmax(140px, 170px);
+    gap: 5px 16px;
+    align-items: center;
     color: inherit;
     text-decoration: none;
 }
@@ -5939,6 +5944,8 @@ body.user-management-page #deleteUserModal {
     grid-row: 1 / span 2;
     align-self: center;
     justify-self: end;
+    width: 100%;
+    max-width: 170px;
     border-radius: 999px;
     background: #e0f2fe;
     color: #075985;
@@ -5946,6 +5953,9 @@ body.user-management-page #deleteUserModal {
     font-weight: 800;
     padding: 5px 8px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
 }
 
 .user-row-pill.is-overdue {
@@ -5966,7 +5976,10 @@ body.user-management-page #deleteUserModal {
 }
 
 @media (max-width: 1100px) {
-    .user-dashboard-stats,
+    .user-dashboard-stats {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
     .user-dashboard-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -5995,5 +6008,23 @@ body.user-management-page #deleteUserModal {
     .user-kpi-row strong,
     .user-kpi-row em {
         text-align: left;
+    }
+
+    .user-list-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .user-row-main,
+    .user-row-meta,
+    .user-row-pill {
+        grid-column: 1;
+    }
+
+    .user-row-pill {
+        grid-row: auto;
+        justify-self: start;
+        width: auto;
+        max-width: 100%;
     }
 }

@@ -623,6 +623,170 @@ body:not(.login-page) table thead th.sort-desc::after {
     opacity: 1;
 }
 
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table thead,
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table thead tr,
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table thead th {
+    position: sticky !important;
+    top: 0 !important;
+}
+
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table thead {
+    z-index: 30;
+}
+
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table thead tr {
+    z-index: 31;
+}
+
+body:not(.login-page) :is(
+    .daily-data-table,
+    .issue-config-table-wrap,
+    .issue-table-wrap,
+    .ts-table-wrap,
+    .gemba-table-wrap,
+    .lgt-table-wrap,
+    .gw-table-shell,
+    .gk-table-shell,
+    .at-table-wrap,
+    .gw-detail-table-wrap,
+    .ar-table-wrap,
+    .ar-detail-table-wrap,
+    .pc-table-wrap,
+    .pc-records-wrap,
+    .carlex-table-wrap,
+    .hs-cross-table-wrap,
+    .lsr-table-wrap,
+    .lsr-table-wrapper,
+    .table-wrapper
+) > table thead th {
+    z-index: 32 !important;
+}
+
 /* Keep full settings navigation visible for all config pages. */
 .settings-container.issue-board-full-page .settings-sidebar {
     display: block !important;

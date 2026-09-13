@@ -193,6 +193,9 @@
 }
 
 .carlex-drawer-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     justify-content: space-between;
     gap: 16px;
     border-bottom: 1px solid #e5e7eb;
@@ -247,6 +250,9 @@
 }
 
 .carlex-observation-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -296,7 +302,7 @@
 
 .carlex-observation-row {
     display: grid;
-    grid-template-columns: minmax(200px, 1fr) minmax(360px, 2fr) minmax(150px, 0.8fr) 42px;
+    grid-template-columns: minmax(230px, 1.15fr) minmax(360px, 2fr) minmax(78px, 0.35fr) minmax(210px, 0.9fr) 42px;
     gap: 12px;
     align-items: end;
     padding: 0 0 12px;
@@ -308,7 +314,7 @@
 }
 
 .carlex-observation-row .carlex-observation-image-group {
-    grid-column: 1 / 4;
+    grid-column: auto;
 }
 
 .carlex-observation-actions {
@@ -323,6 +329,10 @@
     padding: 8px 10px;
     line-height: 1.4;
     white-space: nowrap;
+}
+
+.carlex-observation-row .pc-observation-status {
+    text-align: center;
 }
 
 .carlex-observation-row .carlex-form-group label {
@@ -425,6 +435,14 @@ body.carlex-drawer-open {
     .carlex-form-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .carlex-observation-row {
+        grid-template-columns: minmax(220px, 1fr) minmax(320px, 1.5fr) minmax(80px, 0.4fr) 42px;
+    }
+
+    .carlex-observation-row .carlex-observation-image-group {
+        grid-column: 1 / 4;
+    }
 }
 
 @media (max-width: 650px) {
@@ -444,6 +462,12 @@ body.carlex-drawer-open {
     }
 
     .carlex-form-group.carlex-wide {
+        grid-column: auto;
+    }
+
+    .carlex-observation-row,
+    .carlex-observation-row .carlex-observation-image-group {
+        grid-template-columns: 1fr;
         grid-column: auto;
     }
 

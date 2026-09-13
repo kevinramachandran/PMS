@@ -100,6 +100,7 @@
 
 .gemba-table-wrap {
     overflow: auto;
+    max-height: min(640px, calc(100vh - 230px));
 }
 
 .gemba-table {
@@ -109,6 +110,9 @@
 }
 
 .gemba-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     background: #f9fafb;
     color: #374151;
     border: 1px solid #e5e7eb;

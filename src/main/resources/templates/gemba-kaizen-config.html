@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemba Kaizen Configuration - Carlsberg Brewery</title>
+    <title>Gemba Kaizen Reporting - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
     <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=20260903-field-audit">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -55,11 +55,11 @@
                 </div>
             </div>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Reporting"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -88,7 +88,7 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>Gemba Kaizen Configuration</h1>
+                <h1>Gemba Kaizen Reporting</h1>
             </div>
             <div class="header-right">
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -111,7 +111,6 @@
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Last Modified Time</th>
-                                <th>Provider Name</th>
                                 <th>Employee ID / HO Number</th>
                                 <th>Department</th>
                                 <th>Classification</th>
@@ -127,7 +126,7 @@
                             </tr>
                         </thead>
                         <tbody id="gembaKaizenConfigRecordsBody">
-                            <tr><td colspan="15" class="gk-empty-cell">Loading records...</td></tr>
+                            <tr><td colspan="16" class="gk-empty-cell">Loading records...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -150,20 +149,8 @@
                         <select id="department"></select>
                     </div>
                     <div class="gk-form-group">
-                        <label for="name">Name</label>
-                        <input type="text" id="name">
-                    </div>
-                    <div class="gk-form-group">
                         <label for="lastModifiedTime">Last Modified Time</label>
                         <input type="time" id="lastModifiedTime">
-                    </div>
-                    <div class="gk-form-group">
-                        <label for="gembaKaizenProviderName">Gemba Kaizen Provider Name</label>
-                        <input type="text" id="gembaKaizenProviderName">
-                    </div>
-                    <div class="gk-form-group">
-                        <label for="employeeIdHoNumber">Employee ID / HO Number</label>
-                        <input type="text" id="employeeIdHoNumber">
                     </div>
                     <div class="gk-form-group">
                         <label for="classificationOfKaizen">Classification of Kaizen</label>

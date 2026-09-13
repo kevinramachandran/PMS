@@ -584,6 +584,9 @@ $(function() {
     });
 
     $('.gw-count-card').on('click', function() {
+        if ($(this).hasClass('gw-percent-card')) {
+            return;
+        }
         $('#statusFilter').val($(this).data('status-filter') || 'all');
         applyView(true);
     });

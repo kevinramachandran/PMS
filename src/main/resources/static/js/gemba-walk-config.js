@@ -98,7 +98,12 @@ $(function() {
     }
 
     function populateSelect(selector, values, selected) {
-        $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
+        const current = selected || '';
+        const list = (values || []).slice();
+        if (current && !list.some(function(value) { return lower(value) === lower(current); })) {
+            list.push(current);
+        }
+        $(selector).html(['<option value=""></option>'].concat(list.map(optionHtml)).join('')).val(current);
     }
 
     function filteredProcessAreas(department) {
@@ -123,32 +128,6 @@ $(function() {
         }
     }
 
-    function derivedDepartment(location) {
-        const selected = lower(location);
-        if (!selected) {
-            return '';
-        }
-        const match = (areaItems || []).find(function(item) {
-            return lower(item && item.name) === selected;
-        });
-        return normalize(match && match.parentDepartment);
-    }
-
-    function departmentFromLocation(location) {
-        return derivedDepartment(location);
-    }
-
-    function updateDepartmentFromLocation() {
-        const derived = derivedDepartment($('#locationOfMswConducted').val());
-        const $department = $('#department');
-        if (derived) {
-            $department.val(derived);
-            $('#departmentFieldGroup').addClass('gw-derived-department');
-            return;
-        }
-        $('#departmentFieldGroup').removeClass('gw-derived-department');
-    }
-
     function isEditMode() {
         return !!$('#gembaWalkRecordId').val();
     }
@@ -158,6 +137,32 @@ $(function() {
             email: currentUserIdentity.email || '',
             managerName: currentUserIdentity.label || currentUserIdentity.username || ''
         };
+    }
+
+    function displayManager(record) {
+        return normalize(record.displayManagerName || record.managerName || record.createdBy);
+    }
+
+    function displayEmail(record) {
+        return normalize(record.displayEmail || record.email || '');
+    }
+
+    function sortDateValue(record) {
+        const updated = normalize(record.updatedAt);
+        const created = normalize(record.createdAt);
+        const conducted = normalize(record.dateOfLeadershipSafetyWalkConducted);
+        return updated || created || (conducted ? conducted + 'T00:00:00' : '');
+    }
+
+    function sortRecordsNewestFirst(rows) {
+        return (rows || []).slice().sort(function(a, b) {
+            const leftDate = sortDateValue(a);
+            const rightDate = sortDateValue(b);
+            if (leftDate !== rightDate) {
+                return rightDate.localeCompare(leftDate);
+            }
+            return Number(b.id || 0) - Number(a.id || 0);
+        });
     }
 
     function setEditLock(locked) {
@@ -255,7 +260,7 @@ $(function() {
         $('#completionTime').val(item.completionTime || currentTime());
         $('#dateConducted').val(item.dateOfLeadershipSafetyWalkConducted || todayDate());
         $('#managementSafetyWalkWeek').val(item.managementSafetyWalkWeek || params.get('week') || '');
-        $('#department').val(item.department || departmentFromLocation(item.locationOfMswConducted || params.get('location') || ''));
+        $('#department').val(item.department || '');
         refreshLocationOptions(item.locationOfMswConducted || params.get('location') || '');
         $('#responsibility').val(item.responsibility || $('#responsibility').val() || '');
         $('#assignmentRemark').val('');
@@ -272,7 +277,7 @@ $(function() {
         $('#completionTime').val(currentTime());
         $('#dateConducted').val(todayDate());
         $('#managementSafetyWalkWeek').val(params.get('week') || '');
-        $('#department').val(departmentFromLocation(params.get('location') || ''));
+        $('#department').val('');
         refreshLocationOptions(params.get('location') || '');
         $('#responsibility').val('');
         $('#finalComments').val('');
@@ -284,16 +289,17 @@ $(function() {
     }
 
     function renderTable() {
-        const rows = records.map(function(record, index) {
+        const sortedRecords = sortRecordsNewestFirst(records);
+        const rows = sortedRecords.map(function(record, index) {
             const observations = Array.isArray(record.observations) ? record.observations : [];
             return '' +
                 '<tr>' +
                 '<td class="gw-row-number">' + (index + 1) + '</td>' +
-                '<td>' + escapeHtml(record.serialNumber || record.id) + '</td>' +
+                '<td>' + escapeHtml(record.department) + '</td>' +
                 '<td>' + escapeHtml(record.startTime) + '</td>' +
                 '<td>' + escapeHtml(record.completionTime) + '</td>' +
-                '<td>' + escapeHtml(record.managerName) + '</td>' +
-                '<td>' + escapeHtml(record.email) + '</td>' +
+                '<td>' + escapeHtml(displayManager(record)) + '</td>' +
+                '<td>' + escapeHtml(displayEmail(record)) + '</td>' +
                 '<td>' + escapeHtml(displayDate(record.dateOfLeadershipSafetyWalkConducted)) + '</td>' +
                 '<td>' + escapeHtml(record.managementSafetyWalkWeek) + '</td>' +
                 '<td>' + escapeHtml(record.locationOfMswConducted) + '</td>' +
@@ -306,7 +312,7 @@ $(function() {
                 '</tr>';
         }).join('');
         $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gw-empty-cell">No records found.</td></tr>');
-        records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
+        sortedRecords.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
     function loadRecords() {
@@ -374,7 +380,7 @@ $(function() {
                 departments = options.departments || [];
                 processAreas = options.processAreas || [];
                 areaItems = options.areaItems || [];
-                populateSelect('#department', departments, $('#department').val() || departmentFromLocation($('#locationOfMswConducted').val() || params.get('location') || ''));
+                populateSelect('#department', departments, $('#department').val());
                 refreshLocationOptions($('#locationOfMswConducted').val() || params.get('location') || '');
                 currentUserIdentity = options.currentUser || {};
                 applyCurrentUserIdentity(false);

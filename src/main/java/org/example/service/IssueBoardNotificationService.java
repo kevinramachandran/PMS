@@ -54,6 +54,19 @@ public class IssueBoardNotificationService {
                                            IssueBoardItem previousItem,
                                            IssueBoardItem currentItem) {
         String rowLabel = rowOrder == null ? "-" : String.valueOf(rowOrder);
+        boolean responsibleChanged = responsibleChanged(previousItem, currentItem);
+        if (responsibleChanged) {
+            log.info("Row {}: responsible reassigned from '{}' to '{}', problem='{}'",
+                    rowLabel,
+                    previousItem == null ? "" : previousItem.getResponsible(),
+                    currentItem == null ? "" : currentItem.getResponsible(),
+                    currentItem == null ? "" : currentItem.getProblem());
+
+            String subject = "Issue Reassigned: " + defaultText(currentItem.getProblem(), "Issue Board Item");
+            sendResponsibleNotification(boardDate, rowLabel, currentItem, subject, buildAssignmentBody(boardDate, currentItem));
+            return;
+        }
+
         if (shouldSendCompletion(previousItem, currentItem)) {
             sendResponsibleNotification(
                     boardDate,
@@ -122,7 +135,10 @@ public class IssueBoardNotificationService {
         List<IssueBoardItem> openItems = issueBoardItemRepository.findAllOpenItemsWithTargetDate();
 
         for (IssueBoardItem item : openItems) {
-            LocalDate targetDate = item.getTargetDate();
+            LocalDate targetDate = effectiveTargetDate(item);
+            if (targetDate == null) {
+                continue;
+            }
 
             Optional<AppUser> maybeRecipient = resolveRecipient(item.getResponsible());
             if (maybeRecipient.isEmpty()) {
@@ -137,7 +153,7 @@ public class IssueBoardNotificationService {
                 emailConfigService.sendEmail(
                         List.of(recipient.getEmail()),
                         "Reminder: Issue due tomorrow - " + defaultText(item.getProblem(), "Issue Board Item"),
-                    buildReminderBody(boardDate, recipient, item, false, today),
+                    buildReminderBody(boardDate, recipient, item, targetDate, false, today),
                     true,
                     true
                 );
@@ -146,7 +162,7 @@ public class IssueBoardNotificationService {
                 emailConfigService.sendEmail(
                         List.of(recipient.getEmail()),
                         "Overdue Issue Alert: " + defaultText(item.getProblem(), "Issue Board Item"),
-                    buildReminderBody(boardDate, recipient, item, true, today),
+                    buildReminderBody(boardDate, recipient, item, targetDate, true, today),
                     true,
                     true
                 );
@@ -168,10 +184,18 @@ public class IssueBoardNotificationService {
             return true;
         }
 
-        return !Objects.equals(normalize(previousItem.getResponsible()), responsible)
+        return responsibleChanged(previousItem, currentItem)
                 || !Objects.equals(trim(previousItem.getProblem()), trim(currentItem.getProblem()))
                 || !Objects.equals(trim(previousItem.getActions()), trim(currentItem.getActions()))
-                || !Objects.equals(previousItem.getTargetDate(), currentItem.getTargetDate());
+                || !Objects.equals(effectiveTargetDate(previousItem), effectiveTargetDate(currentItem));
+    }
+
+    private boolean responsibleChanged(IssueBoardItem previousItem, IssueBoardItem currentItem) {
+        if (currentItem == null || normalize(currentItem.getResponsible()) == null) {
+            return false;
+        }
+        return previousItem == null
+                || !Objects.equals(normalize(previousItem.getResponsible()), normalize(currentItem.getResponsible()));
     }
 
     private boolean shouldSendCompletion(IssueBoardItem previousItem, IssueBoardItem currentItem) {
@@ -184,16 +208,42 @@ public class IssueBoardNotificationService {
     }
 
     private Optional<AppUser> resolveRecipient(String responsible) {
-        String normalized = normalize(responsible);
-        if (normalized == null) {
+        String text = trim(responsible);
+        if (text == null) {
             return Optional.empty();
         }
 
-        return appUserRepository.findByUsernameIgnoreCase(normalized)
-                .or(() -> appUserRepository.findByEmailIgnoreCase(normalized))
-                .or(() -> appUserRepository.findByNameIgnoreCase(normalized))
-                .or(() -> appUserRepository.findByEmployeeIdIgnoreCase(normalized))
-                .filter(user -> !"INACTIVE".equalsIgnoreCase(trim(user.getStatus())));
+        List<String> candidates = recipientLookupCandidates(text);
+        for (String candidate : candidates) {
+            Optional<AppUser> user = appUserRepository.findByUsernameIgnoreCase(candidate)
+                    .or(() -> appUserRepository.findByEmailIgnoreCase(candidate))
+                    .or(() -> appUserRepository.findByNameIgnoreCase(candidate))
+                    .or(() -> appUserRepository.findByEmployeeIdIgnoreCase(candidate))
+                    .filter(match -> !"INACTIVE".equalsIgnoreCase(trim(match.getStatus())));
+            if (user.isPresent()) {
+                return user;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private List<String> recipientLookupCandidates(String value) {
+        String text = trim(value);
+        if (text == null) {
+            return List.of();
+        }
+        String withoutParentheses = text.replaceAll("\\s*\\([^)]*\\)\\s*$", "").trim();
+        String parenthetical = "";
+        int open = text.lastIndexOf('(');
+        int close = text.lastIndexOf(')');
+        if (open >= 0 && close > open) {
+            parenthetical = text.substring(open + 1, close).trim();
+        }
+        return List.of(text, parenthetical, withoutParentheses).stream()
+                .map(this::trim)
+                .filter(candidate -> candidate != null)
+                .distinct()
+                .toList();
     }
 
     private boolean isClosed(IssueBoardItem item) {
@@ -240,9 +290,10 @@ public class IssueBoardNotificationService {
     private String buildReminderBody(LocalDate boardDate,
                                      AppUser recipient,
                                      IssueBoardItem item,
+                                     LocalDate targetDate,
                                      boolean overdue,
                                      LocalDate today) {
-        long overdueDays = overdue ? ChronoUnit.DAYS.between(item.getTargetDate(), today) : 0;
+        long overdueDays = overdue ? ChronoUnit.DAYS.between(targetDate, today) : 0;
         String intro = overdue
             ? "This is an overdue reminder for an open issue assigned to you."
             : "This is a reminder that one of your assigned issues is due tomorrow.";
@@ -284,7 +335,7 @@ public class IssueBoardNotificationService {
             .append("<table role='presentation' cellspacing='0' cellpadding='0' border='0' width='100%' style='border-collapse:collapse;font-size:14px;'>")
             .append(buildDetailRow("Issue", defaultText(item.getProblem(), "-")))
             .append(buildDetailRow("Actions", defaultText(item.getActions(), "-")))
-            .append(buildDetailRow("Target Date", formatDate(item.getTargetDate())))
+            .append(buildDetailRow("Target Date", formatDate(effectiveTargetDate(item))))
             .append(buildDetailRow("Board Date", formatDate(boardDate)))
             .append(buildDetailRow("Current Status", defaultText(item.getStatus(), "0%")));
 
@@ -335,6 +386,19 @@ public class IssueBoardNotificationService {
 
     private String formatDate(LocalDate value) {
         return value == null ? "-" : DATE_FORMATTER.format(value);
+    }
+
+    private LocalDate effectiveTargetDate(IssueBoardItem item) {
+        if (item == null) {
+            return null;
+        }
+        if (item.getTargetDateExtension2() != null) {
+            return item.getTargetDateExtension2();
+        }
+        if (item.getTargetDateExtension1() != null) {
+            return item.getTargetDateExtension1();
+        }
+        return item.getTargetDate();
     }
 
     private String defaultText(String value, String fallback) {

@@ -127,7 +127,7 @@ public class WebController {
             case "lsr-tracking" -> settingsView(model, "lsr-tracking", "", "LSR Tracking");
             case "info-portal" -> settingsView(model, "info-portal", "", "Info Portal");
             case "kpi-cross-color" -> settingsView(model, "kpi-cross-color", "", "KPI Target Cross Color");
-            case "kpi-rename-dashboard" -> settingsView(model, "kpi-rename-dashboard", "", "KPI Configuration");
+            case "kpi-rename-dashboard" -> settingsView(model, "kpi-rename-dashboard", "", "KPI Reporting");
             case "kpi-plant-name" -> settingsView(model, "kpi-plant-name", "", "Plant");
             case "master-designation" -> settingsView(model, "master-designation", "", "Designation");
             case "license" -> settingsView(model, "license", "", "License Management");

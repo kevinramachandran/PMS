@@ -62,7 +62,12 @@ $(function() {
     }
 
     function populateSelect(selector, values, selected) {
-        $(selector).html(['<option value=""></option>'].concat((values || []).map(optionHtml)).join('')).val(selected || '');
+        const current = selected || '';
+        const list = (values || []).slice();
+        if (current && !list.some(function(value) { return lower(value) === lower(current); })) {
+            list.push(current);
+        }
+        $(selector).html(['<option value=""></option>'].concat(list.map(optionHtml)).join('')).val(current);
     }
 
     function normalize(value) {
@@ -95,17 +100,6 @@ $(function() {
         }
     }
 
-    function departmentForLocation(location) {
-        const selectedLocation = lower(location);
-        if (!selectedLocation) {
-            return '';
-        }
-        const area = areaItems.find(function(item) {
-            return lower(item && item.name) === selectedLocation;
-        });
-        return normalize(area && area.parentDepartment);
-    }
-
     function setEditLock(isEdit) {
         const $fields = $('#gembaKaizenConfigForm')
             .find('input:not([type="hidden"]), select, textarea')
@@ -134,7 +128,7 @@ $(function() {
         const item = record || {};
         $('#gembaKaizenRecordId').val(item.id || '');
         $('#lastModifiedTime').val(item.lastModifiedTime || currentTime());
-        $('#department').val(item.department || departmentForLocation(item.gembaKaizenLocation || ''));
+        $('#department').val(item.department || '');
         $('#classificationOfKaizen').val(item.classificationOfKaizen || '');
         refreshLocationOptions(item.gembaKaizenLocation || '');
         $('#gembaKaizenGenerationDate').val(item.gembaKaizenGenerationDate || todayDate());
@@ -170,7 +164,9 @@ $(function() {
                 '<tr>' +
                 '<td class="gk-row-number">' + (index + 1) + '</td>' +
                 '<td>' + escapeHtml(record.id) + '</td>' +
+                '<td>' + escapeHtml(record.name) + '</td>' +
                 '<td>' + escapeHtml(record.lastModifiedTime) + '</td>' +
+                '<td>' + escapeHtml(record.employeeIdHoNumber) + '</td>' +
                 '<td>' + escapeHtml(record.department) + '</td>' +
                 '<td>' + escapeHtml(record.classificationOfKaizen) + '</td>' +
                 '<td>' + escapeHtml(record.gembaKaizenLocation) + '</td>' +
@@ -184,7 +180,7 @@ $(function() {
                 '<td><button type="button" class="gk-table-action gk-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Kaizen"><i class="fas fa-pen"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="14" class="gk-empty-cell">No records found.</td></tr>');
+        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="16" class="gk-empty-cell">No records found.</td></tr>');
         records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -198,7 +194,7 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="14" class="gk-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="16" class="gk-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }

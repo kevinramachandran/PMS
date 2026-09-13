@@ -335,12 +335,14 @@ $(document).ready(function() {
         } else if (config === 'gemba-schedule') {
             console.log('   -> Setting gemba-schedule form ACTIVE');
             $('#form-gemba-schedule').addClass('active');
-            if ($('#gembaScheduleDate').attr('data-load-latest-on-open') === '1') {
-                $('#gembaScheduleDate').attr('data-load-latest-on-open', '0');
-                loadLatestGembaScheduleConfig();
-            } else {
-                loadGembaScheduleByDate($('#gembaScheduleDate').val());
-            }
+            loadPlantMasterDataOptions(function() {
+                if ($('#gembaScheduleDate').attr('data-load-latest-on-open') === '1') {
+                    $('#gembaScheduleDate').attr('data-load-latest-on-open', '0');
+                    loadLatestGembaScheduleConfig();
+                } else {
+                    loadGembaScheduleByDate($('#gembaScheduleDate').val());
+                }
+            });
         } else if (config === 'master-gemba-walk') {
             $('#form-master-gemba-walk').addClass('active');
             loadMasterGembaWalkConfig();
@@ -387,7 +389,6 @@ $(document).ready(function() {
             loadKpiCrossColorConfig();
         } else if (config === 'kpi-rename-dashboard') {
             $('#form-kpi-rename-dashboard').addClass('active');
-            loadKpiPlantNameConfig();
             loadKpiRenameDashboard();
         } else if (config === 'kpi-plant-name') {
             $('#form-master-plant').addClass('active');
@@ -2571,6 +2572,15 @@ function regroupRows($container){
             String(today.getDate()).padStart(2, '0');
     }
 
+    function getLoggedInUsername() {
+        const bodyUsername = String(document.body && document.body.dataset.username || '').trim();
+        if (bodyUsername) {
+            return bodyUsername;
+        }
+        const profileName = String($('.pms-profile-name, .profile-name').first().text() || '').trim();
+        return profileName && profileName.toLowerCase() !== 'user' ? profileName : '';
+    }
+
     // ==================== ISSUE BOARD CONFIGURATION ====================
     function initializeIssueBoardConfigDateField() {
         const today = getTodayDateString();
@@ -2838,35 +2848,8 @@ function regroupRows($container){
     }
 
     function validateIssueRow($row) {
-        const requiredFields = [
-            $row.find('.ib-problem'),
-            $row.find('.ib-actions'),
-            $row.find('.ib-responsible')
-        ];
-
-        let rowValid = true;
-        requiredFields.forEach(function($field) {
-            if (!$field.val().trim()) {
-                $field.addClass('ib-invalid');
-                rowValid = false;
-            }
-        });
-
-        const $responsible = $row.find('.ib-responsible');
-        normalizeIssueBoardResponsibleField($responsible);
-        if (!isIssueBoardResponsibleValidValue($responsible.val())) {
-            $responsible.addClass('ib-invalid');
-            rowValid = false;
-        }
-
-        const status = $row.find('.ib-status').val();
-        const $completed = $row.find('.ib-completed-date');
-        if (status === '100%' && !$completed.val()) {
-            $completed.addClass('ib-invalid');
-            rowValid = false;
-        }
-
-        return rowValid;
+        $row.find('.ib-invalid').removeClass('ib-invalid');
+        return true;
     }
 
     function hasAtLeastOneIssueRow() {
@@ -2876,11 +2859,7 @@ function regroupRows($container){
     }
 
     function hasIssueBoardCoreSaveData($row) {
-        return !!(
-            $row.find('.ib-problem').val().trim()
-            || $row.find('.ib-actions').val().trim()
-            || $row.find('.ib-responsible').val().trim()
-        );
+        return $row.find('.ib-problem').length > 0;
     }
 
     function getIssueBoardRowsForSave() {
@@ -2899,23 +2878,7 @@ function regroupRows($container){
 
         let valid = true;
         rows.each(function() {
-            const $row = $(this);
-            if (showErrors) {
-                if (!validateIssueRow($row)) {
-                    valid = false;
-                }
-            } else {
-                const responsibleValue = $row.find('.ib-responsible').val().trim();
-                const requiredOk = $row.find('.ib-problem').val().trim()
-                    && $row.find('.ib-actions').val().trim()
-                    && responsibleValue
-                    && isIssueBoardResponsibleValidValue(responsibleValue);
-                const status = $row.find('.ib-status').val();
-                const completedOk = status !== '100%' || !!$row.find('.ib-completed-date').val();
-                if (!(requiredOk && completedOk)) {
-                    valid = false;
-                }
-            }
+            validateIssueRow($(this));
         });
 
         return valid;
@@ -3036,8 +2999,8 @@ function regroupRows($container){
         const $completedDate = $row.find('.ib-completed-date');
         const isCompleted = status === '100%';
 
-        $completedDate.prop('required', isCompleted);
-        $completedDate.toggleClass('required', isCompleted && !$completedDate.val());
+        $completedDate.prop('required', false);
+        $completedDate.removeClass('required ib-invalid');
     }
 
     function bindIssueBoardRowEvents() {
@@ -3176,11 +3139,22 @@ function regroupRows($container){
         if (!value) {
             return '-';
         }
-        const date = new Date(value + 'T00:00:00');
+        const text = String(value).trim();
+        const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (iso) {
+            return iso[3] + '/' + iso[2] + '/' + iso[1];
+        }
+        const slash = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (slash) {
+            return text;
+        }
+        const date = new Date(text);
         if (Number.isNaN(date.getTime())) {
             return value;
         }
-        return date.toLocaleDateString('en-GB');
+        return String(date.getDate()).padStart(2, '0') + '/'
+            + String(date.getMonth() + 1).padStart(2, '0') + '/'
+            + date.getFullYear();
     }
 
     function createIssueTargetDateDisplaySlot(label, dateValue, remarkValue, superseded) {
@@ -3265,7 +3239,7 @@ function regroupRows($container){
             textCell('ib-problem', safeItem.problem, 'Describe issue') +
             '<td class="ib-display-cell"><span class="ib-priority-pill ib-priority-' + escapeAttributeValue(String(safeItem.priority || '').toLowerCase()) + '">' + escapeHtml(safeItem.priority || '-') + '</span><input type="hidden" class="ib-priority" value="' + escapeAttributeValue(safeItem.priority || '') + '"></td>' +
             textCell('ib-owner', safeItem.ownerName, 'Owner name') +
-            '<td class="ib-display-cell"><span class="ib-cell-text ib-issue-date-display">' + escapeHtml(safeItem.issueDate || '-') + '</span><input type="hidden" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
+            '<td class="ib-display-cell"><span class="ib-cell-text ib-issue-date-display">' + escapeHtml(formatIssueTableDateForDisplay(safeItem.issueDate)) + '</span><input type="hidden" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
             textCell('ib-root-cause', safeItem.rootCause, 'Root cause') +
             textCell('ib-actions', safeItem.actions, 'Action plan') +
             textCell('ib-responsible', safeItem.responsible, 'Responsible') +
@@ -3273,7 +3247,7 @@ function regroupRows($container){
             '<td><span class="ib-cell-text ib-due-days-display">' + escapeHtml(dueDays === '' ? '-' : dueDays) + '</span><input type="hidden" class="ib-due-days" value="' + escapeAttributeValue(dueDays) + '"></td>' +
             '<td class="ib-status-cell"><div class="ib-status-wrap"><div class="ib-progress-row"><div class="ib-pdca-circle" aria-hidden="true" style="--pdca-progress:0" data-stage="-"><span class="ib-pdca-quarter ib-pdca-p">P</span><span class="ib-pdca-quarter ib-pdca-d">D</span><span class="ib-pdca-quarter ib-pdca-c">C</span><span class="ib-pdca-quarter ib-pdca-a">A</span></div></div>' +
             '<select class="ib-status" aria-label="Issue progress status" hidden><option value="0%" ' + (status === '0%' ? 'selected' : '') + '>-</option><option value="25%" ' + (status === '25%' ? 'selected' : '') + '>P</option><option value="50%" ' + (status === '50%' ? 'selected' : '') + '>D</option><option value="75%" ' + (status === '75%' ? 'selected' : '') + '>C</option><option value="100%" ' + (status === '100%' ? 'selected' : '') + '>A</option></select></div></td>' +
-            '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(completedDate || '-') + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
+            '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(formatIssueTableDateForDisplay(completedDate)) + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
             '<td class="ib-history-cell"><button type="button" class="issue-config-history" ' + (safeItem.id ? '' : 'disabled ') + 'title="' + (safeItem.id ? 'View history' : 'History available after save') + '" aria-label="View issue history"><i class="fas fa-clock-rotate-left"></i></button></td>' +
             '<td class="ib-action-cell"><div class="ib-action-stack"><button type="button" class="issue-edit" title="Edit issue" aria-label="Edit issue"><i class="fas fa-pen-to-square"></i></button><button type="button" class="issue-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></div></td>' +
             '</tr>';
@@ -3293,6 +3267,43 @@ function regroupRows($container){
 
     function getIssueConfigEffectiveTarget(data) {
         return data.targetDateExtension2 || data.targetDateExtension1 || data.targetDate || '';
+    }
+
+    function normalizeIssueDuplicateKey(data) {
+        const safe = data || {};
+        return [
+            safe.problem,
+            safe.priority,
+            safe.ownerName,
+            safe.issueDate,
+            safe.actions,
+            safe.responsible,
+            getIssueConfigEffectiveTarget(safe)
+        ].map(function(value) {
+            return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        }).join('|');
+    }
+
+    function hasDuplicateUnsavedIssue(payload, ignoreRowIndex) {
+        const nextKey = normalizeIssueDuplicateKey(payload);
+        if (!nextKey.replace(/\|/g, '')) {
+            return false;
+        }
+        let duplicate = false;
+        $('#issueBoardConfigTableBody tr').each(function(index) {
+            if (ignoreRowIndex !== null && ignoreRowIndex !== undefined && index === Number(ignoreRowIndex)) {
+                return;
+            }
+            const $row = $(this);
+            if ($row.find('.ib-problem').length === 0) {
+                return;
+            }
+            if (normalizeIssueDuplicateKey(readIssueConfigRow($row)) === nextKey) {
+                duplicate = true;
+                return false;
+            }
+        });
+        return duplicate;
     }
 
     function readIssueConfigRow($row) {
@@ -3332,7 +3343,7 @@ function regroupRows($container){
         $row.find('.ib-owner').val(safe.ownerName || '');
         $row.find('.ib-owner-display').text(safe.ownerName || '-');
         $row.find('.ib-issue-date').val(safe.issueDate || '');
-        $row.find('.ib-issue-date-display').text(safe.issueDate || '-');
+        $row.find('.ib-issue-date-display').text(formatIssueTableDateForDisplay(safe.issueDate));
         $row.find('.ib-root-cause').val(safe.rootCause || '');
         $row.find('.ib-root-cause-display').text(safe.rootCause || '-');
         $row.find('.ib-actions').val(safe.actions || '');
@@ -3351,7 +3362,7 @@ function regroupRows($container){
         $row.find('.ib-due-days-display').text(dueDays === '' ? '-' : dueDays);
         $row.find('.ib-status').val(status);
         $row.find('.ib-completed-date').val(safe.completedDate || '');
-        $row.find('.ib-completed-date-display').text(safe.completedDate || '-');
+        $row.find('.ib-completed-date-display').text(formatIssueTableDateForDisplay(safe.completedDate));
 
         updateRowDueDays($row);
         updateCompletedDateRequirement($row);
@@ -3367,8 +3378,8 @@ function regroupRows($container){
         $('#issueConfigDrawerSave').html('<i class="fas fa-check"></i> ' + (rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Update Issue'));
         $('#issueConfigDrawerProblem').val(safe.problem || '');
         $('#issueConfigDrawerPriority').val(safe.priority || '');
-        $('#issueConfigDrawerOwner').val(safe.ownerName || '');
-        $('#issueConfigDrawerIssueDate').val(safe.issueDate || $('#issueBoardConfigDate').val() || getTodayDateString());
+        $('#issueConfigDrawerOwner').val(safe.ownerName || getLoggedInUsername()).prop('readonly', true);
+        $('#issueConfigDrawerIssueDate').val(safe.issueDate || getTodayDateString());
         $('#issueConfigDrawerTargetDate').val(safe.targetDate || '');
         $('#issueConfigDrawerTargetDateRemark').val(safe.targetDateRemark || '');
         $('#issueConfigDrawerTargetExt1').val(safe.targetDateExtension1 || '');
@@ -3415,7 +3426,7 @@ function regroupRows($container){
         }
         return date.toLocaleString('en-GB', {
             day: '2-digit',
-            month: 'short',
+            month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -3430,11 +3441,7 @@ function regroupRows($container){
         if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
             const date = new Date(value + 'T00:00:00');
             if (!Number.isNaN(date.getTime())) {
-                return date.toLocaleString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                });
+                return formatIssueTableDateForDisplay(value);
             }
         }
         return value;
@@ -3511,7 +3518,7 @@ function regroupRows($container){
 
     function updateIssueConfigDrawerDueDays() {
         const effectiveTarget = $('#issueConfigDrawerTargetExt2').val() || $('#issueConfigDrawerTargetExt1').val() || $('#issueConfigDrawerTargetDate').val();
-        $('#issueConfigDrawerDueDays').val(calculateDueDaysFromTarget(effectiveTarget));
+        return calculateDueDaysFromTarget(effectiveTarget);
     }
 
     function validateIssueTargetRemarks(pairs) {
@@ -3579,25 +3586,7 @@ function regroupRows($container){
         const match = findIssueBoardResponsibleUser(responsibleValue);
         const statusValue = $('#issueConfigDrawerStatus').val() || '0%';
 
-        if (issueBoardAssignableUsers.length > 0 && !match) {
-            responsibleField.addClass('ib-invalid').trigger('focus');
-            showIssueBoardPopup('Responsible must be selected from User Management suggestions.');
-            return;
-        }
-
-        if (statusValue === '100%' && !$('#issueConfigDrawerCompletedDate').val()) {
-            $('#issueConfigDrawerCompletedDate').addClass('ib-invalid').trigger('focus');
-            showIssueBoardPopup('Completed date is required when status is 100%.');
-            return;
-        }
-
-        if (!validateIssueTargetRemarks([
-            { date: '#issueConfigDrawerTargetExt1', remark: '#issueConfigDrawerTargetExt1Remark' },
-            { date: '#issueConfigDrawerTargetExt2', remark: '#issueConfigDrawerTargetExt2Remark' }
-        ])) {
-            showIssueBoardPopup('Remarks are required only for the extension target date entered.');
-            return;
-        }
+        $('#issueConfigDrawerForm .ib-invalid').removeClass('ib-invalid');
 
         const payload = {
             problem: ($('#issueConfigDrawerProblem').val() || '').trim(),
@@ -3620,6 +3609,7 @@ function regroupRows($container){
         const rowIndexValue = $('#issueConfigDrawerRowIndex').val();
         let $row = rowIndexValue === '' ? $() : $('#issueBoardConfigTableBody tr').eq(Number(rowIndexValue));
         const existingId = $row.length ? String($row.data('id') || '').trim() : '';
+        const $drawerSaveBtn = $('#issueConfigDrawerSave');
 
         if (existingId) {
             const apiPayload = Object.assign({}, payload, {
@@ -3632,7 +3622,7 @@ function regroupRows($container){
                 targetDateExtension2Remark: payload.targetDateExtension2Remark || null,
                 completedDate: payload.completedDate || null
             });
-            const $saveBtn = $('#issueConfigDrawerSave');
+            const $saveBtn = $drawerSaveBtn;
             $saveBtn.prop('disabled', true).data('original-html', $saveBtn.html()).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
 
             $.ajax({
@@ -3662,6 +3652,7 @@ function regroupRows($container){
             return;
         }
 
+        $drawerSaveBtn.prop('disabled', true);
         $('#issueBoardConfigTableBody .placeholder-row').remove();
         if (!$row.length) {
             $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow(payload));
@@ -3676,6 +3667,9 @@ function regroupRows($container){
         setIssueBoardSaveState();
         setIssueConfigDrawerOpen(false);
         showIssueBoardToast('New issue added. Click Save Issue Board to persist.', 'success');
+        window.setTimeout(function() {
+            $drawerSaveBtn.prop('disabled', false);
+        }, 250);
     });
 
     function bindIssueBoardDeleteButtons() {
@@ -3740,14 +3734,9 @@ function regroupRows($container){
 
         const rows = getIssueBoardRowsForSave();
 
-        if (rows.length > 0 && !validateIssueBoardRows(true)) {
-            showIssueBoardPopup('Problem, Actions, Responsible, and completion date for 100% are required.');
-            setIssueBoardSaveState();
-            return;
-        }
+        validateIssueBoardRows(false);
 
         const payload = [];
-        let invalid = false;
 
         rows.each(function(index) {
             const problem = $(this).find('.ib-problem').val().trim();
@@ -3758,35 +3747,6 @@ function regroupRows($container){
             const dueParsed = calculateDueDaysFromTarget(getEffectiveIssueTargetDate($(this)));
             const statusValue = $(this).find('.ib-status').val();
             const completedDate = $(this).find('.ib-completed-date').val() || null;
-
-            if (!problem || !actions || !responsible) {
-                invalid = true;
-                $(this).find('.ib-problem, .ib-actions, .ib-responsible').each(function() {
-                    if (!$(this).val().trim()) {
-                        $(this).addClass('ib-invalid');
-                    }
-                });
-                return false;
-            }
-
-            if (!isIssueBoardResponsibleValidValue(responsible)) {
-                invalid = true;
-                $responsibleField.addClass('ib-invalid');
-                showIssueBoardPopup('Responsible must be selected from User Management suggestions.');
-                return false;
-            }
-
-            if (dueParsed !== '' && !Number.isFinite(dueParsed)) {
-                invalid = true;
-                return false;
-            }
-
-            if (statusValue === '100%' && !completedDate) {
-                invalid = true;
-                $(this).find('.ib-completed-date').addClass('required ib-invalid');
-                showIssueBoardPopup('Completed date is required when status is 100%.');
-                return false;
-            }
 
             const rowId = ($(this).attr('data-id') || '').trim();
             const payloadItem = {
@@ -3818,12 +3778,6 @@ function regroupRows($container){
 
             payload.push(payloadItem);
         });
-
-        if (invalid) {
-            showIssueBoardPopup('Problem, Actions, and valid Responsible user are required for each row.');
-            setIssueBoardSaveState();
-            return;
-        }
 
         setIssueBoardSaveLoading(true);
 
@@ -3979,29 +3933,18 @@ function regroupRows($container){
 
     function createGembaConfigRow(item) {
         const safeItem = item || {};
-        const functionType = safeItem.functionType || 'Packaging';
+        const functionType = safeItem.functionType || '';
         const associateName = safeItem.associateName || safeItem.functionName || '';
+        const weekAreas = filteredMasterProcessAreas(functionType);
 
         return '' +
             '<tr>' +
-            '<td>' +
-            '<select class="gs-function-type">' +
-            '<option value="Packaging" ' + (functionType === 'Packaging' ? 'selected' : '') + '>Packaging</option>' +
-            '<option value="Quality" ' + (functionType === 'Quality' ? 'selected' : '') + '>Quality</option>' +
-            '<option value="HR & Admin" ' + (functionType === 'HR & Admin' ? 'selected' : '') + '>HR & Admin</option>' +
-            '<option value="Utility & Maintenance" ' + (functionType === 'Utility & Maintenance' ? 'selected' : '') + '>Utility & Maintenance</option>' +
-            '<option value="Customer Supply" ' + (functionType === 'Customer Supply' ? 'selected' : '') + '>Customer Supply</option>' +
-            '<option value="B&P" ' + (functionType === 'B&P' ? 'selected' : '') + '>B&P</option>' +
-            '<option value="Finance" ' + (functionType === 'Finance' ? 'selected' : '') + '>Finance</option>' +
-            '<option value="Health & Safety" ' + (functionType === 'Health & Safety' ? 'selected' : '') + '>Health & Safety</option>' +
-            '<option value="Carlsberg Excellence" ' + (functionType === 'Carlsberg Excellence' ? 'selected' : '') + '>Carlsberg Excellence</option>' +
-            '</select>' +
-            '</td>' +
+            '<td>' + masterDataSelectHtml('gs-function-type', plantMasterDataOptions.departments, functionType) + '</td>' +
             '<td><input type="text" class="gs-associate-name" value="' + escapeAttributeValue(associateName) + '" placeholder="Associate Name"></td>' +
-            '<td><input type="text" class="gs-week1" value="' + escapeAttributeValue(safeItem.week1 || '') + '" placeholder="Week #1"></td>' +
-            '<td><input type="text" class="gs-week2" value="' + escapeAttributeValue(safeItem.week2 || '') + '" placeholder="Week #2"></td>' +
-            '<td><input type="text" class="gs-week3" value="' + escapeAttributeValue(safeItem.week3 || '') + '" placeholder="Week #3"></td>' +
-            '<td><input type="text" class="gs-week4" value="' + escapeAttributeValue(safeItem.week4 || '') + '" placeholder="Week #4"></td>' +
+            '<td>' + masterDataSelectHtml('gs-week1', weekAreas, safeItem.week1 || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('gs-week2', weekAreas, safeItem.week2 || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('gs-week3', weekAreas, safeItem.week3 || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('gs-week4', weekAreas, safeItem.week4 || '') + '</td>' +
             '<td class="ib-action-cell"><button type="button" class="issue-delete gemba-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></td>' +
             '</tr>';
     }
@@ -4010,6 +3953,13 @@ function regroupRows($container){
         $('#gembaConfigTableBody .placeholder-row').remove();
         $('#gembaConfigTableBody').append(createGembaConfigRow({}));
         bindGembaDeleteButtons();
+    });
+
+    $(document).on('change', '.gs-function-type', function() {
+        const $row = $(this).closest('tr');
+        ['.gs-week1', '.gs-week2', '.gs-week3', '.gs-week4'].forEach(function(selector) {
+            refreshRowAreaSelect($row, '.gs-function-type', selector, '');
+        });
     });
 
     function bindGembaDeleteButtons() {
@@ -4107,11 +4057,16 @@ function regroupRows($container){
 
     const plantMasterDataOptions = {
         departments: [],
-        processAreas: []
+        processAreas: [],
+        processAreaItems: []
     };
 
+    function masterDataOptionValue(value) {
+        return String(value && typeof value === 'object' ? value.name : value || '').trim();
+    }
+
     function masterDataOptionHtml(value, selected) {
-        const safeValue = String(value || '').trim();
+        const safeValue = masterDataOptionValue(value);
         if (!safeValue) {
             return '';
         }
@@ -4120,11 +4075,37 @@ function regroupRows($container){
 
     function masterDataSelectHtml(className, values, selected) {
         const selectedValue = String(selected || '').trim();
+        const list = (values || []).slice();
+        if (selectedValue && !list.some(function(value) { return masterDataOptionValue(value).toLowerCase() === selectedValue.toLowerCase(); })) {
+            list.push(selectedValue);
+        }
         return '<select class="' + className + '"><option value=""></option>' +
-            (values || []).map(function(value) {
+            list.map(function(value) {
                 return masterDataOptionHtml(value, selectedValue);
             }).join('') +
             '</select>';
+    }
+
+    function filteredMasterProcessAreas(department) {
+        const selectedDepartment = String(department || '').trim().toLowerCase();
+        if (!selectedDepartment) {
+            return [];
+        }
+        return (plantMasterDataOptions.processAreaItems || [])
+            .filter(function(item) {
+                return String(item.parentDepartment || '').trim().toLowerCase() === selectedDepartment;
+            })
+            .map(function(item) { return item.name; })
+            .filter(Boolean);
+    }
+
+    function refreshRowAreaSelect($row, departmentSelector, areaSelector, selected) {
+        const department = $row.find(departmentSelector).val() || '';
+        $row.find(areaSelector).each(function() {
+            const $select = $(this);
+            const current = selected === undefined ? $select.val() : selected;
+            $select.replaceWith(masterDataSelectHtml(areaSelector.replace('.', ''), filteredMasterProcessAreas(department), current));
+        });
     }
 
     function loadPlantMasterDataOptions(callback) {
@@ -4141,20 +4122,20 @@ function regroupRows($container){
             url: '/api/dashboard-config/master-data/PROCESS_AREA',
             type: 'GET'
         }).then(function(data) {
-            return data && data.status === 'success' && Array.isArray(data.items)
-                ? data.items.map(function(item) { return item.name; }).filter(Boolean)
-                : [];
+            return data && data.status === 'success' && Array.isArray(data.items) ? data.items : [];
         });
 
-        $.when(departmentRequest, processAreaRequest).done(function(departments, processAreas) {
+        $.when(departmentRequest, processAreaRequest).done(function(departments, processAreaItems) {
             plantMasterDataOptions.departments = departments || [];
-            plantMasterDataOptions.processAreas = processAreas || [];
+            plantMasterDataOptions.processAreaItems = processAreaItems || [];
+            plantMasterDataOptions.processAreas = plantMasterDataOptions.processAreaItems.map(function(item) { return item.name; }).filter(Boolean);
             if (typeof callback === 'function') {
                 callback();
             }
         }).fail(function() {
             plantMasterDataOptions.departments = [];
             plantMasterDataOptions.processAreas = [];
+            plantMasterDataOptions.processAreaItems = [];
             if (typeof callback === 'function') {
                 callback();
             }
@@ -4868,12 +4849,13 @@ function regroupRows($container){
         function num(v) {
             return (v === null || v === undefined) ? '' : String(v);
         }
+        const areaOptions = filteredMasterProcessAreas(safe.department || '');
 
         return '' +
             '<tr>' +
             '<td><input type="text" class="lgt-manager-name" value="' + escapeAttributeValue(safe.managerName || '') + '" placeholder="Manager name"></td>' +
             '<td>' + masterDataSelectHtml('lgt-department', plantMasterDataOptions.departments, safe.department || '') + '</td>' +
-            '<td>' + masterDataSelectHtml('lgt-area', plantMasterDataOptions.processAreas, safe.areaOfCoverage || '') + '</td>' +
+            '<td>' + masterDataSelectHtml('lgt-area', areaOptions, safe.areaOfCoverage || '') + '</td>' +
             '<td><input type="number" class="lgt-target-ytd" min="0" step="1" value="' + escapeAttributeValue(num(safe.targetYtd)) + '"></td>' +
             '<td><input type="number" class="lgt-target-mtd" min="0" step="1" value="' + escapeAttributeValue(num(safe.targetMtd)) + '"></td>' +
             '<td><input type="number" class="lgt-week1-target" min="0" step="1" value="' + escapeAttributeValue(num(safe.week1Target)) + '"></td>' +
@@ -4922,6 +4904,10 @@ function regroupRows($container){
         $('#lgtConfigTableBody .placeholder-row').remove();
         $('#lgtConfigTableBody').append(createLgtConfigRow());
         bindLgtDeleteButtons();
+    });
+
+    $(document).on('change', '.lgt-department', function() {
+        refreshRowAreaSelect($(this).closest('tr'), '.lgt-department', '.lgt-area', '');
     });
 
     $('#saveLgtConfigBtn').on('click', function() {
@@ -6580,27 +6566,26 @@ function regroupRows($container){
             input: '#masterDepartmentInput',
             suggestions: '#masterDepartmentSuggestions',
             label: 'Department',
-            parentPlant: '#masterDepartmentPlantSelect'
+            inheritPlant: true
         },
         PROCESS_AREA: {
             input: '#masterProcessAreaInput',
             suggestions: '#masterProcessAreaSuggestions',
             label: 'Process Area',
-            parentPlant: '#masterProcessAreaPlantSelect',
+            inheritPlant: true,
             parentDepartment: '#masterProcessAreaDepartmentSelect'
         },
         DESIGNATION: {
             input: '#masterDesignationInput',
             suggestions: '#masterDesignationSuggestions',
             label: 'Designation',
-            parentPlant: '#masterDesignationPlantSelect',
-            parentDepartment: '#masterDesignationDepartmentSelect',
-            parentProcessArea: '#masterDesignationProcessAreaSelect'
+            inheritPlant: true
         }
     };
     const masterPlantItems = {};
     let masterPlantViewCategory = '';
     let pendingMasterPlantDelete = null;
+    let savedMasterPlantName = '';
 
     function setMasterPlantMessage(message, type) {
         const $message = $('#masterPlantMessage');
@@ -6628,7 +6613,7 @@ function regroupRows($container){
 
     function masterPlantItemNames(category) {
         const config = MASTER_PLANT_CONFIG[category] || {};
-        const parentPlant = config.parentPlant ? ($(config.parentPlant).val() || '').trim().toLowerCase() : '';
+        const parentPlant = config.inheritPlant ? selectedMasterPlant().toLowerCase() : (config.parentPlant ? ($(config.parentPlant).val() || '').trim().toLowerCase() : '');
         const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim().toLowerCase() : '';
         const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim().toLowerCase() : '';
         return (masterPlantItems[category] || []).filter(function(item) {
@@ -6672,32 +6657,49 @@ function regroupRows($container){
         }).join('');
     }
 
+    function selectedMasterPlant() {
+        return ($('#masterPlantSelect').val() || savedMasterPlantName || '').trim();
+    }
+
+    function applySelectedMasterPlant() {
+        refreshMasterPlantDepartmentSelect($('#masterProcessAreaDepartmentSelect').val() || '');
+        renderMasterPlantSuggestions('DEPARTMENT');
+        renderMasterPlantSuggestions('PROCESS_AREA');
+        renderMasterPlantSuggestions('DESIGNATION');
+        if (masterPlantViewCategory) {
+            renderMasterPlantView();
+        }
+    }
+
+    function applySavedMasterPlantSelection() {
+        if (!savedMasterPlantName) {
+            applySelectedMasterPlant();
+            return;
+        }
+        const matchingPlant = (masterPlantItems.PLANT || []).find(function(item) {
+            return String(item.name || '').trim().toLowerCase() === savedMasterPlantName.toLowerCase();
+        });
+        if (matchingPlant) {
+            $('#masterPlantSelect').val(matchingPlant.name);
+        }
+        applySelectedMasterPlant();
+    }
+
     function refreshMasterPlantParentSelects() {
         const plants = masterPlantItems.PLANT || [];
         const selectedPlant = $('#masterPlantSelect').val() || '';
-        const departmentPlant = $('#masterDepartmentPlantSelect').val() || '';
-        const processPlant = $('#masterProcessAreaPlantSelect').val() || '';
         const processDepartment = $('#masterProcessAreaDepartmentSelect').val() || '';
-        const designationPlant = $('#masterDesignationPlantSelect').val() || '';
-        const designationDepartment = $('#masterDesignationDepartmentSelect').val() || '';
-        const designationProcessArea = $('#masterDesignationProcessAreaSelect').val() || '';
-        $('#masterPlantSelect, #masterDepartmentPlantSelect, #masterProcessAreaPlantSelect, #masterDesignationPlantSelect').html(masterPlantOptionsHtml(plants, 'Select Plant'));
+        $('#masterPlantSelect').html(masterPlantOptionsHtml(plants, 'Select Plant'));
         $('#masterPlantSelect').val(selectedPlant);
-        $('#masterDepartmentPlantSelect').val(departmentPlant);
-        $('#masterProcessAreaPlantSelect').val(processPlant);
-        $('#masterDesignationPlantSelect').val(designationPlant);
         refreshMasterPlantDepartmentSelect(processDepartment);
-        refreshMasterDesignationDepartmentSelect(designationDepartment);
-        refreshMasterDesignationProcessAreaSelect(designationProcessArea);
+        applySavedMasterPlantSelection();
     }
 
     function selectMasterPlant(plantName) {
         const value = plantName || $('#masterPlantSelect').val() || '';
+        savedMasterPlantName = value;
         $('#masterPlantSelect').val(value);
-        $('#masterDepartmentPlantSelect, #masterProcessAreaPlantSelect, #masterDesignationPlantSelect').val(value);
-        refreshMasterPlantDepartmentSelect('');
-        refreshMasterDesignationDepartmentSelect('');
-        refreshMasterDesignationProcessAreaSelect('');
+        applySelectedMasterPlant();
     }
 
     function saveSelectedPlantForKpiDashboard(plantName) {
@@ -6723,35 +6725,12 @@ function regroupRows($container){
     }
 
     function refreshMasterPlantDepartmentSelect(selectedValue) {
-        const plant = $('#masterProcessAreaPlantSelect').val() || '';
+        const plant = selectedMasterPlant();
         const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
             return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
         });
         $('#masterProcessAreaDepartmentSelect')
             .html(masterPlantOptionsHtml(departments, 'Select Department'))
-            .val(selectedValue || '');
-    }
-
-    function refreshMasterDesignationDepartmentSelect(selectedValue) {
-        const plant = $('#masterDesignationPlantSelect').val() || '';
-        const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
-            return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
-        });
-        $('#masterDesignationDepartmentSelect')
-            .html(masterPlantOptionsHtml(departments, 'Select Department'))
-            .val(selectedValue || '');
-    }
-
-    function refreshMasterDesignationProcessAreaSelect(selectedValue) {
-        const plant = $('#masterDesignationPlantSelect').val() || '';
-        const department = $('#masterDesignationDepartmentSelect').val() || '';
-        const processAreas = (masterPlantItems.PROCESS_AREA || []).filter(function(item) {
-            const plantMatches = !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
-            const departmentMatches = !department || String(item.parentDepartment || '').toLowerCase() === department.toLowerCase();
-            return plantMatches && departmentMatches;
-        });
-        $('#masterDesignationProcessAreaSelect')
-            .html(masterPlantOptionsHtml(processAreas, 'Select Process Area'))
             .val(selectedValue || '');
     }
 
@@ -6828,8 +6807,11 @@ function regroupRows($container){
         const category = masterPlantViewCategory;
         const config = MASTER_PLANT_CONFIG[category];
         const term = ($('#masterPlantViewSearch').val() || '').trim().toLowerCase();
+        const plant = selectedMasterPlant().toLowerCase();
         const items = (masterPlantItems[category] || []).filter(function(item) {
-            return !term || String(item.name || '').toLowerCase().includes(term);
+            const plantMatches = category === 'PLANT' || !plant || String(item.parentPlant || '').toLowerCase() === plant;
+            const termMatches = !term || String(item.name || '').toLowerCase().includes(term);
+            return plantMatches && termMatches;
         });
         $('#masterPlantViewTitle').text('View ' + (config ? config.label.toLowerCase() + 's' : 'master data'));
         $('#masterPlantViewList').html(items.length ? items.map(function(item) {
@@ -6883,21 +6865,28 @@ function regroupRows($container){
 
     function loadMasterPlantConfig() {
         Object.keys(MASTER_PLANT_CONFIG).forEach(loadMasterPlantCategory);
+        $.getJSON('/api/dashboard-config/plant-name', function(data) {
+            savedMasterPlantName = String((data && data.plantName) || '').trim();
+            applySavedMasterPlantSelection();
+        });
     }
 
     function saveMasterPlantCategory(category) {
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         const value = ($(config.input).val() || '').trim();
-        const parentPlant = config.parentPlant ? ($(config.parentPlant).val() || '').trim() : '';
+        if (config.inheritPlant || config.parentPlant) {
+            applySelectedMasterPlant();
+        }
+        const parentPlant = config.inheritPlant ? selectedMasterPlant() : (config.parentPlant ? ($(config.parentPlant).val() || '').trim() : '');
         const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim() : '';
         const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim() : '';
         if (!value) {
             setMasterPlantMessage(config.label + ' is required.', 'warning');
             return;
         }
-        if (config.parentPlant && !parentPlant) {
-            setMasterPlantMessage('Plant is required.', 'warning');
+        if ((config.inheritPlant || config.parentPlant) && !parentPlant) {
+            setMasterPlantMessage('Select the global Plant before adding ' + config.label + '.', 'warning');
             return;
         }
         if (config.parentDepartment && !parentDepartment) {
@@ -6913,7 +6902,7 @@ function regroupRows($container){
             return;
         }
         const payload = { name: value };
-        if (config.parentPlant) {
+        if (config.inheritPlant || config.parentPlant) {
             payload.parentPlant = parentPlant;
         }
         if (config.parentDepartment) {
@@ -6955,15 +6944,19 @@ function regroupRows($container){
         const existing = (masterPlantItems[category] || []).find(function(item) {
             return String(item.id || '') === String(id);
         }) || {};
-        if (findMasterPlantDuplicate(category, value, existing.parentPlant || '', existing.parentDepartment || '', existing.parentProcessArea || '', id)) {
+        const duplicatePlant = existing.parentPlant || '';
+        const duplicateDepartment = existing.parentDepartment || '';
+        const duplicateProcessArea = existing.parentProcessArea || '';
+        if (findMasterPlantDuplicate(category, value, duplicatePlant, duplicateDepartment, duplicateProcessArea, id)) {
             setMasterPlantMessage(masterPlantDuplicateMessage(config), 'warning');
             return;
         }
+        const payload = { name: value };
         $.ajax({
             url: masterPlantUrl(id),
             type: 'PUT',
             contentType: 'application/json',
-            data: JSON.stringify({ name: value }),
+            data: JSON.stringify(payload),
             success: function(data) {
                 if (data && data.status === 'success') {
                     setMasterPlantMessage(config.label + ' updated.', 'success');
@@ -7094,20 +7087,18 @@ function regroupRows($container){
     $('#masterPlantSelect').on('change', function() {
         const selectedPlant = $(this).val() || '';
         selectMasterPlant(selectedPlant);
+        if (selectedPlant) {
+            setMasterPlantMessage('Plant selected. Click OK to update the KPI Dashboard name.', 'success');
+        }
+    });
+
+    $('#confirmMasterPlantSelection').on('click', function() {
+        const selectedPlant = $('#masterPlantSelect').val() || '';
+        if (!selectedPlant) {
+            setMasterPlantMessage('Select a plant before clicking OK.', 'warning');
+            return;
+        }
         saveSelectedPlantForKpiDashboard(selectedPlant);
-    });
-
-    $('#masterProcessAreaPlantSelect').on('change', function() {
-        refreshMasterPlantDepartmentSelect('');
-    });
-
-    $('#masterDesignationPlantSelect').on('change', function() {
-        refreshMasterDesignationDepartmentSelect('');
-        refreshMasterDesignationProcessAreaSelect('');
-    });
-
-    $('#masterDesignationDepartmentSelect').on('change', function() {
-        refreshMasterDesignationProcessAreaSelect('');
     });
 
     $('.master-plant-input').on('keydown', function(event) {

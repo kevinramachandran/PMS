@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/abnormality-reporting.css?v=20260830">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=active-nav-20260817">
+    <link rel="stylesheet" href="/css/abnormality-reporting.css?v=filters-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -56,11 +56,11 @@
                 </div>
             </div>
             <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-sliders"></i><span>Issue Board</span></a>
-            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality report Configuration"><i class="fas fa-clipboard-list"></i><span>Abnormality report Configuration</span></a>
-            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Configuration"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Configuration</span></a>
+            <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality Reporting"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
+            <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Reporting"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
             <a href="/process-confirmation-config" class="nav-item" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Configuration"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Configuration</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen Reporting"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
                 <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -113,10 +113,24 @@
                     <span>Closed</span>
                     <strong id="closedCount">0</strong>
                 </button>
+                <button type="button" class="ar-count-card ar-percent-card">
+                    <span>% Closed</span>
+                    <strong id="closedPercent">0%</strong>
+                </button>
             </section>
 
             <section class="issue-board-card ar-report-card">
-                <div class="issue-board-title-row ar-filter-row">
+                <div class="ar-section-title">
+                    <div>
+                        <h2>Abnormality Report</h2>
+                        <p id="abnormalityFilterSummary">All periods | 0 records</p>
+                    </div>
+                    <a href="/abnormality-reporting-config" class="issue-add-button" th:if="${session.canViewAbnormalityTrackerConfiguration}">
+                        <i class="fas fa-plus"></i>
+                        <span>New Record</span>
+                    </a>
+                </div>
+                <div class="ar-filter-grid">
                     <div class="ar-filter-group">
                         <label for="periodFilter">Report</label>
                         <select id="periodFilter">
@@ -127,6 +141,28 @@
                         </select>
                     </div>
                     <div class="ar-filter-group">
+                        <label for="anchorDateFilter">Date</label>
+                        <input type="date" id="anchorDateFilter">
+                    </div>
+                    <div class="ar-filter-group">
+                        <label for="plantFilter">Plant</label>
+                        <select id="plantFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="ar-filter-group">
+                        <label for="departmentFilter">Department</label>
+                        <select id="departmentFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="ar-filter-group">
+                        <label for="areaFilter">Area</label>
+                        <select id="areaFilter">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="ar-filter-group">
                         <label for="statusFilter">Tag Status</label>
                         <select id="statusFilter">
                             <option value="all">All</option>
@@ -134,17 +170,22 @@
                             <option value="closed">Closed</option>
                         </select>
                     </div>
-                    <a href="/abnormality-reporting-config" class="issue-add-button" th:if="${session.canViewAbnormalityTrackerConfiguration}">
-                        <i class="fas fa-plus"></i>
-                        <span>New Record</span>
-                    </a>
                 </div>
-                <div class="ar-chart-wrap">
-                    <canvas id="abnormalityReportingChart" aria-label="Abnormality reporting graph"></canvas>
+                <div class="ar-chart-grid">
+                    <div class="ar-chart-wrap">
+                        <canvas id="abnormalityStatusChart" aria-label="Abnormality status chart"></canvas>
+                    </div>
+                    <div class="ar-chart-wrap">
+                        <canvas id="abnormalityDepartmentChart" aria-label="Abnormality department chart"></canvas>
+                    </div>
+                </div>
+                <div class="ar-summary-grid">
+                    <div class="ar-summary-table" id="departmentSummaryTable"></div>
+                    <div class="ar-summary-table" id="areaSummaryTable"></div>
                 </div>
             </section>
 
-            <section class="issue-board-card">
+            <section class="issue-board-card ar-detail-card">
                 <div class="issue-board-title-row">
                     <h2>Records</h2>
                     <div class="issue-search" role="search">
@@ -155,7 +196,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="issue-table-wrap">
+                <div class="issue-table-wrap ar-detail-table-wrap">
                     <table class="issue-table ar-record-table" id="abnormalityReportingTable">
                         <thead>
                         <tr>
@@ -196,7 +237,7 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting.js?v=reporting-visible-20260912"></script>
+<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting.js?v=filters-20260913"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
