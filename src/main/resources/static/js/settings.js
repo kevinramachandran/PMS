@@ -2611,13 +2611,17 @@ function regroupRows($container){
 
                 users.forEach(function(user) {
                     const username = (user.username || '').trim();
+                    const name = (user.name || '').trim();
+                    const employeeId = (user.employeeId || '').trim();
                     const email = (user.email || '').trim();
-                    if (username) {
-                        issueBoardAssignableLookup.set(username.toLowerCase(), user);
-                    }
-                    if (email) {
-                        issueBoardAssignableLookup.set(email.toLowerCase(), user);
-                    }
+                    const label = (user.label || '').trim();
+                    addIssueBoardResponsibleLookup(username, user);
+                    addIssueBoardResponsibleLookup(name, user);
+                    addIssueBoardResponsibleLookup(employeeId, user);
+                    addIssueBoardResponsibleLookup(email, user);
+                    addIssueBoardResponsibleLookup(label, user);
+                    addIssueBoardResponsibleLookup(name && email ? name + ' (' + email + ')' : '', user);
+                    addIssueBoardResponsibleLookup(username && email ? username + ' (' + email + ')' : '', user);
                 });
 
                 renderIssueBoardResponsibleUsers();
@@ -2643,24 +2647,40 @@ function regroupRows($container){
         $list.empty();
         issueBoardAssignableUsers.forEach(function(user) {
             const username = (user.username || '').trim();
+            const label = (user.label || '').trim();
             const email = (user.email || '').trim();
-            if (!username) {
+            const value = username || (user.name || '').trim() || email;
+            if (!value) {
                 return;
             }
 
             $('<option>')
-                .attr('value', username)
-                .attr('label', email ? username + ' (' + email + ')' : username)
+                .attr('value', value)
+                .attr('label', label || (email ? value + ' (' + email + ')' : value))
                 .appendTo($list);
         });
     }
 
+    function normalizeIssueBoardLookupKey(value) {
+        return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function addIssueBoardResponsibleLookup(value, user) {
+        const key = normalizeIssueBoardLookupKey(value);
+        if (key) {
+            issueBoardAssignableLookup.set(key, user);
+        }
+    }
+
     function findIssueBoardResponsibleUser(value) {
-        const normalized = (value || '').trim().toLowerCase();
+        const normalized = normalizeIssueBoardLookupKey(value);
         if (!normalized) {
             return null;
         }
-        return issueBoardAssignableLookup.get(normalized) || null;
+        return issueBoardAssignableLookup.get(normalized)
+            || issueBoardAssignableLookup.get(normalized.replace(/\s*\(([^)]+)\)\s*$/, ''))
+            || issueBoardAssignableLookup.get(normalized.replace(/^.*\(([^)]+)\)\s*$/, '$1'))
+            || null;
     }
 
     function normalizeIssueBoardResponsibleField($field) {
@@ -2852,10 +2872,23 @@ function regroupRows($container){
         }).length > 0;
     }
 
-    function validateIssueBoardRows(showErrors) {
-        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
-            return $(this).find('.ib-problem').length > 0;
+    function hasIssueBoardCoreSaveData($row) {
+        return !!(
+            $row.find('.ib-problem').val().trim()
+            || $row.find('.ib-actions').val().trim()
+            || $row.find('.ib-responsible').val().trim()
+        );
+    }
+
+    function getIssueBoardRowsForSave() {
+        return $('#issueBoardConfigTableBody tr').filter(function() {
+            const $row = $(this);
+            return $row.find('.ib-problem').length > 0 && hasIssueBoardCoreSaveData($row);
         });
+    }
+
+    function validateIssueBoardRows(showErrors) {
+        const rows = getIssueBoardRowsForSave();
 
         if (rows.length === 0) {
             return false;
@@ -3702,9 +3735,7 @@ function regroupRows($container){
             return;
         }
 
-        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
-            return $(this).find('.ib-problem').length > 0;
-        });
+        const rows = getIssueBoardRowsForSave();
 
         if (rows.length > 0 && !validateIssueBoardRows(true)) {
             showIssueBoardPopup('Problem, Actions, Responsible, and completion date for 100% are required.');
