@@ -99,7 +99,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean requiresEditPermission = requiresEditPermission(request, protectedPageKey);
         boolean allowed = requiresEditPermission
                 ? RoleAccess.canEditPage(role, editPermissions, protectedPageKey)
-                : RoleAccess.canViewPage(role, viewPermissions, protectedPageKey);
+                : canAccessReadPage(role, viewPermissions, editPermissions, protectedPageKey);
 
         if (!allowed) {
             denyAccess(request, response);
@@ -145,7 +145,8 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewAbnormalityTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION);
         boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
         boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
-        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canEditInfoPortal = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL) || canEditInfoPortal;
         boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
         boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
         boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
@@ -335,7 +336,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION;
         }
 
-        if (path.startsWith("/api/dashboard-config/info-portal")) {
+        if (path.startsWith("/client-selection") || path.startsWith("/api/dashboard-config/info-portal")) {
             return RoleAccess.PAGE_INFO_PORTAL;
         }
 
@@ -352,6 +353,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
+    }
+
+    private boolean canAccessReadPage(String role, Set<String> viewPermissions, Set<String> editPermissions, String pageKey) {
+        return RoleAccess.canViewPage(role, viewPermissions, pageKey)
+                || RoleAccess.canEditPage(role, editPermissions, pageKey);
     }
 
     private Set<String> extractPermissions(HttpSession session, String attributeName) {

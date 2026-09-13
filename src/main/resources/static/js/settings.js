@@ -161,6 +161,9 @@ $(document).ready(function() {
     const readOnlyActionSelectors = [
         '.form-actions button',
         '#addRowBtn',
+        '#addGembaRowBtn',
+        '#addLgtRowBtn',
+        '#addAtRowBtn',
         '#addTrainingScheduleRowBtn',
         '#cancelTrainingScheduleBtn',
         '#saveTrainingScheduleBtn',

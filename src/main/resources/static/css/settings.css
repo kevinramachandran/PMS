@@ -4060,6 +4060,12 @@ table select {
     border-radius: 10px;
     padding: 8px 10px;
     box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.08);
+    pointer-events: none;
+}
+
+.sticky-save-bar .btn,
+.sticky-save-bar button {
+    pointer-events: auto;
 }
 
 .daily-data-table,
