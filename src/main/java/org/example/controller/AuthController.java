@@ -228,8 +228,9 @@ public class AuthController {
         boolean canViewAbnormalityTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION);
         boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
         boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
-        boolean canEditInfoPortal = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
-        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL) || canEditInfoPortal;
+        boolean canEditInfoPortalView = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW) || canEditInfoPortalView;
+        boolean canViewInfoPortalConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
         boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
         boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
         boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
@@ -260,6 +261,7 @@ public class AuthController {
         session.setAttribute("canViewHsCrossDailyConfiguration", canViewHsCrossDailyConfiguration);
         session.setAttribute("canViewLsrTrackingConfiguration", canViewLsrTrackingConfiguration);
         session.setAttribute("canViewInfoPortal", canViewInfoPortal);
+        session.setAttribute("canViewInfoPortalConfiguration", canViewInfoPortalConfiguration);
         session.setAttribute("canViewKpiTargetCrossColor", canViewKpiTargetCrossColor);
         session.setAttribute("canViewKpiRenameDashboard", canViewKpiRenameDashboard);
         session.setAttribute("canViewKpiPlantName", canViewKpiPlantName);
@@ -332,8 +334,11 @@ public class AuthController {
         if (pages.contains(RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION)) {
             return "/process-confirmation";
         }
-        if (pages.contains(RoleAccess.PAGE_INFO_PORTAL)) {
+        if (pages.contains(RoleAccess.PAGE_INFO_PORTAL_VIEW)) {
             return "/client-selection";
+        }
+        if (pages.contains(RoleAccess.PAGE_INFO_PORTAL)) {
+            return "/settings?config=info-portal";
         }
         if (pages.contains(RoleAccess.PAGE_USER_MANAGEMENT)) {
             return "/pms-configuration";

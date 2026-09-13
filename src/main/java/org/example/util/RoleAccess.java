@@ -43,6 +43,7 @@ public final class RoleAccess {
         public static final String PAGE_HS_CROSS_DAILY_CONFIGURATION = "HS_CROSS_DAILY_CONFIGURATION";
         public static final String PAGE_LSR_TRACKING_CONFIGURATION = "LSR_TRACKING_CONFIGURATION";
         public static final String PAGE_INFO_PORTAL = "INFO_PORTAL";
+        public static final String PAGE_INFO_PORTAL_VIEW = "INFO_PORTAL_VIEW";
         public static final String PAGE_KPI_TARGET_CROSS_COLOR = "KPI_TARGET_CROSS_COLOR";
         public static final String PAGE_KPI_RENAME_DASHBOARD = "KPI_RENAME_DASHBOARD";
         public static final String PAGE_KPI_PLANT_NAME = "KPI_PLANT_NAME";
@@ -69,6 +70,7 @@ public final class RoleAccess {
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
+            PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
@@ -90,6 +92,7 @@ public final class RoleAccess {
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
+            PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
@@ -115,6 +118,7 @@ public final class RoleAccess {
             PAGE_ABNORMALITY_TRACKER_CONFIGURATION,
             PAGE_HS_CROSS_DAILY_CONFIGURATION,
             PAGE_LSR_TRACKING_CONFIGURATION,
+            PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
@@ -285,6 +289,7 @@ public final class RoleAccess {
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
             case "info-portal" -> PAGE_INFO_PORTAL;
+            case "info-portal-view", "client-selection" -> PAGE_INFO_PORTAL_VIEW;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
             case "kpi-rename-dashboard" -> PAGE_KPI_RENAME_DASHBOARD;
             case "kpi-plant-name", "master-designation" -> PAGE_KPI_PLANT_NAME;
@@ -318,6 +323,7 @@ public final class RoleAccess {
             case "hs-cross" -> PAGE_HS_CROSS_DAILY_CONFIGURATION;
             case "lsr-tracking" -> PAGE_LSR_TRACKING_CONFIGURATION;
             case "info-portal" -> PAGE_INFO_PORTAL;
+            case "info-portal-view", "client-selection" -> PAGE_INFO_PORTAL_VIEW;
             case "kpi-cross-color" -> PAGE_KPI_TARGET_CROSS_COLOR;
             case "kpi-rename-dashboard" -> PAGE_KPI_RENAME_DASHBOARD;
             case "kpi-plant-name", "master-designation" -> PAGE_KPI_PLANT_NAME;

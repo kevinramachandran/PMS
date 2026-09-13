@@ -63,6 +63,7 @@
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}" data-tooltip="Training Scheduler"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}" data-tooltip="PMS Agenda"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
             <a href="/client-selection" class="nav-item" th:if="${session.canViewInfoPortal}" data-tooltip="Info Portal"><i class="fas fa-external-link-alt"></i><span>Info Portal</span></a>
+                <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}" data-tooltip="Info Portal Configuration"><i class="fas fa-sliders"></i><span>Info Portal Configuration</span></a>
             <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}" data-tooltip="KPI Configuration"><i class="fas fa-sliders"></i><span>KPI Configuration</span></a>
             <div class="nav-parent" th:if="${session.canViewMasterDataGroup}">
                 <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
@@ -200,3 +201,4 @@
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>
+

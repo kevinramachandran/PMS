@@ -145,8 +145,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewAbnormalityTrackerConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION);
         boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
         boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
-        boolean canEditInfoPortal = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
-        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL) || canEditInfoPortal;
+        boolean canEditInfoPortalView = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW) || canEditInfoPortalView;
+        boolean canViewInfoPortalConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
         boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
         boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
         boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
@@ -176,6 +177,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         session.setAttribute("canViewHsCrossDailyConfiguration", canViewHsCrossDailyConfiguration);
         session.setAttribute("canViewLsrTrackingConfiguration", canViewLsrTrackingConfiguration);
         session.setAttribute("canViewInfoPortal", canViewInfoPortal);
+        session.setAttribute("canViewInfoPortalConfiguration", canViewInfoPortalConfiguration);
         session.setAttribute("canViewKpiTargetCrossColor", canViewKpiTargetCrossColor);
         session.setAttribute("canViewKpiRenameDashboard", canViewKpiRenameDashboard);
         session.setAttribute("canViewKpiPlantName", canViewKpiPlantName);
@@ -336,7 +338,11 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION;
         }
 
-        if (path.startsWith("/client-selection") || path.startsWith("/api/dashboard-config/info-portal")) {
+        if (path.startsWith("/client-selection")) {
+            return RoleAccess.PAGE_INFO_PORTAL_VIEW;
+        }
+
+        if (path.startsWith("/api/dashboard-config/info-portal")) {
             return RoleAccess.PAGE_INFO_PORTAL;
         }
 
@@ -356,6 +362,12 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private boolean canAccessReadPage(String role, Set<String> viewPermissions, Set<String> editPermissions, String pageKey) {
+        if (RoleAccess.PAGE_INFO_PORTAL.equals(pageKey)) {
+            return RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL)
+                    || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL)
+                    || RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW)
+                    || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW);
+        }
         return RoleAccess.canViewPage(role, viewPermissions, pageKey)
                 || RoleAccess.canEditPage(role, editPermissions, pageKey);
     }
