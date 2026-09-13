@@ -99,6 +99,8 @@ $(document).ready(function() {
 
     window.addEventListener('storage', function(event) {
         if (event.key === 'kpi-dashboard-update') {
+            kpiDashboardMetaLoaded = false;
+            loadKpiDashboardMeta();
             loadKpiMetricDefinitions().always(function() {
                 loadProductionCharts(selectedKpiMonth, selectedKpiYear, selectedKpiDate);
             });

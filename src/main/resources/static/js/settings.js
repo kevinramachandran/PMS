@@ -6700,6 +6700,28 @@ function regroupRows($container){
         refreshMasterDesignationProcessAreaSelect('');
     }
 
+    function saveSelectedPlantForKpiDashboard(plantName) {
+        const selectedPlant = (plantName || '').trim();
+        if (!selectedPlant) {
+            return;
+        }
+
+        $.ajax({
+            url: '/api/dashboard-config/plant-name',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ plantName: selectedPlant }),
+            success: function(data) {
+                $('#kpiPlantNameInput').val((data && data.plantName) || selectedPlant);
+                setMasterPlantMessage('KPI Dashboard plant updated to ' + ((data && data.plantName) || selectedPlant) + '.', 'success');
+                localStorage.setItem('kpi-dashboard-update', Date.now());
+            },
+            error: function(xhr) {
+                setMasterPlantMessage('Unable to update KPI Dashboard plant: ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            }
+        });
+    }
+
     function refreshMasterPlantDepartmentSelect(selectedValue) {
         const plant = $('#masterProcessAreaPlantSelect').val() || '';
         const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
@@ -7070,7 +7092,9 @@ function regroupRows($container){
     });
 
     $('#masterPlantSelect').on('change', function() {
-        selectMasterPlant($(this).val() || '');
+        const selectedPlant = $(this).val() || '';
+        selectMasterPlant(selectedPlant);
+        saveSelectedPlantForKpiDashboard(selectedPlant);
     });
 
     $('#masterProcessAreaPlantSelect').on('change', function() {
