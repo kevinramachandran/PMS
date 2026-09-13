@@ -23,13 +23,6 @@ $(document).ready(function() {
     let issueBoardAssignableUsers = [];
     let issueBoardAssignableLookup = new Map();
 
-    function confirmDelete(options) {
-        if (window.PmsConfirm && typeof window.PmsConfirm.open === 'function') {
-            return window.PmsConfirm.open(options);
-        }
-        return Promise.resolve(window.confirm((options && options.message) || 'Delete this record?'));
-    }
-
     const fixedMetricSections = {
         people: [
             'productionProductivityFtdActual', 'productionProductivityFtdTarget', 'productionProductivityMtdActual', 'productionProductivityMtdTarget', 'productionProductivityYtdActual', 'productionProductivityYtdTarget',
@@ -163,11 +156,14 @@ $(document).ready(function() {
     // ==================== DIRECT NAV CONFIGS ====================
     const directNavConfigs = ['issue-board', 'gemba-schedule', 'master-gemba-walk', 'abnormality-tracker', 'master-abnormality', 'leadership-gemba-tracker', 'master-gemba-kaizen',
                              'training-schedule', 'meeting-agenda', 'process-confirmation', 'master-process', 'hs-cross',
-                             'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color', 'kpi-rename-dashboard', 'kpi-plant-name', 'master-designation'];
+                             'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color', 'kpi-rename-dashboard', 'kpi-plant-name'];
     const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
     const readOnlyActionSelectors = [
         '.form-actions button',
         '#addRowBtn',
+        '#addTrainingScheduleRowBtn',
+        '#cancelTrainingScheduleBtn',
+        '#saveTrainingScheduleBtn',
         '.issue-delete',
         '.issue-edit',
         '.issue-add-row-btn',
@@ -178,6 +174,8 @@ $(document).ready(function() {
         '#saveKpiCrossColor',
         '#saveKpiPlantNameBtn',
         '#resetKpiPlantNameBtn',
+        '#openMasterPlantAddModal',
+        '#saveMasterPlantAdd',
         '.master-plant-add-btn',
         '.master-plant-edit-btn',
         '.master-plant-save-btn',
@@ -386,12 +384,10 @@ $(document).ready(function() {
             loadKpiCrossColorConfig();
         } else if (config === 'kpi-rename-dashboard') {
             $('#form-kpi-rename-dashboard').addClass('active');
+            loadKpiPlantNameConfig();
             loadKpiRenameDashboard();
         } else if (config === 'kpi-plant-name') {
             $('#form-master-plant').addClass('active');
-            loadMasterPlantConfig();
-        } else if (config === 'master-designation') {
-            $('#form-master-designation').addClass('active');
             loadMasterPlantConfig();
         } else if (config === 'license') {
             $('#form-license').addClass('active');
@@ -2572,16 +2568,6 @@ function regroupRows($container){
             String(today.getDate()).padStart(2, '0');
     }
 
-    function getLoggedInUsername() {
-        const bodyUsername = ($('body').attr('data-username') || '').trim();
-        if (bodyUsername) {
-            return bodyUsername;
-        }
-
-        const profileName = ($('.pms-profile-name, .profile-name').first().text() || '').trim();
-        return profileName && profileName.toLowerCase() !== 'user' ? profileName : '';
-    }
-
     // ==================== ISSUE BOARD CONFIGURATION ====================
     function initializeIssueBoardConfigDateField() {
         const today = getTodayDateString();
@@ -2625,17 +2611,13 @@ function regroupRows($container){
 
                 users.forEach(function(user) {
                     const username = (user.username || '').trim();
-                    const name = (user.name || '').trim();
-                    const employeeId = (user.employeeId || '').trim();
                     const email = (user.email || '').trim();
-                    const label = (user.label || '').trim();
-                    addIssueBoardResponsibleLookup(username, user);
-                    addIssueBoardResponsibleLookup(name, user);
-                    addIssueBoardResponsibleLookup(employeeId, user);
-                    addIssueBoardResponsibleLookup(email, user);
-                    addIssueBoardResponsibleLookup(label, user);
-                    addIssueBoardResponsibleLookup(name && email ? name + ' (' + email + ')' : '', user);
-                    addIssueBoardResponsibleLookup(username && email ? username + ' (' + email + ')' : '', user);
+                    if (username) {
+                        issueBoardAssignableLookup.set(username.toLowerCase(), user);
+                    }
+                    if (email) {
+                        issueBoardAssignableLookup.set(email.toLowerCase(), user);
+                    }
                 });
 
                 renderIssueBoardResponsibleUsers();
@@ -2661,40 +2643,24 @@ function regroupRows($container){
         $list.empty();
         issueBoardAssignableUsers.forEach(function(user) {
             const username = (user.username || '').trim();
-            const label = (user.label || '').trim();
             const email = (user.email || '').trim();
-            const value = username || (user.name || '').trim() || email;
-            if (!value) {
+            if (!username) {
                 return;
             }
 
             $('<option>')
-                .attr('value', value)
-                .attr('label', label || (email ? value + ' (' + email + ')' : value))
+                .attr('value', username)
+                .attr('label', email ? username + ' (' + email + ')' : username)
                 .appendTo($list);
         });
     }
 
-    function normalizeIssueBoardLookupKey(value) {
-        return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
-    }
-
-    function addIssueBoardResponsibleLookup(value, user) {
-        const key = normalizeIssueBoardLookupKey(value);
-        if (key) {
-            issueBoardAssignableLookup.set(key, user);
-        }
-    }
-
     function findIssueBoardResponsibleUser(value) {
-        const normalized = normalizeIssueBoardLookupKey(value);
+        const normalized = (value || '').trim().toLowerCase();
         if (!normalized) {
             return null;
         }
-        return issueBoardAssignableLookup.get(normalized)
-            || issueBoardAssignableLookup.get(normalized.replace(/\s*\(([^)]+)\)\s*$/, ''))
-            || issueBoardAssignableLookup.get(normalized.replace(/^.*\(([^)]+)\)\s*$/, '$1'))
-            || null;
+        return issueBoardAssignableLookup.get(normalized) || null;
     }
 
     function normalizeIssueBoardResponsibleField($field) {
@@ -2726,28 +2692,6 @@ function regroupRows($container){
         window.__issueBoardPopupTimer = window.setTimeout(function() {
             $popup.removeClass('show');
         }, 2600);
-    }
-
-    function extractAjaxErrorMessage(xhr) {
-        if (!xhr) {
-            return '';
-        }
-        const response = xhr.responseJSON;
-        if (response && response.message) {
-            return response.message;
-        }
-        if (response && response.error) {
-            return response.error;
-        }
-        if (xhr.responseText) {
-            try {
-                const parsed = JSON.parse(xhr.responseText);
-                return parsed.message || parsed.error || '';
-            } catch (ignore) {
-                return xhr.responseText.length < 180 ? xhr.responseText : '';
-            }
-        }
-        return '';
     }
 
     function showIssueBoardToast(message, type) {
@@ -2908,23 +2852,10 @@ function regroupRows($container){
         }).length > 0;
     }
 
-    function hasIssueBoardCoreSaveData($row) {
-        return !!(
-            $row.find('.ib-problem').val().trim()
-            || $row.find('.ib-actions').val().trim()
-            || $row.find('.ib-responsible').val().trim()
-        );
-    }
-
-    function getIssueBoardRowsForSave() {
-        return $('#issueBoardConfigTableBody tr').filter(function() {
-            const $row = $(this);
-            return $row.find('.ib-problem').length > 0 && hasIssueBoardCoreSaveData($row);
-        });
-    }
-
     function validateIssueBoardRows(showErrors) {
-        const rows = getIssueBoardRowsForSave();
+        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
+            return $(this).find('.ib-problem').length > 0;
+        });
 
         if (rows.length === 0) {
             return false;
@@ -3297,8 +3228,8 @@ function regroupRows($container){
             '<td class="ib-row-number"></td>' +
             textCell('ib-problem', safeItem.problem, 'Describe issue') +
             '<td class="ib-display-cell"><span class="ib-priority-pill ib-priority-' + escapeAttributeValue(String(safeItem.priority || '').toLowerCase()) + '">' + escapeHtml(safeItem.priority || '-') + '</span><input type="hidden" class="ib-priority" value="' + escapeAttributeValue(safeItem.priority || '') + '"></td>' +
-            textCell('ib-owner', safeItem.ownerName || getLoggedInUsername(), 'Owner name') +
-            '<td class="ib-display-cell"><span class="ib-cell-text ib-issue-date-display">' + escapeHtml(formatIssueTableDateForDisplay(safeItem.issueDate)) + '</span><input type="hidden" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
+            textCell('ib-owner', safeItem.ownerName, 'Owner name') +
+            '<td class="ib-display-cell"><span class="ib-cell-text ib-issue-date-display">' + escapeHtml(safeItem.issueDate || '-') + '</span><input type="hidden" class="ib-issue-date" value="' + escapeAttributeValue(safeItem.issueDate || '') + '"></td>' +
             textCell('ib-root-cause', safeItem.rootCause, 'Root cause') +
             textCell('ib-actions', safeItem.actions, 'Action plan') +
             textCell('ib-responsible', safeItem.responsible, 'Responsible') +
@@ -3306,7 +3237,7 @@ function regroupRows($container){
             '<td><span class="ib-cell-text ib-due-days-display">' + escapeHtml(dueDays === '' ? '-' : dueDays) + '</span><input type="hidden" class="ib-due-days" value="' + escapeAttributeValue(dueDays) + '"></td>' +
             '<td class="ib-status-cell"><div class="ib-status-wrap"><div class="ib-progress-row"><div class="ib-pdca-circle" aria-hidden="true" style="--pdca-progress:0" data-stage="-"><span class="ib-pdca-quarter ib-pdca-p">P</span><span class="ib-pdca-quarter ib-pdca-d">D</span><span class="ib-pdca-quarter ib-pdca-c">C</span><span class="ib-pdca-quarter ib-pdca-a">A</span></div></div>' +
             '<select class="ib-status" aria-label="Issue progress status" hidden><option value="0%" ' + (status === '0%' ? 'selected' : '') + '>-</option><option value="25%" ' + (status === '25%' ? 'selected' : '') + '>P</option><option value="50%" ' + (status === '50%' ? 'selected' : '') + '>D</option><option value="75%" ' + (status === '75%' ? 'selected' : '') + '>C</option><option value="100%" ' + (status === '100%' ? 'selected' : '') + '>A</option></select></div></td>' +
-            '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(formatIssueTableDateForDisplay(completedDate)) + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
+            '<td class="ib-completed-cell"><span class="ib-cell-text ib-completed-date-display">' + escapeHtml(completedDate || '-') + '</span><input type="hidden" class="ib-completed-date" value="' + escapeAttributeValue(completedDate) + '"></td>' +
             '<td class="ib-history-cell"><button type="button" class="issue-config-history" ' + (safeItem.id ? '' : 'disabled ') + 'title="' + (safeItem.id ? 'View history' : 'History available after save') + '" aria-label="View issue history"><i class="fas fa-clock-rotate-left"></i></button></td>' +
             '<td class="ib-action-cell"><div class="ib-action-stack"><button type="button" class="issue-edit" title="Edit issue" aria-label="Edit issue"><i class="fas fa-pen-to-square"></i></button><button type="button" class="issue-delete" title="Delete row" aria-label="Delete row"><i class="fas fa-trash-alt"></i></button></div></td>' +
             '</tr>';
@@ -3351,7 +3282,6 @@ function regroupRows($container){
 
     function setIssueConfigRowData($row, data) {
         const safe = data || {};
-        const ownerName = safe.ownerName || getLoggedInUsername();
         const effectiveTarget = getIssueConfigEffectiveTarget(safe);
         const dueDays = calculateDueDaysFromTarget(effectiveTarget);
         const status = normalizeIssueStatus(safe.status);
@@ -3363,10 +3293,10 @@ function regroupRows($container){
             .removeClass('ib-priority-high ib-priority-medium ib-priority-low')
             .addClass('ib-priority-' + String(safe.priority || '').toLowerCase())
             .text(safe.priority || '-');
-        $row.find('.ib-owner').val(ownerName);
-        $row.find('.ib-owner-display').text(ownerName || '-');
+        $row.find('.ib-owner').val(safe.ownerName || '');
+        $row.find('.ib-owner-display').text(safe.ownerName || '-');
         $row.find('.ib-issue-date').val(safe.issueDate || '');
-        $row.find('.ib-issue-date-display').text(formatIssueTableDateForDisplay(safe.issueDate));
+        $row.find('.ib-issue-date-display').text(safe.issueDate || '-');
         $row.find('.ib-root-cause').val(safe.rootCause || '');
         $row.find('.ib-root-cause-display').text(safe.rootCause || '-');
         $row.find('.ib-actions').val(safe.actions || '');
@@ -3385,7 +3315,7 @@ function regroupRows($container){
         $row.find('.ib-due-days-display').text(dueDays === '' ? '-' : dueDays);
         $row.find('.ib-status').val(status);
         $row.find('.ib-completed-date').val(safe.completedDate || '');
-        $row.find('.ib-completed-date-display').text(formatIssueTableDateForDisplay(safe.completedDate));
+        $row.find('.ib-completed-date-display').text(safe.completedDate || '-');
 
         updateRowDueDays($row);
         updateCompletedDateRequirement($row);
@@ -3395,15 +3325,14 @@ function regroupRows($container){
 
     function fillIssueConfigDrawer(data, rowIndex) {
         const safe = data || {};
-        const ownerName = safe.ownerName || getLoggedInUsername();
         const isExistingIssue = !!safe.id;
         $('#issueConfigDrawerRowIndex').val(rowIndex === null || rowIndex === undefined ? '' : rowIndex);
         $('#issueConfigDrawerTitle').text(rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Edit Issue');
         $('#issueConfigDrawerSave').html('<i class="fas fa-check"></i> ' + (rowIndex === null || rowIndex === undefined ? 'Add Issue' : 'Update Issue'));
         $('#issueConfigDrawerProblem').val(safe.problem || '');
         $('#issueConfigDrawerPriority').val(safe.priority || '');
-        $('#issueConfigDrawerOwner').val(ownerName);
-        $('#issueConfigDrawerIssueDate').val(safe.issueDate || getTodayDateString());
+        $('#issueConfigDrawerOwner').val(safe.ownerName || '');
+        $('#issueConfigDrawerIssueDate').val(safe.issueDate || $('#issueBoardConfigDate').val() || getTodayDateString());
         $('#issueConfigDrawerTargetDate').val(safe.targetDate || '');
         $('#issueConfigDrawerTargetDateRemark').val(safe.targetDateRemark || '');
         $('#issueConfigDrawerTargetExt1').val(safe.targetDateExtension1 || '');
@@ -3637,7 +3566,7 @@ function regroupRows($container){
         const payload = {
             problem: ($('#issueConfigDrawerProblem').val() || '').trim(),
             priority: $('#issueConfigDrawerPriority').val() || '',
-            ownerName: (($('#issueConfigDrawerOwner').val() || '').trim() || getLoggedInUsername()),
+            ownerName: ($('#issueConfigDrawerOwner').val() || '').trim(),
             issueDate: $('#issueConfigDrawerIssueDate').val() || '',
             rootCause: ($('#issueConfigDrawerRootCause').val() || '').trim(),
             actions: ($('#issueConfigDrawerActions').val() || '').trim(),
@@ -3715,22 +3644,16 @@ function regroupRows($container){
 
     function bindIssueBoardDeleteButtons() {
         $('.issue-delete').off('click').on('click', function() {
-            const $button = $(this);
-            confirmDelete({
-                title: 'Delete issue row?',
-                message: 'This issue row will be removed from the board. Click Save Issue Board to apply the change.',
-                confirmText: 'Delete Row'
-            }).then(function(confirmed) {
-                if (!confirmed) {
-                    return;
-                }
-                $button.closest('tr').remove();
-                if ($('#issueBoardConfigTableBody tr').length === 0) {
-                    $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
-                }
-                applyIssueBoardConfigSearch();
-                setIssueBoardSaveState();
-            });
+            const confirmed = window.confirm('Delete this issue row? This change will be lost if you do not save.');
+            if (!confirmed) {
+                return;
+            }
+            $(this).closest('tr').remove();
+            if ($('#issueBoardConfigTableBody tr').length === 0) {
+                $('#issueBoardConfigTableBody').html('<tr class="placeholder-row"><td colspan="14" style="text-align:center; padding: 18px; color:#9ca3af;">No issue board data for selected date. Click "Add New Issue".</td></tr>');
+            }
+            applyIssueBoardConfigSearch();
+            setIssueBoardSaveState();
         });
 
     }
@@ -3779,7 +3702,9 @@ function regroupRows($container){
             return;
         }
 
-        const rows = getIssueBoardRowsForSave();
+        const rows = $('#issueBoardConfigTableBody tr').filter(function() {
+            return $(this).find('.ib-problem').length > 0;
+        });
 
         if (rows.length > 0 && !validateIssueBoardRows(true)) {
             showIssueBoardPopup('Problem, Actions, Responsible, and completion date for 100% are required.');
@@ -3834,7 +3759,7 @@ function regroupRows($container){
                 rowOrder: index + 1,
                 problem: problem,
                 priority: $(this).find('.ib-priority').val().trim(),
-                ownerName: ($(this).find('.ib-owner').val().trim() || getLoggedInUsername()),
+                ownerName: $(this).find('.ib-owner').val().trim(),
                 issueDate: $(this).find('.ib-issue-date').val().trim(),
                 rootCause: $(this).find('.ib-root-cause').val().trim(),
                 actions: actions,
@@ -3883,8 +3808,7 @@ function regroupRows($container){
                 showIssueBoardToast('Issue Board saved successfully.', 'success');
             },
             error: function() {
-                const message = extractAjaxErrorMessage(arguments[0]) || 'Error saving Issue Board data. Please try again.';
-                showIssueBoardPopup(message);
+                showIssueBoardPopup('Error saving Issue Board data. Please try again.');
                 showIssueBoardToast('Save failed. Please retry.', 'error');
             },
             complete: function() {
@@ -5282,18 +5206,12 @@ function regroupRows($container){
 
     function bindTrainingScheduleDeleteButtons() {
         $('.ts-delete').off('click').on('click', function() {
-            const $button = $(this);
-            confirmDelete({
-                title: 'Delete training row?',
-                message: 'This training schedule row will be removed. Click Save Training Schedule to apply the change.',
-                confirmText: 'Delete Row'
-            }).then(function(confirmed) {
-                if (!confirmed) return;
-                $button.closest('tr').remove();
-                if ($('#trainingScheduleConfigTableBody tr').length === 0) {
-                    $('#trainingScheduleConfigTableBody').html('<tr class="placeholder-row"><td colspan="10" style="text-align:center;padding:18px;color:#9ca3af;">No training rows for selected date. Click "Add New Row".</td></tr>');
-                }
-            });
+            const confirmed = window.confirm('Delete this row? This change will be lost if you do not save.');
+            if (!confirmed) return;
+            $(this).closest('tr').remove();
+            if ($('#trainingScheduleConfigTableBody tr').length === 0) {
+                $('#trainingScheduleConfigTableBody').html('<tr class="placeholder-row"><td colspan="10" style="text-align:center;padding:18px;color:#9ca3af;">No training rows for selected date. Click "Add New Row".</td></tr>');
+            }
         });
     }
 
@@ -5370,20 +5288,27 @@ function regroupRows($container){
         });
     }
 
-    $(document).off('click.trainingScheduleAddRow', '#addTrainingScheduleRowBtn').on('click.trainingScheduleAddRow', '#addTrainingScheduleRowBtn', function(event) {
-        event.preventDefault();
+    $(document).off('click.trainingScheduleAddRow').on('click.trainingScheduleAddRow', '#addTrainingScheduleRowBtn', function() {
+        if (!canEditCurrentPage) {
+            showMessage('trainingScheduleMessage', 'You have view-only access for this page.', 'error');
+            return;
+        }
         $('#trainingScheduleConfigTableBody .placeholder-row').remove();
         $('#trainingScheduleConfigTableBody').append(createTrainingScheduleRow());
         bindTrainingScheduleDeleteButtons();
     });
 
-    $('#cancelTrainingScheduleBtn').on('click', function() {
+    $(document).off('click.trainingScheduleCancel').on('click.trainingScheduleCancel', '#cancelTrainingScheduleBtn', function() {
         const saveDate = $('#trainingConfigDate').val() || getTodayDateString();
         loadTrainingScheduleByDate(saveDate);
         showMessage('trainingScheduleMessage', 'Changes discarded.', 'success');
     });
 
-    $('#saveTrainingScheduleBtn').on('click', function() {
+    $(document).off('click.trainingScheduleSave').on('click.trainingScheduleSave', '#saveTrainingScheduleBtn', function() {
+        if (!canEditCurrentPage) {
+            showMessage('trainingScheduleMessage', 'You have view-only access for this page.', 'error');
+            return;
+        }
         const saveDate = $('#trainingConfigDate').val();
         if (!saveDate) {
             showMessage('trainingScheduleMessage', 'Please select a last updated date.', 'error');
@@ -6614,8 +6539,7 @@ function regroupRows($container){
 
     const MASTER_PLANT_CONFIG = {
         PLANT: {
-            input: '#kpiPlantNameInput',
-            suggestions: '#masterPlantSuggestions',
+            input: '#masterPlantModalInput',
             label: 'Plant'
         },
         DEPARTMENT: {
@@ -6627,15 +6551,17 @@ function regroupRows($container){
         PROCESS_AREA: {
             input: '#masterProcessAreaInput',
             suggestions: '#masterProcessAreaSuggestions',
-            label: 'Area',
-            parentPlant: '#masterAreaPlantSelect',
-            parentDepartment: '#masterAreaDepartmentSelect'
+            label: 'Process Area',
+            parentPlant: '#masterProcessAreaPlantSelect',
+            parentDepartment: '#masterProcessAreaDepartmentSelect'
         },
         DESIGNATION: {
             input: '#masterDesignationInput',
             suggestions: '#masterDesignationSuggestions',
             label: 'Designation',
-            parentPlant: '#masterDesignationPlantSelect'
+            parentPlant: '#masterDesignationPlantSelect',
+            parentDepartment: '#masterDesignationDepartmentSelect',
+            parentProcessArea: '#masterDesignationProcessAreaSelect'
         }
     };
     const masterPlantItems = {};
@@ -6643,8 +6569,17 @@ function regroupRows($container){
     let pendingMasterPlantDelete = null;
 
     function setMasterPlantMessage(message, type) {
-        const $activeMessage = $('.form-section.active #masterPlantMessage, .form-section.active #masterDesignationMessage').first();
-        const $message = $activeMessage.length ? $activeMessage : $('#masterPlantMessage');
+        const $message = $('#masterPlantMessage');
+        if (!$message.length) return;
+        if (!message) {
+            $message.removeClass('show success error warning').text('');
+            return;
+        }
+        $message.removeClass('success error warning').addClass(type || 'success').text(message).addClass('show');
+    }
+
+    function setMasterPlantAddMessage(message, type) {
+        const $message = $('#masterPlantAddMessage');
         if (!$message.length) return;
         if (!message) {
             $message.removeClass('show success error warning').text('');
@@ -6657,68 +6592,111 @@ function regroupRows($container){
         return '/api/dashboard-config/master-data/' + encodeURIComponent(category);
     }
 
-    function selectedMasterPlantParent(category) {
-        const config = MASTER_PLANT_CONFIG[category];
-        return config && config.parentPlant ? ($(config.parentPlant).val() || '').trim() : '';
-    }
-
-    function selectedMasterPlantDepartment(category) {
-        const config = MASTER_PLANT_CONFIG[category];
-        return config && config.parentDepartment ? ($(config.parentDepartment).val() || '').trim() : '';
-    }
-
-    function masterPlantItemMatchesContext(category, item) {
-        const parentPlant = selectedMasterPlantParent(category);
-        const parentDepartment = selectedMasterPlantDepartment(category);
-        if (parentPlant && String(item.parentPlant || '').toLowerCase() !== parentPlant.toLowerCase()) {
-            return false;
-        }
-        if (parentDepartment && String(item.parentDepartment || '').toLowerCase() !== parentDepartment.toLowerCase()) {
-            return false;
-        }
-        return true;
-    }
-
     function masterPlantItemNames(category) {
+        const config = MASTER_PLANT_CONFIG[category] || {};
+        const parentPlant = config.parentPlant ? ($(config.parentPlant).val() || '').trim().toLowerCase() : '';
+        const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim().toLowerCase() : '';
+        const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim().toLowerCase() : '';
         return (masterPlantItems[category] || []).filter(function(item) {
-            return masterPlantItemMatchesContext(category, item || {});
+            const plantMatches = !parentPlant || String(item.parentPlant || '').trim().toLowerCase() === parentPlant;
+            const departmentMatches = !parentDepartment || String(item.parentDepartment || '').trim().toLowerCase() === parentDepartment;
+            const processAreaMatches = !parentProcessArea || String(item.parentProcessArea || '').trim().toLowerCase() === parentProcessArea;
+            return plantMatches && departmentMatches && processAreaMatches;
         }).map(function(item) {
             return item && item.name ? String(item.name) : '';
         }).filter(Boolean);
     }
 
-    function masterPlantOptionHtml(items, placeholder) {
-        const options = ['<option value="">' + escapeHtml(placeholder) + '</option>'];
-        (items || []).forEach(function(item) {
-            const value = item && item.name ? String(item.name) : '';
-            if (value) {
-                options.push('<option value="' + escapeAttributeValue(value) + '">' + escapeHtml(value) + '</option>');
-            }
-        });
-        return options.join('');
+    function normalizeMasterPlantKey(value) {
+        return String(value || '').trim().toLowerCase();
     }
 
-    function populateMasterPlantHierarchyControls() {
-        const plants = masterPlantItems.PLANT || [];
-        const departmentPlant = $('#masterDepartmentPlantSelect').val() || '';
-        const areaPlant = $('#masterAreaPlantSelect').val() || '';
-        const designationPlant = $('#masterDesignationPlantSelect').val() || '';
-        $('#masterDepartmentPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(departmentPlant);
-        $('#masterAreaPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(areaPlant);
-        $('#masterDesignationPlantSelect').html(masterPlantOptionHtml(plants, 'Select Plant')).val(designationPlant);
+    function findMasterPlantDuplicate(category, name, parentPlant, parentDepartment, parentProcessArea, allowedId) {
+        const expectedName = normalizeMasterPlantKey(name);
+        const expectedPlant = normalizeMasterPlantKey(parentPlant);
+        const expectedDepartment = normalizeMasterPlantKey(parentDepartment);
+        const expectedProcessArea = normalizeMasterPlantKey(parentProcessArea);
+        return (masterPlantItems[category] || []).find(function(item) {
+            if (allowedId && String(item.id || '') === String(allowedId)) {
+                return false;
+            }
+            return normalizeMasterPlantKey(item.name) === expectedName
+                && normalizeMasterPlantKey(item.parentPlant) === expectedPlant
+                && normalizeMasterPlantKey(item.parentDepartment) === expectedDepartment
+                && normalizeMasterPlantKey(item.parentProcessArea) === expectedProcessArea;
+        }) || null;
+    }
 
-        const selectedAreaPlant = $('#masterAreaPlantSelect').val() || '';
-        const areaDepartment = $('#masterAreaDepartmentSelect').val() || '';
+    function masterPlantDuplicateMessage(config) {
+        return config.label + ' already exists. Use a different name.';
+    }
+
+    function masterPlantOptionsHtml(items, placeholder) {
+        return '<option value="">' + escapeHtml(placeholder) + '</option>' + (items || []).map(function(item) {
+            const name = item && item.name ? String(item.name) : '';
+            return name ? '<option value="' + escapeAttributeValue(name) + '">' + escapeHtml(name) + '</option>' : '';
+        }).join('');
+    }
+
+    function refreshMasterPlantParentSelects() {
+        const plants = masterPlantItems.PLANT || [];
+        const selectedPlant = $('#masterPlantSelect').val() || '';
+        const departmentPlant = $('#masterDepartmentPlantSelect').val() || '';
+        const processPlant = $('#masterProcessAreaPlantSelect').val() || '';
+        const processDepartment = $('#masterProcessAreaDepartmentSelect').val() || '';
+        const designationPlant = $('#masterDesignationPlantSelect').val() || '';
+        const designationDepartment = $('#masterDesignationDepartmentSelect').val() || '';
+        const designationProcessArea = $('#masterDesignationProcessAreaSelect').val() || '';
+        $('#masterPlantSelect, #masterDepartmentPlantSelect, #masterProcessAreaPlantSelect, #masterDesignationPlantSelect').html(masterPlantOptionsHtml(plants, 'Select Plant'));
+        $('#masterPlantSelect').val(selectedPlant);
+        $('#masterDepartmentPlantSelect').val(departmentPlant);
+        $('#masterProcessAreaPlantSelect').val(processPlant);
+        $('#masterDesignationPlantSelect').val(designationPlant);
+        refreshMasterPlantDepartmentSelect(processDepartment);
+        refreshMasterDesignationDepartmentSelect(designationDepartment);
+        refreshMasterDesignationProcessAreaSelect(designationProcessArea);
+    }
+
+    function selectMasterPlant(plantName) {
+        const value = plantName || $('#masterPlantSelect').val() || '';
+        $('#masterPlantSelect').val(value);
+        $('#masterDepartmentPlantSelect, #masterProcessAreaPlantSelect, #masterDesignationPlantSelect').val(value);
+        refreshMasterPlantDepartmentSelect('');
+        refreshMasterDesignationDepartmentSelect('');
+        refreshMasterDesignationProcessAreaSelect('');
+    }
+
+    function refreshMasterPlantDepartmentSelect(selectedValue) {
+        const plant = $('#masterProcessAreaPlantSelect').val() || '';
         const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
-            return !selectedAreaPlant || String(item.parentPlant || '').toLowerCase() === selectedAreaPlant.toLowerCase();
+            return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
         });
-        $('#masterAreaDepartmentSelect').html(masterPlantOptionHtml(departments, 'Select Department')).val(areaDepartment);
-        if ($('#masterAreaDepartmentSelect').val() !== areaDepartment) {
-            $('#masterAreaDepartmentSelect').val('');
-        }
-        if ($('#masterDesignationPlantSelect').val() !== designationPlant) {
-            $('#masterDesignationPlantSelect').val('');
-        }
+        $('#masterProcessAreaDepartmentSelect')
+            .html(masterPlantOptionsHtml(departments, 'Select Department'))
+            .val(selectedValue || '');
+    }
+
+    function refreshMasterDesignationDepartmentSelect(selectedValue) {
+        const plant = $('#masterDesignationPlantSelect').val() || '';
+        const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
+            return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
+        });
+        $('#masterDesignationDepartmentSelect')
+            .html(masterPlantOptionsHtml(departments, 'Select Department'))
+            .val(selectedValue || '');
+    }
+
+    function refreshMasterDesignationProcessAreaSelect(selectedValue) {
+        const plant = $('#masterDesignationPlantSelect').val() || '';
+        const department = $('#masterDesignationDepartmentSelect').val() || '';
+        const processAreas = (masterPlantItems.PROCESS_AREA || []).filter(function(item) {
+            const plantMatches = !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
+            const departmentMatches = !department || String(item.parentDepartment || '').toLowerCase() === department.toLowerCase();
+            return plantMatches && departmentMatches;
+        });
+        $('#masterDesignationProcessAreaSelect')
+            .html(masterPlantOptionsHtml(processAreas, 'Select Process Area'))
+            .val(selectedValue || '');
     }
 
     function renderMasterPlantSuggestions(category) {
@@ -6752,13 +6730,10 @@ function regroupRows($container){
     function masterPlantRowHtml(category, item) {
         const safeItem = item || {};
         const name = safeItem.name || '';
-        const metaParts = [];
-        if (safeItem.parentPlant) metaParts.push('Plant: ' + safeItem.parentPlant);
-        if (safeItem.parentDepartment) metaParts.push('Department: ' + safeItem.parentDepartment);
+        const meta = [safeItem.parentPlant, safeItem.parentDepartment, safeItem.parentProcessArea].filter(Boolean).join(' / ');
         return '' +
-            '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '">' +
-                '<span><span class="master-plant-name">' + escapeHtml(name) + '</span>' +
-                (metaParts.length ? '<small class="master-plant-row-meta">' + escapeHtml(metaParts.join(' | ')) + '</small>' : '') + '</span>' +
+            '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '" data-name="' + escapeAttributeValue(name) + '">' +
+                '<span class="master-plant-name">' + escapeHtml(name) + (meta ? '<small>' + escapeHtml(meta) + '</small>' : '') + '</span>' +
                 '<div>' +
                     '<div class="kpi-rename-actions">' +
                         '<button type="button" class="master-plant-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
@@ -6786,7 +6761,7 @@ function regroupRows($container){
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         masterPlantItems[category] = Array.isArray(items) ? items : [];
-        populateMasterPlantHierarchyControls();
+        refreshMasterPlantParentSelects();
         renderMasterPlantSuggestions(category);
         if (masterPlantViewCategory === category) {
             renderMasterPlantView();
@@ -6819,7 +6794,8 @@ function regroupRows($container){
         masterPlantViewCategory = '';
     }
 
-    function loadMasterPlantCategory(category) {
+    function loadMasterPlantCategory(category, afterLoad) {
+        afterLoad = typeof afterLoad === 'function' ? afterLoad : null;
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         $.ajax({
@@ -6828,45 +6804,67 @@ function regroupRows($container){
             success: function(data) {
                 if (data && data.status === 'success') {
                     renderMasterPlantCategory(category, data.items || []);
+                    if (afterLoad) {
+                        afterLoad(data.items || []);
+                    }
                 } else {
                     renderMasterPlantCategory(category, []);
                     setMasterPlantMessage((data && data.message) || 'Unable to load ' + config.label + '.', 'error');
+                    if (afterLoad) {
+                        afterLoad([]);
+                    }
                 }
             },
             error: function(xhr) {
                 renderMasterPlantCategory(category, []);
                 setMasterPlantMessage('Unable to load ' + config.label + ': ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+                if (afterLoad) {
+                    afterLoad([]);
+                }
             }
         });
     }
 
     function loadMasterPlantConfig() {
         Object.keys(MASTER_PLANT_CONFIG).forEach(loadMasterPlantCategory);
-        loadKpiPlantNameConfig();
     }
 
     function saveMasterPlantCategory(category) {
         const config = MASTER_PLANT_CONFIG[category];
         if (!config) return;
         const value = ($(config.input).val() || '').trim();
+        const parentPlant = config.parentPlant ? ($(config.parentPlant).val() || '').trim() : '';
+        const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim() : '';
+        const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim() : '';
         if (!value) {
             setMasterPlantMessage(config.label + ' is required.', 'warning');
             return;
         }
+        if (config.parentPlant && !parentPlant) {
+            setMasterPlantMessage('Plant is required.', 'warning');
+            return;
+        }
+        if (config.parentDepartment && !parentDepartment) {
+            setMasterPlantMessage('Department is required.', 'warning');
+            return;
+        }
+        if (config.parentProcessArea && !parentProcessArea) {
+            setMasterPlantMessage('Process Area is required.', 'warning');
+            return;
+        }
+        if (findMasterPlantDuplicate(category, value, parentPlant, parentDepartment, parentProcessArea, null)) {
+            setMasterPlantMessage(masterPlantDuplicateMessage(config), 'warning');
+            return;
+        }
         const payload = { name: value };
         if (config.parentPlant) {
-            payload.parentPlant = selectedMasterPlantParent(category);
-            if (!payload.parentPlant) {
-                setMasterPlantMessage('Select Plant before adding ' + config.label + '.', 'warning');
-                return;
-            }
+            payload.parentPlant = parentPlant;
         }
         if (config.parentDepartment) {
-            payload.parentDepartment = selectedMasterPlantDepartment(category);
-            if (!payload.parentDepartment) {
-                setMasterPlantMessage('Select Department before adding Area.', 'warning');
-                return;
-            }
+            payload.parentDepartment = parentDepartment;
+        }
+        if (config.parentProcessArea) {
+            payload.parentProcessArea = parentProcessArea;
         }
         $.ajax({
             url: masterPlantUrl(category),
@@ -6877,16 +6875,9 @@ function regroupRows($container){
                 if (data && data.status === 'success') {
                     $(config.input).val('');
                     setMasterPlantMessage(config.label + ' added.', 'success');
-                    if (category === 'PLANT') {
-                        saveKpiPlantNameConfig(value, false);
-                    }
                     loadMasterPlantCategory(category);
                 } else {
-                    if (category === 'PLANT' && data && data.message === 'Name already exists') {
-                        saveKpiPlantNameConfig(value, true);
-                    } else {
-                        setMasterPlantMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
-                    }
+                    setMasterPlantMessage((data && data.message) || 'Unable to add ' + config.label + '.', 'error');
                 }
             },
             error: function(xhr) {
@@ -6903,6 +6894,13 @@ function regroupRows($container){
         if (!id || !config) return;
         if (!value) {
             setMasterPlantMessage(config.label + ' is required.', 'warning');
+            return;
+        }
+        const existing = (masterPlantItems[category] || []).find(function(item) {
+            return String(item.id || '') === String(id);
+        }) || {};
+        if (findMasterPlantDuplicate(category, value, existing.parentPlant || '', existing.parentDepartment || '', existing.parentProcessArea || '', id)) {
+            setMasterPlantMessage(masterPlantDuplicateMessage(config), 'warning');
             return;
         }
         $.ajax({
@@ -6949,7 +6947,7 @@ function regroupRows($container){
     function openMasterPlantDeleteConfirm($row) {
         const category = $row.data('category');
         const config = MASTER_PLANT_CONFIG[category];
-        const itemName = $row.find('.master-plant-name').text() || 'this item';
+        const itemName = $row.data('name') || $row.find('.master-plant-name').clone().children().remove().end().text() || 'this item';
         pendingMasterPlantDelete = $row;
         $('#masterPlantDeleteConfirmText').text('Delete "' + itemName + '"? Undo is not possible.');
         $('#masterPlantDeleteConfirmModal').css('display', 'flex');
@@ -6964,8 +6962,94 @@ function regroupRows($container){
         pendingMasterPlantDelete = null;
     }
 
+    function openMasterPlantAddModal() {
+        $('#masterPlantModalInput').val('');
+        setMasterPlantAddMessage('', '');
+        $('#masterPlantAddModal').css('display', 'flex');
+        $('#masterPlantModalInput').trigger('focus');
+    }
+
+    function closeMasterPlantAddModal() {
+        $('#masterPlantAddModal').hide();
+        $('#masterPlantModalInput').val('');
+        setMasterPlantAddMessage('', '');
+    }
+
+    function saveMasterPlantFromModal() {
+        const value = ($('#masterPlantModalInput').val() || '').trim();
+        if (!value) {
+            setMasterPlantAddMessage('Plant name is required.', 'warning');
+            return;
+        }
+        if (findMasterPlantDuplicate('PLANT', value, '', '', '', null)) {
+            setMasterPlantAddMessage('Plant already exists. Use a different name.', 'warning');
+            return;
+        }
+        const $button = $('#saveMasterPlantAdd');
+        $button.prop('disabled', true);
+        $.ajax({
+            url: masterPlantUrl('PLANT'),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ name: value }),
+            success: function(data) {
+                if (data && data.status === 'success') {
+                    closeMasterPlantAddModal();
+                    setMasterPlantMessage('Plant added.', 'success');
+                    loadMasterPlantCategory('PLANT', function() {
+                        selectMasterPlant((data.item && data.item.name) || value);
+                    });
+                } else {
+                    setMasterPlantAddMessage((data && data.message) || 'Unable to add Plant.', 'error');
+                }
+            },
+            error: function(xhr) {
+                setMasterPlantAddMessage('Unable to add Plant: ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
+            },
+            complete: function() {
+                $button.prop('disabled', false);
+            }
+        });
+    }
+
     $('.master-plant-add-btn').on('click', function() {
         saveMasterPlantCategory($(this).data('category'));
+    });
+
+    $('#openMasterPlantAddModal').on('click', openMasterPlantAddModal);
+
+    $('#saveMasterPlantAdd').on('click', saveMasterPlantFromModal);
+
+    $('#masterPlantModalInput').on('keydown', function(event) {
+        if (event.key === 'Enter') {
+            saveMasterPlantFromModal();
+        }
+        if (event.key === 'Escape') {
+            closeMasterPlantAddModal();
+        }
+    });
+
+    $('#closeMasterPlantAddModal, #cancelMasterPlantAdd, #masterPlantAddModal').on('click', function(event) {
+        if (event.target === this) {
+            closeMasterPlantAddModal();
+        }
+    });
+
+    $('#masterPlantSelect').on('change', function() {
+        selectMasterPlant($(this).val() || '');
+    });
+
+    $('#masterProcessAreaPlantSelect').on('change', function() {
+        refreshMasterPlantDepartmentSelect('');
+    });
+
+    $('#masterDesignationPlantSelect').on('change', function() {
+        refreshMasterDesignationDepartmentSelect('');
+        refreshMasterDesignationProcessAreaSelect('');
+    });
+
+    $('#masterDesignationDepartmentSelect').on('change', function() {
+        refreshMasterDesignationProcessAreaSelect('');
     });
 
     $('.master-plant-input').on('keydown', function(event) {
@@ -7003,7 +7087,7 @@ function regroupRows($container){
         const category = $row.data('category');
         const item = {
             id: $row.data('id'),
-            name: $row.find('.master-plant-name').text()
+            name: $row.data('name') || $row.find('.master-plant-name').clone().children().remove().end().text()
         };
         $row.replaceWith(masterPlantEditRowHtml(category, item));
     });
@@ -7049,13 +7133,6 @@ function regroupRows($container){
         renderMasterPlantView();
     });
 
-    $('.master-plant-parent-select').on('change', function() {
-        populateMasterPlantHierarchyControls();
-        renderMasterPlantSuggestions('DEPARTMENT');
-        renderMasterPlantSuggestions('PROCESS_AREA');
-        renderMasterPlantSuggestions('DESIGNATION');
-    });
-
     function setKpiPlantNameMessage(message, type) {
         const $message = $('#kpiPlantNameMessage');
         $message
@@ -7079,8 +7156,8 @@ function regroupRows($container){
         });
     }
 
-    function saveKpiPlantNameConfig(plantName, showAlreadyExistsMessage) {
-        plantName = (plantName || $('#kpiPlantNameInput').val() || '').trim();
+    $('#saveKpiPlantNameBtn').on('click', function() {
+        const plantName = ($('#kpiPlantNameInput').val() || '').trim();
         if (!plantName) {
             setKpiPlantNameMessage('Plant name is required.', 'error');
             return;
@@ -7094,16 +7171,12 @@ function regroupRows($container){
             success: function(data) {
                 $('#kpiDeckTitlePrefix').val(data.prefix || 'PMS 4 deck V0_');
                 $('#kpiPlantNameInput').val(data.plantName || plantName);
-                setKpiPlantNameMessage((showAlreadyExistsMessage ? 'Plant already exists. ' : '') + 'KPI Dashboard will show: ' + (data.deckTitle || ''), 'success');
+                setKpiPlantNameMessage('Plant name saved. KPI Dashboard will show: ' + (data.deckTitle || ''), 'success');
             },
             error: function(xhr) {
                 setKpiPlantNameMessage('Unable to save plant name: ' + (xhr.responseJSON?.message || xhr.statusText || 'Request failed'), 'error');
             }
         });
-    }
-
-    $('#saveKpiPlantNameBtn').on('click', function() {
-        saveKpiPlantNameConfig();
     });
 
     $('#resetKpiPlantNameBtn').on('click', function() {

@@ -13,6 +13,8 @@
     const usernameEl = document.getElementById('newUsername');
     const departmentEl = document.getElementById('newDepartment');
     const areaEl = document.getElementById('newArea');
+    const areaToggleEl = document.getElementById('newAreaToggle');
+    const areaCheckboxesEl = document.getElementById('newAreaCheckboxes');
     const plantEl = document.getElementById('newPlant');
     const designationEl = document.getElementById('newDesignation');
     const reportingManagerEl = document.getElementById('newReportingManager');
@@ -31,6 +33,8 @@
     const editEmployeeIdEl = document.getElementById('editEmployeeId');
     const editDepartmentEl = document.getElementById('editDepartment');
     const editAreaEl = document.getElementById('editArea');
+    const editAreaToggleEl = document.getElementById('editAreaToggle');
+    const editAreaCheckboxesEl = document.getElementById('editAreaCheckboxes');
     const editPlantEl = document.getElementById('editPlant');
     const editDesignationEl = document.getElementById('editDesignation');
     const editReportingManagerEl = document.getElementById('editReportingManager');
@@ -53,14 +57,11 @@
     let pendingDeleteUserId = null;
     const canEditUserManagement = String(document.body.getAttribute('data-can-edit-user-management') || '').toLowerCase() === 'true';
 
-    const DEFAULT_DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
-    let userMasterOptions = {
-        departments: [],
-        departmentItems: [],
-        areas: [],
-        areaItems: [],
+    const DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
+    const masterDataOptions = {
         plants: [],
-        designations: DEFAULT_DESIGNATION_VALUES.slice(),
+        departmentItems: [],
+        areaItems: [],
         designationItems: []
     };
 
@@ -99,11 +100,6 @@
                     key: 'PRODUCTION_METRICS_DATA_COST',
                     label: 'Production KPI Data - Cost',
                     description: 'Cost section of production metrics entry and updates.'
-                },
-                {
-                    key: 'INFO_PORTAL',
-                    label: 'Info Portal',
-                    description: 'Info Portal page access and button configuration.'
                 }
             ]
         },
@@ -113,14 +109,14 @@
             description: 'Setup screens that control daily boards, trackers, and KPI modules.',
             items: [
                 { key: 'ISSUE_BOARD_CONFIGURATION', label: 'Issue Board', description: 'Issue board templates and assignment setup.' },
-                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Schedule', description: 'Schedules and settings for gemba walk planning.' },
+                { key: 'GEMBA_WALK_CONFIGURATION', label: 'Gemba Walk Scheduler', description: 'Schedules and settings for gemba walk planning.' },
                 { key: 'GEMBA_WALK_FINDINGS', label: 'Gemba Walk Findings', description: 'Findings captured from gemba walk activity.' },
-                { key: 'GEMBA_WALK_REPORTING', label: 'Gemba Walk dashboard', description: 'Reporting pages for gemba walk activity.' },
+                { key: 'GEMBA_WALK_REPORTING', label: 'Gemba walk report', description: 'Reporting pages for gemba walk activity.' },
                 { key: 'USER_DASHBOARD', label: 'User Dashboard', description: 'User dashboard overview page.' },
-                { key: 'LEADERSHIP_GEMBA_TRACKER_CONFIGURATION', label: 'Gemba Kaizen / Ideas', description: 'Gemba Kaizen dashboard, reporting form, and master-data setup.' },
                 { key: 'TRAINING_SCHEDULE_CONFIGURATION', label: 'Training Scheduler', description: 'Training schedule periods and configuration data.' },
                 { key: 'MEETING_AGENDA_CONFIGURATION', label: 'PMS Agenda', description: 'PMS agenda configuration and save actions.' },
                 { key: 'ABNORMALITY_TRACKER_CONFIGURATION', label: 'Abnormality report', description: 'Abnormality tracker lists and save actions.' },
+                { key: 'INFO_PORTAL', label: 'Info Portal', description: 'Footer button labels, URLs, and uploads.' },
                 { key: 'PROCESS_CONFIRMATION_CONFIGURATION', label: 'CarlEx Process Confirmation', description: 'Process confirmation configuration and save actions.' },
                 { key: 'HS_CROSS_DAILY_CONFIGURATION', label: 'H&S Cross Daily', description: 'Health and safety daily cross settings.' },
                 { key: 'LSR_TRACKING_CONFIGURATION', label: 'LSR Tracking', description: 'LSR daily tracking settings and updates.' },
@@ -159,7 +155,10 @@
 
     const ROLE_LABELS = {
         ADMIN: 'Admin',
-        USER: 'User',
+        USER: 'User'
+    };
+
+    const DESIGNATION_LABELS = {
         HOD: 'HoD',
         AREA_HOD: 'Area HoD',
         ENGINEER: 'Engineer',
@@ -172,21 +171,6 @@
         if (value === 'ADMIN') {
             return 'ADMIN';
         }
-        if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
-            return 'HOD';
-        }
-        if (value === 'AREA_HOD' || value === 'AREA_HEAD' || value === 'AREA_HEAD_OF_DEPARTMENT') {
-            return 'AREA_HOD';
-        }
-        if (value === 'ENGINEER' || value === 'ENGG') {
-            return 'ENGINEER';
-        }
-        if (value === 'EXECUTIVE' || value === 'EXEC') {
-            return 'EXECUTIVE';
-        }
-        if (value === 'OPERATOR') {
-            return 'OPERATOR';
-        }
         return 'USER';
     }
 
@@ -195,8 +179,8 @@
     }
 
     function normalizeDesignation(designation) {
-        const rawValue = String(designation || '').trim();
-        const value = rawValue.toUpperCase().replace(/[\s-]+/g, '_');
+        const original = String(designation || '').trim();
+        const value = original.toUpperCase().replace(/[\s-]+/g, '_');
         if (value === 'HOD' || value === 'HO_D' || value === 'HEAD_OF_DEPARTMENT' || value === 'DEPARTMENT_HEAD') {
             return 'HOD';
         }
@@ -212,12 +196,12 @@
         if (value === 'OPERATOR') {
             return 'OPERATOR';
         }
-        return rawValue;
+        return original;
     }
 
     function designationLabel(designation) {
         const normalized = normalizeDesignation(designation);
-        return normalized ? ROLE_LABELS[normalized] : (designation || '-');
+        return normalized ? (DESIGNATION_LABELS[normalized] || normalized) : (designation || '-');
     }
 
     function showMessage(targetEl, text, type) {
@@ -227,6 +211,27 @@
         setTimeout(function () {
             targetEl.className = 'form-message';
             targetEl.textContent = '';
+        }, 3500);
+    }
+
+    function showUserToast(text, type) {
+        let toast = document.getElementById('pmsUserToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'pmsUserToast';
+            toast.className = 'dashboard-toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = text;
+        toast.style.background = type === 'error'
+            ? 'rgba(153, 27, 27, 0.94)'
+            : type === 'warning'
+                ? 'rgba(146, 64, 14, 0.94)'
+                : 'rgba(22, 101, 52, 0.94)';
+        toast.classList.add('show');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(function() {
+            toast.classList.remove('show');
         }, 3500);
     }
 
@@ -247,10 +252,6 @@
     function userIcon(role) {
         const normalized = normalizeRole(role);
         if (normalized === 'ADMIN') return 'fa-user-shield';
-        if (normalized === 'HOD' || normalized === 'AREA_HOD') return 'fa-user-tie';
-        if (normalized === 'ENGINEER') return 'fa-helmet-safety';
-        if (normalized === 'EXECUTIVE') return 'fa-briefcase';
-        if (normalized === 'OPERATOR') return 'fa-user-gear';
         return 'fa-user';
     }
 
@@ -302,45 +303,6 @@
             .replace(/>/g, '&gt;');
     }
 
-    function itemName(item) {
-        return String(item && item.name || '').trim();
-    }
-
-    function itemParentPlant(item) {
-        return String(item && item.parentPlant || '').trim();
-    }
-
-    function itemParentDepartment(item) {
-        return String(item && item.parentDepartment || '').trim();
-    }
-
-    function itemMatchesPlant(item, plant) {
-        const selectedPlant = String(plant || '').trim();
-        if (!selectedPlant) {
-            return true;
-        }
-        const parentPlant = itemParentPlant(item);
-        return !parentPlant || parentPlant.toLowerCase() === selectedPlant.toLowerCase();
-    }
-
-    function departmentOptionsForPlant(plant) {
-        const departmentItems = Array.isArray(userMasterOptions.departmentItems) ? userMasterOptions.departmentItems : [];
-        const names = departmentItems
-            .filter(function(item) { return itemMatchesPlant(item, plant); })
-            .map(itemName)
-            .filter(Boolean);
-        return names.length || String(plant || '').trim() ? names : userMasterOptions.departments;
-    }
-
-    function designationOptionsForPlant(plant) {
-        const designationItems = Array.isArray(userMasterOptions.designationItems) ? userMasterOptions.designationItems : [];
-        const names = designationItems
-            .filter(function(item) { return itemMatchesPlant(item, plant); })
-            .map(itemName)
-            .filter(Boolean);
-        return names.length || String(plant || '').trim() ? names : userMasterOptions.designations;
-    }
-
     function setDatalistOptions(id, values) {
         const list = document.getElementById(id);
         if (!list || !Array.isArray(values)) {
@@ -351,38 +313,29 @@
         }).join('');
     }
 
-    function selectOptionLabel(value) {
-        const normalized = normalizeDesignation(value);
-        return ROLE_LABELS[normalized] || String(value || '');
-    }
-
-    function uniqueOptionValues(values, selectedValue) {
-        const seen = new Set();
-        const optionValues = [];
-        (values || []).concat(selectedValue ? [selectedValue] : []).forEach(function(value) {
-            const safeValue = String(value || '').trim();
-            const key = safeValue.toLowerCase();
-            if (safeValue && !seen.has(key)) {
-                seen.add(key);
-                optionValues.push(safeValue);
-            }
-        });
-        return optionValues;
-    }
-
-    function setSelectOptions(select, values, selectedValue, placeholder, labelMapper) {
+    function setSelectOptions(select, values, selectedValue) {
         if (!select || !Array.isArray(values)) {
             return;
         }
         const selected = String(selectedValue || select.value || '').trim();
-        select.innerHTML = '<option value="">' + escapeHtml(placeholder || '') + '</option>' + uniqueOptionValues(values, selected).map(function(value) {
+        const optionValues = values.slice();
+        if (selected && !optionValues.some(function(value) { return sameValue(value, selected); })) {
+            optionValues.push(selected);
+        }
+        select.innerHTML = '<option value=""></option>' + optionValues.map(function(value) {
             const safe = escapeAttribute(value);
-            const label = labelMapper ? labelMapper(value) : value;
-            return '<option value="' + safe + '"' + (String(value || '').trim() === selected ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
+            return '<option value="' + safe + '"' + (sameValue(value, selected) ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
         }).join('');
     }
 
+    function sameValue(left, right) {
+        return String(left || '').trim().toLowerCase() === String(right || '').trim().toLowerCase();
+    }
+
     function splitAreaValues(value) {
+        if (Array.isArray(value)) {
+            return value.map(function(item) { return String(item || '').trim(); }).filter(Boolean);
+        }
         return String(value || '')
             .split(',')
             .map(function(item) { return item.trim(); })
@@ -398,62 +351,202 @@
             .filter(Boolean);
     }
 
-    function selectedAreaCsv(select) {
-        return Array.from(new Set(getSelectedValues(select))).join(', ');
+    function getSelectedAreaValue(select) {
+        return getSelectedValues(select).join(', ');
     }
 
-    function areaMatchesDepartment(item, department) {
-        const selectedDepartment = String(department || '').trim();
-        if (!selectedDepartment) {
-            return true;
+    function syncAreaDropdownToSelect(select) {
+        const parts = areaDropdownParts(select);
+        if (select && parts.menu) {
+            syncAreaSelectFromCheckboxes(select, parts.menu, false);
         }
-        const parentDepartment = itemParentDepartment(item);
-        return !parentDepartment || parentDepartment.toLowerCase() === selectedDepartment.toLowerCase();
+        return getSelectedAreaValue(select);
     }
 
-    function areaOptionsForDepartment(department) {
-        const areaItems = Array.isArray(userMasterOptions.areaItems) ? userMasterOptions.areaItems : [];
-        const selectedDepartment = String(department || '').trim();
-        const names = areaItems
-            .filter(function(item) { return areaMatchesDepartment(item, department); })
-            .map(itemName)
-            .filter(Boolean);
-        return names.length || selectedDepartment ? names : userMasterOptions.areas;
+    function areaDropdownParts(select) {
+        if (select === editAreaEl) {
+            return { toggle: editAreaToggleEl, menu: editAreaCheckboxesEl };
+        }
+        return { toggle: areaToggleEl, menu: areaCheckboxesEl };
     }
 
-    function setMultiSelectOptions(select, values, selectedValues) {
+    function updateAreaDropdownLabel(select) {
+        const parts = areaDropdownParts(select);
+        if (!parts.toggle) {
+            return;
+        }
+        const label = parts.toggle.querySelector('span');
+        const selectedValues = getSelectedValues(select);
+        if (!label) {
+            return;
+        }
+        if (!selectedValues.length) {
+            label.textContent = 'Select process areas';
+        } else if (selectedValues.length <= 2) {
+            label.textContent = selectedValues.join(', ');
+        } else {
+            label.textContent = selectedValues.slice(0, 2).join(', ') + ' +' + (selectedValues.length - 2);
+        }
+        parts.toggle.title = selectedValues.join(', ');
+    }
+
+    function syncAreaSelectFromCheckboxes(select, menu, shouldDispatch) {
+        if (!select || !menu) {
+            return;
+        }
+        const selected = new Set(Array.from(menu.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(function(input) { return String(input.value || '').trim().toLowerCase(); }));
+        Array.from(select.options || []).forEach(function(option) {
+            option.selected = selected.has(String(option.value || '').trim().toLowerCase());
+        });
+        updateAreaDropdownLabel(select);
+        if (shouldDispatch !== false) {
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+
+    function renderAreaCheckboxDropdown(select) {
+        const parts = areaDropdownParts(select);
+        if (!select || !parts.menu) {
+            return;
+        }
+        const selectedKeys = new Set(getSelectedValues(select).map(function(value) { return value.toLowerCase(); }));
+        const options = Array.from(select.options || []);
+        if (!options.length) {
+            parts.menu.innerHTML = '<div class="pms-checkbox-empty">No process areas</div>';
+            updateAreaDropdownLabel(select);
+            return;
+        }
+        parts.menu.innerHTML = options.map(function(option) {
+            const value = String(option.value || '').trim();
+            const id = select.id + 'Check' + value.replace(/[^a-z0-9]+/gi, '_');
+            return '<label class="pms-checkbox-option" for="' + escapeAttribute(id) + '">' +
+                '<input type="checkbox" id="' + escapeAttribute(id) + '" value="' + escapeAttribute(value) + '"' + (selectedKeys.has(value.toLowerCase()) ? ' checked' : '') + '>' +
+                '<span>' + escapeHtml(value) + '</span>' +
+            '</label>';
+        }).join('');
+        updateAreaDropdownLabel(select);
+    }
+
+    function setMultiSelectOptions(select, values, selectedValue) {
         if (!select || !Array.isArray(values)) {
             return;
         }
-        const optionValues = uniqueOptionValues((values || []).concat(selectedValues || []), '');
-        const selected = new Set((selectedValues || []).map(function(value) {
-            return String(value || '').trim().toLowerCase();
-        }));
+        const selectedValues = splitAreaValues(selectedValue || getSelectedAreaValue(select));
+        const selectedKeys = new Set(selectedValues.map(function(value) { return value.toLowerCase(); }));
+        const optionValues = values.slice();
+        selectedValues.forEach(function(value) {
+            if (value && !optionValues.some(function(option) { return sameValue(option, value); })) {
+                optionValues.push(value);
+            }
+        });
         select.innerHTML = optionValues.map(function(value) {
             const safe = escapeAttribute(value);
-            const isSelected = selected.has(String(value || '').trim().toLowerCase());
-            return '<option value="' + safe + '"' + (isSelected ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
+            return '<option value="' + safe + '"' + (selectedKeys.has(String(value || '').trim().toLowerCase()) ? ' selected' : '') + '>' + escapeHtml(value) + '</option>';
         }).join('');
-        select.disabled = optionValues.length === 0;
+        renderAreaCheckboxDropdown(select);
     }
 
-    function refreshAreaOptions(areaSelect, departmentSelect, selectedAreaValue) {
-        const selectedAreas = selectedAreaValue !== undefined
-            ? splitAreaValues(selectedAreaValue)
-            : getSelectedValues(areaSelect);
-        setMultiSelectOptions(areaSelect, areaOptionsForDepartment(departmentSelect ? departmentSelect.value : ''), selectedAreas);
+    function toggleAreaDropdown(select, forceOpen) {
+        const parts = areaDropdownParts(select);
+        if (!parts.toggle || !parts.menu) {
+            return;
+        }
+        const wrapper = parts.toggle.closest('.pms-checkbox-dropdown');
+        if (!wrapper) {
+            return;
+        }
+        const shouldOpen = forceOpen !== undefined ? forceOpen : !wrapper.classList.contains('open');
+        document.querySelectorAll('.pms-checkbox-dropdown.open').forEach(function(dropdown) {
+            if (dropdown !== wrapper) {
+                dropdown.classList.remove('open');
+            }
+        });
+        wrapper.classList.toggle('open', shouldOpen);
     }
 
-    function refreshDepartmentAndDesignationOptions(plantSelect, departmentSelect, areaSelect, designationSelect, selectedDepartment, selectedAreas, selectedDesignation) {
-        const plant = plantSelect ? plantSelect.value : '';
-        setSelectOptions(departmentSelect, departmentOptionsForPlant(plant), selectedDepartment, '');
-        refreshAreaOptions(areaSelect, departmentSelect, selectedAreas);
-        setSelectOptions(designationSelect, designationOptionsForPlant(plant), selectedDesignation, 'Select designation', selectOptionLabel);
+    function bindAreaDropdown(select) {
+        const parts = areaDropdownParts(select);
+        if (!select || !parts.toggle || !parts.menu) {
+            return;
+        }
+        parts.toggle.addEventListener('click', function() {
+            toggleAreaDropdown(select);
+        });
+        parts.menu.addEventListener('change', function(event) {
+            if (event.target && event.target.matches('input[type="checkbox"]')) {
+                syncAreaSelectFromCheckboxes(select, parts.menu);
+            }
+        });
     }
 
-    function isOperationalDesignation(value) {
-        const normalized = normalizeDesignation(value);
-        return normalized === 'ENGINEER' || normalized === 'EXECUTIVE' || normalized === 'OPERATOR' || normalized === 'AREA_HOD';
+    function selectedOrCurrent(selected, key, fallback) {
+        if (selected && Object.prototype.hasOwnProperty.call(selected, key)) {
+            return String(selected[key] || '').trim();
+        }
+        return String(fallback || '').trim();
+    }
+
+    function itemNames(items) {
+        const seen = new Set();
+        return (items || []).map(function(item) {
+            return String((item && item.name) || '').trim();
+        }).filter(function(name) {
+            const key = name.toLowerCase();
+            if (!name || seen.has(key)) {
+                return false;
+            }
+            seen.add(key);
+            return true;
+        });
+    }
+
+    function filteredDepartments(plant) {
+        if (!plant) {
+            return [];
+        }
+        return itemNames((masterDataOptions.departmentItems || []).filter(function(item) {
+            return sameValue(item.parentPlant, plant);
+        }));
+    }
+
+    function filteredAreas(plant, department) {
+        if (!plant || !department) {
+            return [];
+        }
+        return itemNames((masterDataOptions.areaItems || []).filter(function(item) {
+            return sameValue(item.parentPlant, plant) && sameValue(item.parentDepartment, department);
+        }));
+    }
+
+    function filteredDesignations(plant, department, area) {
+        const areas = splitAreaValues(area).map(function(value) { return value.toLowerCase(); });
+        if (!plant || !department || areas.length === 0) {
+            return [];
+        }
+        return itemNames((masterDataOptions.designationItems || []).filter(function(item) {
+            return sameValue(item.parentPlant, plant)
+                && sameValue(item.parentDepartment, department)
+                && areas.indexOf(String(item.parentProcessArea || '').trim().toLowerCase()) !== -1;
+        }));
+    }
+
+    function refreshUserHierarchy(scope, selected) {
+        selected = selected || {};
+        const fields = scope === 'edit'
+            ? { plant: editPlantEl, department: editDepartmentEl, area: editAreaEl, designation: editDesignationEl }
+            : { plant: plantEl, department: departmentEl, area: areaEl, designation: designationEl };
+        const plant = selectedOrCurrent(selected, 'plant', fields.plant && fields.plant.value);
+        setSelectOptions(fields.plant, masterDataOptions.plants || [], plant);
+
+        const department = selectedOrCurrent(selected, 'department', fields.department && fields.department.value);
+        setSelectOptions(fields.department, filteredDepartments(fields.plant ? fields.plant.value : ''), department);
+
+        const area = selected.area !== undefined ? selected.area : getSelectedAreaValue(fields.area);
+        setMultiSelectOptions(fields.area, filteredAreas(fields.plant ? fields.plant.value : '', fields.department ? fields.department.value : ''), area);
+
+        const designation = selectedOrCurrent(selected, 'designation', fields.designation && fields.designation.value);
+        setSelectOptions(fields.designation, filteredDesignations(fields.plant ? fields.plant.value : '', fields.department ? fields.department.value : '', getSelectedAreaValue(fields.area)), designation);
     }
 
     function loadMasterOptions() {
@@ -461,22 +554,12 @@
             .then(parseJsonResponse)
             .then(function (data) {
                 const options = data.options || {};
-                const designations = (options.designations && options.designations.length) ? options.designations : DEFAULT_DESIGNATION_VALUES;
-                userMasterOptions = {
-                    departments: options.departments || [],
-                    departmentItems: options.departmentItems || [],
-                    areas: options.areas || [],
-                    areaItems: options.areaItems || [],
-                    plants: options.plants || [],
-                    designations: designations,
-                    designationItems: options.designationItems || []
-                };
-                setSelectOptions(plantEl, userMasterOptions.plants, null, 'Select plant');
-                refreshDepartmentAndDesignationOptions(plantEl, departmentEl, areaEl, designationEl, null, '', null);
-                setSelectOptions(editPlantEl, userMasterOptions.plants, null, 'Select plant');
-                refreshDepartmentAndDesignationOptions(editPlantEl, editDepartmentEl, editAreaEl, editDesignationEl, null, '', null);
-                setDatalistOptions('plantOptions', userMasterOptions.plants);
-                setDatalistOptions('designationOptions', designations);
+                masterDataOptions.plants = options.plants || [];
+                masterDataOptions.departmentItems = options.departmentItems || [];
+                masterDataOptions.areaItems = options.areaItems || [];
+                masterDataOptions.designationItems = options.designationItems || [];
+                refreshUserHierarchy('new');
+                refreshUserHierarchy('edit');
             })
             .catch(function () {
                 // Dropdown suggestions are helpful, but the form can still save typed values.
@@ -738,9 +821,9 @@
         const employeeId = (employeeIdEl.value || '').trim();
         const username = (usernameEl.value || '').trim();
         const department = (departmentEl.value || '').trim();
-        const area = selectedAreaCsv(areaEl);
+        const area = syncAreaDropdownToSelect(areaEl);
         const plant = (plantEl.value || '').trim();
-        const designation = normalizeDesignation(designationEl.value || '');
+        const designation = (designationEl.value || '').trim();
         const reportingManager = (reportingManagerEl.value || '').trim();
         const email = (emailEl.value || '').trim();
         const password = passwordEl.value || '';
@@ -752,14 +835,6 @@
 
         if (!name || !username || !email || !password) {
             showMessage(messageEl, 'Please fill name, username, email, and password.', 'warning');
-            return;
-        }
-        if (!department || !designation) {
-            showMessage(messageEl, 'Please select department and designation.', 'warning');
-            return;
-        }
-        if (isOperationalDesignation(designation) && !area) {
-            showMessage(messageEl, 'Please select at least one area for this designation.', 'warning');
             return;
         }
 
@@ -791,7 +866,9 @@
                 if (data.status === 'success') {
                     showMessage(messageEl, 'User added successfully.', 'success');
                     showMessage(tableMessageEl, 'User created successfully.', 'success');
+                    showUserToast('User created successfully.', 'success');
                     form.reset();
+                    refreshUserHierarchy('new', { plant: '', department: '', area: '', designation: '' });
                     roleEl.value = 'USER';
                     if (statusEl) statusEl.value = 'ACTIVE';
                     resetPermissions('new');
@@ -801,10 +878,12 @@
                     loadUsers();
                 } else {
                     showMessage(messageEl, data.message || 'Failed to add user.', 'error');
+                    showUserToast(data.message || 'Failed to add user.', 'error');
                 }
             })
             .catch(function () {
                 showMessage(messageEl, 'Server error while adding user.', 'error');
+                showUserToast('Server error while adding user.', 'error');
             })
             .finally(function () {
                 addBtn.disabled = false;
@@ -847,9 +926,13 @@
         editUserIdEl.value = user.id;
         editNameEl.value = user.name || '';
         editEmployeeIdEl.value = user.employeeId || '';
-        setSelectOptions(editPlantEl, userMasterOptions.plants, user.plant || '', 'Select plant');
-        refreshDepartmentAndDesignationOptions(editPlantEl, editDepartmentEl, editAreaEl, editDesignationEl,
-            user.department || '', user.area || '', normalizeDesignation(user.designation || ''));
+        editPlantEl.value = user.plant || '';
+        refreshUserHierarchy('edit', {
+            plant: user.plant || '',
+            department: user.department || '',
+            area: user.area || '',
+            designation: user.designation || ''
+        });
         editReportingManagerEl.value = user.reportingManager || '';
         editEmailEl.value = user.email || '';
         editRoleEl.value = normalizeRole(user.role || 'USER');
@@ -891,9 +974,9 @@
         const name = (editNameEl.value || '').trim();
         const employeeId = (editEmployeeIdEl.value || '').trim();
         const department = (editDepartmentEl.value || '').trim();
-        const area = selectedAreaCsv(editAreaEl);
+        const area = syncAreaDropdownToSelect(editAreaEl);
         const plant = (editPlantEl.value || '').trim();
-        const designation = normalizeDesignation(editDesignationEl.value || '');
+        const designation = (editDesignationEl.value || '').trim();
         const reportingManager = (editReportingManagerEl.value || '').trim();
         const email = (editEmailEl.value || '').trim();
         const role = normalizeRole(editRoleEl.value || 'USER');
@@ -905,14 +988,6 @@
 
         if (!id || !name || !email) {
             showMessage(editMessageEl, 'Name and email are required.', 'warning');
-            return;
-        }
-        if (!department || !designation) {
-            showMessage(editMessageEl, 'Please select department and designation.', 'warning');
-            return;
-        }
-        if (isOperationalDesignation(designation) && !area) {
-            showMessage(editMessageEl, 'Please select at least one area for this designation.', 'warning');
             return;
         }
 
@@ -942,15 +1017,18 @@
             .then(function (data) {
                 if (data.status === 'success') {
                     showMessage(tableMessageEl, 'User updated successfully.', 'success');
+                    showUserToast('User updated successfully.', 'success');
                     closeEditModal();
                     loadMasterOptions();
                     loadUsers();
                 } else {
                     showMessage(editMessageEl, data.message || 'Failed to update user.', 'error');
+                    showUserToast(data.message || 'Failed to update user.', 'error');
                 }
             })
             .catch(function () {
                 showMessage(editMessageEl, 'Server error while updating user.', 'error');
+                showUserToast('Server error while updating user.', 'error');
             })
             .finally(function () {
                 saveEditBtn.disabled = false;
@@ -1043,30 +1121,6 @@
         saveEditBtn.addEventListener('click', saveEdit);
     }
 
-    if (departmentEl) {
-        departmentEl.addEventListener('change', function () {
-            refreshAreaOptions(areaEl, departmentEl, '');
-        });
-    }
-
-    if (plantEl) {
-        plantEl.addEventListener('change', function () {
-            refreshDepartmentAndDesignationOptions(plantEl, departmentEl, areaEl, designationEl, '', '', '');
-        });
-    }
-
-    if (editDepartmentEl) {
-        editDepartmentEl.addEventListener('change', function () {
-            refreshAreaOptions(editAreaEl, editDepartmentEl, '');
-        });
-    }
-
-    if (editPlantEl) {
-        editPlantEl.addEventListener('change', function () {
-            refreshDepartmentAndDesignationOptions(editPlantEl, editDepartmentEl, editAreaEl, editDesignationEl, '', '', '');
-        });
-    }
-
     function bindPermissionRules(scope) {
         const editInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="edit"]');
         const viewInputs = document.querySelectorAll('input[data-scope="' + scope + '"][data-type="view"]');
@@ -1135,6 +1189,16 @@
     bindPermissionRules('edit');
     bindPermissionBulkActions(newPermissionsMatrixEl, 'new');
     bindPermissionBulkActions(editPermissionsMatrixEl, 'edit');
+    bindAreaDropdown(areaEl);
+    bindAreaDropdown(editAreaEl);
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.pms-checkbox-dropdown')) {
+            document.querySelectorAll('.pms-checkbox-dropdown.open').forEach(function(dropdown) {
+                dropdown.classList.remove('open');
+            });
+        }
+    });
 
     if (roleEl) {
         roleEl.addEventListener('change', function () {
@@ -1145,6 +1209,42 @@
     if (editRoleEl) {
         editRoleEl.addEventListener('change', function () {
             togglePermissionSection(editRoleEl, editPermissionsSectionEl);
+        });
+    }
+
+    if (plantEl) {
+        plantEl.addEventListener('change', function () {
+            refreshUserHierarchy('new', { plant: plantEl.value, department: '', area: '', designation: '' });
+        });
+    }
+
+    if (departmentEl) {
+        departmentEl.addEventListener('change', function () {
+            refreshUserHierarchy('new', { plant: plantEl.value, department: departmentEl.value, area: '', designation: '' });
+        });
+    }
+
+    if (areaEl) {
+        areaEl.addEventListener('change', function () {
+            refreshUserHierarchy('new', { plant: plantEl.value, department: departmentEl.value, area: getSelectedAreaValue(areaEl), designation: '' });
+        });
+    }
+
+    if (editPlantEl) {
+        editPlantEl.addEventListener('change', function () {
+            refreshUserHierarchy('edit', { plant: editPlantEl.value, department: '', area: '', designation: '' });
+        });
+    }
+
+    if (editDepartmentEl) {
+        editDepartmentEl.addEventListener('change', function () {
+            refreshUserHierarchy('edit', { plant: editPlantEl.value, department: editDepartmentEl.value, area: '', designation: '' });
+        });
+    }
+
+    if (editAreaEl) {
+        editAreaEl.addEventListener('change', function () {
+            refreshUserHierarchy('edit', { plant: editPlantEl.value, department: editDepartmentEl.value, area: getSelectedAreaValue(editAreaEl), designation: '' });
         });
     }
 
