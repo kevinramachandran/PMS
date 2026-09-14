@@ -2723,6 +2723,103 @@ padding:4px 8px;
     margin-left: auto;
 }
 
+/* Keep plant setup in two compact rows without clipping suggestion menus. */
+#form-master-plant .kpi-rename-shell {
+    width: 100%;
+    gap: 12px;
+}
+
+#form-master-plant .master-plant-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+#form-master-plant .master-plant-card {
+    container-type: inline-size;
+    position: relative;
+    min-width: 0;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+#form-master-plant .master-plant-card:focus-within {
+    z-index: 1;
+}
+
+#form-master-plant .master-plant-card + .master-plant-card {
+    border-left: 1px solid #dfe5e1;
+}
+
+#form-master-plant .footer-btn-card-header {
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+#form-master-plant .master-plant-entry {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+#form-master-plant .master-plant-card[data-category="PLANT"] .master-plant-entry {
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+}
+
+#form-master-plant .master-plant-card[data-category="PROCESS_AREA"] .master-plant-entry {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content;
+}
+
+#form-master-plant .master-plant-entry .btn {
+    padding: 9px 12px;
+    font-size: 13px;
+}
+
+#form-master-plant .master-plant-inline-list {
+    max-height: 72px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    margin: 8px 0;
+    padding: 3px;
+}
+
+#form-master-plant .master-plant-list-hint {
+    line-height: 1.45;
+}
+
+#form-master-plant #masterPlantMessage:empty {
+    display: none;
+}
+
+@container (max-width: 420px) {
+    #form-master-plant .master-plant-card[data-category="PLANT"] .master-plant-entry,
+    #form-master-plant .master-plant-card[data-category="PROCESS_AREA"] .master-plant-entry {
+        grid-template-columns: minmax(0, 1fr) max-content;
+    }
+
+    #form-master-plant .master-plant-card[data-category="PLANT"] .master-plant-entry > .form-group:first-child,
+    #form-master-plant .master-plant-card[data-category="PROCESS_AREA"] .master-plant-entry > .form-group:first-child {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 800px) {
+    #form-master-plant .master-plant-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #form-master-plant .master-plant-card + .master-plant-card {
+        border-left: 0;
+        border-top: 1px solid #dfe5e1;
+    }
+}
+
 .master-plant-entry {
     display: grid;
     grid-template-columns: minmax(180px, 320px) max-content;

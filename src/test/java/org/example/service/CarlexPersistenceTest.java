@@ -94,6 +94,31 @@ class CarlexPersistenceTest {
         assertEquals("Repair", rows.get(2).get("counterMeasureActions").asText());
     }
 
+    @Test
+    void partialObservationsSurviveCreateAndUpdate() throws Exception {
+        var plants = mock(PlantMasterDataService.class);
+        when(plants.names(PlantMasterDataService.DEPARTMENT)).thenReturn(List.of("Packaging"));
+        when(plants.names(PlantMasterDataService.PROCESS_AREA)).thenReturn(List.of("Line 1"));
+        var mapper = new ObjectMapper();
+        var service = new CarlexProcessConfirmationService(repository, mock(AssignmentHistoryService.class),
+                mock(AppUserRepository.class), mock(EmailConfigService.class), plants, mapper);
+        var request = request("Issue", "Third");
+        request.zmObservationsJson = "[{\"description\":\"Issue\",\"counterMeasureActions\":\"Repair\"}]";
+        Long id = service.create(request, "tester", "ADMIN").id;
+        entityManager.flush();
+        entityManager.clear();
+        var rows = mapper.readTree(service.get(id).orElseThrow().zmObservationsJson);
+        assertEquals("", rows.get(0).get("status").asText());
+        assertEquals("Repair", rows.get(0).get("counterMeasureActions").asText());
+        request.zmObservationsJson = "[{\"observationImage\":\"image.png\"}]";
+        service.update(id, request, "tester", "ADMIN").orElseThrow();
+        entityManager.flush();
+        entityManager.clear();
+        rows = mapper.readTree(service.get(id).orElseThrow().zmObservationsJson);
+        assertEquals("image.png", rows.get(0).get("observationImage").asText());
+        assertEquals("", rows.get(0).get("description").asText());
+    }
+
     private CarlexProcessConfirmation request(String first, String third) {
         var record = new CarlexProcessConfirmation();
         record.department = "Packaging";

@@ -6,9 +6,9 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
-    <link rel="stylesheet" href="/css/settings.css?v=training-compact-top-20260914">
+    <link rel="stylesheet" href="/css/settings.css?v=plant-two-row-layout-20260914">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=training-scroll-gap-20260914">
 </head>
 <body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -1664,6 +1664,7 @@
                                         <h2>Plant</h2>
                                     </div>
 
+                                    <div class="master-plant-row">
                                     <div class="footer-btn-card master-plant-card" data-category="PLANT">
                                         <div class="footer-btn-card-header"><i class="fas fa-industry"></i> Plant<button type="button" class="master-plant-view-btn" data-category="PLANT" title="View plants" aria-label="View plants"><i class="fas fa-eye"></i></button></div>
                                         <div class="master-plant-entry">
@@ -1680,6 +1681,7 @@
                                                 <i class="fas fa-plus"></i> Add Plant
                                             </button>
                                         </div>
+                                        <div id="masterPlantList" class="master-plant-inline-list" aria-label="Saved plants" aria-live="polite"></div>
                                         <div class="master-plant-list-hint">Select a plant and click OK to show it on the KPI Dashboard.</div>
                                     </div>
 
@@ -1701,6 +1703,9 @@
                                         <div class="master-plant-list-hint">Select a department below to show its areas. Use View to edit or delete.</div>
                                     </div>
 
+                                    </div>
+
+                                    <div class="master-plant-row">
                                     <div class="footer-btn-card master-plant-card" data-category="PROCESS_AREA">
                                         <div class="footer-btn-card-header"><i class="fas fa-diagram-project"></i> Process Area<button type="button" class="master-plant-view-btn" data-category="PROCESS_AREA" title="View process areas" aria-label="View process areas"><i class="fas fa-eye"></i></button></div>
                                         <div class="master-plant-entry">
@@ -1739,7 +1744,10 @@
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
+                                        <div id="masterDesignationList" class="master-plant-inline-list" aria-label="Saved designations" aria-live="polite"></div>
                                         <div class="master-plant-list-hint">Use View to search, edit, or delete designations.</div>
+                                    </div>
+
                                     </div>
 
                                     <div id="masterPlantMessage" class="form-message"></div>
@@ -2065,7 +2073,7 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=plant-name-only-header-20260913"></script>
-    <script src="/js/settings.js?v=plant-inline-lists-20260914"></script>
+    <script src="/js/settings.js?v=plant-designation-lists-20260914"></script>
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">

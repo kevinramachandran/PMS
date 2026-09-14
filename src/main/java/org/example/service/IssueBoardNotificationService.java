@@ -54,7 +54,7 @@ public class IssueBoardNotificationService {
                                            IssueBoardItem previousItem,
                                            IssueBoardItem currentItem) {
         String rowLabel = rowOrder == null ? "-" : String.valueOf(rowOrder);
-        boolean responsibleChanged = responsibleChanged(previousItem, currentItem);
+        boolean responsibleChanged = previousItem != null && responsibleChanged(previousItem, currentItem);
         if (responsibleChanged) {
             log.info("Row {}: responsible reassigned from '{}' to '{}', problem='{}'",
                     rowLabel,
@@ -79,11 +79,11 @@ public class IssueBoardNotificationService {
         }
 
         if (!shouldSendAssignment(previousItem, currentItem)) {
-            log.debug("Row {}: no assignment change - skipping notification", rowLabel);
+            log.debug("Row {}: no open assignment - skipping notification", rowLabel);
             return;
         }
 
-        log.info("Row {}: assignment changed, responsible='{}', problem='{}'",
+        log.info("Row {}: assignment saved, responsible='{}', problem='{}'",
                 rowLabel, currentItem.getResponsible(), currentItem.getProblem());
 
         String subject = "Issue Assigned: " + defaultText(currentItem.getProblem(), "Issue Board Item");
@@ -126,6 +126,7 @@ public class IssueBoardNotificationService {
      * Runs daily (default 08:00 app timezone).
      * Scans ALL open issues across every board date so that:
      *  - items due tomorrow receive a "due tomorrow" reminder
+     *  - items due today receive a "due today" reminder
      *  - items whose target date has already passed receive an overdue alert
      *    (kept sending every day until the item is closed)
      */
@@ -157,6 +158,14 @@ public class IssueBoardNotificationService {
                     true,
                     true
                 );
+            } else if (targetDate.equals(today)) {
+                emailConfigService.sendEmail(
+                        List.of(recipient.getEmail()),
+                        "Reminder: Issue due today - " + defaultText(item.getProblem(), "Issue Board Item"),
+                        buildReminderBody(boardDate, recipient, item, targetDate, false, today),
+                        true,
+                        true
+                );
             } else if (targetDate.isBefore(today)) {
                 // Target date already passed and still open — keep alerting daily
                 emailConfigService.sendEmail(
@@ -180,14 +189,9 @@ public class IssueBoardNotificationService {
             return false;
         }
 
-        if (previousItem == null) {
-            return true;
-        }
-
-        return responsibleChanged(previousItem, currentItem)
-                || !Objects.equals(trim(previousItem.getProblem()), trim(currentItem.getProblem()))
-                || !Objects.equals(trim(previousItem.getActions()), trim(currentItem.getActions()))
-                || !Objects.equals(effectiveTargetDate(previousItem), effectiveTargetDate(currentItem));
+        // Every saved open assignment is notified, regardless of its target date
+        // or whether the assignment details changed.
+        return true;
     }
 
     private boolean responsibleChanged(IssueBoardItem previousItem, IssueBoardItem currentItem) {
@@ -296,7 +300,9 @@ public class IssueBoardNotificationService {
         long overdueDays = overdue ? ChronoUnit.DAYS.between(targetDate, today) : 0;
         String intro = overdue
             ? "This is an overdue reminder for an open issue assigned to you."
-            : "This is a reminder that one of your assigned issues is due tomorrow.";
+            : targetDate.equals(today)
+                ? "This is a reminder that one of your assigned issues is due today."
+                : "This is a reminder that one of your assigned issues is due tomorrow.";
         String footer = "Please update the issue in PMS once it is completed.";
         String overdueDetail = overdue ? String.valueOf(overdueDays) + " day(s)" : null;
 

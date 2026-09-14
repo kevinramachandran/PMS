@@ -10,7 +10,7 @@ const context = {
     observationState: { zm: [], pm: [], qm: [] }
 };
 vm.createContext(context);
-for (const name of ['escAttribute', 'observationDescriptionOptions', 'isObservationTouched', 'isObservationComplete', 'validatePayload']) {
+for (const name of ['escAttribute', 'observationDescriptionOptions', 'isObservationTouched', 'validatePayload']) {
     const start = source.indexOf('    function ' + name + '(');
     assert.ok(start >= 0);
     const end = source.indexOf('\n    function ', start + 1);
@@ -25,7 +25,16 @@ assert.equal((options.match(/value="Configured"/g) || []).length, 1);
 const data = { department: 'Packaging', areaOfGwProcessConfirmationConducted: 'Line 1' };
 assert.match(context.validatePayload(data), /at least one/);
 context.observationState.zm = [{ description: 'Issue', counterMeasureActions: '', status: 'P' }];
-assert.match(context.validatePayload(data), /ZM 1 must include/);
+assert.equal(context.validatePayload(data), '');
+context.observationState.zm = [{ description: 'Issue', counterMeasureActions: 'Repair', status: '' }];
+assert.equal(context.validatePayload(data), '');
+context.observationState.zm = [{ description: '  ', counterMeasureActions: '\t', status: '' }];
+assert.match(context.validatePayload(data), /at least one/);
+context.observationState.zm = [{ observationImage: 'image.png', status: '' }];
+assert.equal(context.validatePayload(data), '');
+context.observationState.zm[0].status = 'invalid';
+assert.match(context.validatePayload(data), /status must be/);
+context.observationState.zm[0].status = 'P';
 context.observationState.zm[0].counterMeasureActions = 'Repair';
 assert.equal(context.validatePayload(data), '');
 context.observationState.pm = [{ description: '', counterMeasureActions: '', status: '', observationImage: '' }];
@@ -33,4 +42,4 @@ assert.equal(context.validatePayload(data), '');
 // Validation stays in the visible action footer, rather than below scrolled observations.
 assert.ok(html.indexOf('id="carlexMessage"') > html.indexOf('class="carlex-drawer-footer"'));
 assert.match(html, /id="carlexMessage"[^>]*role="alert"/);
-console.log('CarlEX saved choices, partial/complete validation, and visible error placement passed.');
+console.log('CarlEX saved choices, optional observation fields, status validation, and visible error placement passed.');

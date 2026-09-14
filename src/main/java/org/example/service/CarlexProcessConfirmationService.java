@@ -266,7 +266,7 @@ public class CarlexProcessConfirmationService {
         try {
             JsonNode root = objectMapper.readTree(json);
             if (!root.isArray()) {
-                return List.of();
+                throw new IllegalArgumentException(groupType + " observations must be an array");
             }
             List<CarlexProcessConfirmationObservation> rows = new ArrayList<>();
             int order = 1;
@@ -278,10 +278,8 @@ public class CarlexProcessConfirmationService {
                 if (description.isBlank() && actions.isBlank() && status.isBlank() && image.isBlank()) {
                     continue;
                 }
-                if (description.isBlank() || actions.isBlank() || status.isBlank()) {
-                    throw new IllegalArgumentException(groupType + " " + order + " must include description, counter measure actions, and status");
-                }
-                if (!Set.of("P", "D", "C", "A").contains(status.toUpperCase(Locale.ENGLISH))) {
+                status = status.toUpperCase(Locale.ENGLISH);
+                if (!status.isBlank() && !Set.of("P", "D", "C", "A").contains(status)) {
                     throw new IllegalArgumentException(groupType + " " + order + " status must be P, D, C, or A");
                 }
                 CarlexProcessConfirmationObservation row = new CarlexProcessConfirmationObservation();

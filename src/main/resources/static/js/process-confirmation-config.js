@@ -317,33 +317,26 @@ $(function() {
     }
 
     function isObservationTouched(item) {
-        return !!(item && (item.description || item.counterMeasureActions || item.status || item.observationImage));
-    }
-
-    function isObservationComplete(item) {
-        return !!(item && item.description && item.counterMeasureActions && item.status);
+        return !!(item && [item.description, item.counterMeasureActions, item.status, item.observationImage]
+            .some(function(value) { return String(value || '').trim(); }));
     }
 
     function validatePayload(data) {
         if (!data.department) return 'Department is required.';
         if (!data.areaOfGwProcessConfirmationConducted) return 'Area is required.';
-        let completeCount = 0;
-        let partialLabel = '';
+        let observationCount = 0;
+        let statusError = '';
         Object.keys(GROUPS).forEach(function(groupKey) {
             (observationState[groupKey] || []).forEach(function(item, index) {
-                if (isObservationComplete(item)) {
-                    completeCount += 1;
-                    return;
-                }
-                if (!partialLabel && isObservationTouched(item)) {
-                    partialLabel = GROUPS[groupKey].label + ' ' + (index + 1);
+                if (isObservationTouched(item)) observationCount += 1;
+                const status = String(item.status || '').trim().toUpperCase();
+                if (!statusError && status && !['P', 'D', 'C', 'A'].includes(status)) {
+                    statusError = GROUPS[groupKey].label + ' ' + (index + 1) + ' status must be P, D, C, or A.';
                 }
             });
         });
-        if (partialLabel) {
-            return partialLabel + ' must include description, counter measure actions, and status.';
-        }
-        if (!completeCount) {
+        if (statusError) return statusError;
+        if (!observationCount) {
             return 'Enter at least one ZM, PM, or QM observation before saving.';
         }
         return '';

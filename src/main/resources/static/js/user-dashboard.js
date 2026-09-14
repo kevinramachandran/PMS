@@ -188,32 +188,6 @@
         }, 'No open issue actions.');
     }
 
-    function renderKpiSnapshot(rows) {
-        const latest = sortByDateDesc(rows, ['date', 'createdAt', 'updatedAt'])[0] || null;
-        setText('userKpiDate', latest ? 'Data date: ' + formatDate(latest.date) : 'No KPI data found');
-
-        const metricMap = [
-            ['Production Productivity', 'productionProductivityFtdActual', 'productionProductivityFtdTarget'],
-            ['OEE', 'kpiOeeFtdActual', 'kpiOeeFtdTarget'],
-            ['Beer Loss', 'kpiBeerLossFtdActual', 'kpiBeerLossFtdTarget'],
-            ['Energy', 'kpiEnergyKwhHlFtdActual', 'kpiEnergyKwhHlFtdTarget'],
-            ['Dispatch', 'dispatchFtdActual', 'dispatchFtdTarget']
-        ];
-
-        const rowsHtml = latest ? metricMap.map(function (metric) {
-            const actual = latest[metric[1]];
-            const target = latest[metric[2]];
-            return '' +
-                '<div class="user-kpi-row">' +
-                '<span>' + safeHtml(metric[0]) + '</span>' +
-                '<strong>' + safeHtml(text(actual)) + '</strong>' +
-                '<em>Target ' + safeHtml(text(target)) + '</em>' +
-                '</div>';
-        }) : [];
-
-        renderList('userKpiList', rowsHtml, function (rowHtml) { return rowHtml; }, 'No KPI data configured yet.');
-    }
-
     function renderTrainingSummary(rows, lookups) {
         rows = userScopedRows(rows, ['trainer', 'fpr', 'ownerName', 'responsible', 'assignTo', 'assignedTo'], lookups);
         const sorted = sortByDateDesc(rows, ['trainingDate', 'updatedAt']).slice(0, 5);
@@ -265,6 +239,16 @@
             return String(row.isKaizenImplemented || '').trim().toLowerCase() !== 'yes';
         });
         setText('userOpenKaizen', openRows.length);
+        const sorted = sortByDateDesc(rows, ['gembaKaizenGenerationDate', 'lastModifiedTime']).slice(0, 5);
+        renderList('userKaizenList', sorted, function (row) {
+            const implemented = String(row.isKaizenImplemented || '').trim().toLowerCase() === 'yes';
+            return '' +
+                '<a class="user-list-row" href="/gemba-kaizen">' +
+                '<span class="user-row-main">' + safeHtml(row.kaizenIdea || row.classificationOfKaizen || 'Kaizen idea') + '</span>' +
+                '<span class="user-row-meta">' + safeHtml(row.assignedTo || row.gembaKaizenProviderName || row.name || '-') + '</span>' +
+                '<span class="user-row-pill">' + (implemented ? 'Implemented' : 'Open') + '</span>' +
+                '</a>';
+        }, 'No Kaizen ideas recorded.');
     }
 
     function extractRecords(payload) {
@@ -282,18 +266,16 @@
         setText('userDashboardSyncStatus', 'Syncing...');
         Promise.all([
             fetchJson('/api/issue-board/latest'),
-            fetchJson('/api/production-metrics/current-month'),
             fetchJson('/api/training-schedule/latest'),
             fetchJson('/api/gemba-walk-config/records'),
             fetchJson('/api/abnormality-reporting-config/records'),
             fetchJson('/api/gemba-kaizen-config/records')
         ]).then(function (results) {
             renderIssueSummary(extractRecords(results[0]), lookups);
-            renderKpiSnapshot(extractRecords(results[1]));
-            renderTrainingSummary(extractRecords(results[2]), lookups);
-            renderGembaSummary(extractRecords(results[3]), lookups);
-            renderAbnormalitySummary(extractRecords(results[4]), lookups);
-            renderKaizenSummary(extractRecords(results[5]), lookups);
+            renderTrainingSummary(extractRecords(results[1]), lookups);
+            renderGembaSummary(extractRecords(results[2]), lookups);
+            renderAbnormalitySummary(extractRecords(results[3]), lookups);
+            renderKaizenSummary(extractRecords(results[4]), lookups);
             setText('userDashboardSyncStatus', 'Last synced: ' + new Date().toLocaleTimeString('en-GB'));
         }).catch(function () {
             setText('userDashboardSyncStatus', 'Sync failed');

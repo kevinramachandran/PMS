@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${placeholderTitle + ' - Carlsberg Brewery'}">PMS - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=user-notification-width-20260914">
+    <link rel="stylesheet" href="/css/dashboard.css?v=user-dashboard-stack-20260914">
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
 </head>
@@ -158,23 +158,10 @@
                                 </div>
 
                                 <div class="user-dashboard-grid">
-                                    <article class="user-dashboard-card user-dashboard-wide-card">
-                                        <div class="user-card-header">
-                                            <div>
-                                                <h3>KPI Snapshot</h3>
-                                                <p id="userKpiDate">Latest production data</p>
-                                            </div>
-                                            <a href="/kpi-dashboard" title="Open KPI Dashboard" aria-label="Open KPI Dashboard"><i class="fas fa-arrow-up-right-from-square"></i></a>
-                                        </div>
-                                        <div class="user-kpi-list" id="userKpiList">
-                                            <div class="user-dashboard-loading">Loading KPI snapshot...</div>
-                                        </div>
-                                    </article>
-
                                     <article class="user-dashboard-card">
                                         <div class="user-card-header">
                                             <div>
-                                                <h3>Due Soon</h3>
+                                                <h3>Issue Board</h3>
                                                 <p>Issue board actions</p>
                                             </div>
                                             <a href="/issue-board" title="Open Issue Board" aria-label="Open Issue Board"><i class="fas fa-arrow-up-right-from-square"></i></a>
@@ -187,13 +174,13 @@
                                     <article class="user-dashboard-card">
                                         <div class="user-card-header">
                                             <div>
-                                                <h3>Training</h3>
-                                                <p>This month</p>
+                                                <h3>Abnormalities</h3>
+                                                <p>Newest reports</p>
                                             </div>
-                                            <a href="/training-schedule" title="Open Training Schedule" aria-label="Open Training Schedule"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                            <a href="/abnormality-reporting" title="Open Abnormality report" aria-label="Open Abnormality report"><i class="fas fa-arrow-up-right-from-square"></i></a>
                                         </div>
-                                        <div class="user-item-list" id="userTrainingList">
-                                            <div class="user-dashboard-loading">Loading training...</div>
+                                        <div class="user-item-list" id="userAbnormalityList">
+                                            <div class="user-dashboard-loading">Loading abnormalities...</div>
                                         </div>
                                     </article>
 
@@ -213,13 +200,26 @@
                                     <article class="user-dashboard-card">
                                         <div class="user-card-header">
                                             <div>
-                                                <h3>Abnormalities</h3>
-                                                <p>Newest reports</p>
+                                                <h3>Kaizen</h3>
+                                                <p>Recent improvements</p>
                                             </div>
-                                            <a href="/abnormality-reporting" title="Open Abnormality report" aria-label="Open Abnormality report"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                            <a href="/gemba-kaizen" title="Open Kaizen" aria-label="Open Kaizen"><i class="fas fa-arrow-up-right-from-square"></i></a>
                                         </div>
-                                        <div class="user-item-list" id="userAbnormalityList">
-                                            <div class="user-dashboard-loading">Loading abnormalities...</div>
+                                        <div class="user-item-list" id="userKaizenList">
+                                            <div class="user-dashboard-loading">Loading kaizen...</div>
+                                        </div>
+                                    </article>
+
+                                    <article class="user-dashboard-card">
+                                        <div class="user-card-header">
+                                            <div>
+                                                <h3>Training</h3>
+                                                <p>This month</p>
+                                            </div>
+                                            <a href="/training-schedule" title="Open Training Schedule" aria-label="Open Training Schedule"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                        </div>
+                                        <div class="user-item-list" id="userTrainingList">
+                                            <div class="user-dashboard-loading">Loading training...</div>
                                         </div>
                                     </article>
                                 </div>
@@ -256,7 +256,7 @@
             }
         });
     </script>
-    <script src="/js/user-dashboard.js?v=user-scoped-20260905" th:if="${isUserDashboard == true}"></script>
+    <script src="/js/user-dashboard.js?v=user-dashboard-stack-20260914" th:if="${isUserDashboard == true}"></script>
     <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>

@@ -20,6 +20,44 @@ import static org.mockito.Mockito.*;
 
 class NotificationRegressionTest {
     @Test
+    void savedOpenIssuesSendMailForEveryTargetDateEvenWhenUnchanged() {
+        var users = mock(org.example.repository.AppUserRepository.class);
+        var email = mock(EmailConfigService.class);
+        var user = new org.example.entity.AppUser();
+        user.setUsername("owner");
+        user.setEmail("owner@example.test");
+        when(users.findByUsernameIgnoreCase("owner")).thenReturn(java.util.Optional.of(user));
+        var service = new IssueBoardNotificationService(mock(IssueBoardItemRepository.class), users, email, "UTC");
+        LocalDate today = LocalDate.now(java.time.ZoneOffset.UTC);
+        for (LocalDate date : new LocalDate[]{today.minusDays(3), today, today.plusDays(1), today.plusDays(30), null}) {
+            var item = new IssueBoardItem();
+            item.setResponsible("owner");
+            item.setProblem("Issue");
+            item.setTargetDate(date);
+            service.sendAssignmentNotification(today, 1, null, item);
+            service.sendAssignmentNotification(today, 1, item, item);
+        }
+        verify(email, times(10)).sendEmail(eq(List.of("owner@example.test")), eq("Issue Assigned: Issue"), anyString(), eq(true), eq(true));
+    }
+
+    @Test
+    void dailyReminderIncludesIssuesDueToday() {
+        var repository = mock(IssueBoardItemRepository.class);
+        var users = mock(org.example.repository.AppUserRepository.class);
+        var email = mock(EmailConfigService.class);
+        var user = new org.example.entity.AppUser();
+        user.setEmail("owner@example.test");
+        when(users.findByUsernameIgnoreCase("owner")).thenReturn(java.util.Optional.of(user));
+        var item = new IssueBoardItem();
+        item.setResponsible("owner");
+        item.setProblem("Issue");
+        item.setTargetDate(LocalDate.now(java.time.ZoneOffset.UTC));
+        when(repository.findAllOpenItemsWithTargetDate()).thenReturn(List.of(item));
+        new IssueBoardNotificationService(repository, users, email, "UTC").sendPendingIssueReminders();
+        verify(email).sendEmail(eq(List.of("owner@example.test")), eq("Reminder: Issue due today - Issue"), contains("is due today"), eq(true), eq(true));
+    }
+
+    @Test
     void unchangedAssigneesDoNotRequireMembershipInTheNextStageOptions() {
         var walk = new org.example.entity.GembaWalkRecord();
         walk.setId(1L);

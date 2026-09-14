@@ -787,6 +787,30 @@ body:not(.login-page) :is(
     z-index: 32 !important;
 }
 
+/* Training headers move as one opaque layer, including the cell borders. */
+body:not(.login-page) #form-training-schedule .daily-data-table.issue-config-table-wrap {
+    /* Padding inside the scrollport leaves a visible strip above sticky top: 0. */
+    padding: 0 !important;
+}
+
+body:not(.login-page) :is(#trainingScheduleConfigTable, #trainingScheduleTable) thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 40;
+    background: #0b6b2e;
+    box-shadow: 0 -1px 0 #0b6b2e, 0 1px 0 #075f2c;
+}
+
+body:not(.login-page) :is(#trainingScheduleConfigTable, #trainingScheduleTable) thead tr {
+    position: static !important;
+    z-index: auto !important;
+}
+
+body:not(.login-page) :is(#trainingScheduleConfigTable, #trainingScheduleTable) thead th {
+    position: relative !important;
+    z-index: auto !important;
+}
+
 /* Keep full settings navigation visible for all config pages. */
 .settings-container.issue-board-full-page .settings-sidebar {
     display: block !important;

@@ -6739,6 +6739,13 @@ function regroupRows($container){
     }
 
     function renderMasterPlantInlineLists() {
+        [['PLANT', '#masterPlantList', 'No plants configured.'],
+            ['DESIGNATION', '#masterDesignationList', 'No designations configured.']].forEach(function(config) {
+            const items = masterPlantItems[config[0]] || [];
+            $(config[1]).html(items.length ? items.map(function(item) {
+                return '<span class="master-area-label">' + escapeHtml(item.name) + '</span>';
+            }).join('') : '<span class="master-plant-inline-empty">' + config[2] + '</span>');
+        });
         const plant = normalizeMasterPlantKey(selectedMasterPlant());
         const department = normalizeMasterPlantKey($('#masterProcessAreaDepartmentSelect').val());
         const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
