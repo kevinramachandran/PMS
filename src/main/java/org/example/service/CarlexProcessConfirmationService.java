@@ -84,6 +84,7 @@ public class CarlexProcessConfirmationService {
     @Transactional
     public CarlexProcessConfirmation create(CarlexProcessConfirmation record, String username, String role) {
         applyDefaults(record, username, true);
+        assignmentHistoryService.validateTransition(true, "", record.assignedTo, "", record.reassignedTo1, record.reassignment1Remark, "", record.reassignedTo2, record.reassignment2Remark);
         AppUser actor = currentUser(username).orElse(null);
         if (!RoleAccess.isAdmin(role) && !isHod(actor)) {
             throw new IllegalArgumentException("Only HoD users can create Process Confirmations");
@@ -91,14 +92,19 @@ public class CarlexProcessConfirmationService {
         validateConfigured(record.department, plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
         validateConfigured(record.areaOfGwProcessConfirmationConducted, plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area");
         validateAssignedTo(record.assignedTo, record.department, record.areaOfGwProcessConfirmationConducted, actor, role, "", null);
+        validateAssignedTo(record.reassignedTo1, record.department, record.areaOfGwProcessConfirmationConducted, actor, role, record.assignedTo, record);
+        validateAssignedTo(record.reassignedTo2, record.department, record.areaOfGwProcessConfirmationConducted, actor, role, record.reassignedTo1, record);
+        assignmentHistoryService.validateSlots(record.reassignedTo1, record.reassignment1Remark, record.reassignedTo2, record.reassignment2Remark);
         replaceDynamicObservations(record);
         validateRequiredObservations(record);
         CarlexProcessConfirmation saved = repository.save(record);
         assignmentHistoryService.record("carlex-process-confirmation", saved.id, "", saved.assignedTo,
                 saved.assignmentRemark, username, assignmentScope(saved));
-        notifyAssignment("", saved.assignedTo, saved, false);
+        NotificationDispatch.afterCommit(() -> notifyAssignment("", saved.assignedTo, saved, false));
+        NotificationDispatch.afterCommit(() -> notifyAssignment(saved.assignedTo, saved.reassignedTo1, saved, true));
+        NotificationDispatch.afterCommit(() -> notifyAssignment(saved.reassignedTo1, saved.reassignedTo2, saved, true));
         if (isCompleted(saved)) {
-            notifyCompletion(saved);
+            NotificationDispatch.afterCommit(() -> notifyCompletion(saved));
         }
         return saved;
     }
@@ -111,21 +117,30 @@ public class CarlexProcessConfirmationService {
                 throw new IllegalArgumentException("You can update only Process Confirmations created by you, assigned to you, or within your permitted area");
             }
             String previousAssignee = existing.assignedTo;
+            String previousReassignedTo1 = existing.reassignedTo1;
+            String previousReassignedTo2 = existing.reassignedTo2;
             boolean wasCompleted = isCompleted(existing);
+            assignmentHistoryService.validateTransition(false, previousAssignee, incoming.assignedTo, previousReassignedTo1, incoming.reassignedTo1, incoming.reassignment1Remark, previousReassignedTo2, incoming.reassignedTo2, incoming.reassignment2Remark);
             copyEditableFields(existing, incoming);
             applyDefaults(existing, username, false);
             validateConfigured(existing.department, plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
             validateConfigured(existing.areaOfGwProcessConfirmationConducted, plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area");
             validateAssignedTo(existing.assignedTo, existing.department, existing.areaOfGwProcessConfirmationConducted,
                     actor, role, previousAssignee, existing);
+            validateAssignedTo(existing.reassignedTo1, existing.department, existing.areaOfGwProcessConfirmationConducted, actor, role, previousReassignedTo1, existing);
+            validateAssignedTo(existing.reassignedTo2, existing.department, existing.areaOfGwProcessConfirmationConducted, actor, role, previousReassignedTo2, existing);
+            assignmentHistoryService.validateSlots(existing.reassignedTo1, existing.reassignment1Remark, existing.reassignedTo2, existing.reassignment2Remark);
             replaceDynamicObservations(existing);
             validateRequiredObservations(existing);
             CarlexProcessConfirmation saved = repository.save(existing);
             assignmentHistoryService.record("carlex-process-confirmation", saved.id, previousAssignee, saved.assignedTo,
                     incoming.assignmentRemark, username, assignmentScope(saved));
-            notifyAssignment(previousAssignee, saved.assignedTo, saved, true);
+            assignmentHistoryService.recordStages("carlex-process-confirmation", saved.id, saved.assignedTo, previousReassignedTo1, saved.reassignedTo1, saved.reassignment1Remark, previousReassignedTo2, saved.reassignedTo2, saved.reassignment2Remark, username, assignmentScope(saved));
+            NotificationDispatch.afterCommit(() -> notifyAssignment(previousAssignee, saved.assignedTo, saved, true));
+            NotificationDispatch.afterCommit(() -> notifyAssignment(previousReassignedTo1, saved.reassignedTo1, saved, true));
+            NotificationDispatch.afterCommit(() -> notifyAssignment(previousReassignedTo2, saved.reassignedTo2, saved, true));
             if (!wasCompleted && isCompleted(saved)) {
-                notifyCompletion(saved);
+                NotificationDispatch.afterCommit(() -> notifyCompletion(saved));
             }
             return saved;
         });
@@ -175,7 +190,14 @@ public class CarlexProcessConfirmationService {
         target.areaOfGwProcessConfirmationConducted = trim(source.areaOfGwProcessConfirmationConducted);
         target.areaResponsibility = trim(source.areaResponsibility);
         target.assignedTo = trim(source.assignedTo);
+        target.reassignedTo1 = trim(source.reassignedTo1);
+        target.reassignment1Remark = trim(source.reassignment1Remark);
+        target.reassignedTo2 = trim(source.reassignedTo2);
+        target.reassignment2Remark = trim(source.reassignment2Remark);
         target.assignmentRemark = trim(source.assignmentRemark);
+        target.zmObservationsJson = source.zmObservationsJson;
+        target.pmObservationsJson = source.pmObservationsJson;
+        target.qmObservationsJson = source.qmObservationsJson;
         target.zm1Description = trim(source.zm1Description);
         target.zm1CounterMeasureActions = trim(source.zm1CounterMeasureActions);
         target.zm1Status = trim(source.zm1Status);
@@ -272,6 +294,8 @@ public class CarlexProcessConfirmationService {
                 rows.add(row);
             }
             return rows;
+        } catch (IllegalArgumentException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new IllegalArgumentException(groupType + " observations are not valid");
         }
@@ -355,6 +379,7 @@ public class CarlexProcessConfirmationService {
     private void validateAssignedTo(String value, String department, String area, AppUser actor, String role,
                                     String previousAssignee, CarlexProcessConfirmation record) {
         String trimmed = trim(value);
+        if (record != null && record.id != null && trimmed.equalsIgnoreCase(trim(previousAssignee))) return;
         if (trimmed.isBlank()) {
             return;
         }
@@ -408,6 +433,7 @@ public class CarlexProcessConfirmationService {
         }
         if (matchesUser(user, record.name) || matchesUser(user, record.email)
                 || matchesUser(user, record.processConfirmationDoneBy) || matchesUser(user, record.assignedTo)
+                || matchesUser(user, record.reassignedTo1) || matchesUser(user, record.reassignedTo2)
                 || matchesUser(user, record.areaResponsibility)) {
             return true;
         }
@@ -490,6 +516,9 @@ public class CarlexProcessConfirmationService {
     }
 
     private boolean isCompleted(CarlexProcessConfirmation record) {
+        if (record.observations != null && !record.observations.isEmpty()) {
+            return record.observations.stream().allMatch(row -> "A".equalsIgnoreCase(trim(row.getStatus())));
+        }
         List<String> statuses = List.of(trim(record.zm1Status), trim(record.zm2Status),
                 trim(record.pm1Status), trim(record.pm2Status), trim(record.qm1Status), trim(record.qm2Status))
                 .stream().filter(status -> !status.isBlank()).toList();

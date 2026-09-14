@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
 </head>
 <body class="modern-shell dashboard-bg issue-board-page gemba-walk-config-page" th:attr="data-username=${session.username != null ? session.username : ''}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -171,10 +172,7 @@
                         <label for="responsibility">Responsibility</label>
                         <select id="responsibility"></select>
                     </div>
-                    <div class="gw-form-group gw-wide">
-                        <label for="assignmentRemark">Assignment / Reassignment Remarks</label>
-                        <textarea id="assignmentRemark" rows="2"></textarea>
-                    </div>
+                    <section class="assignment-workflow" aria-labelledby="assignmentWorkflowTitle"><h3 id="assignmentWorkflowTitle">Assignment workflow</h3><p class="assignment-workflow-help">Choose the initial assignee. Reassignment becomes available after saving.</p><div class="assignment-stage"><div><label for="reassignedTo1">Reassignee 1<span class="assignment-stage-status">Locked</span></label><select id="reassignedTo1" disabled></select></div><div><label for="reassignment1Remark">Reassignment 1 remark</label><textarea id="reassignment1Remark" rows="2" disabled placeholder="Reason for reassignment"></textarea></div></div><div class="assignment-stage"><div><label for="reassignedTo2">Reassignee 2<span class="assignment-stage-status">Locked</span></label><select id="reassignedTo2" disabled></select></div><div><label for="reassignment2Remark">Reassignment 2 remark</label><textarea id="reassignment2Remark" rows="2" disabled placeholder="Reason for reassignment"></textarea></div></div></section>
                 </div>
 
                 <div id="gembaWalkObservations" class="gw-observations"></div>
@@ -204,7 +202,7 @@
     </main>
 </div>
 
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-walk-config.js?v=reporting-order-20260913"></script>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-walk-config.js?v=20260914-workflow"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

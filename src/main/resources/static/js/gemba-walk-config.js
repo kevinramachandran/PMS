@@ -1,5 +1,6 @@
 $(function() {
     'use strict';
+    let assignmentOptionsRequest = 0;
 
     const API = '/api/gemba-walk-config';
     const ATTACHMENT_API = '/api/attachments/gemba-walk/upload';
@@ -13,9 +14,8 @@ $(function() {
     let currentUserIdentity = {};
 
     const EDIT_ALLOWED_SELECTOR = [
-        '#responsibility',
         '#department',
-        '#assignmentRemark',
+        '#reassignedTo1', '#reassignment1Remark', '#reassignedTo2', '#reassignment2Remark',
         '#finalComments',
         '.gw-picture-image',
         '.gw-status'
@@ -94,7 +94,11 @@ $(function() {
 
     function populateResponsibility(users, selected) {
         const html = ['<option value=""></option>'].concat((users || []).map(userOptionHtml)).join('');
-        $('#responsibility').html(html).val(selected || '');
+        const reassignedTo1 = $('#reassignedTo1').val();
+        const reassignedTo2 = $('#reassignedTo2').val();
+        AssignmentWorkflow.options('#responsibility', html, selected);
+        AssignmentWorkflow.options('#reassignedTo1', html, reassignedTo1);
+        AssignmentWorkflow.options('#reassignedTo2', html, reassignedTo2);
     }
 
     function populateSelect(selector, values, selected) {
@@ -175,6 +179,7 @@ $(function() {
             $field.prop('disabled', locked && !editableInUpdate);
         });
         $('#addObservationBtn').toggle(!locked);
+        AssignmentWorkflow.refresh();
     }
 
     function renderObservation(index, observation) {
@@ -237,7 +242,10 @@ $(function() {
             locationOfMswConducted: $('#locationOfMswConducted').val(),
             department: $('#department').val(),
             responsibility: $('#responsibility').val(),
-            assignmentRemark: $('#assignmentRemark').val(),
+            reassignedTo1: $('#reassignedTo1').val(),
+            reassignment1Remark: $('#reassignment1Remark').val(),
+            reassignedTo2: $('#reassignedTo2').val(),
+            reassignment2Remark: $('#reassignment2Remark').val(),
             finalComments: $('#finalComments').val(),
             observations: $('#gembaWalkObservations .gw-observation').map(function() {
                 const $section = $(this);
@@ -253,7 +261,9 @@ $(function() {
     }
 
     function setRecord(record) {
+        assignmentOptionsRequest++;
         const item = record || {};
+        AssignmentWorkflow.setRecord(item, '#responsibility');
         $('#gembaWalkRecordId').val(item.id || '');
         $('#scheduleItemId').val(item.scheduleItemId || params.get('scheduleId') || '');
         $('#startTime').val(item.startTime || currentTime());
@@ -263,7 +273,10 @@ $(function() {
         $('#department').val(item.department || '');
         refreshLocationOptions(item.locationOfMswConducted || params.get('location') || '');
         $('#responsibility').val(item.responsibility || $('#responsibility').val() || '');
-        $('#assignmentRemark').val('');
+        $('#reassignedTo1').val(item.reassignedTo1 || '');
+        $('#reassignment1Remark').val(item.reassignment1Remark || '');
+        $('#reassignedTo2').val(item.reassignedTo2 || '');
+        $('#reassignment2Remark').val(item.reassignment2Remark || '');
         $('#finalComments').val(item.finalComments || '');
         $('#gembaWalkObservations').empty();
         const observations = item.observations && item.observations.length ? item.observations : [{}];
@@ -271,6 +284,7 @@ $(function() {
     }
 
     function resetRecord() {
+        AssignmentWorkflow.setRecord({}, '#responsibility');
         $('#gembaWalkRecordId').val('');
         $('#scheduleItemId').val(params.get('scheduleId') || '');
         $('#startTime').val(currentTime());
@@ -280,6 +294,7 @@ $(function() {
         $('#department').val('');
         refreshLocationOptions(params.get('location') || '');
         $('#responsibility').val('');
+        $('#reassignedTo1,#reassignedTo2,#reassignment1Remark,#reassignment2Remark').val('');
         $('#finalComments').val('');
         $('#gembaWalkObservations').empty();
         setMessage('', 'success');
@@ -365,6 +380,7 @@ $(function() {
     }
 
     function loadOptions(recordId) {
+        const request = ++assignmentOptionsRequest;
         return $.ajax({
             url: API + '/options',
             type: 'GET',
@@ -374,6 +390,7 @@ $(function() {
                 recordId: recordId || $('#gembaWalkRecordId').val() || ''
             },
             success: function(data) {
+                if (request !== assignmentOptionsRequest) return;
                 const options = data && data.options ? data.options : {};
                 gembaCategories = options.gembaCategories || [];
                 lifeSaverRules = options.lifeSaverRules || [];
@@ -456,12 +473,12 @@ $(function() {
     $('#department').on('change', function() {
         $('#locationOfMswConducted').val('');
         refreshLocationOptions('');
-        $('#responsibility').val('');
+        if (!isEditMode()) $('#responsibility').val('');
         loadOptions();
     });
 
     $('#locationOfMswConducted').on('change input', function() {
-        $('#responsibility').val('');
+        if (!isEditMode()) $('#responsibility').val('');
         loadOptions();
     });
 

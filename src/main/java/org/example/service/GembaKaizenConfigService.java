@@ -67,13 +67,17 @@ public class GembaKaizenConfigService {
     @Transactional
     public GembaKaizenRecord create(GembaKaizenRecord record, String username, String role) {
         applyDefaults(record, username, true);
+        assignmentHistoryService.validateTransition(true, "", record.getAssignedTo(), "", record.getReassignedTo1(), record.getReassignment1Remark(), "", record.getReassignedTo2(), record.getReassignment2Remark());
         validateAssignedTo(record.getAssignedTo(), record.getDepartment(), record.getGembaKaizenLocation(),
                 currentUser(username).orElse(null), role, "", null);
+        validateAssignedTo(record.getReassignedTo1(), record.getDepartment(), record.getGembaKaizenLocation(), currentUser(username).orElse(null), role, record.getAssignedTo(), record);
+        validateAssignedTo(record.getReassignedTo2(), record.getDepartment(), record.getGembaKaizenLocation(), currentUser(username).orElse(null), role, record.getReassignedTo1(), record);
+        assignmentHistoryService.validateSlots(record.getReassignedTo1(), record.getReassignment1Remark(), record.getReassignedTo2(), record.getReassignment2Remark());
         GembaKaizenRecord saved = repository.save(record);
         assignmentHistoryService.record("gemba-kaizen", saved.getId(), "", saved.getAssignedTo(), saved.getAssignmentRemark(), username, saved.getGembaKaizenLocation());
-        notifyHods(saved, username, "Gemba Kaizen Submitted: #" + saved.getId(), buildKaizenEmailBody("Gemba Kaizen Submitted", "A Gemba Kaizen idea has been submitted for review.", saved));
+        NotificationDispatch.afterCommit(() -> notifyHods(saved, username, "Gemba Kaizen Submitted: #" + saved.getId(), buildKaizenEmailBody("Gemba Kaizen Submitted", "A Gemba Kaizen idea has been submitted for review.", saved)));
         if (isImplemented(saved)) {
-            notifyClosed(saved, username);
+            NotificationDispatch.afterCommit(() -> notifyClosed(saved, username));
         }
         return saved;
     }
@@ -86,19 +90,38 @@ public class GembaKaizenConfigService {
                 throw new IllegalArgumentException("You can update only Gemba Kaizens created by you or assigned to you");
             }
             String previousAssignee = existing.getAssignedTo();
+            String previousFirst = existing.getReassignedTo1();
+            String previousSecond = existing.getReassignedTo2();
+            assignmentHistoryService.validateTransition(false, previousAssignee, incoming.getAssignedTo(), previousFirst, incoming.getReassignedTo1(), incoming.getReassignment1Remark(), previousSecond, incoming.getReassignedTo2(), incoming.getReassignment2Remark());
             boolean wasImplemented = isImplemented(existing);
             existing.setPictureImage(trim(incoming.getPictureImage()));
             existing.setIsKaizenImplemented(normalizeYesNo(incoming.getIsKaizenImplemented()));
             String requestedAssignee = trim(incoming.getAssignedTo());
             validateAssignedTo(requestedAssignee, existing.getDepartment(), existing.getGembaKaizenLocation(),
                     actor, role, previousAssignee, existing);
+            validateAssignedTo(incoming.getReassignedTo1(), existing.getDepartment(), existing.getGembaKaizenLocation(), actor, role, previousFirst, existing);
+            validateAssignedTo(incoming.getReassignedTo2(), existing.getDepartment(), existing.getGembaKaizenLocation(), actor, role, previousSecond, existing);
+            assignmentHistoryService.validateSlots(incoming.getReassignedTo1(), incoming.getReassignment1Remark(), incoming.getReassignedTo2(), incoming.getReassignment2Remark());
             existing.setAssignedTo(requestedAssignee);
+            existing.setReassignedTo1(trim(incoming.getReassignedTo1()));
+            existing.setReassignment1Remark(trim(incoming.getReassignment1Remark()));
+            existing.setReassignedTo2(trim(incoming.getReassignedTo2()));
+            existing.setReassignment2Remark(trim(incoming.getReassignment2Remark()));
             existing.setAssignmentRemark(incoming.getAssignmentRemark());
             applyDefaults(existing, username, false);
             GembaKaizenRecord saved = repository.save(existing);
             assignmentHistoryService.record("gemba-kaizen", saved.getId(), previousAssignee, saved.getAssignedTo(), incoming.getAssignmentRemark(), username, saved.getGembaKaizenLocation());
+            assignmentHistoryService.recordStages("gemba-kaizen", saved.getId(), saved.getAssignedTo(), previousFirst, saved.getReassignedTo1(), saved.getReassignment1Remark(), previousSecond, saved.getReassignedTo2(), saved.getReassignment2Remark(), username, saved.getGembaKaizenLocation());
+            if (!trim(previousFirst).equalsIgnoreCase(trim(saved.getReassignedTo1()))) {
+                NotificationDispatch.afterCommit(() -> assignedUserEmail(saved.getReassignedTo1()).ifPresent(email ->
+                        emailConfigService.sendEmail(List.of(email), "Gemba Kaizen Reassigned: #" + saved.getId(), buildKaizenEmailBody("Gemba Kaizen Reassigned", "A Gemba Kaizen has been assigned to you.", saved), true, true)));
+            }
+            if (!trim(previousSecond).equalsIgnoreCase(trim(saved.getReassignedTo2()))) {
+                NotificationDispatch.afterCommit(() -> assignedUserEmail(saved.getReassignedTo2()).ifPresent(email ->
+                        emailConfigService.sendEmail(List.of(email), "Gemba Kaizen Reassigned: #" + saved.getId(), buildKaizenEmailBody("Gemba Kaizen Reassigned", "A Gemba Kaizen has been assigned to you.", saved), true, true)));
+            }
             if (!wasImplemented && isImplemented(saved)) {
-                notifyClosed(saved, username);
+                NotificationDispatch.afterCommit(() -> notifyClosed(saved, username));
             }
             return saved;
         });
@@ -299,6 +322,7 @@ public class GembaKaizenConfigService {
 
     private void validateAssignedTo(String value, String department, String location, AppUser actor, String role, String previousAssignee, GembaKaizenRecord record) {
         String trimmed = trim(value);
+        if (record != null && record.getId() != null && trimmed.equalsIgnoreCase(trim(previousAssignee))) return;
         if (trimmed.isBlank()) {
             return;
         }
@@ -337,14 +361,18 @@ public class GembaKaizenConfigService {
         return matchesUser(user, record.getName())
                 || matchesUser(user, record.getGembaKaizenProviderName())
                 || matchesUser(user, record.getEmployeeIdHoNumber())
-                || matchesUser(user, record.getAssignedTo());
+                || matchesUser(user, record.getAssignedTo())
+                || matchesUser(user, record.getReassignedTo1())
+                || matchesUser(user, record.getReassignedTo2());
     }
 
     private boolean canUpdateRecord(GembaKaizenRecord record, AppUser user) {
         return canSeeRecord(record, user) && (matchesUser(user, record.getName())
                 || matchesUser(user, record.getEmployeeIdHoNumber())
                 || matchesUser(user, record.getGembaKaizenProviderName())
-                || matchesUser(user, record.getAssignedTo()));
+                || matchesUser(user, record.getAssignedTo())
+                || matchesUser(user, record.getReassignedTo1())
+                || matchesUser(user, record.getReassignedTo2()));
     }
 
     private boolean matchesScope(AppUser user, String department, String location) {

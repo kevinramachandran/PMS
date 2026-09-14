@@ -74,7 +74,7 @@ public class AbnormalityReportingConfigService {
         applyClosedDate(record);
         AbnormalityReportingRecord saved = repository.save(record);
         assignmentHistoryService.record("abnormality-reporting", saved.getId(), "", saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
-        notifyDepartmentHod(saved, "Abnormality Report Raised");
+        NotificationDispatch.afterCommit(() -> notifyDepartmentHod(saved, "Abnormality Report Raised"));
         return saved;
     }
 
@@ -91,13 +91,24 @@ public class AbnormalityReportingConfigService {
             throw new IllegalArgumentException("You can update only abnormalities raised by you, assigned to you, or within your permitted area");
         }
         String previousAssignee = record.getAssignTo();
+        String previousFirst = record.getReassignedTo1();
+        String previousSecond = record.getReassignedTo2();
         boolean wasClosed = isClosed(record.getTagStatus());
         apply(record, request, username, role, false);
         applyClosedDate(record);
         AbnormalityReportingRecord saved = repository.save(record);
         assignmentHistoryService.record("abnormality-reporting", saved.getId(), previousAssignee, saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
+        assignmentHistoryService.recordStages("abnormality-reporting", saved.getId(), saved.getAssignTo(), previousFirst, saved.getReassignedTo1(), saved.getReassignment1Remark(), previousSecond, saved.getReassignedTo2(), saved.getReassignment2Remark(), username, saved.getDepartment());
+            if (!trim(previousFirst).equalsIgnoreCase(trim(saved.getReassignedTo1()))) {
+                NotificationDispatch.afterCommit(() -> resolveUser(saved.getReassignedTo1()).map(AppUser::getEmail).filter(this::hasText).ifPresent(email ->
+                        emailConfigService.sendEmail(List.of(email), "Abnormality Report Reassigned: #" + saved.getId(), buildEmailBody(saved), true, true)));
+            }
+            if (!trim(previousSecond).equalsIgnoreCase(trim(saved.getReassignedTo2()))) {
+                NotificationDispatch.afterCommit(() -> resolveUser(saved.getReassignedTo2()).map(AppUser::getEmail).filter(this::hasText).ifPresent(email ->
+                        emailConfigService.sendEmail(List.of(email), "Abnormality Report Reassigned: #" + saved.getId(), buildEmailBody(saved), true, true)));
+            }
         if (!wasClosed && isClosed(saved.getTagStatus())) {
-            notifyClosure(saved);
+            NotificationDispatch.afterCommit(() -> notifyClosure(saved));
         }
         return Optional.of(saved);
     }
@@ -165,8 +176,12 @@ public class AbnormalityReportingConfigService {
                     .map(user -> defaultText(user.getUsername(), user.getName()))
                     .orElse("");
         }
+        assignmentHistoryService.validateTransition(forceCurrentUser, record.getAssignTo(), requestedAssignee, record.getReassignedTo1(), request.getReassignedTo1(), request.getReassignment1Remark(), record.getReassignedTo2(), request.getReassignedTo2(), request.getReassignment2Remark());
         validateAssignee(requestedAssignee, request.getDepartment(), request.getAreaMachine(),
                 currentUser(username).orElse(null), role, record);
+        validateOptionalAssignee(request.getReassignedTo1(), request.getDepartment(), request.getAreaMachine(), username, role, record);
+        validateOptionalAssignee(request.getReassignedTo2(), request.getDepartment(), request.getAreaMachine(), username, role, record);
+        assignmentHistoryService.validateSlots(request.getReassignedTo1(), request.getReassignment1Remark(), request.getReassignedTo2(), request.getReassignment2Remark());
         validateInSet(request.getTagStatus(), TAG_STATUSES, "Tag Status");
         record.setTypeOfTag(trim(request.getTypeOfTag()));
         record.setPriority(trim(request.getPriority()));
@@ -189,6 +204,10 @@ public class AbnormalityReportingConfigService {
         record.setPictureImage(trim(request.getPictureImage()));
         record.setAbnormalityDefectType(trim(request.getAbnormalityDefectType()));
         record.setAssignTo(requestedAssignee);
+        record.setReassignedTo1(trim(request.getReassignedTo1()));
+        record.setReassignment1Remark(trim(request.getReassignment1Remark()));
+        record.setReassignedTo2(trim(request.getReassignedTo2()));
+        record.setReassignment2Remark(trim(request.getReassignment2Remark()));
         record.setDateClosed(request.getDateClosed());
         record.setTagStatus(trim(request.getTagStatus()));
     }
@@ -239,6 +258,7 @@ public class AbnormalityReportingConfigService {
     private void validateAssignee(String username, String department, String areaMachine, AppUser actor, String role, AbnormalityReportingRecord record) {
         validateRequired(username, "Assign To");
         String previousAssignee = record == null ? "" : trim(record.getAssignTo());
+        if (record != null && record.getId() != null && previousAssignee.equalsIgnoreCase(trim(username))) return;
         boolean assigneeChanged = !defaultText(previousAssignee, "").equalsIgnoreCase(defaultText(username, ""));
         if (assigneeChanged && record != null && record.getId() != null && !RoleAccess.isAdmin(role) && !isAreaHod(actor)) {
             throw new IllegalArgumentException("Only the Area HoD can reassign this Abnormality Report");
@@ -251,6 +271,15 @@ public class AbnormalityReportingConfigService {
         if (!valid) {
             throw new IllegalArgumentException("Assign To must be a permitted workflow user");
         }
+    }
+
+    private void validateOptionalAssignee(String username, String department, String areaMachine, String actorUsername, String role, AbnormalityReportingRecord record) {
+        if (isBlank(username)) return;
+        if (record != null && record.getId() != null && (equalsIgnoreCase(record.getReassignedTo1(), username) || equalsIgnoreCase(record.getReassignedTo2(), username))) return;
+        boolean valid = assignableUsers(department, areaMachine, currentUser(actorUsername).orElse(null), role, record).stream()
+                .anyMatch(user -> equalsIgnoreCase(user.getUsername(), username) || equalsIgnoreCase(user.getName(), username)
+                        || equalsIgnoreCase(user.getEmail(), username) || equalsIgnoreCase(user.getEmployeeId(), username));
+        if (!valid) throw new IllegalArgumentException("Reassignment must be a permitted workflow user");
     }
 
     private void notifyDepartmentHod(AbnormalityReportingRecord record, String subjectPrefix) {
@@ -321,12 +350,14 @@ public class AbnormalityReportingConfigService {
         if (record == null || user == null) {
             return false;
         }
-        return matchesUser(user, record.getTagRaisedBy()) || matchesUser(user, record.getAssignTo());
+        return matchesUser(user, record.getTagRaisedBy()) || matchesUser(user, record.getAssignTo())
+                || matchesUser(user, record.getReassignedTo1()) || matchesUser(user, record.getReassignedTo2());
     }
 
     private boolean canUpdateRecord(AbnormalityReportingRecord record, AppUser user) {
         return canSeeRecord(record, user)
-                && (isAreaHod(user) || matchesUser(user, record.getTagRaisedBy()) || matchesUser(user, record.getAssignTo()));
+                && (isAreaHod(user) || matchesUser(user, record.getTagRaisedBy()) || matchesUser(user, record.getAssignTo())
+                || matchesUser(user, record.getReassignedTo1()) || matchesUser(user, record.getReassignedTo2()));
     }
 
     private List<AppUser> activeUsers() {
@@ -532,6 +563,9 @@ public class AbnormalityReportingConfigService {
     }
 
     private boolean matchesAnyArea(String userAreas, String expectedArea) {
+        if (isBlank(userAreas)) {
+            return false;
+        }
         return List.of(trim(userAreas).split(",")).stream()
                 .map(this::compact)
                 .anyMatch(expectedArea::equals);

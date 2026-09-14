@@ -68,12 +68,16 @@ public class GembaWalkConfigService {
     @Transactional
     public GembaWalkRecord create(GembaWalkRecord record, String username, String role) {
         applyDefaults(record, username, true);
+        assignmentHistoryService.validateTransition(true, "", record.getResponsibility(), "", record.getReassignedTo1(), record.getReassignment1Remark(), "", record.getReassignedTo2(), record.getReassignment2Remark());
         validateResponsibility(record.getResponsibility(), record.getDepartment(), record.getLocationOfMswConducted(),
                 currentUser(username).orElse(null), "", role, null);
+        validateResponsibility(record.getReassignedTo1(), record.getDepartment(), record.getLocationOfMswConducted(), currentUser(username).orElse(null), record.getResponsibility(), role, record);
+        validateResponsibility(record.getReassignedTo2(), record.getDepartment(), record.getLocationOfMswConducted(), currentUser(username).orElse(null), record.getReassignedTo1(), role, record);
+        assignmentHistoryService.validateSlots(record.getReassignedTo1(), record.getReassignment1Remark(), record.getReassignedTo2(), record.getReassignment2Remark());
         replaceObservations(record, record.getObservations());
         GembaWalkRecord saved = repository.save(record);
         assignmentHistoryService.record("gemba-walk", saved.getId(), "", saved.getResponsibility(), saved.getAssignmentRemark(), username, saved.getLocationOfMswConducted());
-        notifyAreaHod(saved, "Gemba Walk Observation Submitted: " + label(saved), submittedBody(saved));
+        NotificationDispatch.afterCommit(() -> notifyAreaHod(saved, "Gemba Walk Observation Submitted: " + label(saved), submittedBody(saved)));
         return saved;
     }
 
@@ -85,10 +89,20 @@ public class GembaWalkConfigService {
                 throw new IllegalArgumentException("You can update only Gemba Walks created by you or assigned to you");
             }
             String previousAssignee = existing.getResponsibility();
+            String previousFirst = existing.getReassignedTo1();
+            String previousSecond = existing.getReassignedTo2();
+            assignmentHistoryService.validateTransition(false, previousAssignee, incoming.getResponsibility(), previousFirst, incoming.getReassignedTo1(), incoming.getReassignment1Remark(), previousSecond, incoming.getReassignedTo2(), incoming.getReassignment2Remark());
             boolean hadOpenObservation = hasOpenObservation(existing);
             String requestedAssignee = trim(incoming.getResponsibility());
             validateResponsibility(requestedAssignee, existing.getDepartment(), existing.getLocationOfMswConducted(), actor, previousAssignee, role, existing);
+            validateResponsibility(incoming.getReassignedTo1(), existing.getDepartment(), existing.getLocationOfMswConducted(), actor, previousFirst, role, existing);
+            validateResponsibility(incoming.getReassignedTo2(), existing.getDepartment(), existing.getLocationOfMswConducted(), actor, previousSecond, role, existing);
+            assignmentHistoryService.validateSlots(incoming.getReassignedTo1(), incoming.getReassignment1Remark(), incoming.getReassignedTo2(), incoming.getReassignment2Remark());
             existing.setResponsibility(requestedAssignee);
+            existing.setReassignedTo1(trim(incoming.getReassignedTo1()));
+            existing.setReassignment1Remark(trim(incoming.getReassignment1Remark()));
+            existing.setReassignedTo2(trim(incoming.getReassignedTo2()));
+            existing.setReassignment2Remark(trim(incoming.getReassignment2Remark()));
             existing.setAssignmentRemark(trim(incoming.getAssignmentRemark()));
             existing.setFinalComments(trim(incoming.getFinalComments()));
             existing.setDepartment(deriveDepartment(existing.getLocationOfMswConducted(), incoming.getDepartment(), existing.getCreatorDepartment()));
@@ -96,8 +110,17 @@ public class GembaWalkConfigService {
             updateEditableObservationFields(existing, incoming.getObservations());
             GembaWalkRecord saved = repository.save(existing);
             assignmentHistoryService.record("gemba-walk", saved.getId(), previousAssignee, saved.getResponsibility(), incoming.getAssignmentRemark(), username, saved.getLocationOfMswConducted());
+            assignmentHistoryService.recordStages("gemba-walk", saved.getId(), saved.getResponsibility(), previousFirst, saved.getReassignedTo1(), saved.getReassignment1Remark(), previousSecond, saved.getReassignedTo2(), saved.getReassignment2Remark(), username, saved.getLocationOfMswConducted());
+            if (!trim(previousFirst).equalsIgnoreCase(trim(saved.getReassignedTo1()))) {
+                NotificationDispatch.afterCommit(() -> responsibilityEmail(saved.getReassignedTo1()).ifPresent(email ->
+                        emailConfigService.sendEmail(List.of(email), "Gemba Walk Reassigned: #" + saved.getId(), submittedBody(saved), true, true)));
+            }
+            if (!trim(previousSecond).equalsIgnoreCase(trim(saved.getReassignedTo2()))) {
+                NotificationDispatch.afterCommit(() -> responsibilityEmail(saved.getReassignedTo2()).ifPresent(email ->
+                        emailConfigService.sendEmail(List.of(email), "Gemba Walk Reassigned: #" + saved.getId(), submittedBody(saved), true, true)));
+            }
             if (hadOpenObservation && !hasOpenObservation(saved)) {
-                notifyClosed(saved);
+                NotificationDispatch.afterCommit(() -> notifyClosed(saved));
             }
             return saved;
         });
@@ -255,6 +278,7 @@ public class GembaWalkConfigService {
 
     private void validateResponsibility(String value, String department, String location, AppUser actor, String previousAssignee, String actorRole, GembaWalkRecord record) {
         String trimmed = trim(value);
+        if (record != null && record.getId() != null && trimmed.equalsIgnoreCase(trim(previousAssignee))) return;
         if (trimmed.isBlank()) {
             return;
         }
@@ -412,6 +436,8 @@ public class GembaWalkConfigService {
         }
         return matchesUser(user, record.getCreatedBy())
                 || matchesUser(user, record.getResponsibility())
+                || matchesUser(user, record.getReassignedTo1())
+                || matchesUser(user, record.getReassignedTo2())
                 || matchesUser(user, record.getManagerName())
                 || matchesUser(user, record.getEmail());
     }
@@ -419,6 +445,8 @@ public class GembaWalkConfigService {
     private boolean canUpdateRecord(GembaWalkRecord record, AppUser user) {
         return canSeeRecord(record, user) && (matchesUser(user, record.getCreatedBy())
                 || matchesUser(user, record.getResponsibility())
+                || matchesUser(user, record.getReassignedTo1())
+                || matchesUser(user, record.getReassignedTo2())
                 || isAreaHod(user));
     }
 

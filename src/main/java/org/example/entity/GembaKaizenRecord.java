@@ -50,6 +50,11 @@ public class GembaKaizenRecord {
     @Column(length = 160)
     private String assignedTo;
 
+    @Column(length = 160) private String reassignedTo1;
+    @Column(length = 1000) private String reassignment1Remark;
+    @Column(length = 160) private String reassignedTo2;
+    @Column(length = 1000) private String reassignment2Remark;
+
     @Transient
     private String assignmentRemark;
 
@@ -159,6 +164,14 @@ public class GembaKaizenRecord {
 
     public String getAssignedTo() { return assignedTo; }
     public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
+    public String getReassignedTo1() { return reassignedTo1; }
+    public void setReassignedTo1(String value) { reassignedTo1 = value; }
+    public String getReassignment1Remark() { return reassignment1Remark; }
+    public void setReassignment1Remark(String value) { reassignment1Remark = value; }
+    public String getReassignedTo2() { return reassignedTo2; }
+    public void setReassignedTo2(String value) { reassignedTo2 = value; }
+    public String getReassignment2Remark() { return reassignment2Remark; }
+    public void setReassignment2Remark(String value) { reassignment2Remark = value; }
     public String getAssignmentRemark() { return assignmentRemark; }
     public void setAssignmentRemark(String assignmentRemark) { this.assignmentRemark = assignmentRemark; }
 }

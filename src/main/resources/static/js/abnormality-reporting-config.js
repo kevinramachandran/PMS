@@ -1,5 +1,6 @@
 $(function () {
     'use strict';
+    let assignmentOptionsRequest = 0;
 
     const API = '/api/abnormality-reporting-config';
     const ATTACHMENT_API = '/api/attachments/abnormality-reporting/upload';
@@ -123,10 +124,15 @@ $(function () {
             const value = user.username || user.name || user.email || '';
             return '<option value="' + escapeAttr(value) + '">' + escapeHtml(userLabel(user)) + '</option>';
         })).join('');
-        $('#assignTo').html(html);
+        const reassignedTo1 = $('#reassignedTo1').val();
+        const reassignedTo2 = $('#reassignedTo2').val();
+        AssignmentWorkflow.options('#assignTo', html);
+        AssignmentWorkflow.options('#reassignedTo1', html, reassignedTo1);
+        AssignmentWorkflow.options('#reassignedTo2', html, reassignedTo2);
     }
 
     function loadOptions() {
+        const request = ++assignmentOptionsRequest;
         return $.ajax({
             url: API + '/options',
             type: 'GET',
@@ -136,6 +142,7 @@ $(function () {
                 recordId: $('#abnormalityReportingId').val() || ''
             },
             success: function(data) {
+                if (request !== assignmentOptionsRequest) return;
                 const options = data && data.options ? data.options : {};
                 currentUser = options.currentUser || {};
                 areaItems = options.areaItems || [];
@@ -155,6 +162,7 @@ $(function () {
     }
 
     function loadDepartmentOptions(department) {
+        const request = ++assignmentOptionsRequest;
         refreshAreaMachineOptions($('#areaMachine').val());
         $.ajax({
             url: API + '/department-options',
@@ -165,6 +173,7 @@ $(function () {
                 recordId: $('#abnormalityReportingId').val() || ''
             },
             success: function(data) {
+                if (request !== assignmentOptionsRequest) return;
                 const options = data && data.options ? data.options : {};
                 populateAssignTo(options.assignableUsers || []);
                 if (!$('#assignTo').val() && options.defaultAssignee) {
@@ -188,7 +197,10 @@ $(function () {
             pictureImage: $('#pictureImageStored').val(),
             abnormalityDefectType: $('#abnormalityDefectType').val(),
             assignTo: $('#assignTo').val(),
-            assignmentRemark: $('#assignmentRemark').val(),
+            reassignedTo1: $('#reassignedTo1').val(),
+            reassignment1Remark: $('#reassignment1Remark').val(),
+            reassignedTo2: $('#reassignedTo2').val(),
+            reassignment2Remark: $('#reassignment2Remark').val(),
             dateClosed: $('#dateClosed').val() || null,
             tagStatus: $('#tagStatus').val()
         };
@@ -240,7 +252,9 @@ $(function () {
     }
 
     function setForm(record) {
+        assignmentOptionsRequest++;
         const item = record || {};
+        AssignmentWorkflow.setRecord(item, '#assignTo');
         $('#abnormalityReportingId').val(item.id || '');
         $('#typeOfTag').val(item.typeOfTag || '');
         $('#priority').val(item.priority || '');
@@ -256,12 +270,12 @@ $(function () {
         $('#pictureImageStored').val(item.pictureImage || '');
         $('#abnormalityDefectType').val(item.abnormalityDefectType || '');
         loadDepartmentOptions(item.department || '');
-        setTimeout(function() {
-            $('#assignTo').val(item.assignTo || '');
-        }, 150);
+        AssignmentWorkflow.select('#assignTo', item.assignTo || '');
+        AssignmentWorkflow.refresh();
         $('#dateClosed').val(item.dateClosed || '');
         $('#tagStatus').val(item.tagStatus || '');
-        $('#assignmentRemark').val('');
+        $('#reassignment1Remark').val(item.reassignment1Remark || '');
+        $('#reassignment2Remark').val(item.reassignment2Remark || '');
     }
 
     function resetForm() {
@@ -402,11 +416,13 @@ $(function () {
     });
 
     $('#department').on('change', function() {
+        if (!$('#abnormalityReportingId').val()) $('#assignTo').val('');
         $('#areaMachine').val('');
         loadDepartmentOptions($(this).val());
     });
 
     $('#areaMachine').on('change', function() {
+        if (!$('#abnormalityReportingId').val()) $('#assignTo').val('');
         loadDepartmentOptions($('#department').val());
     });
 

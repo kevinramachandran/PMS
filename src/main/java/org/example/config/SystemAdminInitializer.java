@@ -31,6 +31,7 @@ public class SystemAdminInitializer {
     public void ensureSystemAdminUser() {
         ensurePermissionColumnsCanStoreAllPages();
         ensureCarlexProcessConfirmationColumns();
+        ensureReassignmentColumns();
         ensureAdminUser(SYSTEM_ADMIN_USERNAME, DEFAULT_EMAIL, DEFAULT_PASSWORD, true);
     }
 
@@ -47,7 +48,39 @@ public class SystemAdminInitializer {
         if (!tableExists("carlex_process_confirmations")) {
             return;
         }
+        // Older installations used large VARCHARs for observation text. Their declared
+        // widths exhaust MySQL's row budget even when the actual values are short.
+        jdbcTemplate.queryForList("SELECT COLUMN_NAME, IS_NULLABLE FROM information_schema.columns "
+                + "WHERE table_schema = DATABASE() AND table_name = 'carlex_process_confirmations' "
+                + "AND DATA_TYPE = 'varchar' AND CHARACTER_MAXIMUM_LENGTH > 255 "
+                + "AND COLUMN_DEFAULT IS NULL").forEach(column -> {
+            String name = String.valueOf(column.get("COLUMN_NAME"));
+            if (!name.matches("[A-Za-z0-9_]+")) {
+                throw new IllegalStateException("Unexpected CarlEX column name");
+            }
+            String nullable = "YES".equals(column.get("IS_NULLABLE")) ? " NULL" : " NOT NULL";
+            jdbcTemplate.execute("ALTER TABLE carlex_process_confirmations MODIFY COLUMN `" + name + "` TEXT" + nullable);
+        });
         addColumnIfMissing("carlex_process_confirmations", "assigned_to", "TEXT NULL");
+        addColumnIfMissing("carlex_process_confirmations", "department", "TEXT NULL");
+        addColumnIfMissing("carlex_process_confirmations", "reassigned_to1", "TEXT NULL");
+        addColumnIfMissing("carlex_process_confirmations", "reassignment1_remark", "TEXT NULL");
+        addColumnIfMissing("carlex_process_confirmations", "reassigned_to2", "TEXT NULL");
+        addColumnIfMissing("carlex_process_confirmations", "reassignment2_remark", "TEXT NULL");
+    }
+
+    private void ensureReassignmentColumns() {
+        ensureReassignmentColumns("gemba_walk_records");
+        ensureReassignmentColumns("gemba_kaizen_records");
+        ensureReassignmentColumns("abnormality_reporting_records");
+    }
+
+    private void ensureReassignmentColumns(String table) {
+        if (!tableExists(table)) return;
+        addColumnIfMissing(table, "reassigned_to1", "VARCHAR(160) NULL");
+        addColumnIfMissing(table, "reassignment1_remark", "TEXT NULL");
+        addColumnIfMissing(table, "reassigned_to2", "VARCHAR(160) NULL");
+        addColumnIfMissing(table, "reassignment2_remark", "TEXT NULL");
     }
 
     private boolean tableExists(String tableName) {

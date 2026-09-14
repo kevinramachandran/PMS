@@ -6,7 +6,7 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
-    <link rel="stylesheet" href="/css/settings.css?v=training-sticky-header-20260913">
+    <link rel="stylesheet" href="/css/settings.css?v=training-compact-top-20260914">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
 </head>
@@ -1005,10 +1005,6 @@
                                             <label for="trainingPeriodLabelInput">Period Label (Auto from Date)</label>
                                             <input type="text" id="trainingPeriodLabelInput" name="trainingPeriodLabelInput" readonly placeholder="e.g. Dec'24">
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div class="config-table-section issue-board-table-card">
                                     <div class="training-issue-search" role="search">
                                         <i class="fas fa-search" aria-hidden="true"></i>
                                         <input type="search" id="trainingGlobalIssueSearch" placeholder="Search issues across PMS" aria-label="Search issues across PMS">
@@ -1017,6 +1013,10 @@
                                         </button>
                                         <div id="trainingGlobalIssueSearchResults" class="training-issue-search-results" aria-live="polite"></div>
                                     </div>
+                                    </div>
+                                </div>
+
+                                <div class="config-table-section issue-board-table-card">
                                     <div class="daily-data-table issue-config-table-wrap">
                                         <table id="trainingScheduleConfigTable">
                                             <thead>
@@ -1673,11 +1673,11 @@
                                                     <option value="">Select Plant</option>
                                                 </select>
                                             </div>
-                                            <button type="button" id="openMasterPlantAddModal" class="btn btn-primary">
-                                                <i class="fas fa-plus"></i> Add Plant
-                                            </button>
                                             <button type="button" id="confirmMasterPlantSelection" class="btn btn-primary">
                                                 <i class="fas fa-check"></i> OK
+                                            </button>
+                                            <button type="button" id="openMasterPlantAddModal" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> Add Plant
                                             </button>
                                         </div>
                                         <div class="master-plant-list-hint">Select a plant and click OK to show it on the KPI Dashboard.</div>
@@ -1697,7 +1697,8 @@
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
-                                        <div class="master-plant-list-hint">Use View to search, edit, or delete departments.</div>
+                                        <div id="masterDepartmentList" class="master-plant-inline-list" aria-label="Departments in selected plant" aria-live="polite"></div>
+                                        <div class="master-plant-list-hint">Select a department below to show its areas. Use View to edit or delete.</div>
                                     </div>
 
                                     <div class="footer-btn-card master-plant-card" data-category="PROCESS_AREA">
@@ -1720,7 +1721,8 @@
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
-                                        <div class="master-plant-list-hint">Use View to search, edit, or delete process areas.</div>
+                                        <div id="masterProcessAreaList" class="master-plant-inline-list" aria-label="Areas in selected department" aria-live="polite"></div>
+                                        <div class="master-plant-list-hint">Areas for the selected plant and department. Use View to edit or delete.</div>
                                     </div>
 
                                     <div class="footer-btn-card master-plant-card" data-category="DESIGNATION">
@@ -2063,7 +2065,7 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=plant-name-only-header-20260913"></script>
-    <script src="/js/settings.js?v=issue-board-fast-save-20260913"></script>
+    <script src="/js/settings.js?v=plant-inline-lists-20260914"></script>
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">

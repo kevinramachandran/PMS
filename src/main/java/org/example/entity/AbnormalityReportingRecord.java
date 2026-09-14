@@ -63,6 +63,11 @@ public class AbnormalityReportingRecord {
     @Column(name = "assign_to", length = 160)
     private String assignTo;
 
+    @Column(length = 160) private String reassignedTo1;
+    @Column(length = 1000) private String reassignment1Remark;
+    @Column(length = 160) private String reassignedTo2;
+    @Column(length = 1000) private String reassignment2Remark;
+
     @Column(name = "date_closed")
     private LocalDate dateClosed;
 
@@ -104,6 +109,14 @@ public class AbnormalityReportingRecord {
     public void setAbnormalityDefectType(String abnormalityDefectType) { this.abnormalityDefectType = abnormalityDefectType; }
     public String getAssignTo() { return assignTo; }
     public void setAssignTo(String assignTo) { this.assignTo = assignTo; }
+    public String getReassignedTo1() { return reassignedTo1; }
+    public void setReassignedTo1(String value) { reassignedTo1 = value; }
+    public String getReassignment1Remark() { return reassignment1Remark; }
+    public void setReassignment1Remark(String value) { reassignment1Remark = value; }
+    public String getReassignedTo2() { return reassignedTo2; }
+    public void setReassignedTo2(String value) { reassignedTo2 = value; }
+    public String getReassignment2Remark() { return reassignment2Remark; }
+    public void setReassignment2Remark(String value) { reassignment2Remark = value; }
     public LocalDate getDateClosed() { return dateClosed; }
     public void setDateClosed(LocalDate dateClosed) { this.dateClosed = dateClosed; }
     public String getTagStatus() { return tagStatus; }

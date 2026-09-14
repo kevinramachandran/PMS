@@ -6616,6 +6616,9 @@ function regroupRows($container){
         const parentPlant = config.inheritPlant ? selectedMasterPlant().toLowerCase() : (config.parentPlant ? ($(config.parentPlant).val() || '').trim().toLowerCase() : '');
         const parentDepartment = config.parentDepartment ? ($(config.parentDepartment).val() || '').trim().toLowerCase() : '';
         const parentProcessArea = config.parentProcessArea ? ($(config.parentProcessArea).val() || '').trim().toLowerCase() : '';
+        if ((config.inheritPlant && !parentPlant) || (config.parentDepartment && !parentDepartment)) {
+            return [];
+        }
         return (masterPlantItems[category] || []).filter(function(item) {
             const plantMatches = !parentPlant || String(item.parentPlant || '').trim().toLowerCase() === parentPlant;
             const departmentMatches = !parentDepartment || String(item.parentDepartment || '').trim().toLowerCase() === parentDepartment;
@@ -6658,7 +6661,7 @@ function regroupRows($container){
     }
 
     function selectedMasterPlant() {
-        return ($('#masterPlantSelect').val() || savedMasterPlantName || '').trim();
+        return ($('#masterPlantSelect').val() || '').trim();
     }
 
     function applySelectedMasterPlant() {
@@ -6666,6 +6669,7 @@ function regroupRows($container){
         renderMasterPlantSuggestions('DEPARTMENT');
         renderMasterPlantSuggestions('PROCESS_AREA');
         renderMasterPlantSuggestions('DESIGNATION');
+        renderMasterPlantInlineLists();
         if (masterPlantViewCategory) {
             renderMasterPlantView();
         }
@@ -6727,11 +6731,34 @@ function regroupRows($container){
     function refreshMasterPlantDepartmentSelect(selectedValue) {
         const plant = selectedMasterPlant();
         const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
-            return !plant || String(item.parentPlant || '').toLowerCase() === plant.toLowerCase();
+            return plant && normalizeMasterPlantKey(item.parentPlant) === normalizeMasterPlantKey(plant);
         });
         $('#masterProcessAreaDepartmentSelect')
             .html(masterPlantOptionsHtml(departments, 'Select Department'))
             .val(selectedValue || '');
+    }
+
+    function renderMasterPlantInlineLists() {
+        const plant = normalizeMasterPlantKey(selectedMasterPlant());
+        const department = normalizeMasterPlantKey($('#masterProcessAreaDepartmentSelect').val());
+        const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
+            return plant && normalizeMasterPlantKey(item.parentPlant) === plant;
+        });
+        const areas = (masterPlantItems.PROCESS_AREA || []).filter(function(item) {
+            return plant && department && normalizeMasterPlantKey(item.parentPlant) === plant
+                && normalizeMasterPlantKey(item.parentDepartment) === department;
+        });
+        $('#masterDepartmentList').html(departments.length ? departments.map(function(item) {
+            const selected = normalizeMasterPlantKey(item.name) === department;
+            return '<button type="button" class="master-department-choice" aria-pressed="' + selected
+                + '" data-department="' + escapeAttributeValue(item.name) + '">' + escapeHtml(item.name) + '</button>';
+        }).join('') : '<span class="master-plant-inline-empty">'
+            + (plant ? 'No departments configured for this plant.' : 'Select a plant to see its departments.') + '</span>');
+        $('#masterProcessAreaList').html(areas.length ? areas.map(function(item) {
+            return '<span class="master-area-label">' + escapeHtml(item.name) + '</span>';
+        }).join('') : '<span class="master-plant-inline-empty">'
+            + (!plant ? 'Select a plant to see its areas.' : !department ? 'Select a department to see its areas.'
+                : 'No areas configured for this department.') + '</span>');
     }
 
     function renderMasterPlantSuggestions(category) {
@@ -6808,15 +6835,20 @@ function regroupRows($container){
         const config = MASTER_PLANT_CONFIG[category];
         const term = ($('#masterPlantViewSearch').val() || '').trim().toLowerCase();
         const plant = selectedMasterPlant().toLowerCase();
+        const department = normalizeMasterPlantKey($('#masterProcessAreaDepartmentSelect').val());
         const items = (masterPlantItems[category] || []).filter(function(item) {
-            const plantMatches = category === 'PLANT' || !plant || String(item.parentPlant || '').toLowerCase() === plant;
+            const plantMatches = category === 'PLANT' || (plant && normalizeMasterPlantKey(item.parentPlant) === plant);
+            const departmentMatches = category !== 'PROCESS_AREA' || (department && normalizeMasterPlantKey(item.parentDepartment) === department);
             const termMatches = !term || String(item.name || '').toLowerCase().includes(term);
-            return plantMatches && termMatches;
+            return plantMatches && departmentMatches && termMatches;
         });
         $('#masterPlantViewTitle').text('View ' + (config ? config.label.toLowerCase() + 's' : 'master data'));
+        const emptyMessage = category !== 'PLANT' && !plant ? 'Select a plant to view its data.'
+            : category === 'PROCESS_AREA' && !department ? 'Select a department to view its process areas.'
+            : 'No matching data found.';
         $('#masterPlantViewList').html(items.length ? items.map(function(item) {
             return masterPlantRowHtml(category, item);
-        }).join('') : '<div class="master-plant-view-empty">No matching data found.</div>');
+        }).join('') : '<div class="master-plant-view-empty">' + emptyMessage + '</div>');
     }
 
     function openMasterPlantView(category) {
@@ -7086,6 +7118,8 @@ function regroupRows($container){
 
     $('#masterPlantSelect').on('change', function() {
         const selectedPlant = $(this).val() || '';
+        $('#masterProcessAreaDepartmentSelect').val('');
+        $('#masterDepartmentInput, #masterProcessAreaInput, #masterDesignationInput').val('');
         selectMasterPlant(selectedPlant);
         if (selectedPlant) {
             setMasterPlantMessage('Plant selected. Click OK to update the KPI Dashboard name.', 'success');
@@ -7099,6 +7133,19 @@ function regroupRows($container){
             return;
         }
         saveSelectedPlantForKpiDashboard(selectedPlant);
+    });
+
+    $('#masterProcessAreaDepartmentSelect').on('change', function() {
+        $('#masterProcessAreaInput').val('');
+        renderMasterPlantSuggestions('PROCESS_AREA');
+        renderMasterPlantInlineLists();
+        if (masterPlantViewCategory === 'PROCESS_AREA') {
+            renderMasterPlantView();
+        }
+    });
+
+    $(document).on('click', '.master-department-choice', function() {
+        $('#masterProcessAreaDepartmentSelect').val($(this).attr('data-department')).trigger('change');
     });
 
     $('.master-plant-input').on('keydown', function(event) {

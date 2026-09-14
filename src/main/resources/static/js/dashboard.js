@@ -1252,6 +1252,7 @@ function loadKpiDashboardMeta() {
         })
         .then(function(config) {
             setElementText('pmsDeckTitle', config.plantName);
+            setElementText('pmsDeckBannerTitle', config.deckTitle || config.plantName);
             setElementText('lsrTargetText', config.lsrOverviewTarget);
             setElementText('lsr12Target', config.lsrTarget12);
             setElementText('lsr5Target', config.lsrTarget5);
@@ -1261,6 +1262,7 @@ function loadKpiDashboardMeta() {
         })
         .catch(function() {
             setElementText('pmsDeckTitle', '-');
+            setElementText('pmsDeckBannerTitle', 'PMS 4');
             renderLsrFocusRules([]);
             applyInfoPortalButtons({});
         });

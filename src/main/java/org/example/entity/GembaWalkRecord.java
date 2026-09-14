@@ -52,6 +52,18 @@ public class GembaWalkRecord {
     @Column(length = 160)
     private String responsibility;
 
+    @Column(length = 160)
+    private String reassignedTo1;
+
+    @Column(length = 1000)
+    private String reassignment1Remark;
+
+    @Column(length = 160)
+    private String reassignedTo2;
+
+    @Column(length = 1000)
+    private String reassignment2Remark;
+
     @Column(length = 1000)
     private String finalComments;
 
@@ -199,6 +211,15 @@ public class GembaWalkRecord {
     public void setResponsibility(String responsibility) {
         this.responsibility = responsibility;
     }
+
+    public String getReassignedTo1() { return reassignedTo1; }
+    public void setReassignedTo1(String reassignedTo1) { this.reassignedTo1 = reassignedTo1; }
+    public String getReassignment1Remark() { return reassignment1Remark; }
+    public void setReassignment1Remark(String reassignment1Remark) { this.reassignment1Remark = reassignment1Remark; }
+    public String getReassignedTo2() { return reassignedTo2; }
+    public void setReassignedTo2(String reassignedTo2) { this.reassignedTo2 = reassignedTo2; }
+    public String getReassignment2Remark() { return reassignment2Remark; }
+    public void setReassignment2Remark(String reassignment2Remark) { this.reassignment2Remark = reassignment2Remark; }
 
     public String getFinalComments() {
         return finalComments;

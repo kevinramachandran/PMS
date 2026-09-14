@@ -1,0 +1,13 @@
+.assignment-workflow { grid-column: 1 / -1; min-width: 0; padding: 20px; border: 1px solid #cbded2; border-top: 3px solid #17733d; border-radius: 8px; background: #fbfdfb; }
+.assignment-workflow h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: #16452b; }
+.assignment-workflow-help { margin: 0 0 18px; color: #516157; font-size: 13px; line-height: 1.5; }
+.assignment-stage { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.6fr); gap: 16px; align-items: start; }
+.assignment-stage + .assignment-stage { margin-top: 18px; padding-top: 18px; border-top: 1px solid #dce7df; }
+.assignment-stage label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; color: #263e2e; font-size: 13px; font-weight: 600; }
+.assignment-stage-status { font-size: 11px; font-weight: 600; color: #316448; }
+.assignment-stage select, .assignment-stage textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid #b8cbbf; border-radius: 6px; background: #fff; color: #23372a; font: inherit; }
+.assignment-stage textarea { height: 44px; resize: vertical; }
+.assignment-stage :is(select, textarea):disabled { background: #eef2ef; color: #59695e; border-color: #d8e0da; cursor: not-allowed; opacity: 1; }
+.assignment-stage :is(select, textarea):focus-visible { outline: 3px solid #afd4bc; outline-offset: 2px; border-color: #17733d; }
+.assignment-stage-disabled .assignment-stage-status { color: #657369; }
+@media (max-width: 620px) { .assignment-workflow { padding: 16px; } .assignment-stage { grid-template-columns: minmax(0, 1fr); gap: 12px; } }

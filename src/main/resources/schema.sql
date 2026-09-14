@@ -104,6 +104,10 @@ CREATE TABLE IF NOT EXISTS abnormality_reporting_records (
     picture_image VARCHAR(255) NULL,
     abnormality_defect_type VARCHAR(160) NULL,
     assign_to VARCHAR(160) NULL,
+    reassigned_to1 VARCHAR(160) NULL,
+    reassignment1_remark TEXT NULL,
+    reassigned_to2 VARCHAR(160) NULL,
+    reassignment2_remark TEXT NULL,
     date_closed DATE NULL,
     tag_status VARCHAR(80) NULL,
     PRIMARY KEY (id)
@@ -120,6 +124,10 @@ CREATE TABLE IF NOT EXISTS gemba_walk_records (
     management_safety_walk_week VARCHAR(160) NULL,
     location_of_msw_conducted VARCHAR(160) NULL,
     responsibility VARCHAR(160) NULL,
+    reassigned_to1 VARCHAR(160) NULL,
+    reassignment1_remark TEXT NULL,
+    reassigned_to2 VARCHAR(160) NULL,
+    reassignment2_remark TEXT NULL,
     PRIMARY KEY (id)
 );
 
@@ -151,6 +159,10 @@ CREATE TABLE IF NOT EXISTS gemba_kaizen_records (
     benefits_of_kaizen VARCHAR(1000) NULL,
     is_kaizen_implemented VARCHAR(10) NULL,
     assigned_to VARCHAR(160) NULL,
+    reassigned_to1 VARCHAR(160) NULL,
+    reassignment1_remark TEXT NULL,
+    reassigned_to2 VARCHAR(160) NULL,
+    reassignment2_remark TEXT NULL,
     PRIMARY KEY (id)
 );
 
@@ -181,6 +193,10 @@ CREATE TABLE IF NOT EXISTS carlex_process_confirmations (
     area_of_gw_process_confirmation_conducted VARCHAR(160) NULL,
     area_responsibility VARCHAR(160) NULL,
     assigned_to TEXT NULL,
+    reassigned_to1 TEXT NULL,
+    reassignment1_remark TEXT NULL,
+    reassigned_to2 TEXT NULL,
+    reassignment2_remark TEXT NULL,
     zm1_description TEXT NULL, zm1_counter_measure_actions TEXT NULL, zm1_status VARCHAR(40) NULL, zm1_observation_image VARCHAR(255) NULL, another_zm_observation BIT NULL,
     zm2_description TEXT NULL, zm2_counter_measure_actions TEXT NULL, zm2_status VARCHAR(40) NULL, zm2_observation_image VARCHAR(255) NULL,
     pm1_description TEXT NULL, pm1_counter_measure_actions TEXT NULL, pm1_status VARCHAR(40) NULL, pm1_observation_image VARCHAR(255) NULL, another_pm_observation BIT NULL,

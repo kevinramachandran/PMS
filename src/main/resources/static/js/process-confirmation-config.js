@@ -1,4 +1,5 @@
 $(function() {
+    let assignmentOptionsRequest = 0;
     const API = '/api/carlex-process-confirmation/records';
     const OPTIONS_API = '/api/carlex-process-confirmation/options';
     const GROUPS = {
@@ -33,7 +34,10 @@ $(function() {
         ['dateOfGwProcessConfirmationConducted', 'Date of the GW Process Confirmation conducted', 'date'],
         ['gwPcWeek', 'GW PC week', 'text'],
         ['assignedTo', 'Assigned To', 'select'],
-        ['assignmentRemark', 'Assignment / Reassignment Remarks', 'textarea']
+        ['reassignedTo1', 'Reassign 1', 'select'],
+        ['reassignment1Remark', 'Reassign 1 Remarks', 'textarea'],
+        ['reassignedTo2', 'Reassign 2', 'select'],
+        ['reassignment2Remark', 'Reassign 2 Remarks', 'textarea']
     ];
 
     let records = [];
@@ -43,11 +47,20 @@ $(function() {
     let departments = [];
     let assignmentUsers = [];
     let saveInFlight = false;
+    let pendingImageUploads = 0;
     let observationOptions = { zm: [], pm: [], qm: [] };
     let observationState = { zm: [emptyObservation()], pm: [emptyObservation()], qm: [emptyObservation()] };
 
     function esc(value) {
         return $('<div>').text(value == null ? '' : value).html();
+    }
+
+    function escAttribute(value) {
+        return esc(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function showFormError(message) {
+        $('#carlexMessage').text(message).addClass('show error').trigger('focus');
     }
 
     function nowTime() {
@@ -94,7 +107,8 @@ $(function() {
         const group = GROUPS[key];
         return '<section class="carlex-observation-panel" data-group="' + key + '">' +
             '<div class="carlex-observation-header">' +
-            '<h3>' + group.label + ' Observations</h3>' +
+            '<div class="carlex-observation-heading"><i class="fas fa-user" aria-hidden="true"></i><div><h3>' + group.label + ' Observations</h3>' +
+            '<p>Enter ' + group.label + ' observations and measurement details</p></div></div>' +
             '<button type="button" class="carlex-add-observation" data-group="' + key + '">' +
             '<i class="fas fa-plus"></i><span>Add ' + group.label + '</span></button>' +
             '</div><div class="carlex-observation-list" id="' + key + 'ObservationList"></div></section>';
@@ -102,7 +116,8 @@ $(function() {
 
     function buildForm() {
         $('#carlexFields').html('<input type="hidden" id="areaResponsibility">' +
-            baseFields.map(fieldHtml).join('') +
+            baseFields.filter(function(field) { return !/^reassign/.test(field[0]); }).map(fieldHtml).join('') +
+            "<section class=\"assignment-workflow\" aria-labelledby=\"assignmentWorkflowTitle\"><h3 id=\"assignmentWorkflowTitle\">Assignment workflow</h3><p class=\"assignment-workflow-help\">Choose the initial assignee. Reassignment becomes available after saving.</p><div class=\"assignment-stage\"><div><label for=\"reassignedTo1\">Reassignee 1<span class=\"assignment-stage-status\">Locked</span></label><select id=\"reassignedTo1\" disabled></select></div><div><label for=\"reassignment1Remark\">Reassignment 1 remark</label><textarea id=\"reassignment1Remark\" rows=\"2\" disabled placeholder=\"Reason for reassignment\"></textarea></div></div><div class=\"assignment-stage\"><div><label for=\"reassignedTo2\">Reassignee 2<span class=\"assignment-stage-status\">Locked</span></label><select id=\"reassignedTo2\" disabled></select></div><div><label for=\"reassignment2Remark\">Reassignment 2 remark</label><textarea id=\"reassignment2Remark\" rows=\"2\" disabled placeholder=\"Reason for reassignment\"></textarea></div></div></section>" +
             '<div class="carlex-observations-wide">' +
             observationGroupHtml('zm') + observationGroupHtml('pm') + observationGroupHtml('qm') +
             '</div>');
@@ -202,19 +217,21 @@ $(function() {
         const current = $('#assignedTo').val();
         const hod = departmentHod();
         const target = defaultAssignedTo || (hod && hod.username) || '';
-        if ((forceDefault || !current) && target) {
+        if (!$('#carlexId').val() && (forceDefault || !current) && target) {
             $('#assignedTo').val(target);
         }
         syncAreaResponsibility();
     }
 
     function loadOptions(callback, forceDefaultAssignee) {
+        const request = ++assignmentOptionsRequest;
         const params = {
             department: $('#department').val() || '',
             area: $('#areaOfGwProcessConfirmationConducted').val() || '',
             recordId: $('#carlexId').val() || ''
         };
         $.getJSON(OPTIONS_API, params, function(data) {
+            if (request !== assignmentOptionsRequest) return;
             const options = data.options || data || {};
             currentUserIdentity = options.currentUser || {};
             departments = options.departments || [];
@@ -223,9 +240,12 @@ $(function() {
             const currentAssignedTo = $('#assignedTo').val();
             populateDepartments();
             populateAreas();
-            $('#assignedTo').html('<option value=""></option>' + assignmentUsers.map(function(user) {
+            const assignmentHtml = '<option value=""></option>' + assignmentUsers.map(function(user) {
                 return '<option value="' + esc(user.username) + '">' + esc(user.label || user.username) + '</option>';
-            }).join(''));
+            }).join('');
+            AssignmentWorkflow.options('#assignedTo', assignmentHtml);
+            AssignmentWorkflow.options('#reassignedTo1', assignmentHtml);
+            AssignmentWorkflow.options('#reassignedTo2', assignmentHtml);
             if (currentAssignedTo && assignmentUsers.some(function(user) {
                 return String(user.username || '').trim().toLowerCase() === currentAssignedTo.trim().toLowerCase();
             })) {
@@ -241,7 +261,10 @@ $(function() {
             $.getJSON('/api/dashboard-config/process-master-data/' + GROUPS[groupKey].category, function(data) {
                 const items = data.items || [];
                 observationOptions[groupKey] = items.map(function(item) { return item.name; }).filter(Boolean);
-                renderObservationGroup(groupKey);
+                $('#' + groupKey + 'ObservationList .pc-observation-description').each(function() {
+                    const selected = $(this).val() || '';
+                    $(this).html(observationDescriptionOptions(groupKey, selected)).val(selected);
+                });
             });
         });
     }
@@ -250,20 +273,26 @@ $(function() {
         Object.keys(GROUPS).forEach(renderObservationGroup);
     }
 
+    function observationDescriptionOptions(groupKey, selected) {
+        const names = (observationOptions[groupKey] || []).slice();
+        if (selected && !names.includes(selected)) names.push(selected);
+        return '<option value="">Select an observation</option>' + names.map(function(name) {
+            return '<option value="' + escAttribute(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>';
+        }).join('');
+    }
+
     function renderObservationGroup(groupKey) {
         const group = GROUPS[groupKey];
         const rows = (observationState[groupKey] || [emptyObservation()]).map(function(item, index) {
             const remove = index === 0 ? '' :
                 '<button type="button" class="carlex-remove-observation" data-group="' + groupKey + '" data-index="' + index + '" title="Remove ' + group.label + ' observation"><i class="fas fa-trash"></i></button>';
-            const options = '<option value=""></option>' + (observationOptions[groupKey] || []).map(function(name) {
-                return '<option value="' + esc(name) + '"' + (name === item.description ? ' selected' : '') + '>' + esc(name) + '</option>';
-            }).join('');
+            const options = observationDescriptionOptions(groupKey, item.description);
             return '<div class="carlex-observation-row" data-group="' + groupKey + '" data-index="' + index + '">' +
                 '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Describe observation ' + (index + 1) + ' - Issues</label><select class="pc-observation-description">' + options + '</select></div>' +
-                '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' Counter measure actions</label><textarea class="pc-observation-actions" rows="2">' + esc(item.counterMeasureActions) + '</textarea></div>' +
+                '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' Counter measure actions</label><textarea class="pc-observation-actions" rows="2" placeholder="Enter counter measure actions…">' + esc(item.counterMeasureActions) + '</textarea></div>' +
                 '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Status</label><select class="pc-observation-status">' +
-                '<option value=""></option><option value="P">P</option><option value="D">D</option><option value="C">C</option><option value="A">A</option></select></div>' +
-                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><input class="pc-observation-image" type="file" accept="image/*" capture="environment"><input class="pc-observation-image-stored" type="hidden" value="' + esc(item.observationImage) + '"></div>' +
+                '<option value="">Select status</option><option value="P">P</option><option value="D">D</option><option value="C">C</option><option value="A">A</option></select></div>' +
+                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><label class="carlex-image-picker"><i class="fas fa-image" aria-hidden="true"></i><span>' + (item.observationImage ? 'Replace' : 'Choose') + '</span><input class="pc-observation-image" type="file" accept="image/*" capture="environment" aria-label="' + group.label + ' ' + (index + 1) + ' observation image"><input class="pc-observation-image-stored" type="hidden" value="' + escAttribute(item.observationImage) + '"></label></div>' +
                 '<div class="carlex-observation-actions">' + remove + '</div>' +
                 '</div>';
         }).join('');
@@ -351,6 +380,8 @@ $(function() {
     }
 
     function setForm(record) {
+        assignmentOptionsRequest++;
+        AssignmentWorkflow.setRecord(record, '#assignedTo', readOnly);
         baseFields.forEach(function(field) {
             let value = (record || {})[field[0]];
             $('#' + field[0]).val(value == null ? '' : value);
@@ -369,6 +400,8 @@ $(function() {
         $('#areaOfGwProcessConfirmationConducted').val((record || {}).areaOfGwProcessConfirmationConducted || '');
         loadOptions(function() {
             $('#assignedTo').val((record || {}).assignedTo || $('#assignedTo').val());
+            $('#reassignedTo1').val((record || {}).reassignedTo1 || '');
+            $('#reassignedTo2').val((record || {}).reassignedTo2 || '');
             syncAreaResponsibility();
         });
     }
@@ -457,11 +490,17 @@ $(function() {
         $('#carlexSaveBtn').toggle(!readOnly);
         $('#carlexCancelBtn').text(readOnly ? 'Close' : 'Cancel');
         $('#carlexFields input, #carlexFields select, #carlexFields textarea, .carlex-add-observation, .carlex-remove-observation').prop('disabled', readOnly);
+        AssignmentWorkflow.refresh();
         $('#carlexBackdrop, #carlexForm').attr('aria-hidden', 'false');
         $('.carlex-config-page').addClass('carlex-drawer-open');
     }
 
     function close() {
+        if (saveInFlight) return;
+        if (pendingImageUploads) {
+            showFormError('Please wait for the image upload to finish.');
+            return;
+        }
         $('#carlexBackdrop, #carlexForm').attr('aria-hidden', 'true');
         $('.carlex-config-page').removeClass('carlex-drawer-open');
     }
@@ -469,11 +508,15 @@ $(function() {
     $('#carlexForm').on('submit', function(e) {
         e.preventDefault();
         if (readOnly || saveInFlight) return;
+        if (pendingImageUploads) {
+            showFormError('Please wait for the image upload to finish before saving.');
+            return;
+        }
         const id = $('#carlexId').val();
         const data = payload();
         const validationMessage = validatePayload(data);
         if (validationMessage) {
-            $('#carlexMessage').text(validationMessage).addClass('show error');
+            showFormError(validationMessage);
             return;
         }
         saveInFlight = true;
@@ -485,14 +528,15 @@ $(function() {
             data: JSON.stringify(data),
             success: function(data) {
                 if (data && data.status === 'error') {
-                    $('#carlexMessage').text(data.message || 'Unable to save record.').addClass('show error');
+                    showFormError(data.message || 'Unable to save record.');
                     return;
                 }
+                saveInFlight = false;
                 close();
                 load();
             },
             error: function(xhr) {
-                $('#carlexMessage').text(xhr.responseJSON?.message || 'Unable to save record.').addClass('show error');
+                showFormError(xhr.responseJSON?.message || 'Unable to save record. Please try again.');
             },
             complete: function() {
                 saveInFlight = false;
@@ -504,9 +548,10 @@ $(function() {
     $('#carlexAddBtn').on('click', function() { open(null, false); });
     $('#carlexCloseBtn, #carlexCancelBtn, #carlexBackdrop').on('click', close);
     $(document).on('change', '#department', function() {
+        $('#areaOfGwProcessConfirmationConducted').val('');
         populateAreas('');
         $('#areaResponsibility').val('');
-        $('#assignedTo').val('');
+        if (!$('#carlexId').val()) $('#assignedTo').val('');
         loadOptions(null, true);
     });
     $(document).on('change', '#areaOfGwProcessConfirmationConducted', function() {
@@ -548,6 +593,9 @@ $(function() {
         const file = input.files && input.files[0];
         if (!file) return;
         const hidden = $(input).siblings('.pc-observation-image-stored');
+        pendingImageUploads += 1;
+        $(input).siblings('span').text('Uploading…');
+        $('.carlex-add-observation, .carlex-remove-observation').prop('disabled', true);
         const formData = new FormData();
         formData.append('file', file);
         if (hidden.val()) formData.append('replace', hidden.val());
@@ -557,9 +605,17 @@ $(function() {
             data: formData,
             processData: false,
             contentType: false,
-            success: function(data) { hidden.val(data.storedName || ''); },
+            success: function(data) {
+                hidden.val(data.storedName || '');
+                $(input).siblings('span').text('Replace');
+            },
             error: function(xhr) {
-                $('#carlexMessage').text(xhr.responseJSON?.error || 'Image upload failed.').addClass('show error');
+                $(input).siblings('span').text(hidden.val() ? 'Replace' : 'Choose');
+                showFormError(xhr.responseJSON?.error || 'Image upload failed. Please choose the image again.');
+            },
+            complete: function() {
+                pendingImageUploads -= 1;
+                if (!pendingImageUploads) $('.carlex-add-observation, .carlex-remove-observation').prop('disabled', readOnly);
             }
         });
     });

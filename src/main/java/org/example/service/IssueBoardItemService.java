@@ -18,12 +18,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class IssueBoardItemService {
@@ -179,7 +177,7 @@ public class IssueBoardItemService {
         if (!history.isEmpty()) {
             historyRepository.saveAll(history);
         }
-        sendAssignmentNotificationAsync(saved.getBoardDate(), saved.getRowOrder(), previousSnapshot, saved);
+        sendAssignmentNotificationAsync(saved.getBoardDate(), saved.getRowOrder(), previousSnapshot, notificationSnapshot(saved));
         return saved;
     }
 
@@ -191,10 +189,12 @@ public class IssueBoardItemService {
     @Transactional
     public List<IssueBoardItem> replaceByBoardDate(LocalDate boardDate, List<IssueBoardItem> items, String editedBy) {
         List<IssueBoardItem> existingItems = repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
+        Map<Long, IssueBoardItem> previousById = new HashMap<>();
         Map<Long, IssueBoardItem> existingById = new HashMap<>();
         for (IssueBoardItem existing : existingItems) {
             if (existing.getId() != null) {
                 existingById.put(existing.getId(), existing);
+                previousById.put(existing.getId(), notificationSnapshot(existing));
             }
         }
 
@@ -238,7 +238,10 @@ public class IssueBoardItemService {
         }
         List<IssueBoardItem> savedItems = repository.findByBoardDateOrderByUpdatedAtDescIdDesc(boardDate);
 
-        sendAssignmentNotificationsAsync(boardDate, mapByRowOrder(existingItems), mapByRowOrder(savedItems));
+        for (IssueBoardItem saved : savedItems) {
+            sendAssignmentNotificationAsync(boardDate, saved.getRowOrder(),
+                    previousById.get(saved.getId()), notificationSnapshot(saved));
+        }
         return savedItems;
     }
 
@@ -246,24 +249,12 @@ public class IssueBoardItemService {
                                                  Integer rowOrder,
                                                  IssueBoardItem previousItem,
                                                  IssueBoardItem currentItem) {
-        CompletableFuture.runAsync(() -> {
+        NotificationDispatch.afterCommit(() -> {
             try {
                 notificationService.sendAssignmentNotification(boardDate, rowOrder, previousItem, currentItem);
             } catch (Exception ex) {
                 log.error("Failed to send assignment notification for issueId={} - save was still successful",
                         currentItem == null ? null : currentItem.getId(), ex);
-            }
-        });
-    }
-
-    private void sendAssignmentNotificationsAsync(LocalDate boardDate,
-                                                  Map<Integer, IssueBoardItem> previousItems,
-                                                  Map<Integer, IssueBoardItem> currentItems) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                notificationService.sendAssignmentNotifications(boardDate, previousItems, currentItems);
-            } catch (Exception ex) {
-                log.error("Failed to send assignment notifications for boardDate={} - save was still successful", boardDate, ex);
             }
         });
     }
@@ -345,16 +336,6 @@ public class IssueBoardItemService {
         }
     }
 
-    private Map<Integer, IssueBoardItem> mapByRowOrder(List<IssueBoardItem> items) {
-        Map<Integer, IssueBoardItem> mapped = new LinkedHashMap<>();
-        for (IssueBoardItem item : items) {
-            if (item.getRowOrder() != null) {
-                mapped.put(item.getRowOrder(), item);
-            }
-        }
-        return mapped;
-    }
-
     private IssueBoardItemHistory historyEntry(Long issueBoardItemId,
                                                String fieldName,
                                                Object oldValue,
@@ -407,11 +388,14 @@ public class IssueBoardItemService {
 
     private IssueBoardItem notificationSnapshot(IssueBoardItem source) {
         IssueBoardItem snapshot = new IssueBoardItem();
+        snapshot.setId(source.getId());
         snapshot.setRowOrder(source.getRowOrder());
         snapshot.setProblem(source.getProblem());
         snapshot.setActions(source.getActions());
         snapshot.setResponsible(source.getResponsible());
         snapshot.setTargetDate(source.getTargetDate());
+        snapshot.setTargetDateExtension1(source.getTargetDateExtension1());
+        snapshot.setTargetDateExtension2(source.getTargetDateExtension2());
         snapshot.setStatus(source.getStatus());
         snapshot.setCompletedDate(source.getCompletedDate());
         snapshot.setBoardDate(source.getBoardDate());

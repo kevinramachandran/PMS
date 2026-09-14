@@ -1,5 +1,6 @@
 $(function() {
     'use strict';
+    let assignmentOptionsRequest = 0;
 
     const API = '/api/gemba-kaizen-config';
     const ATTACHMENT_API = '/api/attachments/gemba-kaizen/upload';
@@ -9,7 +10,7 @@ $(function() {
     let areaItems = [];
     let departments = [];
     let saveInFlight = false;
-    const EDIT_ALLOWED_FIELDS = '#pictureImage, #isKaizenImplemented, #assignedTo, #assignmentRemark';
+    const EDIT_ALLOWED_FIELDS = '#pictureImage, #isKaizenImplemented, #reassignedTo1, #reassignment1Remark, #reassignedTo2, #reassignment2Remark';
 
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function(ch) {
@@ -106,6 +107,7 @@ $(function() {
             .not(EDIT_ALLOWED_FIELDS);
         $fields.prop('disabled', !!isEdit);
         $('#gembaKaizenConfigForm').toggleClass('gk-edit-locked', !!isEdit);
+        AssignmentWorkflow.refresh();
     }
 
     function payload() {
@@ -120,12 +122,17 @@ $(function() {
             benefitsOfKaizen: $('#benefitsOfKaizen').val(),
             isKaizenImplemented: $('#isKaizenImplemented').val(),
             assignedTo: $('#assignedTo').val(),
-            assignmentRemark: $('#assignmentRemark').val()
+            reassignedTo1: $('#reassignedTo1').val(),
+            reassignment1Remark: $('#reassignment1Remark').val(),
+            reassignedTo2: $('#reassignedTo2').val(),
+            reassignment2Remark: $('#reassignment2Remark').val()
         };
     }
 
     function setRecord(record) {
+        assignmentOptionsRequest++;
         const item = record || {};
+        AssignmentWorkflow.setRecord(item, '#assignedTo');
         $('#gembaKaizenRecordId').val(item.id || '');
         $('#lastModifiedTime').val(item.lastModifiedTime || currentTime());
         $('#department').val(item.department || '');
@@ -138,10 +145,14 @@ $(function() {
         $('#benefitsOfKaizen').val(item.benefitsOfKaizen || '');
         $('#isKaizenImplemented').val(item.isKaizenImplemented || 'No');
         $('#assignedTo').val(item.assignedTo || '');
-        $('#assignmentRemark').val('');
+        $('#reassignedTo1').val(item.reassignedTo1 || '');
+        $('#reassignment1Remark').val(item.reassignment1Remark || '');
+        $('#reassignedTo2').val(item.reassignedTo2 || '');
+        $('#reassignment2Remark').val(item.reassignment2Remark || '');
     }
 
     function resetRecord() {
+        AssignmentWorkflow.setRecord({}, '#assignedTo');
         $('#gembaKaizenRecordId').val('');
         $('#lastModifiedTime').val(currentTime());
         $('#department').val('');
@@ -154,6 +165,7 @@ $(function() {
         $('#benefitsOfKaizen').val('');
         $('#isKaizenImplemented').val('No');
         $('#assignedTo').val('');
+        $('#reassignedTo1,#reassignedTo2,#reassignment1Remark,#reassignment2Remark').val('');
         setMessage('', 'success');
         loadOptions();
     }
@@ -222,7 +234,9 @@ $(function() {
             success: function(data) {
                 if (data && data.record) {
                     setRecord(data.record);
-                    openDrawer(data.record);
+                    loadOptions().done(function() {
+                        openDrawer(data.record);
+                    });
                 }
             },
             error: function() {
@@ -232,6 +246,7 @@ $(function() {
     }
 
     function loadOptions() {
+        const request = ++assignmentOptionsRequest;
         return $.ajax({
             url: API + '/options',
             type: 'GET',
@@ -241,6 +256,7 @@ $(function() {
                 recordId: $('#gembaKaizenRecordId').val() || ''
             },
             success: function(data) {
+                if (request !== assignmentOptionsRequest) return;
                 const options = data && data.options ? data.options : {};
                 currentUserIdentity = options.currentUser || {};
                 areaItems = options.areaItems || [];
@@ -250,6 +266,8 @@ $(function() {
                 refreshLocationOptions($('#gembaKaizenLocation').val());
                 const assignmentUsers = options.assignmentUsers || [];
                 populateSelect('#assignedTo', assignmentUsers.map(function(user) { return user.username; }), $('#assignedTo').val());
+                populateSelect('#reassignedTo1', assignmentUsers.map(function(user) { return user.username; }), $('#reassignedTo1').val());
+                populateSelect('#reassignedTo2', assignmentUsers.map(function(user) { return user.username; }), $('#reassignedTo2').val());
                 if (!$('#assignedTo').val() && options.defaultAssignedTo) {
                     $('#assignedTo').val(options.defaultAssignedTo);
                 }

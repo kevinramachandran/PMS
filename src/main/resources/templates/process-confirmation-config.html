@@ -8,10 +8,11 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
     <link rel="stylesheet" href="/css/process-confirmation.css?v=carlex-records-20260903">
-    <link rel="stylesheet" href="/css/process-confirmation-config.css?v=carlex-config-20260913">
+    <link rel="stylesheet" href="/css/process-confirmation-config.css?v=carlex-config-20260914-responsive">
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
 </head>
 <body class="modern-shell dashboard-bg carlex-config-page">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -48,8 +49,8 @@
             <a href="/abnormality-reporting-config" class="nav-item" th:if="${session.canViewAbnormalityTrackerConfiguration}"><i class="fas fa-clipboard-list"></i><span>Abnormality Reporting</span></a>
             <a href="/gemba-walk-config" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}"><i class="fas fa-map-location-dot"></i><span>Gemba Walk Reporting</span></a>
             <a href="/settings?config=gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Scheduler"><i class="fas fa-calendar-check"></i><span>Gemba Walk Scheduler</span></a>
-            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/process-confirmation-config" class="nav-item active" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="CarlEx P C reporting"><i class="fas fa-sliders"></i><span>CarlEx P C reporting</span></a>
+            <a href="/gemba-kaizen-config" class="nav-item" th:if="${session.canViewLeadershipGembaTrackerConfiguration}"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen Reporting</span></a>
             <a href="/settings?config=training-schedule" class="nav-item" th:if="${session.canViewTrainingScheduleConfiguration}"><i class="fas fa-book"></i><span>Training Scheduler</span></a>
             <a href="/settings?config=meeting-agenda" class="nav-item" th:if="${session.canViewMeetingAgendaConfiguration}"><i class="fas fa-sliders"></i><span>PMS Agenda</span></a>
             <a href="/settings?config=info-portal" class="nav-item" th:if="${session.canViewInfoPortalConfiguration}"><i class="fas fa-sliders"></i><span>Info Portal</span></a>
@@ -73,8 +74,8 @@
     </main>
 </div>
 <div id="carlexBackdrop" class="carlex-backdrop" aria-hidden="true"></div>
-<form id="carlexForm" class="carlex-drawer" aria-hidden="true"><div class="carlex-drawer-header"><h2 id="carlexDrawerTitle">Add CarlEX Process Confirmation</h2><button type="button" id="carlexCloseBtn" class="carlex-close" aria-label="Close"><i class="fas fa-times"></i></button></div><div class="carlex-drawer-body"><input type="hidden" id="carlexId"><div class="carlex-form-grid" id="carlexFields"></div><div id="carlexMessage" class="form-message"></div></div><div class="carlex-drawer-footer"><button type="button" id="carlexCancelBtn" class="btn btn-secondary">Cancel</button><button type="submit" id="carlexSaveBtn" class="btn btn-primary"><i class="fas fa-save"></i> Save confirmation</button></div></form>
-<script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation-config.js?v=20260913-workflow-ui"></script><script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<form id="carlexForm" class="carlex-drawer" role="dialog" aria-modal="true" aria-labelledby="carlexDrawerTitle" aria-describedby="carlexDrawerDescription" aria-hidden="true"><div class="carlex-drawer-header"><div class="carlex-drawer-heading"><span class="carlex-drawer-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span><div><h2 id="carlexDrawerTitle">Add CarlEX Process Confirmation</h2><p id="carlexDrawerDescription">Enter observations and confirmation details for the selected process.</p></div></div><button type="button" id="carlexCloseBtn" class="carlex-close" aria-label="Close"><i class="fas fa-times"></i></button></div><div class="carlex-drawer-body"><input type="hidden" id="carlexId"><div class="carlex-form-grid" id="carlexFields"></div></div><div class="carlex-drawer-footer"><div id="carlexMessage" class="form-message" role="alert" aria-live="assertive" tabindex="-1"></div><button type="button" id="carlexCancelBtn" class="btn btn-secondary">Cancel</button><button type="submit" id="carlexSaveBtn" class="btn btn-primary"><i class="fas fa-save"></i> Save confirmation</button></div></form>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation-config.js?v=20260914-workflow"></script><script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>
 </html>
 

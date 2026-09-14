@@ -23,10 +23,14 @@ public class CarlexProcessConfirmation {
     @Column(length = 160) public String processConfirmationDoneBy;
     public LocalDate dateOfGwProcessConfirmationConducted;
     @Column(length = 80) public String gwPcWeek;
-    @Transient public String department;
+    @Column(columnDefinition = "TEXT") public String department;
     @Column(length = 160) public String areaOfGwProcessConfirmationConducted;
     @Column(length = 160) public String areaResponsibility;
     @Column(columnDefinition = "TEXT") public String assignedTo;
+    @Column(name = "reassigned_to1", columnDefinition = "TEXT") public String reassignedTo1;
+    @Column(name = "reassignment1_remark", columnDefinition = "TEXT") public String reassignment1Remark;
+    @Column(name = "reassigned_to2", columnDefinition = "TEXT") public String reassignedTo2;
+    @Column(name = "reassignment2_remark", columnDefinition = "TEXT") public String reassignment2Remark;
     @Transient public String assignmentRemark;
 
     @Column(name = "zm1_description", columnDefinition = "TEXT") public String zm1Description;
