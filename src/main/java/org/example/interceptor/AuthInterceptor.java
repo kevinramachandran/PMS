@@ -33,6 +33,9 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
 
+        boolean syncConfigurationUser = authService.isSyncConfigurationUser(username, role);
+        request.setAttribute("syncConfigurationUser", syncConfigurationUser);
+
         // Not logged in: APIs must return 401 JSON (not HTML redirect), pages redirect to login.
         if (username == null) {
             // /api/license/generate is open — no auth required
@@ -49,6 +52,14 @@ public class AuthInterceptor implements HandlerInterceptor {
 
             response.sendRedirect(request.getContextPath() + "/pms-login");
             return false;
+        }
+
+        if (path.startsWith("/sync-configuration") || path.startsWith("/api/cloud-sync")) {
+            if (!syncConfigurationUser) {
+                denyAccess(request, response);
+                return false;
+            }
+            return true;
         }
 
         boolean licenseBypassUser = authService.isLicenseBypassUser(username);

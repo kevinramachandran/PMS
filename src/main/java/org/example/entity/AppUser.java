@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "app_users")
-public class AppUser {
+public class AppUser extends MasterMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

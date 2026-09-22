@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class AbnormalityMasterDataService {
 
     public static final String ABT_TAG_TYPE = "ABT_TAG_TYPE";
@@ -15,8 +16,11 @@ public class AbnormalityMasterDataService {
 
     private final AbnormalityMasterDataItemRepository repository;
 
-    public AbnormalityMasterDataService(AbnormalityMasterDataItemRepository repository) {
+    private final MasterReferenceService references;
+
+    public AbnormalityMasterDataService(AbnormalityMasterDataItemRepository repository, MasterReferenceService references) {
         this.repository = repository;
+        this.references = references;
     }
 
     public List<AbnormalityMasterDataItem> list(String category) {
@@ -52,6 +56,7 @@ public class AbnormalityMasterDataService {
         AbnormalityMasterDataItem item = existing.get();
         String normalizedName = normalizeName(name);
         rejectDuplicate(item.getCategory(), normalizedName, id);
+        if (!normalizedName.equals(item.getName())) references.captureBeforeChange(AbnormalityMasterDataItem.class, item.getCategory(), item.getName());
         item.setName(normalizedName);
         return Optional.of(repository.save(item));
     }
@@ -60,6 +65,8 @@ public class AbnormalityMasterDataService {
         if (id == null || !repository.existsById(id)) {
             return false;
         }
+        AbnormalityMasterDataItem item = repository.findById(id).orElseThrow();
+        references.captureBeforeChange(AbnormalityMasterDataItem.class, item.getCategory(), item.getName());
         repository.deleteById(id);
         return true;
     }

@@ -3639,7 +3639,6 @@ function regroupRows($container){
                     setIssueConfigDrawerOpen(false);
                     localStorage.setItem('issue-board-update', Date.now());
                     showIssueBoardToast('Issue updated.', 'success');
-                    loadIssueBoardByDate($('#issueBoardConfigDate').val());
                 },
                 error: function() {
                     showIssueBoardPopup('Failed to update issue. Please try again.');
@@ -3655,8 +3654,8 @@ function regroupRows($container){
         $drawerSaveBtn.prop('disabled', true);
         $('#issueBoardConfigTableBody .placeholder-row').remove();
         if (!$row.length) {
-            $('#issueBoardConfigTableBody').append(createIssueBoardConfigRow(payload));
-            $row = $('#issueBoardConfigTableBody tr').last();
+            $('#issueBoardConfigTableBody').prepend(createIssueBoardConfigRow(payload));
+            $row = $('#issueBoardConfigTableBody tr').first();
         } else {
             setIssueConfigRowData($row, payload);
         }
@@ -4156,6 +4155,7 @@ function regroupRows($container){
     };
 
     function setMasterGembaWalkMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         const $message = $('#masterGembaWalkMessage');
         if (!$message.length) return;
         if (!message) {
@@ -4569,6 +4569,7 @@ function regroupRows($container){
     };
 
     function setMasterAbnormalityMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         const $message = $('#masterAbnormalityMessage');
         if (!$message.length) return;
         if (!message) {
@@ -4989,6 +4990,7 @@ function regroupRows($container){
     };
 
     function setMasterGembaKaizenMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         const $message = $('#masterGembaKaizenMessage');
         if (!$message.length) return;
         if (!message) {
@@ -6134,6 +6136,7 @@ function regroupRows($container){
     };
 
     function setMasterProcessMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         const $message = $('#masterProcessMessage');
         if (!$message.length) return;
         if (!message) {
@@ -6588,6 +6591,7 @@ function regroupRows($container){
     let savedMasterPlantName = '';
 
     function setMasterPlantMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         const $message = $('#masterPlantMessage');
         if (!$message.length) return;
         if (!message) {
@@ -6598,6 +6602,7 @@ function regroupRows($container){
     }
 
     function setMasterPlantAddMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         const $message = $('#masterPlantAddMessage');
         if (!$message.length) return;
         if (!message) {
@@ -7362,11 +7367,8 @@ window.openLicenseModal = function () {
     if (!input) return;
 
     input.value = "";
-
-    input.oninput = function (e) {
-        realLicenseValue = e.target.value;
-        e.target.value = "*".repeat(realLicenseValue.length);
-    };
+    realLicenseValue = "";
+    document.getElementById('licenseModalMessage').textContent = '';
 };
 
 window.closeLicenseModal = function () {
@@ -7375,10 +7377,10 @@ window.closeLicenseModal = function () {
 };
 
 window.saveLicenseFromModal = function () {
-    const token = realLicenseValue;
+    const token = (document.getElementById('licenseMaskedInput').value || '').trim();
 
     if (!token) {
-        showMessage('licenseMessage', 'License token is required.', 'error');
+        showMessage('licenseModalMessage', 'License token is required.', 'error');
         return;
     }
 
@@ -7396,17 +7398,18 @@ window.saveLicenseFromModal = function () {
 
         success: function(response) {
             if (!response || response.status !== 'success') {
-                showMessage('licenseMessage', 'License save failed.', 'error');
+                showMessage('licenseModalMessage', response && response.message ? response.message : 'License save failed.', 'error');
                 return;
             }
 
             showMessage('licenseMessage', 'License saved successfully.', 'success');
+            closeLicenseModal();
 
             loadLicenseConfig(); // refresh UI
         },
 
-        error: function() {
-            showMessage('licenseMessage', 'Error saving license.', 'error');
+        error: function(xhr) {
+            showMessage('licenseModalMessage', xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error saving license.', 'error');
         },
 
         complete: function() {
@@ -7414,7 +7417,6 @@ window.saveLicenseFromModal = function () {
         }
     });
 
-    closeLicenseModal();
 };
 
 

@@ -67,7 +67,11 @@ public class GembaWalkConfigService {
 
     @Transactional
     public GembaWalkRecord create(GembaWalkRecord record, String username, String role) {
+        if (record.getId() != null) throw new IllegalArgumentException("Use Update to change an existing record");
         applyDefaults(record, username, true);
+        // Existing walks retain their original, read-only location even if master data changes.
+        // Validate against the current master list only when creating a walk.
+        validateConfigured(record.getLocationOfMswConducted(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Location of MSW Conducted");
         assignmentHistoryService.validateTransition(true, "", record.getResponsibility(), "", record.getReassignedTo1(), record.getReassignment1Remark(), "", record.getReassignedTo2(), record.getReassignment2Remark());
         validateResponsibility(record.getResponsibility(), record.getDepartment(), record.getLocationOfMswConducted(),
                 currentUser(username).orElse(null), "", role, null);
@@ -106,7 +110,7 @@ public class GembaWalkConfigService {
             existing.setAssignmentRemark(trim(incoming.getAssignmentRemark()));
             existing.setFinalComments(trim(incoming.getFinalComments()));
             existing.setDepartment(deriveDepartment(existing.getLocationOfMswConducted(), incoming.getDepartment(), existing.getCreatorDepartment()));
-            applyDefaults(existing, username, true);
+            applyDefaults(existing, username, false);
             updateEditableObservationFields(existing, incoming.getObservations());
             GembaWalkRecord saved = repository.save(existing);
             assignmentHistoryService.record("gemba-walk", saved.getId(), previousAssignee, saved.getResponsibility(), incoming.getAssignmentRemark(), username, saved.getLocationOfMswConducted());
@@ -124,6 +128,17 @@ public class GembaWalkConfigService {
             }
             return saved;
         });
+    }
+
+    @Transactional
+    public boolean delete(Long id, String username, String role) {
+        Optional<GembaWalkRecord> record = findForUser(id, username, role);
+        if (record.isEmpty()) return false;
+        if (!RoleAccess.isAdmin(role) && !canUpdateRecord(record.get(), currentUser(username).orElse(null))) {
+            throw new IllegalArgumentException("You can delete only records you are allowed to edit" );
+        }
+        repository.deleteById(id);
+        return true;
     }
 
     public Map<String, Object> options(String username, String role, String department, String location, Long recordId) {
@@ -196,7 +211,6 @@ public class GembaWalkConfigService {
             defaultResponsibility(record.getDepartment(), record.getLocationOfMswConducted()).ifPresent(record::setResponsibility);
         }
         record.setFinalComments(trim(record.getFinalComments()));
-        validateConfigured(record.getLocationOfMswConducted(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Location of MSW Conducted");
     }
 
     private List<GembaWalkRecord> withDisplayIdentity(List<GembaWalkRecord> records) {
@@ -222,11 +236,11 @@ public class GembaWalkConfigService {
     }
 
     private void replaceObservations(GembaWalkRecord record, List<GembaWalkObservation> observations) {
+        List<GembaWalkObservation> source = observations == null ? List.of() : new ArrayList<>(observations);
         if (record.getObservations() == null) {
             record.setObservations(new ArrayList<>());
         }
         record.getObservations().clear();
-        List<GembaWalkObservation> source = observations == null ? List.of() : new ArrayList<>(observations);
         int order = 1;
         for (GembaWalkObservation observation : source) {
             GembaWalkObservation item = new GembaWalkObservation();

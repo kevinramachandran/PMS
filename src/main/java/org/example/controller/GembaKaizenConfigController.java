@@ -54,7 +54,7 @@ public class GembaKaizenConfigController {
 
     @PostMapping("/records")
     public ResponseEntity<Map<String, Object>> create(@RequestBody GembaKaizenRecord record, HttpSession session) {
-        if (!canView(session)) {
+        if (!canEdit(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
@@ -80,6 +80,14 @@ public class GembaKaizenConfigController {
         }
     }
 
+    @DeleteMapping("/records/{id}")
+    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id, HttpSession session) {
+        if (!canEdit(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+        return service.delete(id, username(session), role(session))
+                ? ResponseEntity.ok(Map.of("status", "success"))
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Not found"));
+    }
+
     @GetMapping("/options")
     public ResponseEntity<Map<String, Object>> options(@RequestParam(value = "department", required = false) String department,
                                                        @RequestParam(value = "location", required = false) String location,
@@ -89,6 +97,13 @@ public class GembaKaizenConfigController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), department, location, recordId)));
+    }
+
+    private boolean canEdit(HttpSession session) {
+        if (session == null) return false;
+        Object raw = session.getAttribute("editPermissions");
+        Set<String> edits = raw instanceof Set<?> values ? values.stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet()) : Set.of();
+        return RoleAccess.canEditPage(role(session), edits, RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION);
     }
 
     private boolean canView(HttpSession session) {

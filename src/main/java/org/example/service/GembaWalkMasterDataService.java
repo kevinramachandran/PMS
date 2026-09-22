@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class GembaWalkMasterDataService {
 
     public static final String GEMBA_CATEGORY = "GEMBA_CATEGORY";
@@ -15,8 +16,11 @@ public class GembaWalkMasterDataService {
 
     private final GembaWalkMasterDataItemRepository repository;
 
-    public GembaWalkMasterDataService(GembaWalkMasterDataItemRepository repository) {
+    private final MasterReferenceService references;
+
+    public GembaWalkMasterDataService(GembaWalkMasterDataItemRepository repository, MasterReferenceService references) {
         this.repository = repository;
+        this.references = references;
     }
 
     public List<GembaWalkMasterDataItem> list(String category) {
@@ -52,6 +56,7 @@ public class GembaWalkMasterDataService {
         GembaWalkMasterDataItem item = existing.get();
         String normalizedName = normalizeName(name);
         rejectDuplicate(item.getCategory(), normalizedName, id);
+        if (!normalizedName.equals(item.getName())) references.captureBeforeChange(GembaWalkMasterDataItem.class, item.getCategory(), item.getName());
         item.setName(normalizedName);
         return Optional.of(repository.save(item));
     }
@@ -60,6 +65,8 @@ public class GembaWalkMasterDataService {
         if (id == null || !repository.existsById(id)) {
             return false;
         }
+        GembaWalkMasterDataItem item = repository.findById(id).orElseThrow();
+        references.captureBeforeChange(GembaWalkMasterDataItem.class, item.getCategory(), item.getName());
         repository.deleteById(id);
         return true;
     }

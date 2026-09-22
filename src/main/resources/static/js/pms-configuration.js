@@ -520,15 +520,12 @@
         }));
     }
 
-    function filteredDesignations(plant, department, area) {
-        const areas = splitAreaValues(area).map(function(value) { return value.toLowerCase(); });
-        if (!plant || !department || areas.length === 0) {
+    function filteredDesignations(plant) {
+        if (!plant) {
             return [];
         }
         return itemNames((masterDataOptions.designationItems || []).filter(function(item) {
-            return sameValue(item.parentPlant, plant)
-                && sameValue(item.parentDepartment, department)
-                && areas.indexOf(String(item.parentProcessArea || '').trim().toLowerCase()) !== -1;
+            return sameValue(item.parentPlant, plant);
         }));
     }
 
@@ -547,7 +544,7 @@
         setMultiSelectOptions(fields.area, filteredAreas(fields.plant ? fields.plant.value : '', fields.department ? fields.department.value : ''), area);
 
         const designation = selectedOrCurrent(selected, 'designation', fields.designation && fields.designation.value);
-        setSelectOptions(fields.designation, filteredDesignations(fields.plant ? fields.plant.value : '', fields.department ? fields.department.value : '', getSelectedAreaValue(fields.area)), designation);
+        setSelectOptions(fields.designation, filteredDesignations(fields.plant ? fields.plant.value : ''), designation);
     }
 
     function loadMasterOptions() {

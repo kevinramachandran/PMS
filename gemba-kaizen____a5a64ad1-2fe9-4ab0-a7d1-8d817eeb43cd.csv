@@ -1,0 +1,2 @@
+﻿id,name,lastModifiedTime,gembaKaizenProviderName,employeeIdHoNumber,department,classificationOfKaizen,gembaKaizenLocation,gembaKaizenGenerationDate,kaizenIdea,pictureImage,benefitsOfKaizen,isKaizenImplemented,assignedTo,reassignedTo1,reassignment1Remark,reassignedTo2,reassignment2Remark,assignmentRemark,plantId,departmentId,processAreaId,classificationOfKaizenId
+1,,13:33,,,Kevin Department,Class 1,Kevin Process,2026-09-22,Cloud data,b77c9ebc-8f95-4eee-b2a7-29f2f2d58b8b.jpg,Cloud Kaizen data,No,priya,,,,,,1,2,3,1

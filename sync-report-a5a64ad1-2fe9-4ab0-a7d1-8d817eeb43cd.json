@@ -1,0 +1,9 @@
+{
+  "warnings" : [ ],
+  "updated" : 0,
+  "errors" : [ "plant-master__PLANT__a5a64ad1-2fe9-4ab0-a7d1-8d817eeb43cd.csv: CSV row 2: ID 1 belongs to a different master category", "Stopped before phase 1 because an earlier phase failed; remaining files were not imported." ],
+  "files" : [ ],
+  "runId" : "a5a64ad1-2fe9-4ab0-a7d1-8d817eeb43cd",
+  "unchanged" : 0,
+  "created" : 0
+}

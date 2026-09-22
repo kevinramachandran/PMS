@@ -1,0 +1,25 @@
+:root { --sync-green: #16783b; --sync-ink: #18352a; --sync-muted: #60766a; --sync-border: #d4e1d8; }
+body.sync-configuration-page { min-height: 100vh; background: #edf4ef; color: var(--sync-ink); }
+body.sync-configuration-page .main-content { min-height: 100vh; }
+.sync-shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 42px; }
+.sync-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.sync-back { color: var(--sync-green); font-size: 13px; font-weight: 700; text-decoration: none; }
+.sync-kicker { margin: 16px 0 5px; color: #69917b; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.sync-header h1 { margin: 0; font-size: clamp(26px, 4vw, 42px); letter-spacing: 0; }
+.sync-subtitle { max-width: 680px; margin: 10px 0 0; color: var(--sync-muted); line-height: 1.6; }
+.sync-badge { padding: 10px 14px; border: 1px solid #bad5c2; border-radius: 7px; color: var(--sync-green); background: #f8fcf9; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.sync-status-panel, .sync-card { border: 1px solid var(--sync-border); border-radius: 9px; background: #fff; box-shadow: 0 8px 26px #18452a0d; }
+.sync-status-panel { padding: 18px 20px; margin-bottom: 18px; }
+.sync-status-line { display: flex; align-items: center; gap: 9px; font-size: 14px; }.sync-status-line span:last-child { color: var(--sync-muted); }
+.sync-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #8aa095; }.sync-status-dot.running { background: #d28a15; }.sync-status-dot.success { background: #19853f; }.sync-status-dot.error { background: #b43c32; }
+.sync-progress-track { height: 8px; margin-top: 14px; overflow: hidden; border-radius: 9px; background: #e5eee8; }.sync-progress-bar { width: 0; height: 100%; background: var(--sync-green); transition: width .3s ease; }.sync-progress-bar.running { width: 65%; animation: sync-pulse 1.2s ease-in-out infinite alternate; }.sync-times { margin: 9px 0 0; color: var(--sync-muted); font-size: 12px; }
+.sync-card { padding: 24px; }.sync-card-heading { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5eee8; }.sync-card-heading .sync-kicker { margin-top: 0; }.sync-card-heading h2 { margin: 0 0 16px; font-size: 19px; }.sync-card-heading > i { color: #81aa91; font-size: 24px; }.local-heading { margin-top: 28px; }
+.sync-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }.sync-grid-wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sync-card label { display: flex; flex-direction: column; gap: 7px; color: #385247; font-size: 12px; font-weight: 700; }.sync-card input, .sync-card textarea { box-sizing: border-box; width: 100%; border: 1px solid #cbdad0; border-radius: 5px; padding: 11px 12px; background: #fbfdfb; color: var(--sync-ink); font: inherit; font-weight: 400; }.sync-card textarea { margin-top: 16px; resize: vertical; }.sync-card input:focus, .sync-card textarea:focus { outline: 3px solid #bfe0c9; border-color: var(--sync-green); }
+.sync-toggle { flex-direction: row !important; align-items: center; margin-top: 18px; }.sync-toggle input { width: 17px; height: 17px; }.sync-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }.sync-actions button { border: 0; border-radius: 6px; padding: 11px 17px; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }.sync-save { background: #496b58; }.sync-now { background: var(--sync-green); }.sync-actions button:hover { filter: brightness(.93); }.sync-form-message { min-height: 20px; margin: 14px 0 0; color: var(--sync-green); font-size: 13px; text-align: right; }
+.sync-manual-note { margin: 18px 0 0; color: var(--sync-muted); font-size: 13px; }
+@keyframes sync-pulse { from { opacity: .55; } to { opacity: 1; } }
+.sync-page-footer { padding: 12px 24px 18px; color: #6b8074; font-size: 12px; text-align: center; }.sync-page-footer span { padding: 0 6px; color: #a2b5a9; }
+@media (max-width: 720px) { .sync-shell { width: min(100% - 24px, 620px); padding-top: 20px; }.sync-header { align-items: flex-start; flex-direction: column; }.sync-grid, .sync-grid-wide { grid-template-columns: 1fr; }.sync-actions { flex-direction: column; }.sync-actions button { width: 100%; } }
+.sync-status-dot.success_with_warnings, .sync-progress-bar.success_with_warnings { background: #ab730b; }
+.sync-progress-bar.success, .sync-progress-bar.success_with_warnings { width: 100%; }

@@ -5743,7 +5743,7 @@ body.user-management-page #deleteUserModal {
 
 .user-dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     margin: 18px 0;
 }
@@ -5808,8 +5808,24 @@ body.user-management-page #deleteUserModal {
 
 .user-dashboard-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+.user-dashboard-card-wide {
+    grid-column: 1 / -1;
+}
+
+.user-dashboard-grid .user-item-list {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.user-dashboard-grid .user-list-row {
+    min-width: 260px;
+    grid-template-columns: minmax(110px, 1fr) minmax(85px, 110px);
+    gap: 5px 12px;
 }
 
 .user-dashboard-card {
@@ -5976,8 +5992,9 @@ body.user-management-page #deleteUserModal {
 }
 
 @media (max-width: 1100px) {
-    .user-dashboard-stats {
-        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    .user-dashboard-stats,
+    .user-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
 }
@@ -6002,7 +6019,9 @@ body.user-management-page #deleteUserModal {
         text-align: left;
     }
 
-    .user-list-row {
+    .user-list-row,
+    .user-dashboard-grid .user-list-row {
+        min-width: 0;
         grid-template-columns: 1fr;
         gap: 6px;
     }

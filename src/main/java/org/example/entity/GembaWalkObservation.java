@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "gemba_walk_observations")
-public class GembaWalkObservation {
+public class GembaWalkObservation extends MasterMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

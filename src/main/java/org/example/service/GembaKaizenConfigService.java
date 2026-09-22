@@ -66,6 +66,7 @@ public class GembaKaizenConfigService {
 
     @Transactional
     public GembaKaizenRecord create(GembaKaizenRecord record, String username, String role) {
+        if (record.getId() != null) throw new IllegalArgumentException("Use Update to change an existing record");
         applyDefaults(record, username, true);
         assignmentHistoryService.validateTransition(true, "", record.getAssignedTo(), "", record.getReassignedTo1(), record.getReassignment1Remark(), "", record.getReassignedTo2(), record.getReassignment2Remark());
         validateAssignedTo(record.getAssignedTo(), record.getDepartment(), record.getGembaKaizenLocation(),
@@ -125,6 +126,17 @@ public class GembaKaizenConfigService {
             }
             return saved;
         });
+    }
+
+    @Transactional
+    public boolean delete(Long id, String username, String role) {
+        Optional<GembaKaizenRecord> record = findForUser(id, username, role);
+        if (record.isEmpty()) return false;
+        if (!RoleAccess.isAdmin(role) && !canUpdateRecord(record.get(), currentUser(username).orElse(null))) {
+            throw new IllegalArgumentException("You can delete only records you are allowed to edit" );
+        }
+        repository.deleteById(id);
+        return true;
     }
 
     public Map<String, Object> options(String username, String role, String department, String location, Long recordId) {
@@ -190,9 +202,11 @@ public class GembaKaizenConfigService {
                     record.setAssignedTo(firstNonBlank(user.getUsername(), user.getName())));
         }
         record.setIsKaizenImplemented(normalizeYesNo(record.getIsKaizenImplemented()));
-        validateConfigured(record.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
-        validateConfigured(record.getGembaKaizenLocation(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Gemba Kaizen Location");
-        validateConfigured(record.getClassificationOfKaizen(), kaizenMasterDataService.names(GembaKaizenMasterDataService.CLASSIFICATION_OF_KAIZEN), "Classification of Kaizen");
+        if (forceUserIdentity) {
+            validateConfigured(record.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
+            validateConfigured(record.getGembaKaizenLocation(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Gemba Kaizen Location");
+            validateConfigured(record.getClassificationOfKaizen(), kaizenMasterDataService.names(GembaKaizenMasterDataService.CLASSIFICATION_OF_KAIZEN), "Classification of Kaizen");
+        }
     }
 
     private void validateConfigured(String value, List<String> options, String label) {

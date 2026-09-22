@@ -13,7 +13,7 @@ import jakarta.persistence.UniqueConstraint;
         name = "plant_master_data_items",
         uniqueConstraints = @UniqueConstraint(name = "uk_plant_master_hierarchy_name", columnNames = {"category", "parent_plant", "parent_department", "parent_process_area", "name"})
 )
-public class PlantMasterDataItem {
+public class PlantMasterDataItem extends MasterMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

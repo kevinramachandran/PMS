@@ -34,6 +34,7 @@ $(function() {
         ['dateOfGwProcessConfirmationConducted', 'Date of the GW Process Confirmation conducted', 'date'],
         ['gwPcWeek', 'GW PC week', 'text'],
         ['assignedTo', 'Assigned To', 'select'],
+        ['assignmentRemark', 'Remarks (optional)', 'textarea'],
         ['reassignedTo1', 'Reassign 1', 'select'],
         ['reassignment1Remark', 'Reassign 1 Remarks', 'textarea'],
         ['reassignedTo2', 'Reassign 2', 'select'],
@@ -99,7 +100,7 @@ $(function() {
             ? '<textarea id="' + id + '" rows="2"></textarea>'
             : '<input id="' + id + '" type="' + type + '">';
         if (type === 'select') input = '<select id="' + id + '"></select>';
-        return '<div class="carlex-form-group' + (type === 'textarea' ? ' carlex-wide' : '') + '">' +
+        return '<div class="carlex-form-group' + (type === 'textarea' && id !== 'assignmentRemark' ? ' carlex-wide' : '') + '">' +
             '<label for="' + id + '">' + label + '</label>' + input + '</div>';
     }
 
@@ -527,6 +528,7 @@ $(function() {
                 saveInFlight = false;
                 close();
                 load();
+                if (window.PmsFeedback) window.PmsFeedback.show(id ? 'Process Confirmation updated successfully.' : 'Process Confirmation saved successfully.', 'success');
             },
             error: function(xhr) {
                 showFormError(xhr.responseJSON?.message || 'Unable to save record. Please try again.');
@@ -572,14 +574,26 @@ $(function() {
         open(record, $(this).hasClass('carlex-view'));
     });
     $(document).on('click', '.carlex-delete', function() {
-        const id = $(this).data('id');
-        confirmDelete({
+        const $button = $(this);
+        if ($button.prop('disabled')) return;
+        const id = $button.data('id');
+        $button.prop('disabled', true);
+        Promise.resolve(confirmDelete({
             title: 'Delete process confirmation?',
             message: 'This process confirmation record will be permanently deleted.',
             confirmText: 'Delete Record'
-        }).then(function(confirmed) {
-            if (confirmed) $.ajax({ url: API + '/' + id, type: 'DELETE', success: load });
-        });
+        })).then(function(confirmed) {
+            if (!confirmed) return;
+            return $.ajax({ url: API + '/' + encodeURIComponent(id), type: 'DELETE' }).then(function(data) {
+                if (data && data.status === 'error') throw new Error(data.message || 'Unable to delete this record.');
+                load();
+                if (window.PmsFeedback) window.PmsFeedback.show('Process Confirmation deleted successfully.', 'success');
+            });
+        }).catch(function(error) {
+            const message = error.responseJSON && error.responseJSON.message || error.message || 'Unable to delete this record.';
+            if (window.PmsFeedback) window.PmsFeedback.show(message, 'error');
+            else window.alert(message);
+        }).finally(function() { $button.prop('disabled', false); });
     });
     $(document).on('change', '.pc-observation-image', function() {
         const input = this;

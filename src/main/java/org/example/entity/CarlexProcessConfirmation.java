@@ -10,7 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "carlex_process_confirmations")
-public class CarlexProcessConfirmation {
+public class CarlexProcessConfirmation extends MasterMappedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
@@ -31,7 +31,7 @@ public class CarlexProcessConfirmation {
     @Column(name = "reassignment1_remark", columnDefinition = "TEXT") public String reassignment1Remark;
     @Column(name = "reassigned_to2", columnDefinition = "TEXT") public String reassignedTo2;
     @Column(name = "reassignment2_remark", columnDefinition = "TEXT") public String reassignment2Remark;
-    @Transient public String assignmentRemark;
+    @Column(name = "assignment_remark", columnDefinition = "TEXT") public String assignmentRemark;
 
     @Column(name = "zm1_description", columnDefinition = "TEXT") public String zm1Description;
     @Column(name = "zm1_counter_measure_actions", columnDefinition = "TEXT") public String zm1CounterMeasureActions;

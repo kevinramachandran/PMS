@@ -1,4 +1,28 @@
 (function () {
+    window.PmsFeedback = {
+        show: function (message, type) {
+            if (!message) return;
+            let notice = document.getElementById('pmsActionFeedback');
+            if (!notice) {
+                notice = document.createElement('div');
+                notice.id = 'pmsActionFeedback';
+                const text = document.createElement('span');
+                text.className = 'pms-action-feedback-text';
+                const close = document.createElement('button');
+                close.type = 'button'; close.textContent = '\u00d7';
+                close.setAttribute('aria-label', 'Dismiss message');
+                close.addEventListener('click', function () { notice.hidden = true; });
+                notice.appendChild(text); notice.appendChild(close);
+                document.body.appendChild(notice);
+            }
+            const state = type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'success';
+            notice.className = 'pms-action-feedback pms-action-feedback-' + state;
+            notice.setAttribute('role', state === 'error' ? 'alert' : 'status');
+            notice.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
+            notice.querySelector('.pms-action-feedback-text').textContent = message;
+            notice.hidden = false;
+        }
+    };
     function getMonthValue() {
         const now = new Date();
         return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');

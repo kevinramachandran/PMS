@@ -9,7 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "gemba_walk_records")
-public class GembaWalkRecord {
+public class GembaWalkRecord extends MasterMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

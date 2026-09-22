@@ -12,7 +12,7 @@ import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "abnormality_reporting_records")
-public class AbnormalityReportingRecord {
+public class AbnormalityReportingRecord extends MasterMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

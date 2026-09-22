@@ -22,6 +22,7 @@ $(function () {
     }
 
     function setMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         $('#abnormalityReportingMessage')
             .removeClass('show success error warning')
             .addClass(type || 'success')
@@ -303,7 +304,8 @@ $(function () {
                 '<td>' + escapeHtml(displayDate(record.dateClosed)) + '</td>' +
                 '<td>' + escapeHtml(record.tagStatus) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeAttr(record.id) + '">Loading...</td>' +
-                '<td><button type="button" class="ar-table-action ar-edit-record" data-id="' + escapeAttr(record.id) + '" title="Edit" aria-label="Edit abnormality reporting"><i class="fas fa-pen"></i></button></td>' +
+                '<td><button type="button" class="ar-table-action ar-edit-record" data-id="' + escapeAttr(record.id) + '" title="Edit" aria-label="Edit abnormality reporting"><i class="fas fa-pen"></i></button>' +
+                '<button type="button" class="ar-table-action ar-delete-record" data-id="' + escapeAttr(record.id) + '" title="Delete" aria-label="Delete abnormality reporting"><i class="fas fa-trash"></i></button></td>' +
                 '</tr>';
         }).join('');
             $('#abnormalityReportingRecordsBody').html(rows || '<tr><td colspan="18" class="ar-empty">No records found.</td></tr>');
@@ -409,6 +411,28 @@ $(function () {
 
     $('#abnormalityReportingRecordsBody').on('click', '.ar-edit-record', function() {
         loadRecordById($(this).data('id'));
+    });
+
+    $('#abnormalityReportingRecordsBody').on('click', '.ar-delete-record', function() {
+        const $button = $(this);
+        if ($button.prop('disabled')) return;
+        const id = $button.data('id');
+        if (!id) return;
+        $button.prop('disabled', true);
+        const confirmation = window.PmsConfirm && typeof window.PmsConfirm.open === 'function'
+            ? window.PmsConfirm.open({ title: 'Delete Abnormality report?', message: 'This record will be permanently deleted.', confirmText: 'Delete record' })
+            : Promise.resolve(window.confirm('Delete this Abnormality report?'));
+        confirmation.then(function(confirmed) {
+            if (!confirmed) return;
+            return $.ajax({ url: API + '/records/' + encodeURIComponent(id), type: 'DELETE' })
+                .then(function(data) {
+                    if (!data || data.status !== 'success') throw new Error(data && data.message || 'Unable to delete this record.');
+                    loadRecords();
+                    setMessage('Abnormality report deleted successfully.', 'success');
+                });
+        }).catch(function(error) {
+            setMessage(error.responseJSON && error.responseJSON.message || error.message || 'Unable to delete this record.', 'error');
+        }).finally(function() { $button.prop('disabled', false); });
     });
 
     $('#abnormalityReportingDrawerClose, #cancelAbnormalityReportingBtn').on('click', function() {

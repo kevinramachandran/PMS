@@ -83,6 +83,7 @@ public class CarlexProcessConfirmationService {
 
     @Transactional
     public CarlexProcessConfirmation create(CarlexProcessConfirmation record, String username, String role) {
+        if (record.id != null) throw new IllegalArgumentException("Use Update to change an existing record");
         applyDefaults(record, username, true);
         assignmentHistoryService.validateTransition(true, "", record.assignedTo, "", record.reassignedTo1, record.reassignment1Remark, "", record.reassignedTo2, record.reassignment2Remark);
         AppUser actor = currentUser(username).orElse(null);
@@ -120,11 +121,15 @@ public class CarlexProcessConfirmationService {
             String previousReassignedTo1 = existing.reassignedTo1;
             String previousReassignedTo2 = existing.reassignedTo2;
             boolean wasCompleted = isCompleted(existing);
+            String previousDepartment = trim(existing.department);
+            String previousArea = trim(existing.areaOfGwProcessConfirmationConducted);
             assignmentHistoryService.validateTransition(false, previousAssignee, incoming.assignedTo, previousReassignedTo1, incoming.reassignedTo1, incoming.reassignment1Remark, previousReassignedTo2, incoming.reassignedTo2, incoming.reassignment2Remark);
             copyEditableFields(existing, incoming);
             applyDefaults(existing, username, false);
-            validateConfigured(existing.department, plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
-            validateConfigured(existing.areaOfGwProcessConfirmationConducted, plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area");
+            if (!previousDepartment.equalsIgnoreCase(trim(existing.department)))
+                validateConfigured(existing.department, plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
+            if (!previousArea.equalsIgnoreCase(trim(existing.areaOfGwProcessConfirmationConducted)))
+                validateConfigured(existing.areaOfGwProcessConfirmationConducted, plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area");
             validateAssignedTo(existing.assignedTo, existing.department, existing.areaOfGwProcessConfirmationConducted,
                     actor, role, previousAssignee, existing);
             validateAssignedTo(existing.reassignedTo1, existing.department, existing.areaOfGwProcessConfirmationConducted, actor, role, previousReassignedTo1, existing);
@@ -260,6 +265,10 @@ public class CarlexProcessConfirmationService {
     }
 
     private List<CarlexProcessConfirmationObservation> parseObservationRows(String groupType, String json) {
+        return parseCloudObservations(objectMapper, groupType, json);
+    }
+
+    static List<CarlexProcessConfirmationObservation> parseCloudObservations(ObjectMapper objectMapper, String groupType, String json) {
         if (isBlank(json)) {
             return List.of();
         }
@@ -300,6 +309,10 @@ public class CarlexProcessConfirmationService {
     }
 
     private String observationsJson(CarlexProcessConfirmation record, String groupType) {
+        return cloudObservationsJson(objectMapper, record, groupType);
+    }
+
+    static String cloudObservationsJson(ObjectMapper objectMapper, CarlexProcessConfirmation record, String groupType) {
         if (record.observations == null || record.observations.isEmpty()) {
             return "";
         }
@@ -543,15 +556,52 @@ public class CarlexProcessConfirmationService {
                 .append(row("Email", record.email))
                 .append(row("Area Responsibility", record.areaResponsibility))
                 .append(row("Assigned To", record.assignedTo))
+                .append(optionalEmailRow("Assignment Remarks", record.assignmentRemark))
+                .append(optionalEmailRow("Reassigned To 1", record.reassignedTo1))
+                .append(optionalEmailRow("Reassignment 1 Remarks", record.reassignment1Remark))
+                .append(optionalEmailRow("Reassigned To 2", record.reassignedTo2))
+                .append(optionalEmailRow("Reassignment 2 Remarks", record.reassignment2Remark))
                 .append(row("GW PC Week", record.gwPcWeek))
-                .append(row("ZM 1", record.zm1Description))
-                .append(row("PM 1", record.pm1Description))
-                .append(row("QM 1", record.qm1Description))
-                .append(row("Status", statusSummary(record)))
                 .append("</table>")
+                .append(buildEmailObservations(record))
                 .append("<p style='margin:16px 0 0;font-size:13px;color:#6b7280;'>Regards,<br>Brewery PMS</p>")
                 .append("</td></tr></table></td></tr></table></body></html>");
         return html.toString();
+    }
+
+    private String buildEmailObservations(CarlexProcessConfirmation record) {
+        StringBuilder rows = new StringBuilder();
+        if (record.observations != null && !record.observations.isEmpty()) {
+            for (CarlexProcessConfirmationObservation observation : record.observations) {
+                rows.append(emailObservationRow(observation.getGroupType(), observation.getDescription(),
+                        observation.getCounterMeasureActions(), observation.getStatus()));
+            }
+        } else {
+            rows.append(emailObservationRow("ZM 1", record.zm1Description, record.zm1CounterMeasureActions, record.zm1Status));
+            rows.append(emailObservationRow("ZM 2", record.zm2Description, record.zm2CounterMeasureActions, record.zm2Status));
+            rows.append(emailObservationRow("PM 1", record.pm1Description, record.pm1CounterMeasureActions, record.pm1Status));
+            rows.append(emailObservationRow("PM 2", record.pm2Description, record.pm2CounterMeasureActions, record.pm2Status));
+            rows.append(emailObservationRow("QM 1", record.qm1Description, record.qm1CounterMeasureActions, record.qm1Status));
+            rows.append(emailObservationRow("QM 2", record.qm2Description, record.qm2CounterMeasureActions, record.qm2Status));
+        }
+        rows.append(emailObservationRow("OM 1", record.om1Description, record.om1CounterMeasureActions, record.om1Status));
+        return "<h3 style='margin:18px 0 8px;color:#003d24;font-size:16px;'>Observations</h3>"
+                + "<table cellspacing='0' cellpadding='0' width='100%' style='border-collapse:collapse;font-size:13px;'>"
+                + "<tr><th>Category</th><th>Observation</th><th>Countermeasure Actions</th><th>Status</th></tr>"
+                + rows + "</table>";
+    }
+
+    private String emailObservationRow(String category, String description, String actions, String status) {
+        if (isBlank(description) && isBlank(actions) && isBlank(status)) {
+            return "";
+        }
+        return "<tr>" + emailObservationCell(category) + emailObservationCell(description)
+                + emailObservationCell(actions) + emailObservationCell(status) + "</tr>";
+    }
+
+    private String emailObservationCell(String value) {
+        return "<td style='padding:8px 10px;border:1px solid #e5e7eb;color:#111827;vertical-align:top;'>"
+                + escape(firstNonBlank(value, "-")).replace("\n", "<br>") + "</td>";
     }
 
     private String statusSummary(CarlexProcessConfirmation record) {
@@ -560,11 +610,15 @@ public class CarlexProcessConfirmationService {
                 + " | QM: " + firstNonBlank(record.qm1Status, "-");
     }
 
+    private String optionalEmailRow(String label, String value) {
+        return isBlank(value) ? "" : row(label, value);
+    }
+
     private String row(String label, String value) {
         return "<tr><td style='padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;width:190px;color:#374151;font-weight:600;'>"
                 + escape(label)
                 + "</td><td style='padding:8px 10px;border:1px solid #e5e7eb;color:#111827;'>"
-                + escape(firstNonBlank(value, "-"))
+                + escape(firstNonBlank(value, "-")).replace("\n", "<br>")
                 + "</td></tr>";
     }
 
@@ -706,11 +760,11 @@ public class CarlexProcessConfirmationService {
         return trimmedFirst.isBlank() ? trim(second) : trimmedFirst;
     }
 
-    private boolean isBlank(String value) {
+    private static boolean isBlank(String value) {
         return trim(value).isBlank();
     }
 
-    private String trim(String value) {
+    private static String trim(String value) {
         return value == null ? "" : value.trim();
     }
 

@@ -310,10 +310,8 @@ $(document).ready(function() {
     function sortIssueRows(rows) {
         if (!issueBoardSortKey || !rows.length) {
             return [...rows].sort(function(a, b) {
-                const aVal = a.updatedAt || '';
-                const bVal = b.updatedAt || '';
-                const cmp = String(bVal).localeCompare(String(aVal));
-                return cmp !== 0 ? cmp : (Number(b.id || 0) - Number(a.id || 0));
+                const cmp = Number(a.rowOrder || 0) - Number(b.rowOrder || 0);
+                return cmp !== 0 ? cmp : (Number(a.id || 0) - Number(b.id || 0));
             });
         }
 
@@ -805,9 +803,6 @@ $(document).ready(function() {
                 updateSyncStatus('Last synced: ' + new Date().toLocaleTimeString('en-GB'));
             },
             error: function() {
-                currentIssueBoardData = [];
-                window.__issueBoardRows = [];
-                applyIssueBoardView();
                 updateSyncStatus('Sync failed');
             }
         });

@@ -65,6 +65,7 @@ public class SystemAdminInitializer {
         addColumnIfMissing("carlex_process_confirmations", "department", "TEXT NULL");
         addColumnIfMissing("carlex_process_confirmations", "reassigned_to1", "TEXT NULL");
         addColumnIfMissing("carlex_process_confirmations", "reassignment1_remark", "TEXT NULL");
+        addColumnIfMissing("carlex_process_confirmations", "assignment_remark", "TEXT NULL");
         addColumnIfMissing("carlex_process_confirmations", "reassigned_to2", "TEXT NULL");
         addColumnIfMissing("carlex_process_confirmations", "reassignment2_remark", "TEXT NULL");
     }

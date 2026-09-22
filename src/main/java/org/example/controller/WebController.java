@@ -245,6 +245,11 @@ public class WebController {
         return "pms-configuration";
     }
 
+    @GetMapping("/sync-configuration")
+    public String syncConfiguration() {
+        return "sync-configuration";
+    }
+
     @GetMapping("/smtp-configuration")
     public String smtpConfiguration(Model model) {
         model.addAttribute("emailPageMode", "smtp");

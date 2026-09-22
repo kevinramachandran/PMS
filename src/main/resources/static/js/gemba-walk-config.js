@@ -11,6 +11,7 @@ $(function() {
     let departments = [];
     let areaItems = [];
     let records = [];
+    let saveInFlight = false;
     let currentUserIdentity = {};
 
     const EDIT_ALLOWED_SELECTOR = [
@@ -70,6 +71,7 @@ $(function() {
     }
 
     function setMessage(message, type) {
+        if (message && window.PmsFeedback) window.PmsFeedback.show(message, type);
         $('#gembaWalkConfigMessage')
             .removeClass('show success error')
             .addClass(type || 'success')
@@ -323,7 +325,8 @@ $(function() {
                 '<td><span class="gw-status-pill">' + observations.length + '</span></td>' +
                 '<td>' + escapeHtml(record.finalComments) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
-                '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button></td>' +
+                '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button>' +
+                '<button type="button" class="gw-table-action gw-delete-record" data-id="' + escapeHtml(record.id) + '" title="Delete" aria-label="Delete Gemba Walk"><i class="fas fa-trash"></i></button></td>' +
                 '</tr>';
         }).join('');
         $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gw-empty-cell">No records found.</td></tr>');
@@ -423,6 +426,8 @@ $(function() {
     }
 
     function saveRecord() {
+        if (saveInFlight) return;
+        saveInFlight = true;
         const id = $('#gembaWalkRecordId').val();
         setSaveLoading(true);
         $.ajax({
@@ -433,7 +438,7 @@ $(function() {
             success: function(data) {
                 if (data && data.status === 'success' && data.record) {
                     setRecord(data.record);
-                    setMessage('Submitted.', 'success');
+                    setMessage(id ? 'Gemba Walk updated successfully.' : 'Gemba Walk saved successfully.', 'success');
                     loadRecords();
                     closeDrawer();
                 } else {
@@ -444,6 +449,7 @@ $(function() {
                 setMessage(xhr.responseJSON?.message || 'Unable to submit.', 'error');
             },
             complete: function() {
+                saveInFlight = false;
                 setSaveLoading(false);
             }
         });
@@ -498,6 +504,28 @@ $(function() {
 
     $('#gembaWalkConfigRecordsBody').on('click', '.gw-edit-record', function() {
         loadRecordIntoDrawer($(this).data('id'));
+    });
+
+    $('#gembaWalkConfigRecordsBody').on('click', '.gw-delete-record', function() {
+        const $button = $(this);
+        if ($button.prop('disabled')) return;
+        const id = $button.data('id');
+        if (!id) return;
+        $button.prop('disabled', true);
+        const confirmation = window.PmsConfirm && typeof window.PmsConfirm.open === 'function'
+            ? window.PmsConfirm.open({ title: 'Delete Gemba Walk?', message: 'This record will be permanently deleted.', confirmText: 'Delete record' })
+            : Promise.resolve(window.confirm('Delete this Gemba Walk?'));
+        confirmation.then(function(confirmed) {
+            if (!confirmed) return;
+            return $.ajax({ url: API + '/records/' + encodeURIComponent(id), type: 'DELETE' })
+                .then(function(data) {
+                    if (!data || data.status !== 'success') throw new Error(data && data.message || 'Unable to delete this record.');
+                    loadRecords();
+                    setMessage('Gemba Walk deleted successfully.', 'success');
+                });
+        }).catch(function(error) {
+            setMessage(error.responseJSON && error.responseJSON.message || error.message || 'Unable to delete this record.', 'error');
+        }).finally(function() { $button.prop('disabled', false); });
     });
 
     $('#gembaWalkConfigDrawerClose, #gembaWalkConfigCancelBtn').on('click', function() {

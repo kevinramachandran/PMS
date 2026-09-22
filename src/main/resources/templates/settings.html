@@ -6,9 +6,10 @@
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
-    <link rel="stylesheet" href="/css/settings.css?v=plant-two-row-layout-20260914">
+    <link rel="stylesheet" href="/css/settings.css?v=20260921-mutation-fixes">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=training-scroll-gap-20260914">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/data-sync.css?v=2">
 </head>
 <body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -66,6 +67,7 @@
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
                         <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                        <a href="/sync-configuration" class="nav-item nav-child" th:if="${syncConfigurationUser}" data-tooltip="Cloud Sync Configuration"><i class="fas fa-cloud-arrow-down"></i><span>Cloud Sync Configuration</span></a>
                         <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                         <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
                         <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
@@ -2025,7 +2027,8 @@
                                 <div class="modal-content">
                                     <h3>Enter License</h3>
 
-                                    <textarea id="licenseMaskedInput" rows="5" placeholder="Paste license here..."></textarea>
+                                    <input id="licenseMaskedInput" type="password" autocomplete="new-password" placeholder="Paste license here...">
+                                    <div id="licenseModalMessage" role="status"></div>
 
                                     <div class="modal-actions">
                                         <button class="btn btn-primary" onclick="saveLicenseFromModal()">Save</button>
@@ -2073,11 +2076,12 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=plant-name-only-header-20260913"></script>
-    <script src="/js/settings.js?v=plant-designation-lists-20260914"></script>
+    <script src="/js/settings.js?v=20260922-license-input"></script>
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
+    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
 </body>
 </html>
 

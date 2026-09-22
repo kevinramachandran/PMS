@@ -9,6 +9,7 @@ import org.example.util.RoleAccess;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -61,7 +62,7 @@ public class AbnormalityReportingConfigController {
 
     @PostMapping("/records")
     public ResponseEntity<?> create(@RequestBody AbnormalityReportingRecord request, HttpSession session) {
-        if (!canView(session)) {
+        if (!canEdit(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         try {
@@ -87,6 +88,14 @@ public class AbnormalityReportingConfigController {
         }
     }
 
+    @DeleteMapping("/records/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id, HttpSession session) {
+        if (!canEdit(session)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
+        return service.delete(id, username(session), role(session))
+                ? ResponseEntity.ok(Map.of("status", "success"))
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("status", "error", "message", "Record not found"));
+    }
+
     @GetMapping("/options")
     public ResponseEntity<?> options(@RequestParam(value = "department", required = false) String department,
                                      @RequestParam(value = "areaMachine", required = false) String areaMachine,
@@ -107,6 +116,13 @@ public class AbnormalityReportingConfigController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
         return ResponseEntity.ok(Map.of("status", "success", "options", service.departmentOptions(username(session), role(session), department, areaMachine, recordId)));
+    }
+
+    private boolean canEdit(HttpSession session) {
+        if (session == null) return false;
+        Object raw = session.getAttribute("editPermissions");
+        Set<String> edits = raw instanceof Set<?> values ? values.stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet()) : Set.of();
+        return RoleAccess.canEditPage(role(session), edits, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION);
     }
 
     private boolean canView(HttpSession session) {

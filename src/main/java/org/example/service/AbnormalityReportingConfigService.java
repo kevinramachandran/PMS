@@ -69,6 +69,7 @@ public class AbnormalityReportingConfigService {
 
     @Transactional
     public AbnormalityReportingRecord create(AbnormalityReportingRecord request, String username, String role) {
+        if (request.getId() != null) throw new IllegalArgumentException("Use Update to change an existing record");
         AbnormalityReportingRecord record = new AbnormalityReportingRecord();
         apply(record, request, username, role, true);
         applyClosedDate(record);
@@ -99,11 +100,11 @@ public class AbnormalityReportingConfigService {
         AbnormalityReportingRecord saved = repository.save(record);
         assignmentHistoryService.record("abnormality-reporting", saved.getId(), previousAssignee, saved.getAssignTo(), request.getAssignmentRemark(), username, saved.getDepartment());
         assignmentHistoryService.recordStages("abnormality-reporting", saved.getId(), saved.getAssignTo(), previousFirst, saved.getReassignedTo1(), saved.getReassignment1Remark(), previousSecond, saved.getReassignedTo2(), saved.getReassignment2Remark(), username, saved.getDepartment());
-            if (!trim(previousFirst).equalsIgnoreCase(trim(saved.getReassignedTo1()))) {
+            if (!sameOptionalValue(previousFirst, saved.getReassignedTo1())) {
                 NotificationDispatch.afterCommit(() -> resolveUser(saved.getReassignedTo1()).map(AppUser::getEmail).filter(this::hasText).ifPresent(email ->
                         emailConfigService.sendEmail(List.of(email), "Abnormality Report Reassigned: #" + saved.getId(), buildEmailBody(saved), true, true)));
             }
-            if (!trim(previousSecond).equalsIgnoreCase(trim(saved.getReassignedTo2()))) {
+            if (!sameOptionalValue(previousSecond, saved.getReassignedTo2())) {
                 NotificationDispatch.afterCommit(() -> resolveUser(saved.getReassignedTo2()).map(AppUser::getEmail).filter(this::hasText).ifPresent(email ->
                         emailConfigService.sendEmail(List.of(email), "Abnormality Report Reassigned: #" + saved.getId(), buildEmailBody(saved), true, true)));
             }
@@ -111,6 +112,17 @@ public class AbnormalityReportingConfigService {
             NotificationDispatch.afterCommit(() -> notifyClosure(saved));
         }
         return Optional.of(saved);
+    }
+
+    @Transactional
+    public boolean delete(Long id, String username, String role) {
+        Optional<AbnormalityReportingRecord> record = findForUser(id, username, role);
+        if (record.isEmpty()) return false;
+        if (!RoleAccess.isAdmin(role) && !canUpdateRecord(record.get(), currentUser(username).orElse(null))) {
+            throw new IllegalArgumentException("You can delete only records you are allowed to edit" );
+        }
+        repository.deleteById(id);
+        return true;
     }
 
     public Map<String, Object> options(String username, String role, String department, String areaMachine, Long recordId) {
@@ -160,16 +172,20 @@ public class AbnormalityReportingConfigService {
         if (request == null) {
             throw new IllegalArgumentException("Record is required");
         }
-        validateConfigured(request.getTypeOfTag(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE), "Type of Tag");
+        if (forceCurrentUser || !sameOptionalValue(record.getTypeOfTag(), request.getTypeOfTag()))
+            validateConfigured(request.getTypeOfTag(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABT_TAG_TYPE), "Type of Tag");
         validateInSet(request.getPriority(), PRIORITIES, "Priority");
         validateRequired(request.getDateRaised(), "Date Raised");
         validateInSet(request.getShift(), SHIFTS, "Shift");
-        validateConfigured(request.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
-        validateConfigured(request.getAreaMachine(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area/Machine");
+        if (forceCurrentUser || !sameOptionalValue(record.getDepartment(), request.getDepartment()))
+            validateConfigured(request.getDepartment(), plantMasterDataService.names(PlantMasterDataService.DEPARTMENT), "Department");
+        if (forceCurrentUser || !sameOptionalValue(record.getAreaMachine(), request.getAreaMachine()))
+            validateConfigured(request.getAreaMachine(), plantMasterDataService.names(PlantMasterDataService.PROCESS_AREA), "Area/Machine");
         validateRequired(request.getComponent(), "Component");
         validateRequired(request.getDescription(), "Description");
         validateRequired(request.getProposedAction(), "Proposed Action");
-        validateConfigured(request.getAbnormalityDefectType(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE), "Abnormality/Defect Type");
+        if (forceCurrentUser || !sameOptionalValue(record.getAbnormalityDefectType(), request.getAbnormalityDefectType()))
+            validateConfigured(request.getAbnormalityDefectType(), abnormalityMasterDataService.names(AbnormalityMasterDataService.ABNORMALITY_DEFECT_TYPE), "Abnormality/Defect Type");
         String requestedAssignee = trim(request.getAssignTo());
         if (isBlank(requestedAssignee) && record.getId() == null) {
             requestedAssignee = defaultAreaHod(request.getDepartment(), request.getAreaMachine())
@@ -258,7 +274,7 @@ public class AbnormalityReportingConfigService {
     private void validateAssignee(String username, String department, String areaMachine, AppUser actor, String role, AbnormalityReportingRecord record) {
         validateRequired(username, "Assign To");
         String previousAssignee = record == null ? "" : trim(record.getAssignTo());
-        if (record != null && record.getId() != null && previousAssignee.equalsIgnoreCase(trim(username))) return;
+        if (record != null && record.getId() != null && sameOptionalValue(previousAssignee, username)) return;
         boolean assigneeChanged = !defaultText(previousAssignee, "").equalsIgnoreCase(defaultText(username, ""));
         if (assigneeChanged && record != null && record.getId() != null && !RoleAccess.isAdmin(role) && !isAreaHod(actor)) {
             throw new IllegalArgumentException("Only the Area HoD can reassign this Abnormality Report");
@@ -613,6 +629,10 @@ public class AbnormalityReportingConfigService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean sameOptionalValue(String left, String right) {
+        return defaultText(left, "").trim().equalsIgnoreCase(defaultText(right, "").trim());
     }
 
     private boolean isBlank(String value) {

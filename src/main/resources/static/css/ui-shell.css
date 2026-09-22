@@ -828,3 +828,9 @@ button > i,
     justify-content: center;
     line-height: 1;
 }
+.pms-action-feedback { position: fixed; top: 84px; right: 24px; z-index: 10050; display: flex; align-items: flex-start; gap: 16px; max-width: min(520px, calc(100vw - 32px)); padding: 14px 16px; border: 1px solid #a4d7b4; border-radius: 8px; background: #edf9f1; color: #195b32; box-shadow: 0 4px 18px #0002; font-size: 14px; line-height: 1.5; }
+.pms-action-feedback[hidden] { display: none; }
+.pms-action-feedback-error { background: #fff0f0; border-color: #edb3b3; color: #8a2020; }
+.pms-action-feedback-warning { background: #fff8e8; border-color: #e1c37d; color: #725310; }
+.pms-action-feedback-text { overflow-wrap: anywhere; }
+.pms-action-feedback button { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 24px; line-height: 1; padding: 0 4px; }

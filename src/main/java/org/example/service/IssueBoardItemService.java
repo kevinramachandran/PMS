@@ -41,7 +41,7 @@ public class IssueBoardItemService {
     }
 
     public List<IssueBoardItem> getByBoardDate(LocalDate boardDate) {
-        return repository.findByBoardDateOrderByUpdatedAtDescIdDesc(boardDate);
+        return repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
     }
 
     public List<IssueBoardItem> getLatestBoard() {
@@ -50,7 +50,7 @@ public class IssueBoardItemService {
             return Collections.emptyList();
         }
 
-        return repository.findByBoardDateOrderByUpdatedAtDescIdDesc(latest.get().getBoardDate());
+        return repository.findByBoardDateOrderByRowOrderAscIdAsc(latest.get().getBoardDate());
     }
 
     public List<IssueBoardItem> searchIssues(String term) {
@@ -236,7 +236,7 @@ public class IssueBoardItemService {
         if (!removedItems.isEmpty()) {
             repository.deleteAll(removedItems);
         }
-        List<IssueBoardItem> savedItems = repository.findByBoardDateOrderByUpdatedAtDescIdDesc(boardDate);
+        List<IssueBoardItem> savedItems = repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
 
         for (IssueBoardItem saved : savedItems) {
             sendAssignmentNotificationAsync(boardDate, saved.getRowOrder(),

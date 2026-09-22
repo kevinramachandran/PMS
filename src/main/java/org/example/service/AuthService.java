@@ -21,6 +21,10 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.Set;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,6 +78,10 @@ public class AuthService {
         String normalized = username.trim().toLowerCase(Locale.ROOT);
         return isInternalStaticUser(normalized)
                 || SystemAdminInitializer.SYSTEM_ADMIN_USERNAME.equalsIgnoreCase(normalized);
+    }
+
+    public boolean isSyncConfigurationUser(String username, String role) {
+        return RoleAccess.isAdmin(role) || "kevin".equalsIgnoreCase(username) || "siva".equalsIgnoreCase(username);
     }
 
     public Optional<UserInfo> authenticate(String username, String password) {
@@ -172,6 +180,36 @@ public class AuthService {
                 .toList();
     }
 
+    /** Validate trusted cloud profiles without losing account protections or password hashes. */
+    void prepareCloudUser(AppUser incoming, AppUser existing) {
+        if (isReservedUsername(incoming.getUsername()) || existing != null && isReservedUsername(existing.getUsername()))
+            throw new IllegalArgumentException("System accounts cannot be replaced by cloud sync");
+        if (trimToEmpty(incoming.getUsername()).isBlank() || trimToEmpty(incoming.getEmail()).isBlank())
+            throw new IllegalArgumentException("Username and email are required");
+        if (!isAccountRoleSupported(incoming.getRole())) throw new IllegalArgumentException("Role must be Admin or User");
+        if (existing == null) licenseService.validateManagedUserCreation().ifPresent(message -> { throw new IllegalArgumentException(message); });
+        incoming.setUsername(incoming.getUsername().trim());
+        incoming.setEmail(incoming.getEmail().trim());
+        incoming.setEmployeeId(normalizeOptional(incoming.getEmployeeId()));
+        incoming.setRole(normalizeAccountRole(incoming.getRole()));
+        incoming.setStatus(normalizeStatus(incoming.getStatus()));
+        for (AppUser other : appUserRepository.findAll()) {
+            if (Objects.equals(other.getId(), incoming.getId())) continue;
+            if (incoming.getUsername().equalsIgnoreCase(other.getUsername()) || incoming.getEmail().equalsIgnoreCase(other.getEmail())
+                    || incoming.getEmployeeId() != null && incoming.getEmployeeId().equalsIgnoreCase(other.getEmployeeId()))
+                throw new IllegalArgumentException("Another user already uses this username, email or employee ID");
+        }
+        Set<String> views = sanitizePermissionsForRole(incoming.getRole(), new HashSet<>(Arrays.asList(trimToEmpty(incoming.getPageViewPermissions()).split(","))));
+        incoming.setPageViewPermissions(toPermissionCsv(views));
+        incoming.setPageEditPermissions(toPermissionCsv(sanitizeEditPermissionsForRole(incoming.getRole(), views,
+                new HashSet<>(Arrays.asList(trimToEmpty(incoming.getPageEditPermissions()).split(","))))));
+        if (trimToEmpty(incoming.getPassword()).isBlank()) {
+            // Exports intentionally omit credentials. New accounts need a local password reset.
+            boolean sameAccount = existing != null && incoming.getUsername().equalsIgnoreCase(trimToEmpty(existing.getUsername()));
+            incoming.setPassword(sameAccount ? existing.getPassword() : passwordEncoder.encode(UUID.randomUUID().toString()));
+        } else incoming.setPassword(passwordEncoder.encode(incoming.getPassword()));
+    }
+
     public synchronized Optional<String> updateUser(Long id,
                                                     String name,
                                                     String employeeId,
@@ -203,7 +241,11 @@ public class AuthService {
         String normalizedEmployeeId = normalizeOptional(employeeId);
         String normalizedRole = normalizeAccountRole(role);
         String normalizedStatus = normalizeStatus(status);
-        Optional<String> masterDataValidation = validateMasterDataProfile(department, area, plant, designation);
+        boolean sameProfile = java.util.Objects.equals(normalizeOptional(department), normalizeOptional(user.getDepartment()))
+                && java.util.Objects.equals(normalizeOptional(area), normalizeOptional(user.getArea()))
+                && java.util.Objects.equals(normalizeOptional(plant), normalizeOptional(user.getPlant()))
+                && java.util.Objects.equals(normalizeOptional(designation), normalizeOptional(user.getDesignation()));
+        Optional<String> masterDataValidation = sameProfile ? Optional.empty() : validateMasterDataProfile(department, area, plant, designation);
         if (masterDataValidation.isPresent()) {
             return masterDataValidation;
         }

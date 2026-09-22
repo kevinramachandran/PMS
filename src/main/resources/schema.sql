@@ -51,8 +51,6 @@ CREATE TABLE IF NOT EXISTS plant_master_data_items (
 );
 
 ALTER TABLE plant_master_data_items ADD COLUMN parent_process_area VARCHAR(160) NULL;
-ALTER TABLE plant_master_data_items DROP INDEX uk_plant_master_category_name;
-ALTER TABLE plant_master_data_items DROP INDEX uk_plant_master_hierarchy_name;
 ALTER TABLE plant_master_data_items ADD UNIQUE KEY uk_plant_master_hierarchy_name (category, parent_plant, parent_department, parent_process_area, name);
 
 CREATE TABLE IF NOT EXISTS abnormality_master_data_items (
@@ -193,6 +191,7 @@ CREATE TABLE IF NOT EXISTS carlex_process_confirmations (
     area_of_gw_process_confirmation_conducted VARCHAR(160) NULL,
     area_responsibility VARCHAR(160) NULL,
     assigned_to TEXT NULL,
+    assignment_remark TEXT NULL,
     reassigned_to1 TEXT NULL,
     reassignment1_remark TEXT NULL,
     reassigned_to2 TEXT NULL,

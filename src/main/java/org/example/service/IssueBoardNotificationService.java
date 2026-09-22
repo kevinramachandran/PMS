@@ -189,9 +189,9 @@ public class IssueBoardNotificationService {
             return false;
         }
 
-        // Every saved open assignment is notified, regardless of its target date
-        // or whether the assignment details changed.
-        return true;
+        // A full-board save includes older rows too. Only a new or reopened
+        // assignment needs this email; reassignment is handled separately.
+        return previousItem == null || isClosed(previousItem);
     }
 
     private boolean responsibleChanged(IssueBoardItem previousItem, IssueBoardItem currentItem) {

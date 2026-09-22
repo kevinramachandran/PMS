@@ -8,13 +8,14 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
     <link rel="stylesheet" href="/css/process-confirmation.css?v=carlex-records-20260903">
-    <link rel="stylesheet" href="/css/process-confirmation-config.css?v=carlex-config-20260914-responsive">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/process-confirmation-config.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
+    <link rel="stylesheet" href="/css/data-sync.css?v=2">
 </head>
-<body class="modern-shell dashboard-bg carlex-config-page">
+<body class="modern-shell dashboard-bg carlex-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="app-container">
     <aside class="sidebar" id="sidebar">
@@ -57,6 +58,7 @@
             <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}"><i class="fas fa-sliders"></i><span>KPI Configuration</span></a>
             <div class="nav-parent" th:if="${session.canViewMasterDataGroup}"><a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a><div class="nav-children">
                 <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                <a href="/sync-configuration" class="nav-item nav-child" th:if="${syncConfigurationUser}" data-tooltip="Cloud Sync Configuration"><i class="fas fa-cloud-arrow-down"></i><span>Cloud Sync Configuration</span></a>
                 <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                 <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}"><i class="fas fa-industry"></i><span>Plant</span></a>
                 <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}"><i class="fas fa-bug"></i><span>Abnormality</span></a>
@@ -75,7 +77,8 @@
 </div>
 <div id="carlexBackdrop" class="carlex-backdrop" aria-hidden="true"></div>
 <form id="carlexForm" class="carlex-drawer" role="dialog" aria-modal="true" aria-labelledby="carlexDrawerTitle" aria-describedby="carlexDrawerDescription" aria-hidden="true"><div class="carlex-drawer-header"><div class="carlex-drawer-heading"><span class="carlex-drawer-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span><div><h2 id="carlexDrawerTitle">Add CarlEX Process Confirmation</h2><p id="carlexDrawerDescription">Enter observations and confirmation details for the selected process.</p></div></div><button type="button" id="carlexCloseBtn" class="carlex-close" aria-label="Close"><i class="fas fa-times"></i></button></div><div class="carlex-drawer-body"><input type="hidden" id="carlexId"><div class="carlex-form-grid" id="carlexFields"></div></div><div class="carlex-drawer-footer"><div id="carlexMessage" class="form-message" role="alert" aria-live="assertive" tabindex="-1"></div><button type="button" id="carlexCancelBtn" class="btn btn-secondary">Cancel</button><button type="submit" id="carlexSaveBtn" class="btn btn-primary"><i class="fas fa-save"></i> Save confirmation</button></div></form>
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation-config.js?v=20260914-validation"></script><script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation-config.js?v=20260921-mutation-fixes"></script><script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
+    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
 </body>
 </html>
 

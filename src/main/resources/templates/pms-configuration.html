@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=user-area-checkbox-dropdown-20260912">
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/data-sync.css?v=2">
 </head>
 <body class="modern-shell dashboard-bg user-management-page" th:attr="data-can-edit-user-management=${session.canEditUserManagement}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -65,6 +66,7 @@
                     <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
                     <div class="nav-children">
                         <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                        <a href="/sync-configuration" class="nav-item nav-child" th:if="${syncConfigurationUser}" data-tooltip="Cloud Sync Configuration"><i class="fas fa-cloud-arrow-down"></i><span>Cloud Sync Configuration</span></a>
                         <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
                         <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
                         <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
@@ -414,9 +416,10 @@
     <datalist id="areaOptions"></datalist>
 
     <script src="/js/dashboard.js"></script>
-    <script src="/js/pms-configuration.js?v=info-portal-view-permission-20260913"></script>
+    <script src="/js/pms-configuration.js?v=plant-designation-dropdown-20260915"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
 </body>
 </html>
 

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Sync Configuration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css?v=sync-shell">
+    <link rel="stylesheet" href="/css/settings.css">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sync-shell">
+    <link rel="stylesheet" href="/css/sync-configuration.css">
+</head>
+<body class="modern-shell dashboard-bg sync-configuration-page">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><div class="sidebar-logo"><img class="logo header-logo" src="/images/image.png" alt="Carlsberg Logo"></div></div>
+        <nav class="sidebar-nav">
+            <a href="/kpi-dashboard" class="nav-item" th:if="${session.canViewKpiDashboard}" data-tooltip="KPI Dashboard"><i class="fas fa-chart-line"></i><span>KPI Dashboard</span></a>
+            <a href="/user-dashboard" class="nav-item" th:if="${session.canViewUserDashboard}" data-tooltip="User Dashboard"><i class="fas fa-table-columns"></i><span>User Dashboard</span></a>
+            <a href="/gemba-schedule" class="nav-item" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk Schedule"><i class="fas fa-clipboard-list"></i><span>Gemba Walk Schedule</span></a>
+            <a href="/gemba-reporting" class="nav-item" th:if="${session.canViewGembaWalkReporting}" data-tooltip="Gemba walk report"><i class="fas fa-chart-pie"></i><span>Gemba walk report</span></a>
+            <a href="/settings?config=issue-board" class="nav-item" th:if="${session.canViewIssueBoardConfiguration}" data-tooltip="Issue Board"><i class="fas fa-table-list"></i><span>Issue Board</span></a>
+            <a href="/settings?config=kpi-rename-dashboard" class="nav-item" th:if="${session.canViewKpiConfigurationGroup}" data-tooltip="KPI Configuration"><i class="fas fa-sliders"></i><span>KPI Configuration</span></a>
+            <div class="nav-parent" th:if="${session.canViewMasterDataGroup}">
+                <a href="#" class="nav-item nav-parent-toggle" data-tooltip="Master Data"><i class="fas fa-layer-group"></i><span>Master Data</span><i class="fas fa-chevron-down nav-chevron"></i></a>
+                <div class="nav-children">
+                    <a href="/pms-configuration" class="nav-item nav-child" th:if="${session.canEditUserManagement}" data-tooltip="User Management"><i class="fas fa-users-cog"></i><span>User Management</span></a>
+                    <a href="/sync-configuration" class="nav-item nav-child active" th:if="${syncConfigurationUser}" data-tooltip="Cloud Sync Configuration"><i class="fas fa-cloud-arrow-down"></i><span>Cloud Sync Configuration</span></a>
+                    <a href="/email-configuration" class="nav-item nav-child" th:if="${session.canViewEmailConfiguration}" data-tooltip="Email Scheduler"><i class="fas fa-envelope"></i><span>Email Scheduler</span></a>
+                    <a href="/settings?config=kpi-plant-name" class="nav-item nav-child" th:if="${session.canViewKpiPlantName}" data-tooltip="Plant"><i class="fas fa-industry"></i><span>Plant</span></a>
+                    <a href="/settings?config=master-abnormality" class="nav-item nav-child" th:if="${session.canViewAbnormalityTrackerConfiguration}" data-tooltip="Abnormality"><i class="fas fa-bug"></i><span>Abnormality</span></a>
+                    <a href="/settings?config=master-gemba-walk" class="nav-item nav-child" th:if="${session.canViewGembaWalkConfiguration}" data-tooltip="Gemba Walk"><i class="fas fa-map-location-dot"></i><span>Gemba Walk</span></a>
+                    <a href="/settings?config=master-gemba-kaizen" class="nav-item nav-child" th:if="${session.canViewLeadershipGembaTrackerConfiguration}" data-tooltip="Gemba Kaizen"><i class="fas fa-lightbulb"></i><span>Gemba Kaizen</span></a>
+                    <a href="/settings?config=master-process" class="nav-item nav-child" th:if="${session.canViewProcessConfirmationConfiguration}" data-tooltip="Process"><i class="fas fa-list-check"></i><span>Process</span></a>
+                    <a href="/settings?config=license" class="nav-item nav-child" th:if="${session.canViewLicenseManagement}" data-tooltip="License Management"><i class="fas fa-key"></i><span>License Management</span></a>
+                </div>
+            </div>
+        </nav>
+        <div class="sidebar-footer"><img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo"></div>
+    </aside>
+    <main class="main-content">
+        <header class="top-header">
+            <div class="header-left"><div class="hamburger" id="hamburger"><span></span><span></span><span></span></div><h1>Cloud Sync Configuration</h1></div>
+            <div class="header-right">
+                <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
+                <div class="user-info-header"><i class="fa-solid profile-role-icon" th:classappend="${session.role == 'ADMIN'} ? ' fa-user-shield' : ' fa-user'"></i><div class="profile-meta"><div class="profile-name" th:text="${session.username != null ? session.username : 'User'}">User</div><div class="profile-subline"><span class="header-role-badge" th:text="${session.roleLabel != null ? session.roleLabel : session.role}">ROLE</span><span class="profile-email" th:text="${session.email != null ? session.email : 'no-email@local'}">mail@example.com</span></div></div></div>
+                <a href="/logout" class="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+            </div>
+        </header>
+        <div class="content-area">
+<main class="sync-shell">
+    <header class="sync-header">
+        <div>
+            <a class="sync-back" href="/pms-configuration"><i class="fas fa-arrow-left"></i> User Management</a>
+            <p class="sync-kicker">Restricted operations</p>
+            <h1>Cloud Sync Configuration</h1>
+            <p class="sync-subtitle">Click Sync to pull cloud data, stage it locally, and import it into this on-premises environment.</p>
+        </div>
+        <div class="sync-badge"><i class="fas fa-shield-halved"></i> Admin / Kevin / Siva</div>
+    </header>
+    <section class="sync-status-panel" aria-live="polite">
+        <div class="sync-status-line"><span id="syncStatusDot" class="sync-status-dot"></span><strong id="syncStatus">Loading sync status...</strong><span id="syncMessage"></span></div>
+        <div class="sync-progress-track"><div id="syncProgress" class="sync-progress-bar"></div></div>
+        <p id="syncTimes" class="sync-times"></p>
+    </section>
+    <form id="syncConfigForm" class="sync-card">
+        <div class="sync-card-heading"><div><p class="sync-kicker">Connection</p><h2>Cloud source</h2></div><i class="fas fa-cloud-arrow-down"></i></div>
+        <div class="sync-grid">
+            <label>Cloud PMS URL<input id="cloudUrl" required placeholder="https://cloud-pms.company.com"></label>
+            <label>Cloud username<input id="cloudUsername" required placeholder="sync-user"></label>
+            <label>Cloud password<input id="cloudPassword" type="password" placeholder="Leave blank to keep saved password"></label>
+        </div>
+        <div class="sync-card-heading local-heading"><div><p class="sync-kicker">Local processing</p><h2>Folders and timing</h2></div><i class="fas fa-folder-tree"></i></div>
+        <div class="sync-grid sync-grid-wide">
+            <label>Download folder<input id="downloadFolder" required></label>
+            <label>Processing folder<input id="processingFolder" required></label>
+            <label>Completed folder<input id="completedFolder" required></label>
+            <label>Failed folder<input id="failedFolder" required></label>
+            <label>Delay before import (seconds)<input id="delaySeconds" type="number" min="0" max="86400" required></label>
+            <label>Daily sync time<input id="scheduleTime" type="time" required></label>
+        </div>
+        <div class="sync-card-heading local-heading"><div><p class="sync-kicker">Datasets</p><h2>Cloud files to pull</h2></div><i class="fas fa-database"></i></div>
+        <label>One dataset per line; use <code>dataset:CATEGORY</code> for master data<textarea id="datasets" rows="5"></textarea></label>
+        <label class="sync-toggle"><input id="enabled" type="checkbox"><span>Enable daily scheduled sync</span></label>
+        <p class="sync-manual-note"><i class="fas fa-hand-pointer"></i> Sync now always runs immediately. Scheduled sync runs once daily at the configured time.</p>
+        <div class="sync-actions"><button type="submit" class="sync-save"><i class="fas fa-save"></i> Save configuration</button><button type="button" id="syncNow" class="sync-now"><i class="fas fa-arrows-rotate"></i> Sync now</button></div>
+        <p id="formMessage" class="sync-form-message"></p>
+    </form>
+</main>
+        </div>
+        <footer class="sync-page-footer">Cloud Sync Configuration <span>·</span> Brewery PMS</footer>
+    </main>
+</div>
+<script src="/js/ui-shell.js"></script>
+<script src="/js/sync-configuration.js"></script>
+</body>
+</html>

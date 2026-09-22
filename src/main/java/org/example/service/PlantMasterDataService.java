@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class PlantMasterDataService {
 
     public static final String PLANT = "PLANT";
@@ -17,8 +18,11 @@ public class PlantMasterDataService {
 
     private final PlantMasterDataItemRepository repository;
 
-    public PlantMasterDataService(PlantMasterDataItemRepository repository) {
+    private final MasterReferenceService references;
+
+    public PlantMasterDataService(PlantMasterDataItemRepository repository, MasterReferenceService references) {
         this.repository = repository;
+        this.references = references;
     }
 
     public List<PlantMasterDataItem> list(String category) {
@@ -53,7 +57,9 @@ public class PlantMasterDataService {
         item.setParentPlant(emptyToNull(normalizedParentPlant));
         item.setParentDepartment(emptyToNull(normalizedParentDepartment));
         item.setParentProcessArea(emptyToNull(normalizedParentProcessArea));
-        return repository.save(item);
+        PlantMasterDataItem saved = repository.save(item);
+        references.refreshReferences(saved);
+        return saved;
     }
 
     public Optional<PlantMasterDataItem> update(Long id, String name) {
@@ -75,21 +81,32 @@ public class PlantMasterDataService {
 
         PlantMasterDataItem item = existing.get();
         String normalizedName = normalizeName(name);
-        String normalizedParentPlant = parentPlant == null
+        String normalizedParentPlant = parentPlant == null || trim(parentPlant).equalsIgnoreCase(trim(item.getParentPlant()))
                 ? trim(item.getParentPlant())
                 : normalizeParentPlant(item.getCategory(), parentPlant);
-        String normalizedParentDepartment = parentDepartment == null
+        boolean plantChanged = !normalizedParentPlant.equalsIgnoreCase(trim(item.getParentPlant()));
+        String requestedDepartment = parentDepartment == null ? trim(item.getParentDepartment()) : parentDepartment;
+        String normalizedParentDepartment = !plantChanged && (parentDepartment == null || trim(parentDepartment).equalsIgnoreCase(trim(item.getParentDepartment())))
                 ? trim(item.getParentDepartment())
-                : normalizeParentDepartment(item.getCategory(), normalizedParentPlant, parentDepartment);
+                : normalizeParentDepartment(item.getCategory(), normalizedParentPlant, requestedDepartment);
         String normalizedParentProcessArea = parentProcessArea == null
                 ? trim(item.getParentProcessArea())
                 : normalizeParentProcessArea(item.getCategory(), normalizedParentPlant, normalizedParentDepartment, parentProcessArea);
         rejectDuplicate(item.getCategory(), normalizedName, normalizedParentPlant, normalizedParentDepartment, normalizedParentProcessArea, id);
+        boolean departmentChanged = !normalizedParentDepartment.equalsIgnoreCase(trim(item.getParentDepartment()));
+        if (plantChanged && DEPARTMENT.equals(item.getCategory())) rejectDeleteWithChildren(item);
+        if (!normalizedName.equals(item.getName()) || plantChanged || departmentChanged)
+            references.captureBeforeChange(PlantMasterDataItem.class, item.getCategory(), item.getName());
+        if (plantChanged) item.getMasterReferences().remove("parentPlantId");
+        if (plantChanged || departmentChanged) item.getMasterReferences().remove("parentDepartmentId");
         item.setName(normalizedName);
         item.setParentPlant(emptyToNull(normalizedParentPlant));
         item.setParentDepartment(emptyToNull(normalizedParentDepartment));
         item.setParentProcessArea(emptyToNull(normalizedParentProcessArea));
-        return Optional.of(repository.save(item));
+        PlantMasterDataItem saved = repository.save(item);
+        references.refreshReferences(saved);
+        references.refreshMasterHierarchy();
+        return Optional.of(saved);
     }
 
     public boolean delete(Long id) {
@@ -101,6 +118,7 @@ public class PlantMasterDataService {
             return false;
         }
         rejectDeleteWithChildren(existing.get());
+        references.captureBeforeChange(PlantMasterDataItem.class, existing.get().getCategory(), existing.get().getName());
         repository.deleteById(id);
         return true;
     }

@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "gemba_kaizen_records")
-public class GembaKaizenRecord {
+public class GembaKaizenRecord extends MasterMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

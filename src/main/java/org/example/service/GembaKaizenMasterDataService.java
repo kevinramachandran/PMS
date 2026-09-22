@@ -8,14 +8,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class GembaKaizenMasterDataService {
 
     public static final String CLASSIFICATION_OF_KAIZEN = "CLASSIFICATION_OF_KAIZEN";
 
     private final GembaKaizenMasterDataItemRepository repository;
 
-    public GembaKaizenMasterDataService(GembaKaizenMasterDataItemRepository repository) {
+    private final MasterReferenceService references;
+
+    public GembaKaizenMasterDataService(GembaKaizenMasterDataItemRepository repository, MasterReferenceService references) {
         this.repository = repository;
+        this.references = references;
     }
 
     public List<GembaKaizenMasterDataItem> list(String category) {
@@ -51,6 +55,7 @@ public class GembaKaizenMasterDataService {
         GembaKaizenMasterDataItem item = existing.get();
         String normalizedName = normalizeName(name);
         rejectDuplicate(item.getCategory(), normalizedName, id);
+        if (!normalizedName.equals(item.getName())) references.captureBeforeChange(GembaKaizenMasterDataItem.class, item.getCategory(), item.getName());
         item.setName(normalizedName);
         return Optional.of(repository.save(item));
     }
@@ -59,6 +64,8 @@ public class GembaKaizenMasterDataService {
         if (id == null || !repository.existsById(id)) {
             return false;
         }
+        GembaKaizenMasterDataItem item = repository.findById(id).orElseThrow();
+        references.captureBeforeChange(GembaKaizenMasterDataItem.class, item.getCategory(), item.getName());
         repository.deleteById(id);
         return true;
     }

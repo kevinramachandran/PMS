@@ -20,7 +20,96 @@ import static org.mockito.Mockito.*;
 
 class NotificationRegressionTest {
     @Test
-    void savedOpenIssuesSendMailForEveryTargetDateEvenWhenUnchanged() {
+    void carlexEmailOmitsEmptyAssignmentRemarksAndReassignmentFields() {
+        var service = new CarlexProcessConfirmationService(null, null, null, null, null, null);
+        var record = new org.example.entity.CarlexProcessConfirmation();
+        record.assignedTo = "owner";
+        record.assignmentRemark = "  ";
+        record.reassignment1Remark = "";
+        String html = ReflectionTestUtils.invokeMethod(service, "buildEmailBody", "Assigned", "Details", record);
+        assertNotNull(html);
+        assertTrue(html.contains("owner"));
+        assertFalse(html.contains("Assignment Remarks"));
+        assertFalse(html.contains("Reassigned To 1"));
+        assertFalse(html.contains("Reassignment 1 Remarks"));
+        assertFalse(html.contains("Reassigned To 2"));
+        assertFalse(html.contains("Reassignment 2 Remarks"));
+        record.reassignedTo1 = "engineer";
+        record.reassignment1Remark = "Inspect";
+        html = ReflectionTestUtils.invokeMethod(service, "buildEmailBody", "Reassigned", "Details", record);
+        assertNotNull(html);
+        assertTrue(html.contains("engineer"));
+        assertTrue(html.contains("Inspect"));
+        assertFalse(html.contains("Reassigned To 2"));
+    }
+
+    @Test
+    void carlexEmailIncludesRemarksAndAllDynamicObservationActionsSafely() {
+        var service = new CarlexProcessConfirmationService(null, null, null, null, null, null);
+        var record = new org.example.entity.CarlexProcessConfirmation();
+        record.assignmentRemark = "Initial remark";
+        record.reassignedTo1 = "Engineer";
+        record.reassignment1Remark = "Check <valve>\nThen report";
+        record.reassignedTo2 = "Manager";
+        record.reassignment2Remark = "Review repair";
+        for (int i = 1; i <= 3; i++) {
+            var observation = new org.example.entity.CarlexProcessConfirmationObservation();
+            observation.setGroupType("ZM");
+            observation.setDescription("Finding " + i);
+            observation.setCounterMeasureActions("Repair " + i);
+            observation.setStatus("D");
+            record.observations.add(observation);
+        }
+        String html = ReflectionTestUtils.invokeMethod(service, "buildEmailBody", "Assigned", "Details", record);
+        assertNotNull(html);
+        assertTrue(html.contains("Initial remark"));
+        assertTrue(html.contains("Check &lt;valve&gt;<br>Then report"));
+        assertTrue(html.contains("Review repair"));
+        assertTrue(html.contains("Finding 3"));
+        assertTrue(html.contains("Repair 3"));
+        assertTrue(html.contains("cid:brandLogo"));
+    }
+
+    @Test
+    void carlexEmailIncludesLegacySecondaryObservationsAndActions() {
+        var service = new CarlexProcessConfirmationService(null, null, null, null, null, null);
+        var record = new org.example.entity.CarlexProcessConfirmation();
+        record.qm2Description = "Second quality finding";
+        record.qm2CounterMeasureActions = "Quality repair";
+        record.om1Description = "Operations finding";
+        String html = ReflectionTestUtils.invokeMethod(service, "buildEmailBody", "Completed", "Details", record);
+        assertNotNull(html);
+        assertTrue(html.contains("Second quality finding"));
+        assertTrue(html.contains("Quality repair"));
+        assertTrue(html.contains("Operations finding"));
+    }
+
+    @Test
+    void savingNewIssueDoesNotEmailAnOlderUnchangedIssue() {
+        var users = mock(org.example.repository.AppUserRepository.class);
+        var email = mock(EmailConfigService.class);
+        var user = new org.example.entity.AppUser();
+        user.setUsername("owner");
+        user.setEmail("owner@example.test");
+        when(users.findByUsernameIgnoreCase("owner")).thenReturn(java.util.Optional.of(user));
+        var service = new IssueBoardNotificationService(mock(IssueBoardItemRepository.class), users, email, "UTC");
+        var older = new IssueBoardItem();
+        older.setId(1L);
+        older.setProblem("Older issue");
+        older.setResponsible("owner");
+        var latest = new IssueBoardItem();
+        latest.setId(2L);
+        latest.setProblem("Latest issue");
+        latest.setResponsible("owner");
+        service.sendAssignmentNotification(LocalDate.now(), 1, null, latest);
+        service.sendAssignmentNotification(LocalDate.now(), 2, older, older);
+        verify(email).sendEmail(eq(List.of("owner@example.test")), eq("Issue Assigned: Latest issue"),
+                contains("Latest issue"), eq(true), eq(true));
+        verifyNoMoreInteractions(email);
+    }
+
+    @Test
+    void newIssuesSendMailForEveryTargetDateButUnchangedIssuesDoNot() {
         var users = mock(org.example.repository.AppUserRepository.class);
         var email = mock(EmailConfigService.class);
         var user = new org.example.entity.AppUser();
@@ -37,7 +126,7 @@ class NotificationRegressionTest {
             service.sendAssignmentNotification(today, 1, null, item);
             service.sendAssignmentNotification(today, 1, item, item);
         }
-        verify(email, times(10)).sendEmail(eq(List.of("owner@example.test")), eq("Issue Assigned: Issue"), anyString(), eq(true), eq(true));
+        verify(email, times(5)).sendEmail(eq(List.of("owner@example.test")), eq("Issue Assigned: Issue"), anyString(), eq(true), eq(true));
     }
 
     @Test
@@ -130,7 +219,6 @@ class NotificationRegressionTest {
         incoming.setRowOrder(3);
         incoming.setResponsible("new-user");
         when(repository.findByBoardDateOrderByRowOrderAscIdAsc(date)).thenReturn(List.of(existing));
-        when(repository.findByBoardDateOrderByUpdatedAtDescIdDesc(date)).thenReturn(List.of(existing));
         service.replaceByBoardDate(date, List.of(incoming), "editor");
         var before = ArgumentCaptor.forClass(IssueBoardItem.class);
         var after = ArgumentCaptor.forClass(IssueBoardItem.class);
