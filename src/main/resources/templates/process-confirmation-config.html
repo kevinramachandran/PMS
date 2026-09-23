@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
-    <link rel="stylesheet" href="/css/data-sync.css?v=2">
 </head>
 <body class="modern-shell dashboard-bg carlex-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -30,7 +29,6 @@
 <div id="carlexBackdrop" class="carlex-backdrop" aria-hidden="true"></div>
 <form id="carlexForm" class="carlex-drawer" role="dialog" aria-modal="true" aria-labelledby="carlexDrawerTitle" aria-describedby="carlexDrawerDescription" aria-hidden="true"><div class="carlex-drawer-header"><div class="carlex-drawer-heading"><span class="carlex-drawer-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span><div><h2 id="carlexDrawerTitle">Add CarlEX Process Confirmation</h2><p id="carlexDrawerDescription">Enter observations and confirmation details for the selected process.</p></div></div><button type="button" id="carlexCloseBtn" class="carlex-close" aria-label="Close"><i class="fas fa-times"></i></button></div><div class="carlex-drawer-body"><input type="hidden" id="carlexId"><div class="carlex-form-grid" id="carlexFields"></div></div><div class="carlex-drawer-footer"><div id="carlexMessage" class="form-message" role="alert" aria-live="assertive" tabindex="-1"></div><button type="button" id="carlexCancelBtn" class="btn btn-secondary">Cancel</button><button type="submit" id="carlexSaveBtn" class="btn btn-primary"><i class="fas fa-save"></i> Save confirmation</button></div></form>
 <script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation-config.js?v=20260921-mutation-fixes"></script><script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
 </body>
 </html>
 
