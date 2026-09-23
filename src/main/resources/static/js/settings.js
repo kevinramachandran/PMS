@@ -6744,14 +6744,14 @@ function regroupRows($container){
     }
 
     function renderMasterPlantInlineLists() {
+        const plant = normalizeMasterPlantKey(selectedMasterPlant());
         [['PLANT', '#masterPlantList', 'No plants configured.'],
-            ['DESIGNATION', '#masterDesignationList', 'No designations configured.']].forEach(function(config) {
-            const items = masterPlantItems[config[0]] || [];
-            $(config[1]).html(items.length ? items.map(function(item) {
-                return '<span class="master-area-label">' + escapeHtml(item.name) + '</span>';
+            ['DESIGNATION', '#masterDesignationList', plant ? 'No designations configured for this plant.' : 'Select a plant to see its designations.']].forEach(function(config) {
+            const names = masterPlantItemNames(config[0]);
+            $(config[1]).html(names.length ? names.map(function(name) {
+                return '<span class="master-area-label">' + escapeHtml(name) + '</span>';
             }).join('') : '<span class="master-plant-inline-empty">' + config[2] + '</span>');
         });
-        const plant = normalizeMasterPlantKey(selectedMasterPlant());
         const department = normalizeMasterPlantKey($('#masterProcessAreaDepartmentSelect').val());
         const departments = (masterPlantItems.DEPARTMENT || []).filter(function(item) {
             return plant && normalizeMasterPlantKey(item.parentPlant) === plant;
