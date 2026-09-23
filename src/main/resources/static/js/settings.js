@@ -7122,7 +7122,9 @@ function regroupRows($container){
         }
     });
 
-    $('#closeMasterPlantAddModal, #cancelMasterPlantAdd, #masterPlantAddModal').on('click', function(event) {
+    $('#closeMasterPlantAddModal, #cancelMasterPlantAdd').on('click', closeMasterPlantAddModal);
+
+    $('#masterPlantAddModal').on('click', function(event) {
         if (event.target === this) {
             closeMasterPlantAddModal();
         }
@@ -7212,7 +7214,9 @@ function regroupRows($container){
         openMasterPlantDeleteConfirm($(this).closest('.master-plant-view-row'));
     });
 
-    $('#closeMasterPlantDeleteConfirm, #cancelMasterPlantDelete, #masterPlantDeleteConfirmModal').on('click', function(event) {
+    $('#closeMasterPlantDeleteConfirm, #cancelMasterPlantDelete').on('click', closeMasterPlantDeleteConfirm);
+
+    $('#masterPlantDeleteConfirmModal').on('click', function(event) {
         if (event.target === this) {
             closeMasterPlantDeleteConfirm();
         }
@@ -7229,7 +7233,9 @@ function regroupRows($container){
         openMasterPlantView($(this).data('category'));
     });
 
-    $('#closeMasterPlantView, #masterPlantViewModal').on('click', function(event) {
+    $('#closeMasterPlantView').on('click', closeMasterPlantView);
+
+    $('#masterPlantViewModal').on('click', function(event) {
         if (event.target === this) {
             closeMasterPlantView();
         }
