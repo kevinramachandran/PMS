@@ -7,9 +7,14 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class WebController {
 
+    @GetMapping("/cloud-no-access")
+    public String cloudNoAccess() {
+        return "cloud-no-access";
+    }
+
     @GetMapping("/")
     public String index() {
-        return "redirect:/kpi-dashboard";
+        return "redirect:/settings?config=kpi-plant-name";
     }
 
     @GetMapping("/home")

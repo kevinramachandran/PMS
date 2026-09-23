@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpSession;
 import org.example.service.AuthService;
 import org.example.service.LicenseService;
 import org.example.util.RoleAccess;
+import org.example.util.CloudNavigation;
+import org.example.controller.WebController;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -51,6 +54,17 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
 
             response.sendRedirect(request.getContextPath() + "/pms-login");
+            return false;
+        }
+
+        var cloudPages = CloudNavigation.pages(session, syncConfigurationUser);
+        request.setAttribute("cloudConfigPages", cloudPages.stream().filter(page -> !page.master()).toList());
+        request.setAttribute("cloudMasterPages", cloudPages.stream().filter(CloudNavigation.Page::master).toList());
+
+        // Restrict rendered pages only; sync, attachments and other APIs keep their existing contracts.
+        if (handler instanceof HandlerMethod method && method.getBeanType() == WebController.class
+                && !CloudNavigation.isRetainedPage(path, request.getParameter("config"))) {
+            response.sendRedirect(request.getContextPath() + CloudNavigation.landing(session, syncConfigurationUser));
             return false;
         }
 
@@ -292,6 +306,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (isReadMethod(request.getMethod()) && (path.startsWith("/api/gemba-walk-config/records") || path.startsWith("/api/gemba-walk-config/options"))) {
+            HttpSession session = request.getSession(false);
+            String role = session == null ? null : (String) session.getAttribute("role");
+            if (canAccessReadPage(role, extractPermissions(session, "viewPermissions"),
+                    extractPermissions(session, "editPermissions"), RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION)) {
+                return RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION;
+            }
             return RoleAccess.PAGE_GEMBA_WALK_REPORTING;
         }
 
@@ -369,7 +389,9 @@ public class AuthInterceptor implements HandlerInterceptor {
             return;
         }
 
-        response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
+        HttpSession session = request.getSession(false);
+        response.sendRedirect(request.getContextPath() + CloudNavigation.landing(session,
+                Boolean.TRUE.equals(request.getAttribute("syncConfigurationUser"))));
     }
 
     private boolean canAccessReadPage(String role, Set<String> viewPermissions, Set<String> editPermissions, String pageKey) {

@@ -109,7 +109,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.status === 'success') {
-                        window.location.href = data.redirectUrl || '/kpi-dashboard';
+                        window.location.href = data.redirectUrl || '/';
                     } else {
                         if (data.code === 'LICENSE_EXPIRED') {
                             showError('License has expired. Only internal static users can sign in.');

@@ -71,7 +71,7 @@ public class AuthController {
                     "roleLabel", RoleAccess.displayName(normalizedRole),
                 "username", user.get().getUsername(),
                 "email",    user.get().getEmail(),
-                "redirectUrl", landingPageFor(normalizedRole, viewPermissions)
+                "redirectUrl", landingPageForSession(session)
             );
         }
         return Map.of("status", "error", "message", "Invalid credentials");
@@ -288,85 +288,10 @@ public class AuthController {
         if (session == null) {
             return "/pms-login";
         }
-        return landingPageFor((String) session.getAttribute("role"), toPermissionSet(session.getAttribute("viewPermissions")));
+        return org.example.util.CloudNavigation.landing(session,
+                authService.isSyncConfigurationUser((String) session.getAttribute("username"),
+                        (String) session.getAttribute("role")));
     }
-
-    private String landingPageFor(String role, Set<String> viewPermissions) {
-        if (RoleAccess.isAdmin(role)) {
-            return "/kpi-dashboard";
-        }
-        Set<String> pages = RoleAccess.sanitizePages(viewPermissions);
-        if (pages.contains(RoleAccess.PAGE_PMS_DATA_ENTRY)
-                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA)
-                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_PEOPLE)
-                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_QUALITY)
-                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_SERVICE)
-                || pages.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA_COST)) {
-            return "/kpi-dashboard";
-        }
-        if (pages.contains(RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION)) {
-            return "/issue-board";
-        }
-        if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION)) {
-            return "/gemba-schedule";
-        }
-        if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_FINDINGS)) {
-            return "/gemba-reporting";
-        }
-        if (pages.contains(RoleAccess.PAGE_GEMBA_WALK_REPORTING)) {
-            return "/gemba-reporting";
-        }
-        if (pages.contains(RoleAccess.PAGE_USER_DASHBOARD)) {
-            return "/user-dashboard";
-        }
-        if (pages.contains(RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION)) {
-            return "/training-schedule";
-        }
-        if (pages.contains(RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION)) {
-            return "/meeting-agenda";
-        }
-        if (pages.contains(RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION)) {
-            return "/abnormality-tracker";
-        }
-        if (pages.contains(RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION)) {
-            return "/leadership-gemba-tracker";
-        }
-        if (pages.contains(RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION)) {
-            return "/process-confirmation";
-        }
-        if (pages.contains(RoleAccess.PAGE_INFO_PORTAL_VIEW)) {
-            return "/client-selection";
-        }
-        if (pages.contains(RoleAccess.PAGE_INFO_PORTAL)) {
-            return "/settings?config=info-portal";
-        }
-        if (pages.contains(RoleAccess.PAGE_USER_MANAGEMENT)) {
-            return "/pms-configuration";
-        }
-        if (pages.contains(RoleAccess.PAGE_LICENSE_MANAGEMENT)) {
-            return "/settings?config=license";
-        }
-        if (pages.contains(RoleAccess.PAGE_EMAIL_CONFIGURATION)) {
-            return "/smtp-configuration";
-        }
-        if (pages.contains(RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION)) {
-            return "/settings?config=hs-cross";
-        }
-        if (pages.contains(RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION)) {
-            return "/settings?config=lsr-tracking";
-        }
-        if (pages.contains(RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR)) {
-            return "/settings?config=kpi-rename-dashboard";
-        }
-        if (pages.contains(RoleAccess.PAGE_KPI_RENAME_DASHBOARD)) {
-            return "/settings?config=kpi-rename-dashboard";
-        }
-        if (pages.contains(RoleAccess.PAGE_KPI_PLANT_NAME)) {
-            return "/settings?config=kpi-rename-dashboard";
-        }
-        return "/kpi-dashboard";
-    }
-
     private Map<String, Object> toUserResponse(AppUser user) {
         String normalizedRole = RoleAccess.isAdmin(user.getRole()) ? RoleAccess.ADMIN : RoleAccess.USER;
         Set<String> viewPermissions = toPermissionSet(user.getPageViewPermissions());
