@@ -7,10 +7,18 @@ const rendered = {};
 const context = {
     MASTER_PLANT_CONFIG: {
         PLANT: { label: 'Plant' },
+        DESIGNATION: { label: 'Designation', inheritPlant: true },
         DEPARTMENT: { label: 'Department', inheritPlant: true },
         PROCESS_AREA: { label: 'Process Area', inheritPlant: true, parentDepartment: '#masterProcessAreaDepartmentSelect' }
     },
     masterPlantItems: {
+        DESIGNATION: [
+            { name: 'Engineer', parentPlant: 'Plant A' },
+            { name: 'Engineer', parentPlant: 'Plant B' },
+            { name: 'Operator', parentPlant: ' plant a ' },
+            { name: 'Area HOD', parentPlant: 'Plant B' },
+            { name: 'Unassigned', parentPlant: '' }
+        ],
         DEPARTMENT: [
             { name: 'Packaging', parentPlant: 'Plant A' },
             { name: 'Brewing', parentPlant: 'Plant B' }
@@ -76,3 +84,25 @@ context.renderMasterPlantInlineLists();
 assert.match(rendered['#masterDepartmentList'], /Select a plant/);
 assert.doesNotMatch(rendered['#masterDepartmentList'], /Packaging/);
 console.log('Inline department and area visibility and scope passed.');
+values['#masterPlantSelect'] = 'Plant A';
+context.renderMasterPlantInlineLists();
+assert.equal((rendered['#masterDesignationList'].match(/>Engineer</g) || []).length, 1);
+assert.match(rendered['#masterDesignationList'], /Operator/);
+assert.doesNotMatch(rendered['#masterDesignationList'], /Area HOD|Unassigned/);
+context.masterPlantViewCategory = 'DESIGNATION';
+context.renderMasterPlantView();
+assert.equal(rendered['#masterPlantViewList'], 'EngineerOperator');
+values['#masterPlantSelect'] = 'Plant B';
+context.renderMasterPlantInlineLists();
+context.renderMasterPlantView();
+assert.equal(rendered['#masterPlantViewList'], 'EngineerArea HOD');
+assert.match(rendered['#masterDesignationList'], /Area HOD/);
+assert.doesNotMatch(rendered['#masterDesignationList'], /Operator|Unassigned/);
+values['#masterPlantSelect'] = 'Plant C';
+context.renderMasterPlantInlineLists();
+assert.match(rendered['#masterDesignationList'], /No designations configured for this plant/);
+values['#masterPlantSelect'] = '';
+context.renderMasterPlantInlineLists();
+assert.match(rendered['#masterDesignationList'], /Select a plant/);
+assert.doesNotMatch(rendered['#masterDesignationList'], /Engineer|Operator|Area HOD|Unassigned/);
+console.log('Designation list and View stay scoped when switching or clearing the plant.');
