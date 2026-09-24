@@ -2,6 +2,7 @@ package org.example.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
+import org.example.entity.AppUser;
 import org.example.entity.GembaWalkRecord;
 import org.example.entity.PlantMasterDataItem;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,35 @@ class CloudMasterReferenceTest {
     private final ObjectMapper mapper = new ObjectMapper();
     private final MasterReferenceService service = new MasterReferenceService(mock(EntityManager.class), mapper);
     private final Set<String> headers = Set.of("id", "locationOfMswConducted", "processAreaId");
+
+    @Test void cloudUserRetainsUnresolvedAreaWithoutBindingToLocalMaster() {
+        var catalog = new MasterReferenceService.Catalog(Map.of(PlantMasterDataItem.class, List.of(
+                new MasterReferenceService.Master(88L, "PROCESS_AREA", "Old area", "", ""))));
+        for (var sourceCatalog : List.of(catalog, new MasterReferenceService.Catalog(Map.of()))) {
+            var row = mapper.createObjectNode().put("id", 5).put("area", "Old area").put("areaIds", "");
+            var warnings = new ArrayList<String>();
+            service.resolveCloud(AppUser.class, null, row, Set.of("id", "area", "areaIds"), sourceCatalog, warnings);
+            assertEquals("Old area", row.path("area").asText());
+            assertEquals("", row.path("areaIds").asText());
+            assertTrue(warnings.stream().anyMatch(w -> w.contains("Old area")));
+        }
+    }
+
+    @Test void userReferenceValidationRemainsStrictForExplicitIdsAndManualImports() {
+        var catalog = new MasterReferenceService.Catalog(Map.of());
+        var row = mapper.createObjectNode().put("id", 5).put("area", "Old area").put("areaIds", "99");
+        var fields = Set.of("id", "area", "areaIds");
+        assertThrows(IllegalArgumentException.class, () -> service.resolveCloud(AppUser.class, null,
+                row.deepCopy(), fields, catalog, new ArrayList<>()));
+        row.put("areaIds", "");
+        assertThrows(IllegalArgumentException.class, () -> service.resolve(AppUser.class, null,
+                row.deepCopy(), fields, catalog, new ArrayList<>()));
+        row.remove("areaIds");
+        var warnings = new ArrayList<String>();
+        service.resolveCloud(AppUser.class, null, row, Set.of("id", "area"), catalog, warnings);
+        assertEquals("", row.path("areaIds").asText());
+        assertFalse(warnings.isEmpty());
+    }
 
     @Test void blankSourceLinkDoesNotBindToLocalOnlyMaster() {
         var row = mapper.createObjectNode().put("id", 9).put("locationOfMswConducted", "Area2").put("processAreaId", "");
@@ -90,13 +120,64 @@ class CloudMasterReferenceTest {
         assertFalse(warnings.isEmpty());
     }
 
-    @Test void unknownExplicitIdAndLegacyCsvWithoutReferenceColumnsStillFail() {
+    @Test void unknownExplicitIdFailsButLegacyUnresolvedTextIsRetained() {
         var row = mapper.createObjectNode().put("id", 9).put("locationOfMswConducted", "Old area").put("processAreaId", "99");
         var catalog = new MasterReferenceService.Catalog(Map.of());
         assertThrows(IllegalArgumentException.class, () -> service.resolveCloud(GembaWalkRecord.class, null,
                 row, headers, catalog, new ArrayList<>()));
         row.remove("processAreaId");
-        assertThrows(IllegalArgumentException.class, () -> service.resolveCloud(GembaWalkRecord.class, null,
-                row, Set.of("id", "locationOfMswConducted"), catalog, new ArrayList<>()));
+        var warnings = new ArrayList<String>();
+        service.resolveCloud(GembaWalkRecord.class, null, row, Set.of("id", "locationOfMswConducted"), catalog, warnings);
+        assertEquals("Old area", row.path("locationOfMswConducted").asText());
+        assertFalse(warnings.isEmpty());
+    }
+
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> mappings() {
+        var resolver = new MasterReferenceService(mock(EntityManager.class), new ObjectMapper());
+        return java.util.stream.Stream.of(PlantMasterDataItem.class, AppUser.class, GembaWalkRecord.class,
+                org.example.entity.GembaWalkObservation.class, org.example.entity.GembaKaizenRecord.class,
+                org.example.entity.AbnormalityReportingRecord.class, org.example.entity.CarlexProcessConfirmation.class)
+                .flatMap(type -> resolver.links(type).stream().map(link ->
+                        org.junit.jupiter.params.provider.Arguments.of(type, link)));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.MethodSource("mappings")
+    void everyMappingPreservesBlankSourceLinksAndRejectsInvalidExplicitIds(Class<?> type, MasterReferenceService.Link link) {
+        var row = mapper.createObjectNode().put("id", 71).put(link.column(), "");
+        if (!link.field().isEmpty()) row.put(link.field(), "Historical value");
+        var fields = new HashSet<String>(); row.fieldNames().forEachRemaining(fields::add);
+        var catalog = new MasterReferenceService.Catalog(Map.of(link.master(), List.of(
+                new MasterReferenceService.Master(88L, link.category(), "Historical value", "", ""))));
+        var warnings = new ArrayList<String>();
+        service.resolveCloud(type, null, row, fields, catalog, warnings);
+        assertEquals("", row.path(link.column()).asText());
+        if (!link.field().isEmpty()) {
+            assertEquals("Historical value", row.path(link.field()).asText());
+            assertFalse(warnings.isEmpty());
+            var legacy = row.deepCopy(); legacy.remove(link.column());
+            service.resolveCloud(type, null, legacy, Set.of("id", link.field()),
+                    new MasterReferenceService.Catalog(Map.of()), new ArrayList<>());
+            assertEquals("Historical value", legacy.path(link.field()).asText());
+            assertEquals("", legacy.path(link.column()).asText());
+        }
+        for (String invalid : List.of("999", "-1", "abc", "88,88")) {
+            var invalidRow = row.deepCopy().put(link.column(), invalid);
+            assertThrows(IllegalArgumentException.class, () -> service.resolveCloud(type, null,
+                    invalidRow, fields, catalog, new ArrayList<>()));
+        }
+    }
+
+    @Test void nestedWalkObservationRetainsUnresolvedMappings() {
+        var row = mapper.createObjectNode().put("id", 71);
+        row.putArray("observations").addObject().put("id", 72)
+                .put("gembaCategory", "Old category").put("gembaCategoryId", "")
+                .put("lifeSaverRule", "Old rule");
+        var warnings = new ArrayList<String>();
+        service.resolveCloud(GembaWalkRecord.class, null, row, Set.of("id", "observations"),
+                new MasterReferenceService.Catalog(Map.of()), warnings);
+        assertEquals("Old category", row.path("observations").get(0).path("gembaCategory").asText());
+        assertEquals("", row.path("observations").get(0).path("lifeSaverRuleId").asText());
+        assertEquals(2, warnings.size());
     }
 }
