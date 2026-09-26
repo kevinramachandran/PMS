@@ -122,7 +122,7 @@ function Ensure-EnvFile {
 # Auto-created by the Brewery PMS service. Edit these values for the target VM.
 
 SPRING_PROFILES_ACTIVE=prod
-SERVER_PORT=8080
+SERVER_PORT=165
 APP_TIMEZONE=UTC
 
 DB_URL=jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true

@@ -6808,12 +6808,6 @@ function regroupRows($container){
         return '' +
             '<div class="master-plant-view-row" data-id="' + escapeAttributeValue(safeItem.id || '') + '" data-category="' + escapeAttributeValue(category) + '" data-name="' + escapeAttributeValue(name) + '">' +
                 '<span class="master-plant-name">' + escapeHtml(name) + (meta ? '<small>' + escapeHtml(meta) + '</small>' : '') + '</span>' +
-                '<div>' +
-                    '<div class="kpi-rename-actions">' +
-                        '<button type="button" class="master-plant-edit-btn" title="Edit"><i class="fas fa-edit"></i></button>' +
-                        '<button type="button" class="master-plant-delete-btn" title="Delete"><i class="fas fa-trash-alt"></i></button>' +
-                    '</div>' +
-                '</div>' +
             '</div>';
     }
 

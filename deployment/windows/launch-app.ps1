@@ -1,7 +1,7 @@
 param(
     [string]$InstallRoot = "C:\Brewery-PMS",
     [string]$ServiceName = "brewery-pms",
-    [string]$ApplicationUrl = "http://localhost:8080",
+    [string]$ApplicationUrl = "http://localhost:165",
     [int]$StartupTimeoutSeconds = 90
 )
 
@@ -226,7 +226,7 @@ function Ensure-EnvFile {
 # Auto-created by service\start.bat. Edit these values for the target VM.
 
 SPRING_PROFILES_ACTIVE=prod
-SERVER_PORT=8080
+SERVER_PORT=165
 APP_TIMEZONE=UTC
 
 DB_URL=jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
@@ -297,7 +297,7 @@ if (Test-Path $envFile) {
     Write-StartupLog "Loaded environment file $envFile"
 }
 
-$port = 8080
+$port = 165
 $configuredPort = [System.Environment]::GetEnvironmentVariable("SERVER_PORT")
 if ($configuredPort -and $configuredPort -match "^\d+$") {
     $port = [int]$configuredPort

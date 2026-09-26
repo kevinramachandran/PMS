@@ -143,7 +143,7 @@ public class MasterReferenceService {
                     || link.category().equals("PROCESS_AREA") && (!text(original, "departmentId").equals(text(incoming, "departmentId"))
                     || !text(original, "departmentIds").equals(text(incoming, "departmentIds"))));
             boolean unchanged = original != null && same(name, oldName) && rawIds.equals(oldIds) && !scopeChanged;
-            if (cloud && headers.contains(link.column()) && rawIds.isBlank() && isReportingType(type)) {
+            if (cloud && headers.contains(link.column()) && rawIds.isBlank()) {
                 // An explicitly blank source link must not bind to an unrelated local name match.
                 incoming.put(link.column(), "");
                 if (!name.isBlank()) warn(warnings, incoming, link.field() + " retains an unresolved source value: " + name);
@@ -161,10 +161,16 @@ public class MasterReferenceService {
                 if (name.isBlank()) { incoming.put(link.column(), ""); continue; }
                 List<Master> matches = matchNames(link, name, incoming, catalog);
                 if (matches.isEmpty()) {
+                    if (cloud) {
+                        incoming.put(link.column(), "");
+                        warn(warnings, incoming, link.field() + " retains an unresolved source value: " + name
+                                + " (no unique master match for " + link.column() + ")");
+                        continue;
+                    }
                     throw new IllegalArgumentException(link.field() + " has no unique master match. Supply " + link.column() + " and plant/department scope.");
                 }
                 incoming.put(link.column(), ids(matches.stream().map(Master::id).toList()));
-                incoming.put(link.field(), matches.stream().map(Master::name).collect(Collectors.joining(", ")));
+                if (!cloud) incoming.put(link.field(), matches.stream().map(Master::name).collect(Collectors.joining(", ")));
                 continue;
             }
             List<Long> selected = parseIds(rawIds, link.many());
@@ -303,10 +309,6 @@ public class MasterReferenceService {
         }
         return !link.category().equals("PROCESS_AREA") || department.isBlank()
                 || Arrays.stream(department.split(",")).anyMatch(d -> same(d, master.department()));
-    }
-    private static boolean isReportingType(Class<?> type) {
-        return List.of(GembaWalkRecord.class, GembaWalkObservation.class, GembaKaizenRecord.class,
-                AbnormalityReportingRecord.class, CarlexProcessConfirmation.class).contains(type);
     }
     private static List<Long> parseIds(String value, boolean many) {
         try {

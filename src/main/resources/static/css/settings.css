@@ -3062,6 +3062,16 @@ padding:4px 8px;
     border-bottom: 0;
 }
 
+.master-plant-entry .master-plant-update-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.master-plant-sync-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
 .master-plant-name {
     color: #111827;
     font-size: 14px;

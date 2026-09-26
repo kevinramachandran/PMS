@@ -59,6 +59,10 @@ public class AuthInterceptor implements HandlerInterceptor {
                 denyAccess(request, response);
                 return false;
             }
+            // Sync pages need the same fresh menu permissions as every other page.
+            applyNavigationSessionAttributes(session, role,
+                    RoleAccess.isAdmin(role) ? RoleAccess.CONFIG_PAGES : extractPermissions(session, "viewPermissions"),
+                    RoleAccess.isAdmin(role) ? RoleAccess.CONFIG_PAGES : extractPermissions(session, "editPermissions"));
             return true;
         }
 
