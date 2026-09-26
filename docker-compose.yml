@@ -12,10 +12,10 @@ services:
       mysql:
         condition: service_healthy
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "${SERVER_PORT:-165}:165"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SERVER_PORT: 8080
+      SERVER_PORT: 165
       APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
       DB_URL: ${DB_URL:-jdbc:mysql://mysql:3306/brewery_pms}
       DB_USERNAME: ${DB_USERNAME:-brewery_user}
@@ -23,7 +23,7 @@ services:
       LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
       LOG_LEVEL_WEB: ${LOG_LEVEL_WEB:-INFO}
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:165/actuator/health"]
       interval: 30s
       timeout: 5s
       retries: 3
