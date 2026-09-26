@@ -304,11 +304,9 @@ $(function () {
                 '<td>' + escapeHtml(displayDate(record.dateClosed)) + '</td>' +
                 '<td>' + escapeHtml(record.tagStatus) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeAttr(record.id) + '">Loading...</td>' +
-                '<td><button type="button" class="ar-table-action ar-edit-record" data-id="' + escapeAttr(record.id) + '" title="Edit" aria-label="Edit abnormality reporting"><i class="fas fa-pen"></i></button>' +
-                '<button type="button" class="ar-table-action ar-delete-record" data-id="' + escapeAttr(record.id) + '" title="Delete" aria-label="Delete abnormality reporting"><i class="fas fa-trash"></i></button></td>' +
                 '</tr>';
         }).join('');
-            $('#abnormalityReportingRecordsBody').html(rows || '<tr><td colspan="18" class="ar-empty">No records found.</td></tr>');
+            $('#abnormalityReportingRecordsBody').html(rows || '<tr><td colspan="17" class="ar-empty">No records found.</td></tr>');
             records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -322,7 +320,7 @@ $(function () {
             },
             error: function() {
                 records = [];
-                $('#abnormalityReportingRecordsBody').html('<tr><td colspan="18" class="ar-empty">Unable to load records.</td></tr>');
+                $('#abnormalityReportingRecordsBody').html('<tr><td colspan="17" class="ar-empty">Unable to load records.</td></tr>');
             }
         });
     }
@@ -452,6 +450,23 @@ $(function () {
 
     $('#abnormalityReportingForm').on('input change', 'input, select, textarea', function() {
         markField('#' + this.id, false);
+    });
+
+    $('#abnormalityExportBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Abnormality Reporting', filename: 'abnormality-reporting', records: function() { return records; },
+            dateValue: function(record) { return record.dateRaised; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Type of Tag', value: function(r) { return r.typeOfTag; } },
+                { label: 'Priority', value: function(r) { return r.priority; } }, { label: 'Raised By', value: function(r) { return r.tagRaisedBy; } },
+                { label: 'Date Raised', value: function(r) { return r.dateRaised; } }, { label: 'Shift', value: function(r) { return r.shift; } },
+                { label: 'Department', value: function(r) { return r.department; } }, { label: 'Area / Machine', value: function(r) { return r.areaMachine; } },
+                { label: 'Component', value: function(r) { return r.component; } }, { label: 'Description', value: function(r) { return r.description; } },
+                { label: 'Proposed Action', value: function(r) { return r.proposedAction; } }, { label: 'Defect Type', value: function(r) { return r.abnormalityDefectType; } },
+                { label: 'Assigned To', value: function(r) { return r.assignTo; } }, { label: 'Date Closed', value: function(r) { return r.dateClosed; } },
+                { label: 'Status', value: function(r) { return r.tagStatus; } }
+            ]
+        });
     });
 
     $('#tagStatus').on('change input', function() {

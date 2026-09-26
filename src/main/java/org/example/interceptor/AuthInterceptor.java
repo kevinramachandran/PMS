@@ -87,6 +87,13 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
 
+        if (isCloudManagedMasterWrite(path, request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":\"error\",\"message\":\"Master data changes must be made in the configured cloud PMS.\"}");
+            return false;
+        }
+
         if (RoleAccess.isAdmin(role)) {
             applyNavigationSessionAttributes(session, role, RoleAccess.CONFIG_PAGES, RoleAccess.CONFIG_PAGES);
             applyPermissionAttributes(request, true, true, protectedPageKeyForRequest(request));
@@ -122,6 +129,19 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         return true;
+    }
+
+    private boolean isCloudManagedMasterWrite(String path, String method) {
+        if (!Set.of("POST", "PUT", "DELETE").contains(method.toUpperCase(java.util.Locale.ROOT))) return false;
+        return path.startsWith("/api/dashboard-config/master-data/")
+                || path.startsWith("/api/dashboard-config/abnormality-master-data/")
+                || path.startsWith("/api/dashboard-config/gemba-walk-master-data/")
+                || path.startsWith("/api/dashboard-config/gemba-kaizen-master-data/")
+                || path.startsWith("/api/dashboard-config/process-master-data/")
+                || path.startsWith("/api/gemba-kaizen-config/records")
+                || path.startsWith("/api/gemba-walk-config/records")
+                || path.startsWith("/api/abnormality-reporting-config/records")
+                || path.startsWith("/api/carlex-process-confirmation/records");
     }
 
     private String protectedPageKeyForRequest(HttpServletRequest request) {
@@ -236,6 +256,10 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private String resolveProtectedPageKey(HttpServletRequest request) {
         String path = request.getRequestURI();
+
+        if (path.startsWith("/api/master-cloud-target")) {
+            return RoleAccess.pageKeyForSettingsConfig(request.getParameter("config"));
+        }
 
         if (path.startsWith("/pms-configuration") || path.startsWith("/api/users")) {
             return RoleAccess.PAGE_USER_MANAGEMENT;

@@ -271,6 +271,7 @@ public final class RoleAccess {
         }
 
         return switch (config.trim().toLowerCase(Locale.ROOT)) {
+            case "user-management" -> PAGE_USER_MANAGEMENT;
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
             case "master-gemba-walk" -> PAGE_GEMBA_WALK_CONFIGURATION;

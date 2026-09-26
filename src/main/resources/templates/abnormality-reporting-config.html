@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abnormality Reporting - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
+    <link rel="stylesheet" href="/css/issue-board.css?v=20260926-report-footer">
     <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
-    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260926-report-footer">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
         <link rel="stylesheet" href="/css/data-sync.css?v=2">
@@ -46,10 +49,6 @@
 
         <div class="content-area">
             <section class="ar-card ar-config-table-card">
-                <div class="issue-board-title-row">
-                    <h2>Abnormality report</h2>
-                    <button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Report</span></button>
-                </div>
                 <div class="ar-table-wrap">
                     <table class="ar-table">
                         <thead>
@@ -71,13 +70,17 @@
                                 <th>Date Closed</th>
                                 <th>Status</th>
                                 <th>Assignment History</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="abnormalityReportingRecordsBody">
-                            <tr><td colspan="18" class="ar-empty">Loading records...</td></tr>
+                            <tr><td colspan="17" class="ar-empty">Loading records...</td></tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="report-page-actions report-page-actions-footer">
+                    <button type="button" id="abnormalityExportBtn" class="issue-add-button"><i class="fas fa-file-csv"></i><span>Download</span></button>
+                    <button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Report</span></button>
+                    <button type="button" id="abnormalityUpdatePageBtn" class="issue-add-button"><i class="fas fa-cloud-arrow-up"></i><span>Update</span></button>
                 </div>
             </section>
 
@@ -179,10 +182,11 @@
     </main>
 </div>
 
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20260921-mutation-fixes"></script>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/pdf-report.js?v=1"></script><script src="/js/report-export.js?v=2"></script><script src="/js/abnormality-reporting-config.js?v=20260926-report-cloud-actions"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
     <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
+    <script src="/js/master-cloud-routing.js?v=4"></script>
 </body>
 </html>
 

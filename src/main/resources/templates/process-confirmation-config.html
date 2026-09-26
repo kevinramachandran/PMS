@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarlEx P C reporting</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
+    <link rel="stylesheet" href="/css/issue-board.css?v=20260926-report-footer">
     <link rel="stylesheet" href="/css/process-confirmation.css?v=carlex-records-20260903">
-    <link rel="stylesheet" href="/css/process-confirmation-config.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/process-confirmation-config.css?v=20260926-report-footer">
     <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -24,13 +26,14 @@
         <div class="sidebar-footer"><img src="/images/solvex-logo.png" alt="SolveX" class="sidebar-solvex-logo"></div>
     </aside>
     <main class="main-content"><header class="top-header"><div class="header-left"><div class="hamburger" id="hamburger"><span></span><span></span><span></span></div><h1>CarlEX Process Confirmation</h1></div><div class="header-right"><div class="user-avatar" th:attr="data-username=${session.username != null ? session.username : 'User'}"><i class="fas fa-user"></i></div></div></header>
-        <div class="content-area"><section class="issue-board-card carlex-config-card"><div class="pc-page-toolbar"><div><h2>Process Confirmation Records</h2><p>Maintain the CarlEX process confirmation register.</p></div><button type="button" id="carlexAddBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add confirmation</span></button></div><div class="carlex-table-wrap"><table class="carlex-table"><thead><tr><th>#</th><th>ID</th><th>Date</th><th>Name</th><th>Email</th><th>Department</th><th>Area</th><th>Responsibility</th><th>Assigned To</th><th>ZM 1</th><th>PM 1</th><th>QM 1</th><th>Status</th><th>Images</th><th>Assignment History</th><th>Actions</th></tr></thead><tbody id="carlexRecordsBody"><tr><td colspan="16">Loading records...</td></tr></tbody></table></div></section></div>
+        <div class="content-area"><section class="issue-board-card carlex-config-card"><div class="carlex-table-wrap"><table class="carlex-table"><thead><tr><th>#</th><th>ID</th><th>Date</th><th>Name</th><th>Email</th><th>Department</th><th>Area</th><th>Responsibility</th><th>Assigned To</th><th>ZM 1</th><th>PM 1</th><th>QM 1</th><th>Status</th><th>Images</th><th>Assignment History</th></tr></thead><tbody id="carlexRecordsBody"><tr><td colspan="15">Loading records...</td></tr></tbody></table></div><div class="report-page-actions report-page-actions-footer"><button type="button" id="carlexExportBtn" class="issue-add-button"><i class="fas fa-file-csv"></i><span>Download</span></button><button type="button" id="carlexAddBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add confirmation</span></button><button type="button" id="carlexUpdatePageBtn" class="issue-add-button"><i class="fas fa-cloud-arrow-up"></i><span>Update</span></button></div></section></div>
     </main>
 </div>
 <div id="carlexBackdrop" class="carlex-backdrop" aria-hidden="true"></div>
 <form id="carlexForm" class="carlex-drawer" role="dialog" aria-modal="true" aria-labelledby="carlexDrawerTitle" aria-describedby="carlexDrawerDescription" aria-hidden="true"><div class="carlex-drawer-header"><div class="carlex-drawer-heading"><span class="carlex-drawer-icon" aria-hidden="true"><i class="fas fa-file-lines"></i></span><div><h2 id="carlexDrawerTitle">Add CarlEX Process Confirmation</h2><p id="carlexDrawerDescription">Enter observations and confirmation details for the selected process.</p></div></div><button type="button" id="carlexCloseBtn" class="carlex-close" aria-label="Close"><i class="fas fa-times"></i></button></div><div class="carlex-drawer-body"><input type="hidden" id="carlexId"><div class="carlex-form-grid" id="carlexFields"></div></div><div class="carlex-drawer-footer"><div id="carlexMessage" class="form-message" role="alert" aria-live="assertive" tabindex="-1"></div><button type="button" id="carlexCancelBtn" class="btn btn-secondary">Cancel</button><button type="submit" id="carlexSaveBtn" class="btn btn-primary"><i class="fas fa-save"></i> Save confirmation</button></div></form>
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation-config.js?v=20260921-mutation-fixes"></script><script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/pdf-report.js?v=1"></script><script src="/js/report-export.js?v=2"></script><script src="/js/process-confirmation-config.js?v=20260926-report-cloud-actions"></script><script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
     <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
+    <script src="/js/master-cloud-routing.js?v=4"></script>
 </body>
 </html>
 

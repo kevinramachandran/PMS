@@ -190,11 +190,9 @@ $(function() {
                 '<td><span class="gk-status-pill">' + escapeHtml(record.isKaizenImplemented || 'No') + '</span></td>' +
                 '<td>' + escapeHtml(record.assignedTo) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
-                '<td><button type="button" class="gk-table-action gk-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Kaizen"><i class="fas fa-pen"></i></button>' +
-                '<button type="button" class="gk-table-action gk-delete-record" data-id="' + escapeHtml(record.id) + '" title="Delete" aria-label="Delete Gemba Kaizen"><i class="fas fa-trash"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="16" class="gk-empty-cell">No records found.</td></tr>');
+        $('#gembaKaizenConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gk-empty-cell">No records found.</td></tr>');
         records.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -208,7 +206,7 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="16" class="gk-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaKaizenConfigRecordsBody').html('<tr><td colspan="15" class="gk-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }
@@ -378,6 +376,21 @@ $(function() {
     $('#gembaKaizenAddRecordBtn').on('click', function() {
         resetRecord();
         openDrawer(null);
+    });
+
+    $('#gembaKaizenExportBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Gemba Kaizen', filename: 'gemba-kaizen', records: function() { return records; },
+            dateValue: function(record) { return record.gembaKaizenGenerationDate; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Name', value: function(r) { return r.name; } },
+                { label: 'Last Modified Time', value: function(r) { return r.lastModifiedTime; } }, { label: 'Employee ID / HO Number', value: function(r) { return r.employeeIdHoNumber; } },
+                { label: 'Department', value: function(r) { return r.department; } }, { label: 'Classification', value: function(r) { return r.classificationOfKaizen; } },
+                { label: 'Location', value: function(r) { return r.gembaKaizenLocation; } }, { label: 'Generation Date', value: function(r) { return r.gembaKaizenGenerationDate; } },
+                { label: 'Kaizen Idea', value: function(r) { return r.kaizenIdea; } }, { label: 'Benefits of Kaizen', value: function(r) { return r.benefitsOfKaizen; } },
+                { label: 'Implemented', value: function(r) { return r.isKaizenImplemented; } }, { label: 'Assigned To', value: function(r) { return r.assignedTo; } }
+            ]
+        });
     });
 
     $('#gembaKaizenConfigRecordsBody').on('click', '.gk-edit-record', function() {

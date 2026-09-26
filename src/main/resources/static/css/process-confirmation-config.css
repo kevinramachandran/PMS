@@ -19,10 +19,14 @@
     font-size: 13px;
 }
 
-.pc-records-wrap,
-.carlex-table-wrap {
+.pc-records-wrap {
     overflow: auto;
     max-height: calc(100vh - 255px);
+}
+
+.carlex-table-wrap {
+    overflow: auto;
+    max-height: calc(100vh - 190px);
 }
 
 .pc-records-table,
@@ -63,6 +67,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.carlex-table td.carlex-observation-description {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    vertical-align: top;
 }
 
 .carlex-table th:nth-child(1),

@@ -325,11 +325,9 @@ $(function() {
                 '<td><span class="gw-status-pill">' + observations.length + '</span></td>' +
                 '<td>' + escapeHtml(record.finalComments) + '</td>' +
                 '<td class="assignment-history-cell" data-record-id="' + escapeHtml(record.id) + '">Loading...</td>' +
-                '<td><button type="button" class="gw-table-action gw-edit-record" data-id="' + escapeHtml(record.id) + '" title="Edit" aria-label="Edit Gemba Walk"><i class="fas fa-pen"></i></button>' +
-                '<button type="button" class="gw-table-action gw-delete-record" data-id="' + escapeHtml(record.id) + '" title="Delete" aria-label="Delete Gemba Walk"><i class="fas fa-trash"></i></button></td>' +
                 '</tr>';
         }).join('');
-        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="15" class="gw-empty-cell">No records found.</td></tr>');
+        $('#gembaWalkConfigRecordsBody').html(rows || '<tr><td colspan="14" class="gw-empty-cell">No records found.</td></tr>');
         sortedRecords.forEach(function(record) { $.getJSON(API + '/records/' + record.id + '/history', function(entries) { $('.assignment-history-cell[data-record-id="' + record.id + '"]').html(formatAssignmentHistory(entries)); }); });
     }
 
@@ -343,7 +341,7 @@ $(function() {
             },
             error: function() {
                 records = [];
-                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="15" class="gw-empty-cell">Unable to load records.</td></tr>');
+                $('#gembaWalkConfigRecordsBody').html('<tr><td colspan="14" class="gw-empty-cell">Unable to load records.</td></tr>');
             }
         });
     }
@@ -500,6 +498,22 @@ $(function() {
     $('#gembaWalkAddRecordBtn').on('click', function() {
         resetRecord();
         openDrawer(null);
+    });
+
+    $('#gembaWalkExportBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Gemba Walk', filename: 'gemba-walk', records: function() { return records; },
+            dateValue: function(record) { return record.dateOfLeadershipSafetyWalkConducted; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Department', value: function(r) { return r.department; } },
+                { label: 'Start Time', value: function(r) { return r.startTime; } }, { label: 'Completion Time', value: function(r) { return r.completionTime; } },
+                { label: 'Manager', value: function(r) { return displayManager(r); } }, { label: 'Email', value: function(r) { return displayEmail(r); } },
+                { label: 'Date Conducted', value: function(r) { return r.dateOfLeadershipSafetyWalkConducted; } },
+                { label: 'Week', value: function(r) { return r.managementSafetyWalkWeek; } }, { label: 'Location', value: function(r) { return r.locationOfMswConducted; } },
+                { label: 'Responsibility', value: function(r) { return r.responsibility; } }, { label: 'Observations', value: function(r) { return window.ReportExport.text(r.observations); } },
+                { label: 'Final Comments', value: function(r) { return r.finalComments; } }
+            ]
+        });
     });
 
     $('#gembaWalkConfigRecordsBody').on('click', '.gw-edit-record', function() {

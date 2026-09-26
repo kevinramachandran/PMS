@@ -80,8 +80,14 @@ public class CloudSyncService {
     }
 
     public void startNow() {
+        startNow(null);
+    }
+
+    public void startNow(String datasetSelection) {
         SyncConfiguration config = getOrCreate();
-        if (claimRun(config)) java.util.concurrent.CompletableFuture.runAsync(() -> execute(config));
+        List<String> selectedDatasets = datasetSelection == null || datasetSelection.isBlank()
+                ? null : SyncDatasetPlan.resolve(datasetSelection);
+        if (claimRun(config)) java.util.concurrent.CompletableFuture.runAsync(() -> execute(config, selectedDatasets));
     }
 
     private void run(SyncConfiguration config) {
@@ -103,6 +109,10 @@ public class CloudSyncService {
     }
 
     private void execute(SyncConfiguration config) {
+        execute(config, null);
+    }
+
+    private void execute(SyncConfiguration config, List<String> selectedDatasets) {
         try {
             validateConfigured(config);
             for (Path folder : folders(config)) {
@@ -120,9 +130,12 @@ public class CloudSyncService {
             List<Path> batch = new ArrayList<>();
             List<String> sourceWarnings = new ArrayList<>();
             String runId = UUID.randomUUID().toString();
-            List<String> plan = SyncDatasetPlan.resolve(config.getDatasets());
-            config.setDatasets(String.join("\n", plan));
-            repository.save(config);
+            List<String> plan = selectedDatasets == null
+                    ? SyncDatasetPlan.resolve(config.getDatasets()) : selectedDatasets;
+            if (selectedDatasets == null) {
+                config.setDatasets(String.join("\n", plan));
+                repository.save(config);
+            }
             for (String datasetSpec : plan) {
                 if (datasetSpec.isBlank()) continue;
                 String[] parts = datasetSpec.trim().split(":", 2);
@@ -142,9 +155,11 @@ public class CloudSyncService {
                 downloaded++;
             }
             ImportSummary summary = processFiles(config, batch, sourceWarnings, runId);
+            cleanupSyncCsvFiles(config);
             config.setLastStatus(summary.hasWarnings() ? "SUCCESS_WITH_WARNINGS" : "SUCCESS");
             config.setLastSuccessAt(LocalDateTime.now());
-            String message = "Sync completed. Downloaded " + downloaded + " dataset file(s). " + summary.message();
+            String message = "Sync completed. Downloaded " + downloaded + " dataset file(s). " + summary.message()
+                    + " CSV files cleared from sync folders.";
             config.setLastMessage(message.substring(0, Math.min(message.length(), 2000)));
         } catch (Exception ex) {
             if (ex instanceof InterruptedException) Thread.currentThread().interrupt();
@@ -211,7 +226,20 @@ public class CloudSyncService {
         if (!errors.isEmpty()) throw new IOException("Sync import failed for " + errors.size() + " file(s). "
                 + String.join("; ", errors) + ". " + skippedFiles.size() + " dependent file(s) not imported. Report: " + report);
         return new ImportSummary(created + " added, " + updated + " replaced, " + unchanged + " unchanged. "
-                + warnings.size() + " warning(s). Report: " + report + ". " + warnings.stream().limit(3).collect(java.util.stream.Collectors.joining("; ")), !warnings.isEmpty());
+                + warnings.size() + " warning(s). Report: " + report + ". "
+                + warnings.stream().limit(3).collect(java.util.stream.Collectors.joining("; ")), !warnings.isEmpty());
+    }
+
+    private static void cleanupSyncCsvFiles(SyncConfiguration config) throws IOException {
+        for (Path folder : folders(config)) {
+            if (!Files.isDirectory(folder)) continue;
+            try (var files = Files.list(folder)) {
+                for (Path file : files.filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".csv")).toList()) {
+                    Files.deleteIfExists(file);
+                }
+            }
+        }
     }
 
     private static int importPriority(Path file) {

@@ -1,7 +1,6 @@
 .gemba-kaizen-config-page .gk-form-card {
     overflow: visible;
 }
-
 .gemba-kaizen-config-page .gk-form-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -126,7 +125,7 @@
 
 .gemba-kaizen-config-page .gk-table-shell {
     overflow: auto;
-    max-height: calc(100vh - 275px);
+    max-height: calc(100vh - 190px);
     border-top: 1px solid #dfe5e2;
 }
 

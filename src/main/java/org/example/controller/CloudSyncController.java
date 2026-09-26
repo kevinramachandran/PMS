@@ -42,8 +42,8 @@ public class CloudSyncController {
     public Map<String, Object> status() { return service.status(); }
 
     @PostMapping("/run")
-    public Map<String, Object> run() {
-        service.startNow();
+    public Map<String, Object> run(@RequestParam(required = false) String dataset) {
+        service.startNow(dataset);
         return Map.of("status", "success", "message", "Sync started");
     }
 }

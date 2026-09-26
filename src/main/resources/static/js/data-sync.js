@@ -1,10 +1,12 @@
 (function () {
     'use strict';
-    function mount(host) {
-        const trigger = document.createElement('button');
-        trigger.type = 'button';
-        trigger.className = 'data-sync-trigger';
-        trigger.innerHTML = '<i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync';
+    function mount(host, datasetSelection, existingTrigger) {
+        const trigger = existingTrigger || document.createElement('button');
+        if (!existingTrigger) {
+            trigger.type = 'button';
+            trigger.className = 'data-sync-trigger';
+            trigger.innerHTML = '<i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync';
+        }
         trigger.setAttribute('aria-haspopup', 'dialog');
         const dialog = document.createElement('div');
         dialog.className = 'data-sync-dialog';
@@ -19,8 +21,10 @@
             '<button type="button" class="data-sync-button data-sync-ok" hidden>OK</button>' +
             '<button type="button" class="data-sync-button data-sync-cancel">Cancel</button></div></section>';
         const target = host.classList && host.classList.contains('footer-btn-card') ? host.querySelector('.footer-btn-card-header') : document.querySelector('.top-header .header-right');
-        const triggerTarget = target && (typeof target.appendChild === 'function' || typeof target.prepend === 'function') ? target : host;
-        if (typeof triggerTarget.appendChild === 'function') triggerTarget.appendChild(trigger); else triggerTarget.prepend(trigger);
+        if (!existingTrigger) {
+            const triggerTarget = target && (typeof target.appendChild === 'function' || typeof target.prepend === 'function') ? target : host;
+            if (typeof triggerTarget.appendChild === 'function') triggerTarget.appendChild(trigger); else triggerTarget.prepend(trigger);
+        }
         if (typeof document.body.appendChild === 'function') document.body.appendChild(dialog);
         const panel = dialog.querySelector('.data-sync-panel');
         const status = panel.querySelector('.data-sync-status');
@@ -55,7 +59,8 @@
             runButton.disabled = true;
             setStatus({ status: 'RUNNING', message: 'Starting sync...' });
             try {
-                await request('/api/cloud-sync/run', { method: 'POST' });
+                const query = datasetSelection ? '?dataset=' + encodeURIComponent(datasetSelection) : '';
+                await request('/api/cloud-sync/run' + query, { method: 'POST' });
                 const timer = setInterval(async () => { const data = await refreshStatus(); if (!data || data.status !== 'RUNNING') clearInterval(timer); }, 1500);
             } catch (error) { setStatus({ status: 'ERROR', message: error.message }); }
         }
@@ -67,10 +72,37 @@
         runButton.addEventListener('click', runSync);
         if (document.addEventListener) document.addEventListener('keydown', event => { if (event.key === 'Escape' && !dialog.hidden) closeDialog(); });
     }
+    function datasetForCard(card) {
+        const category = card.getAttribute('data-category') || '';
+        const mappings = {
+            'master-plant-card': 'plant-master:',
+            'master-gemba-kaizen-card': 'kaizen-master:',
+            'master-abnormality-card': 'abnormality-master:',
+            'master-gemba-walk-card': 'walk-master:',
+            'master-process-card': 'process-master:'
+        };
+        const prefix = Object.keys(mappings).find(name => card.classList.contains(name));
+        return prefix && category ? mappings[prefix] + category : '';
+    }
     function init() {
-        const pages = ['/gemba-kaizen-config', '/abnormality-reporting-config', '/gemba-walk-config', '/process-confirmation-config', '/pms-configuration'];
-        if (pages.includes(window.location.pathname)) { const content = document.querySelector('.content-area'); if (content) mount(content); }
-        if (window.location.pathname === '/settings') ['master-plant-card', 'master-gemba-kaizen-card', 'master-abnormality-card', 'master-gemba-walk-card', 'master-process-card'].forEach(className => document.querySelectorAll('.' + className + '[data-category]').forEach(card => mount(card)));
+        const pageDatasets = {
+            '/gemba-kaizen-config': 'gemba-kaizen',
+            '/abnormality-reporting-config': 'abnormality',
+            '/gemba-walk-config': 'gemba-walk',
+            '/process-confirmation-config': 'process-confirmation',
+            '/pms-configuration': 'users'
+        };
+        const pageDataset = pageDatasets[window.location.pathname];
+        if (pageDataset) {
+            const content = document.querySelector('.content-area');
+            if (content) mount(content, pageDataset);
+        }
+        if (window.location.pathname === '/settings') {
+            document.querySelectorAll('.master-plant-sync-btn').forEach(button =>
+                mount(button.parentElement, 'plant-master:PLANT\nplant-master:DEPARTMENT\nplant-master:PROCESS_AREA\nplant-master:DESIGNATION', button));
+            ['master-plant-card', 'master-gemba-kaizen-card', 'master-abnormality-card', 'master-gemba-walk-card', 'master-process-card'].forEach(className =>
+                document.querySelectorAll('.' + className + '[data-category]').forEach(card => mount(card, datasetForCard(card))));
+        }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 }());

@@ -151,7 +151,7 @@
 
 .gemba-walk-config-page .gw-table-shell {
     overflow: auto;
-    max-height: calc(100vh - 275px);
+    max-height: calc(100vh - 190px);
     border-top: 1px solid #dfe5e2;
 }
 
