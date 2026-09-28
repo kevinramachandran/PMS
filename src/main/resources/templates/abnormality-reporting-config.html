@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abnormality Reporting - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/report-export.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260921-mutation-fixes">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -46,7 +47,7 @@
             <section class="ar-card ar-config-table-card">
                 <div class="issue-board-title-row">
                     <h2>Abnormality report</h2>
-                    <button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Report</span></button>
+                    <div class="report-page-actions"><button type="button" id="abnormalityDownloadBtn" class="issue-add-button"><i class="fas fa-download"></i><span>Download</span></button><button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add new</span></button></div>
                 </div>
                 <div class="ar-table-wrap">
                     <table class="ar-table">
@@ -177,9 +178,9 @@
     </main>
 </div>
 
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20260921-mutation-fixes"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script><script src="/js/pdf-report.js?v=history-column-20260817"></script><script src="/js/report-export.js"></script><script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20260921-mutation-fixes"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
 </body>
 </html>
 

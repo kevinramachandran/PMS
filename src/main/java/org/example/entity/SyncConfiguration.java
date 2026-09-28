@@ -46,6 +46,13 @@ public class SyncConfiguration {
     @Column(nullable = false, length = 5)
     private String scheduleTime = "02:00";
 
+    // Nullable additions preserve the daily schedule of existing installations.
+    @Column(length = 16)
+    private String scheduleMode;
+
+    @Column(length = 2000)
+    private String scheduleTimes;
+
     private LocalDateTime lastRunAt;
     private LocalDateTime lastSuccessAt;
 
@@ -80,6 +87,10 @@ public class SyncConfiguration {
     public void setDatasets(String datasets) { this.datasets = datasets; }
     public String getScheduleTime() { return scheduleTime; }
     public void setScheduleTime(String scheduleTime) { this.scheduleTime = scheduleTime; }
+    public String getScheduleMode() { return scheduleMode == null ? "DAILY" : scheduleMode; }
+    public void setScheduleMode(String scheduleMode) { this.scheduleMode = scheduleMode; }
+    public String getScheduleTimes() { return scheduleTimes == null || scheduleTimes.isBlank() ? scheduleTime : scheduleTimes; }
+    public void setScheduleTimes(String scheduleTimes) { this.scheduleTimes = scheduleTimes; }
     public LocalDateTime getLastRunAt() { return lastRunAt; }
     public void setLastRunAt(LocalDateTime lastRunAt) { this.lastRunAt = lastRunAt; }
     public LocalDateTime getLastSuccessAt() { return lastSuccessAt; }

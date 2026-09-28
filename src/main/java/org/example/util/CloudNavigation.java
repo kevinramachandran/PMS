@@ -16,7 +16,7 @@ public final class CloudNavigation {
         new Page("/settings?config=kpi-plant-name", "Plant", RoleAccess.PAGE_KPI_PLANT_NAME, true),
         new Page("/gemba-walk-config", "Gemba Walk Reporting", RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION, false),
         new Page("/gemba-kaizen-config", "Gemba Kaizen Reporting", RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION, false),
-        new Page("/process-confirmation-config", "CarlEx Process Confirmation", RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION, false),
+        new Page("/process-confirmation-config", "CarlEX PC Reporting", RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION, false),
         new Page("/abnormality-reporting-config", "Abnormality Reporting", RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION, false),
         new Page("/pms-configuration", "User Management", RoleAccess.PAGE_USER_MANAGEMENT, true),
         new Page("/sync-configuration", "Cloud Sync Configuration", "sync", true),
@@ -24,7 +24,7 @@ public final class CloudNavigation {
         new Page("/settings?config=master-abnormality", "Abnormality", RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION, true),
         new Page("/settings?config=master-gemba-walk", "Gemba Walk", RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION, true),
         new Page("/settings?config=master-gemba-kaizen", "Gemba Kaizen", RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION, true),
-        new Page("/settings?config=master-process", "Process", RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION, true),
+        new Page("/settings?config=master-process", "CarlEX pC", RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION, true),
         new Page("/settings?config=master-designation", "Designation", RoleAccess.PAGE_KPI_PLANT_NAME, true),
         new Page("/smtp-configuration", "SMTP Config", RoleAccess.PAGE_EMAIL_CONFIGURATION, true),
         new Page("/settings?config=license", "License Management", RoleAccess.PAGE_LICENSE_MANAGEMENT, true)

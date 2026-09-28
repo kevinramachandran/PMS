@@ -10,6 +10,21 @@ $(function() {
     let areaItems = [];
     let departments = [];
     let saveInFlight = false;
+
+    $('#gembaKaizenDownloadBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Gemba Kaizen', filename: 'gemba-kaizen', records: function() { return records; },
+            dateValue: function(r) { return r.gembaKaizenGenerationDate; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Name', value: function(r) { return r.name; } },
+                { label: 'Last Modified Time', value: function(r) { return r.lastModifiedTime; } }, { label: 'Employee ID / HO Number', value: function(r) { return r.employeeIdHoNumber; } },
+                { label: 'Department', value: function(r) { return r.department; } }, { label: 'Classification', value: function(r) { return r.classificationOfKaizen; } },
+                { label: 'Location', value: function(r) { return r.gembaKaizenLocation; } }, { label: 'Generation Date', value: function(r) { return r.gembaKaizenGenerationDate; } },
+                { label: 'Kaizen Idea', value: function(r) { return r.kaizenIdea; } }, { label: 'Benefits of Kaizen', value: function(r) { return r.benefitsOfKaizen; } },
+                { label: 'Implemented', value: function(r) { return r.isKaizenImplemented; } }, { label: 'Assigned To', value: function(r) { return r.assignedTo; } }
+            ]
+        });
+    });
     const EDIT_ALLOWED_FIELDS = '#pictureImage, #isKaizenImplemented, #reassignedTo1, #reassignment1Remark, #reassignedTo2, #reassignment2Remark';
 
     function escapeHtml(value) {

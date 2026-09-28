@@ -172,8 +172,10 @@ body.modern-shell .top-header {
     position: fixed !important;
     left: 0 !important;
     top: 0 !important;
+    bottom: 0 !important;
     width: var(--sidebar-width) !important;
-    height: 100vh !important;
+    /* Anchor both edges so page zoom cannot leave a gap below navigation. */
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     overflow-y: auto !important;

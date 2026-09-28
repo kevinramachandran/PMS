@@ -70,7 +70,8 @@ $(function() {
     }
 
     function today() {
-        return new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        return String(now.getFullYear()) + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     }
 
     function formatDate(value) {
@@ -373,6 +374,12 @@ $(function() {
         return legacyRows.length ? legacyRows : [emptyObservation()];
     }
 
+    function observationDescriptions(record, groupKey) {
+        return observationsFromRecord(record, groupKey).map(function(item) {
+            return item.description;
+        }).filter(Boolean).join('; ');
+    }
+
     function setForm(record) {
         assignmentOptionsRequest++;
         AssignmentWorkflow.setRecord(record, '#assignedTo', readOnly);
@@ -424,12 +431,29 @@ $(function() {
         return result;
     }
 
+    $('#carlexDownloadBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'CarlEX Process Confirmation', filename: 'carlex-process-confirmation', records: function() { return records; },
+            dateValue: function(r) { return r.dateOfGwProcessConfirmationConducted; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Date', value: function(r) { return r.dateOfGwProcessConfirmationConducted; } },
+                { label: 'Name', value: function(r) { return r.name; } }, { label: 'Email', value: function(r) { return r.email; } },
+                { label: 'Department', value: function(r) { return r.department; } }, { label: 'Area', value: function(r) { return r.areaOfGwProcessConfirmationConducted; } },
+                { label: 'Responsibility', value: function(r) { return r.areaResponsibility; } }, { label: 'Assigned To', value: function(r) { return r.assignedTo; } },
+                { label: 'ZM Observations', value: function(r) { return observationDescriptions(r, 'zm'); } },
+                { label: 'PM Observations', value: function(r) { return observationDescriptions(r, 'pm'); } },
+                { label: 'QM Observations', value: function(r) { return observationDescriptions(r, 'qm'); } },
+                { label: 'Status', value: function(r) { return r.zm1Status || r.pm1Status || r.qm1Status; } }
+            ]
+        });
+    });
+
     function render() {
         $('#carlexRecordsBody').html(records.map(function(r, i) {
             return '<tr><td>' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(formatDate(r.dateOfGwProcessConfirmationConducted)) + '</td>' +
                 '<td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.department) + '</td>' +
                 '<td>' + esc(r.areaOfGwProcessConfirmationConducted) + '</td><td>' + esc(r.areaResponsibility) + '</td><td>' + esc(r.assignedTo) + '</td>' +
-                '<td>' + esc(r.zm1Description) + '</td><td>' + esc(r.pm1Description) + '</td><td>' + esc(r.qm1Description) + '</td>' +
+                '<td class="carlex-observation-description">' + esc(observationDescriptions(r, 'zm')) + '</td><td class="carlex-observation-description">' + esc(observationDescriptions(r, 'pm')) + '</td><td class="carlex-observation-description">' + esc(observationDescriptions(r, 'qm')) + '</td>' +
                 '<td>' + esc(r.zm1Status || r.pm1Status || r.qm1Status) + '</td><td>' + imageFields.map(function(field) {
                     return attachmentIcon('process-confirmation', r[field], r[field]);
                 }).join(' ') + '</td><td class="assignment-history-cell" data-record-id="' + r.id + '">Loading...</td>' +

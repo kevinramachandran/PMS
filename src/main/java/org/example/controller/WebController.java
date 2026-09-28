@@ -124,7 +124,7 @@ public class WebController {
             case "leadership-gemba-tracker" -> settingsView(model, "leadership-gemba-tracker", "", "Safety Gemba - Tracker");
             case "training-schedule" -> settingsView(model, "training-schedule", "", "Training Schedule");
             case "meeting-agenda" -> settingsView(model, "meeting-agenda", "", "PMS Agenda");
-            case "master-process" -> settingsView(model, "master-process", "", "Process");
+            case "master-process" -> settingsView(model, "master-process", "", "CarlEX pC");
             case "process-confirmation" -> settingsView(model, "process-confirmation", "", "PMS Process Confirmation");
             case "master-abnormality" -> settingsView(model, "master-abnormality", "", "Abnormality");
             case "abnormality-tracker" -> settingsView(model, "abnormality-tracker", "", "Abnormality Tracker");

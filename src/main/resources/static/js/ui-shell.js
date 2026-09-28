@@ -616,6 +616,88 @@
         }
     }
 
+    function setupSidebarToggle() {
+        const sidebar = document.getElementById('sidebar');
+        const toggle = document.getElementById('hamburger') || document.getElementById('sidebarToggle');
+        const overlay = document.getElementById('sidebarOverlay');
+        const main = document.querySelector('.main-content');
+        if (!sidebar || !toggle || toggle.dataset.shellToggleBound) return;
+        toggle.dataset.shellToggleBound = 'true';
+        const breakpoint = document.body.classList.contains('at-dashboard') ? 900 : 768;
+        const mobile = function () { return window.innerWidth <= breakpoint; };
+        let collapsed = document.body.classList.contains('kpi-tv-layout');
+        try {
+            const saved = localStorage.getItem('sidebarCollapsed');
+            if (saved !== null) collapsed = saved === 'true';
+        } catch (error) { /* Navigation remains usable when storage is unavailable. */ }
+        function updateAccessibility() {
+            const expanded = mobile() ? sidebar.classList.contains('active') : !sidebar.classList.contains('collapsed');
+            toggle.setAttribute('aria-expanded', String(expanded));
+            toggle.setAttribute('aria-label', expanded ? 'Hide navigation' : 'Show navigation');
+        }
+        function closeDrawer() {
+            sidebar.classList.remove('active', 'open');
+            if (overlay) overlay.classList.remove('active');
+            updateAccessibility();
+        }
+        function applyViewport() {
+            closeDrawer();
+            sidebar.classList.toggle('collapsed', !mobile() && collapsed);
+            if (main) main.classList.toggle('expanded', !mobile() && collapsed);
+            updateAccessibility();
+        }
+        toggle.setAttribute('aria-controls', sidebar.id);
+        if (toggle.tagName !== 'BUTTON') {
+            toggle.setAttribute('role', 'button');
+            toggle.setAttribute('tabindex', '0');
+        }
+        // Own the control before legacy page handlers to avoid toggling twice.
+        document.addEventListener('click', function (event) {
+            if (toggle.contains(event.target)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (mobile()) {
+                    const open = !sidebar.classList.contains('active');
+                    sidebar.classList.toggle('active', open);
+                    sidebar.classList.toggle('open', open);
+                    if (overlay) overlay.classList.toggle('active', open);
+                } else {
+                    collapsed = !sidebar.classList.contains('collapsed');
+                    sidebar.classList.toggle('collapsed', collapsed);
+                    if (main) main.classList.toggle('expanded', collapsed);
+                    try { localStorage.setItem('sidebarCollapsed', String(collapsed)); } catch (error) { }
+                    window.dispatchEvent(new Event('resize'));
+                }
+                updateAccessibility();
+            } else if (overlay && event.target === overlay) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                closeDrawer();
+            }
+        }, true);
+        toggle.addEventListener('keydown', function (event) {
+            if (toggle.tagName !== 'BUTTON' && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                toggle.click();
+            }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && mobile() && sidebar.classList.contains('active')) {
+                closeDrawer();
+                toggle.focus();
+            }
+        });
+        let wasMobile = mobile();
+        window.addEventListener('resize', function () {
+            const isMobile = mobile();
+            if (wasMobile !== isMobile) {
+                wasMobile = isMobile;
+                window.requestAnimationFrame(applyViewport);
+            }
+        });
+        applyViewport();
+    }
+
     function normalizeSidebarLabels() {
         document.querySelectorAll('.nav-parent-toggle').forEach(function (toggle) {
             const span = toggle.querySelector('span');
@@ -889,6 +971,7 @@
     });
 
     document.addEventListener('DOMContentLoaded', function () {
+        setupSidebarToggle();
         ensureGlobalTableHeaderStyle();
         document.querySelectorAll('.top-header').forEach(enhanceHeader);
         normalizeSidebarLabels();

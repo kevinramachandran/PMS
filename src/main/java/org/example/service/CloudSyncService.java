@@ -49,10 +49,12 @@ public class CloudSyncService {
         config.setCompletedFolder(required(input, "completedFolder"));
         config.setFailedFolder(required(input, "failedFolder"));
         config.setDelaySeconds(number(input, "delaySeconds", 60, 0, 86400));
-        config.setIntervalMinutes(number(input, "intervalMinutes", 15, 1, 1440));
+        config.setIntervalMinutes(intervalMinutes(input.getOrDefault("intervalMinutes", config.getIntervalMinutes())));
         config.setEnabled(Boolean.parseBoolean(String.valueOf(input.getOrDefault("enabled", false))));
         config.setDatasets(String.join("\n", SyncDatasetPlan.resolve(String.valueOf(input.getOrDefault("datasets", config.getDatasets())))));
         config.setScheduleTime(scheduleTime(input.getOrDefault("scheduleTime", config.getScheduleTime())));
+        config.setScheduleMode(scheduleMode(input.getOrDefault("scheduleMode", config.getScheduleMode())));
+        config.setScheduleTimes(scheduleTimes(input.getOrDefault("scheduleTimes", config.getScheduleTimes())));
         validateSettings(config);
         return repository.save(config);
     }
@@ -75,6 +77,16 @@ public class CloudSyncService {
     }
 
     static boolean isDue(SyncConfiguration config, LocalDateTime now) {
+        if ("INTERVAL".equals(config.getScheduleMode())) {
+            return config.getLastRunAt() == null
+                    || !now.isBefore(config.getLastRunAt().plusMinutes(config.getIntervalMinutes()));
+        }
+        if ("TIMES".equals(config.getScheduleMode())) {
+            return Arrays.stream(config.getScheduleTimes().split(","))
+                    .map(time -> now.toLocalDate().atTime(LocalTime.parse(time.trim())))
+                    .anyMatch(due -> !now.isBefore(due)
+                            && (config.getLastRunAt() == null || config.getLastRunAt().isBefore(due)));
+        }
         LocalDateTime due = now.toLocalDate().atTime(LocalTime.parse(config.getScheduleTime()));
         return !now.isBefore(due) && (config.getLastRunAt() == null || config.getLastRunAt().isBefore(due));
     }
@@ -262,6 +274,29 @@ public class CloudSyncService {
         catch (RuntimeException ex) { throw new IllegalArgumentException("Schedule time must use HH:mm format"); }
     }
 
+    private static String scheduleMode(Object value) {
+        String mode = Objects.toString(value, "").trim();
+        if (!Set.of("DAILY", "INTERVAL", "TIMES").contains(mode))
+            throw new IllegalArgumentException("Choose daily, interval or specific sync times");
+        return mode;
+    }
+
+    private static int intervalMinutes(Object value) {
+        try {
+            int minutes = Integer.parseInt(String.valueOf(value));
+            if (minutes >= 1 && minutes <= 1440) return minutes;
+        } catch (NumberFormatException ignored) { }
+        throw new IllegalArgumentException("Sync interval must be between 1 and 1440 minutes");
+    }
+
+    private static String scheduleTimes(Object value) {
+        String times = Objects.toString(value, "").trim();
+        if (times.isBlank() || times.length() > 2000)
+            throw new IllegalArgumentException("Enter specific sync times in HH:mm format, separated by commas");
+        return Arrays.stream(times.split(",", -1)).map(CloudSyncService::scheduleTime)
+                .distinct().sorted().collect(java.util.stream.Collectors.joining(","));
+    }
+
     private void login(HttpClient client, SyncConfiguration c) throws IOException, InterruptedException {
         String body = mapper.writeValueAsString(Map.of("username", c.getCloudUsername(), "password", secrets.decrypt(c.getEncryptedCloudPassword())));
         HttpResponse<String> response = client.send(HttpRequest.newBuilder(URI.create(url(c) + "/api/auth/login"))
@@ -339,6 +374,9 @@ public class CloudSyncService {
         }
         SyncDatasetPlan.resolve(c.getDatasets());
         scheduleTime(c.getScheduleTime());
+        scheduleMode(c.getScheduleMode());
+        intervalMinutes(c.getIntervalMinutes());
+        scheduleTimes(c.getScheduleTimes());
     }
     private static List<Path> folders(SyncConfiguration c) {
         return List.of(Path.of(c.getDownloadFolder()), Path.of(c.getProcessingFolder()), Path.of(c.getCompletedFolder()), Path.of(c.getFailedFolder()));

@@ -26,6 +26,8 @@ public class CloudSyncController {
         result.put("intervalMinutes", c.getIntervalMinutes());
         result.put("enabled", c.isEnabled());
         result.put("scheduleTime", c.getScheduleTime());
+        result.put("scheduleMode", c.getScheduleMode());
+        result.put("scheduleTimes", c.getScheduleTimes());
         result.put("datasets", c.getDatasets());
         result.put("effectiveDatasets", c.getDatasets().isBlank() ? java.util.List.of()
                 : org.example.service.SyncDatasetPlan.resolve(c.getDatasets()));

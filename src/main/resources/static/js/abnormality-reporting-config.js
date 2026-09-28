@@ -11,6 +11,23 @@ $(function () {
     let areaItems = [];
     let saveInFlight = false;
 
+    $('#abnormalityDownloadBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Abnormality Report', filename: 'abnormality-report', records: function() { return records; },
+            dateValue: function(r) { return r.dateRaised; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Type of Tag', value: function(r) { return r.typeOfTag; } },
+                { label: 'Priority', value: function(r) { return r.priority; } }, { label: 'Raised By', value: function(r) { return r.tagRaisedBy; } },
+                { label: 'Date Raised', value: function(r) { return r.dateRaised; } }, { label: 'Shift', value: function(r) { return r.shift; } },
+                { label: 'Department', value: function(r) { return r.department; } }, { label: 'Area/Machine', value: function(r) { return r.areaMachine; } },
+                { label: 'Component', value: function(r) { return r.component; } }, { label: 'Description', value: function(r) { return r.description; } },
+                { label: 'Proposed Action', value: function(r) { return r.proposedAction; } }, { label: 'Defect Type', value: function(r) { return r.abnormalityDefectType; } },
+                { label: 'Assign To', value: function(r) { return r.assignTo; } }, { label: 'Date Closed', value: function(r) { return r.dateClosed; } },
+                { label: 'Status', value: function(r) { return r.tagStatus; } }
+            ]
+        });
+    });
+
     function escapeHtml(value) {
         return String(value || '').replace(/[&<>"']/g, function (ch) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
@@ -280,7 +297,9 @@ $(function () {
     }
 
     function resetForm() {
-        setForm({});
+        const now = new Date();
+        const today = String(now.getFullYear()) + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        setForm({ dateRaised: today });
     }
 
     function renderTable() {

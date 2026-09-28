@@ -14,6 +14,23 @@ $(function() {
     let saveInFlight = false;
     let currentUserIdentity = {};
 
+    $('#gembaWalkDownloadBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Gemba Walk', filename: 'gemba-walk', records: function() { return records; },
+            dateValue: function(r) { return r.dateOfLeadershipSafetyWalkConducted; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Department', value: function(r) { return r.department; } },
+                { label: 'Start Time', value: function(r) { return r.startTime; } }, { label: 'Completion Time', value: function(r) { return r.completionTime; } },
+                { label: 'Manager', value: displayManager }, { label: 'Email', value: displayEmail },
+                { label: 'Date Conducted', value: function(r) { return r.dateOfLeadershipSafetyWalkConducted; } },
+                { label: 'Week', value: function(r) { return r.managementSafetyWalkWeek; } }, { label: 'Location', value: function(r) { return r.locationOfMswConducted; } },
+                { label: 'Responsibility', value: function(r) { return r.responsibility; } },
+                { label: 'Observations', value: function(r) { return (r.observations || []).map(function(o) { return o.observationDescription || o.description || ''; }).filter(Boolean).join('; '); } },
+                { label: 'Final Comments', value: function(r) { return r.finalComments; } }
+            ]
+        });
+    });
+
     const EDIT_ALLOWED_SELECTOR = [
         '#department',
         '#reassignedTo1', '#reassignment1Remark', '#reassignedTo2', '#reassignment2Remark',

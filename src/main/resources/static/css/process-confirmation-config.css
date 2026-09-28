@@ -7,6 +7,22 @@
     border-bottom: 1px solid #dfe5e2;
 }
 
+.carlex-config-page .report-page-actions .issue-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 44px;
+    border-radius: 7px;
+    padding: 0 22px;
+    font-size: 13px;
+    font-weight: 800;
+    border: 1px solid #15803d;
+    background: #168334;
+    color: #fff;
+    cursor: pointer;
+}
+
 .pc-page-toolbar h2 {
     margin: 0;
     color: #173b35;
