@@ -2,7 +2,7 @@ param(
     [string]$InstallRoot = "C:\Brewery-PMS",
     [string]$ServiceName = "brewery-pms",
     [string]$ApplicationUrl = "http://localhost:165",
-    [int]$StartupTimeoutSeconds = 90
+    [int]$StartupTimeoutSeconds = 420
 )
 
 $ErrorActionPreference = "Stop"
@@ -210,6 +210,18 @@ function Ensure-EnvFile {
     )
 
     if (Test-Path $EnvFile) {
+        $existingContent = Get-Content -Path $EnvFile -Raw
+        if ($existingContent -match '(?m)^DB_PASSWORD=Password@123\s*$' -and (Test-Path $ExampleFile)) {
+            $exampleContent = Get-Content -Path $ExampleFile -Raw
+            $exampleUsername = [regex]::Match($exampleContent, '(?m)^DB_USERNAME=(.*)$').Groups[1].Value.Trim()
+            $examplePassword = [regex]::Match($exampleContent, '(?m)^DB_PASSWORD=(.*)$').Groups[1].Value.Trim()
+            if ($exampleUsername -and $examplePassword) {
+                $existingContent = [regex]::Replace($existingContent, '(?m)^DB_USERNAME=.*$', "DB_USERNAME=$exampleUsername")
+                $existingContent = [regex]::Replace($existingContent, '(?m)^DB_PASSWORD=.*$', "DB_PASSWORD=$examplePassword")
+                Set-Content -Path $EnvFile -Value $existingContent -Encoding UTF8
+                Write-StartupLog "Updated legacy default database credentials in $EnvFile from its release example"
+            }
+        }
         return
     }
 
@@ -278,6 +290,21 @@ function Wait-ForApplication {
     return $false
 }
 
+function Test-DatabaseAuthenticationFailure {
+    param([string[]]$LogPaths)
+
+    foreach ($path in $LogPaths) {
+        if (Test-Path $path) {
+            $logText = Get-Content -Path $path -Raw -ErrorAction SilentlyContinue
+            if ($logText -match "Access denied for user .*using password") {
+                return $true
+            }
+        }
+    }
+
+    return $false
+}
+
 $rootDir = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $configDir = Join-Path $rootDir "config"
 $envFile = Join-Path $configDir "brewery-pms.env"
@@ -298,25 +325,26 @@ if (Test-Path $envFile) {
 }
 
 $port = 165
-$configuredPort = [System.Environment]::GetEnvironmentVariable("SERVER_PORT")
-if ($configuredPort -and $configuredPort -match "^\d+$") {
-    $port = [int]$configuredPort
-}
 
 Stop-ExistingService -Name $ServiceName
 Stop-PortListeners -Port $port
+if ($port -ne 165) {
+    Stop-PortListeners -Port 165
+}
+$env:SERVER_PORT = "165"
 
 # Start the current release only. Do not fall back to an older installed release.
 $serviceExe = Join-Path (Join-Path $rootDir "service") "$ServiceName.exe"
 $jarPath = Join-Path $rootDir "app\app.jar"
+$installedService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 
-if (Test-Path $serviceExe) {
+if ((Test-Path $serviceExe) -and $installedService) {
     Write-Host "Starting using Windows Service..."
     Write-StartupLog "Starting Windows service using $serviceExe"
     & $serviceExe start 2>&1 | ForEach-Object { Write-StartupLog $_ }
 } else {
-    Write-Host "Service not found. Starting PMS -4..."
-    Write-StartupLog "Service executable not found. Starting PMS -4 directly from $jarPath"
+    Write-Host "Windows Service is not installed. Starting PMS -4 directly..."
+    Write-StartupLog "Windows service is not installed. Starting PMS -4 directly from $jarPath"
 
     if (-not (Test-Path $jarPath)) {
         throw "app.jar not found at $jarPath"
@@ -347,6 +375,13 @@ if (Wait-ForApplication -Url $ApplicationUrl -TimeoutSeconds $StartupTimeoutSeco
     Write-Host "Opened browser at $ApplicationUrl"
     Write-StartupLog "Application is reachable. Opened browser at $ApplicationUrl"
 } else {
-    Write-Warning "App did not start within $StartupTimeoutSeconds seconds"
-    Write-StartupLog "Application did not start within $StartupTimeoutSeconds seconds. Check $env:LOG_FILE and logs\java-stderr.log"
+    $logPaths = @($env:LOG_FILE, (Join-Path $logsDir "java-stderr.log")) | Where-Object { $_ }
+    if (Test-DatabaseAuthenticationFailure -LogPaths $logPaths) {
+        $message = "MySQL rejected the configured database login. Edit config\brewery-pms.env (DB_USERNAME and DB_PASSWORD) to match the MySQL account on this computer, then start PMS again."
+        Write-Host "`n$message" -ForegroundColor Yellow
+        Write-StartupLog $message
+    } else {
+        Write-Warning "App did not start within $StartupTimeoutSeconds seconds"
+        Write-StartupLog "Application did not start within $StartupTimeoutSeconds seconds. Check $env:LOG_FILE and logs\java-stderr.log"
+    }
 }

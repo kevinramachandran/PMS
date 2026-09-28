@@ -20,12 +20,14 @@ public class CloudSyncController {
         result.put("cloudUsername", c.getCloudUsername());
         result.put("downloadFolder", c.getDownloadFolder());
         result.put("processingFolder", c.getProcessingFolder());
-        result.put("completedFolder", c.getCompletedFolder());
         result.put("failedFolder", c.getFailedFolder());
         result.put("delaySeconds", c.getDelaySeconds());
         result.put("intervalMinutes", c.getIntervalMinutes());
+        result.put("intervalStartTime", c.getIntervalStartTime());
         result.put("enabled", c.isEnabled());
         result.put("scheduleTime", c.getScheduleTime());
+        result.put("scheduleMode", c.getScheduleMode());
+        result.put("scheduleTimes", c.getScheduleTimes());
         result.put("datasets", c.getDatasets());
         result.put("effectiveDatasets", c.getDatasets().isBlank() ? java.util.List.of()
                 : org.example.service.SyncDatasetPlan.resolve(c.getDatasets()));

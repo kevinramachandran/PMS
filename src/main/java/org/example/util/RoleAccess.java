@@ -72,6 +72,8 @@ public final class RoleAccess {
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
+            PAGE_USER_MANAGEMENT,
+            PAGE_EMAIL_CONFIGURATION,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
             PAGE_KPI_PLANT_NAME
@@ -94,6 +96,8 @@ public final class RoleAccess {
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
+            PAGE_USER_MANAGEMENT,
+            PAGE_EMAIL_CONFIGURATION,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
             PAGE_KPI_PLANT_NAME

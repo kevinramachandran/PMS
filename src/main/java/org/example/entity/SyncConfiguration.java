@@ -25,6 +25,7 @@ public class SyncConfiguration {
     @Column(nullable = false, length = 500)
     private String processingFolder = "C:/Brewery-PMS/sync/processing";
 
+    // Retained for cleanup of CSVs left by older versions; no longer configurable.
     @Column(nullable = false, length = 500)
     private String completedFolder = "C:/Brewery-PMS/sync/completed";
 
@@ -45,6 +46,19 @@ public class SyncConfiguration {
 
     @Column(nullable = false, length = 5)
     private String scheduleTime = "02:00";
+
+    // Nullable additions preserve the daily schedule of existing installations.
+    @Column(length = 16)
+    private String scheduleMode;
+
+    @Column(length = 2000)
+    private String scheduleTimes;
+
+    // Null keeps existing interval schedules unchanged until a start time is saved.
+    @Column(length = 5)
+    private String intervalStartTime;
+
+    private LocalDateTime intervalAnchorAt;
 
     private LocalDateTime lastRunAt;
     private LocalDateTime lastSuccessAt;
@@ -80,6 +94,14 @@ public class SyncConfiguration {
     public void setDatasets(String datasets) { this.datasets = datasets; }
     public String getScheduleTime() { return scheduleTime; }
     public void setScheduleTime(String scheduleTime) { this.scheduleTime = scheduleTime; }
+    public String getScheduleMode() { return scheduleMode == null ? "DAILY" : scheduleMode; }
+    public void setScheduleMode(String scheduleMode) { this.scheduleMode = scheduleMode; }
+    public String getScheduleTimes() { return scheduleTimes == null || scheduleTimes.isBlank() ? scheduleTime : scheduleTimes; }
+    public void setScheduleTimes(String scheduleTimes) { this.scheduleTimes = scheduleTimes; }
+    public String getIntervalStartTime() { return intervalStartTime; }
+    public void setIntervalStartTime(String intervalStartTime) { this.intervalStartTime = intervalStartTime; }
+    public LocalDateTime getIntervalAnchorAt() { return intervalAnchorAt; }
+    public void setIntervalAnchorAt(LocalDateTime intervalAnchorAt) { this.intervalAnchorAt = intervalAnchorAt; }
     public LocalDateTime getLastRunAt() { return lastRunAt; }
     public void setLastRunAt(LocalDateTime lastRunAt) { this.lastRunAt = lastRunAt; }
     public LocalDateTime getLastSuccessAt() { return lastSuccessAt; }

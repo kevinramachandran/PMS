@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=user-dashboard-columns-20260915">
     <link rel="stylesheet" href="/css/settings.css">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
 </head>
 <body class="modern-shell dashboard-bg"
       th:attr="data-current-username=${session.username},data-current-email=${session.email},data-current-role=${session.role}">
@@ -172,6 +172,7 @@
                     </main>
                 </div>
             </div>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
         </main>
     </div>
 
@@ -201,7 +202,7 @@
         });
     </script>
     <script src="/js/user-dashboard.js?v=user-dashboard-stack-20260914" th:if="${isUserDashboard == true}"></script>
-    <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+    <script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
 </body>
 </html>
 

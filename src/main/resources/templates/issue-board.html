@@ -10,7 +10,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
 </head>
 <body class="modern-shell dashboard-bg issue-board-page" th:attr="data-can-edit-issue-board=${session.canEditIssueBoardConfiguration}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -94,12 +94,7 @@
             </section>
         </div>
 
-        <footer class="footer">
-            <div class="footer-brand">
-                <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-            </div>
-            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-        </footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
 
@@ -224,7 +219,7 @@
 <script src="/js/pdf-report.js?v=history-column-20260817"></script>
 <script src="/js/issue-board.js?v=issue-save-locks-20260821"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
 </body>
 </html>
 

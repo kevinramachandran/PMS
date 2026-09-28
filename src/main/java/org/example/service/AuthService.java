@@ -81,7 +81,13 @@ public class AuthService {
     }
 
     public boolean isSyncConfigurationUser(String username, String role) {
-        return RoleAccess.isAdmin(role) || "kevin".equalsIgnoreCase(username) || "siva".equalsIgnoreCase(username);
+        if (username == null) {
+            return false;
+        }
+        String normalized = normalizeInternalUsername(username);
+        return "kevin".equals(normalized)
+                || "siva".equals(normalized)
+                || SystemAdminInitializer.SYSTEM_ADMIN_USERNAME.equals(normalized);
     }
 
     public Optional<UserInfo> authenticate(String username, String password) {

@@ -106,6 +106,18 @@ function Ensure-EnvFile {
     )
 
     if (Test-Path $EnvFile) {
+        $existingContent = Get-Content -Path $EnvFile -Raw
+        if ($existingContent -match '(?m)^DB_PASSWORD=Password@123\s*$' -and (Test-Path $ExampleFile)) {
+            $exampleContent = Get-Content -Path $ExampleFile -Raw
+            $exampleUsername = [regex]::Match($exampleContent, '(?m)^DB_USERNAME=(.*)$').Groups[1].Value.Trim()
+            $examplePassword = [regex]::Match($exampleContent, '(?m)^DB_PASSWORD=(.*)$').Groups[1].Value.Trim()
+            if ($exampleUsername -and $examplePassword) {
+                $existingContent = [regex]::Replace($existingContent, '(?m)^DB_USERNAME=.*$', "DB_USERNAME=$exampleUsername")
+                $existingContent = [regex]::Replace($existingContent, '(?m)^DB_PASSWORD=.*$', "DB_PASSWORD=$examplePassword")
+                Set-Content -Path $EnvFile -Value $existingContent -Encoding UTF8
+                Write-StartupLog "Updated legacy default database credentials in $EnvFile from its release example"
+            }
+        }
         return
     }
 
@@ -161,6 +173,7 @@ if (Test-Path $envFile) {
     Read-EnvFile -Path $envFile
     Write-StartupLog "Loaded environment file $envFile"
 }
+$env:SERVER_PORT = "165"
 
 if (-not (Test-Path $appJar)) {
     throw "Application JAR not found at $appJar"

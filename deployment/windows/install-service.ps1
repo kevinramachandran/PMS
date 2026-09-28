@@ -6,7 +6,7 @@ param(
     [string]$WinSWDownloadUrl = "https://github.com/winsw/winsw/releases/latest/download/WinSW-x64.exe",
     [switch]$StartAfterInstall,
     [switch]$OpenBrowserAfterStart,
-    [string]$ApplicationUrl = "http://localhost:8080",
+    [string]$ApplicationUrl = "http://localhost:165",
     [int]$StartupTimeoutSeconds = 90
 )
 

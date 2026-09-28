@@ -564,7 +564,7 @@
             animation: fadeIn 0.5s ease;
         }
     </style>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
 </head>
 <body>
     <!-- Sidebar Overlay -->
@@ -958,12 +958,7 @@
             </div>
 
             <!-- Footer -->
-            <footer class="footer">
-                <div class="footer-brand">
-                    <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-                </div>
-                <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-            </footer>
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
         </main>
     </div>
 
@@ -1121,7 +1116,7 @@
     </script>
     <script src="/js/add-metrics-bulk.js"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
 </body>
 </html>
 

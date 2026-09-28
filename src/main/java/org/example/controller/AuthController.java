@@ -229,16 +229,22 @@ public class AuthController {
         boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
         boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
         boolean canEditInfoPortalView = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW);
-        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW) || canEditInfoPortalView;
-        boolean canViewInfoPortalConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW)
+                || canEditInfoPortalView
+                || RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewInfoPortalConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
         boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
         boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
         boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
-        boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+        boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
-        boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+        boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
         boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewLicenseManagement || canViewKpiPlantName
-                || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
+                || canViewInfoPortal || canViewInfoPortalConfiguration || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
                 || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditUserManagement = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);

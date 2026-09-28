@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
     <link rel="stylesheet" href="/css/gemba-reporting.css?v=department-filter-20260913">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -71,7 +71,7 @@
                     </div>
                     <a href="/gemba-walk-config" class="issue-add-button" th:if="${session.canViewGembaWalkConfiguration}">
                         <i class="fas fa-plus"></i>
-                        <span>New Record</span>
+                        <span>Add new</span>
                     </a>
                 </div>
                 <div class="gw-filter-grid">
@@ -167,18 +167,13 @@
             </section>
         </div>
 
-        <footer class="footer">
-            <div class="footer-brand">
-                <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-            </div>
-            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-        </footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
 
 <script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-reporting.js?v=department-filter-20260913"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
 </body>
 </html>
 

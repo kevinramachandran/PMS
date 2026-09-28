@@ -40,20 +40,29 @@ public class CloudSyncService {
     public synchronized SyncConfiguration save(Map<String, Object> input) {
         if (running.get()) throw new IllegalArgumentException("Wait for the current sync to finish before changing its settings");
         SyncConfiguration config = getOrCreate();
+        String startTime = input.containsKey("intervalStartTime")
+                ? scheduleTime(input.get("intervalStartTime")) : config.getIntervalStartTime();
+        boolean resetAnchor = startTime != null && (config.getIntervalAnchorAt() == null
+                || !startTime.equals(config.getIntervalStartTime())
+                || config.getIntervalMinutes() != intervalMinutes(input.getOrDefault("intervalMinutes", config.getIntervalMinutes()))
+                || (!"INTERVAL".equals(config.getScheduleMode()) && "INTERVAL".equals(input.get("scheduleMode"))));
         config.setCloudUrl(required(input, "cloudUrl"));
         config.setCloudUsername(required(input, "cloudUsername"));
         String password = Objects.toString(input.get("cloudPassword"), "");
         if (!password.isBlank()) config.setEncryptedCloudPassword(secrets.encrypt(password));
         config.setDownloadFolder(required(input, "downloadFolder"));
         config.setProcessingFolder(required(input, "processingFolder"));
-        config.setCompletedFolder(required(input, "completedFolder"));
         config.setFailedFolder(required(input, "failedFolder"));
         config.setDelaySeconds(number(input, "delaySeconds", 60, 0, 86400));
-        config.setIntervalMinutes(number(input, "intervalMinutes", 15, 1, 1440));
+        config.setIntervalMinutes(intervalMinutes(input.getOrDefault("intervalMinutes", config.getIntervalMinutes())));
         config.setEnabled(Boolean.parseBoolean(String.valueOf(input.getOrDefault("enabled", false))));
         config.setDatasets(String.join("\n", SyncDatasetPlan.resolve(String.valueOf(input.getOrDefault("datasets", config.getDatasets())))));
         config.setScheduleTime(scheduleTime(input.getOrDefault("scheduleTime", config.getScheduleTime())));
+        config.setScheduleMode(scheduleMode(input.getOrDefault("scheduleMode", config.getScheduleMode())));
+        config.setScheduleTimes(scheduleTimes(input.getOrDefault("scheduleTimes", config.getScheduleTimes())));
         validateSettings(config);
+        config.setIntervalStartTime(startTime);
+        if (resetAnchor) config.setIntervalAnchorAt(LocalDateTime.now().toLocalDate().atTime(LocalTime.parse(startTime)));
         return repository.save(config);
     }
 
@@ -75,6 +84,23 @@ public class CloudSyncService {
     }
 
     static boolean isDue(SyncConfiguration config, LocalDateTime now) {
+        if ("INTERVAL".equals(config.getScheduleMode())) {
+            LocalDateTime anchor = config.getIntervalAnchorAt();
+            if (anchor != null) {
+                if (now.isBefore(anchor)) return false;
+                long elapsedMinutes = java.time.Duration.between(anchor, now).toMinutes();
+                LocalDateTime due = anchor.plusMinutes((elapsedMinutes / config.getIntervalMinutes()) * config.getIntervalMinutes());
+                return config.getLastRunAt() == null || config.getLastRunAt().isBefore(due);
+            }
+            return config.getLastRunAt() == null
+                    || !now.isBefore(config.getLastRunAt().plusMinutes(config.getIntervalMinutes()));
+        }
+        if ("TIMES".equals(config.getScheduleMode())) {
+            return Arrays.stream(config.getScheduleTimes().split(","))
+                    .map(time -> now.toLocalDate().atTime(LocalTime.parse(time.trim())))
+                    .anyMatch(due -> !now.isBefore(due)
+                            && (config.getLastRunAt() == null || config.getLastRunAt().isBefore(due)));
+        }
         LocalDateTime due = now.toLocalDate().atTime(LocalTime.parse(config.getScheduleTime()));
         return !now.isBefore(due) && (config.getLastRunAt() == null || config.getLastRunAt().isBefore(due));
     }
@@ -155,7 +181,6 @@ public class CloudSyncService {
                 downloaded++;
             }
             ImportSummary summary = processFiles(config, batch, sourceWarnings, runId);
-            cleanupSyncCsvFiles(config);
             config.setLastStatus(summary.hasWarnings() ? "SUCCESS_WITH_WARNINGS" : "SUCCESS");
             config.setLastSuccessAt(LocalDateTime.now());
             String message = "Sync completed. Downloaded " + downloaded + " dataset file(s). " + summary.message()
@@ -167,6 +192,17 @@ public class CloudSyncService {
             String message = ex.getMessage() == null ? "Sync failed" : ex.getMessage();
             config.setLastMessage(message.substring(0, Math.min(message.length(), 2000)));
         } finally {
+            try {
+                cleanupSyncCsvFiles(config);
+            } catch (Exception cleanupError) {
+                String cleanupMessage = "CSV cleanup failed: " + Objects.toString(cleanupError.getMessage(), "unknown error");
+                if ("SUCCESS".equals(config.getLastStatus())) {
+                    config.setLastStatus("SUCCESS_WITH_WARNINGS");
+                }
+                String existingMessage = Objects.toString(config.getLastMessage(), "");
+                String combinedMessage = existingMessage.isBlank() ? cleanupMessage : existingMessage + " " + cleanupMessage;
+                config.setLastMessage(combinedMessage.substring(0, Math.min(combinedMessage.length(), 2000)));
+            }
             try { repository.save(config); }
             finally { running.set(false); }
         }
@@ -185,12 +221,10 @@ public class CloudSyncService {
 
     private ImportSummary processFiles(SyncConfiguration config, List<Path> batch, List<String> sourceWarnings, String runId) throws IOException {
         Path processing = Path.of(config.getProcessingFolder());
-        Path completed = Path.of(config.getCompletedFolder());
         Path failed = Path.of(config.getFailedFolder());
-        Files.createDirectories(processing); Files.createDirectories(completed); Files.createDirectories(failed);
+        Files.createDirectories(processing); Files.createDirectories(failed);
         List<String> errors = new ArrayList<>();
         Set<String> warnings = new LinkedHashSet<>(sourceWarnings);
-        List<Map<String, Object>> results = new ArrayList<>();
         List<String> skippedFiles = new ArrayList<>();
         int created = 0, updated = 0, unchanged = 0;
         {
@@ -207,31 +241,26 @@ public class CloudSyncService {
                     String dataset = parts[0];
                     String category = parts.length > 1 ? parts[1] : "";
                     Map<String, Object> result = dataSync.importCsvForSync(dataset, category, Files.readString(staged));
-                    results.add(Map.of("file", staged.getFileName().toString(), "result", result));
                     created += ((Number) result.getOrDefault("created", 0)).intValue();
                     updated += ((Number) result.getOrDefault("updated", 0)).intValue();
                     unchanged += ((Number) result.getOrDefault("unchanged", 0)).intValue();
                     if (result.get("warnings") instanceof Collection<?> items) items.forEach(item -> warnings.add(dataset + (category.isBlank() ? "" : ":" + category) + ": " + item));
-                    Files.move(staged, completed.resolve(staged.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                    Files.deleteIfExists(staged);
                 } catch (Exception ex) {
                     Files.move(staged, failed.resolve(staged.getFileName()), StandardCopyOption.REPLACE_EXISTING);
                     errors.add(staged.getFileName() + ": " + Objects.toString(ex.getMessage(), "Import failed"));
                 }
             }
         }
-        Path report = completed.resolve("sync-report-" + runId + ".json");
-        mapper.writerWithDefaultPrettyPrinter().writeValue(report.toFile(), Map.of(
-                "runId", runId, "files", results, "warnings", warnings, "errors", errors, "skippedFiles", skippedFiles,
-                "created", created, "updated", updated, "unchanged", unchanged));
         if (!errors.isEmpty()) throw new IOException("Sync import failed for " + errors.size() + " file(s). "
-                + String.join("; ", errors) + ". " + skippedFiles.size() + " dependent file(s) not imported. Report: " + report);
+                + String.join("; ", errors) + ". " + skippedFiles.size() + " dependent file(s) not imported.");
         return new ImportSummary(created + " added, " + updated + " replaced, " + unchanged + " unchanged. "
-                + warnings.size() + " warning(s). Report: " + report + ". "
+                + warnings.size() + " warning(s). "
                 + warnings.stream().limit(3).collect(java.util.stream.Collectors.joining("; ")), !warnings.isEmpty());
     }
 
     private static void cleanupSyncCsvFiles(SyncConfiguration config) throws IOException {
-        for (Path folder : folders(config)) {
+        for (Path folder : cleanupFolders(config)) {
             if (!Files.isDirectory(folder)) continue;
             try (var files = Files.list(folder)) {
                 for (Path file : files.filter(Files::isRegularFile)
@@ -288,6 +317,29 @@ public class CloudSyncService {
         String result = String.valueOf(value).trim();
         try { return LocalTime.parse(result).withSecond(0).withNano(0).toString(); }
         catch (RuntimeException ex) { throw new IllegalArgumentException("Schedule time must use HH:mm format"); }
+    }
+
+    private static String scheduleMode(Object value) {
+        String mode = Objects.toString(value, "").trim();
+        if (!Set.of("DAILY", "INTERVAL", "TIMES").contains(mode))
+            throw new IllegalArgumentException("Choose daily, interval or specific sync times");
+        return mode;
+    }
+
+    private static int intervalMinutes(Object value) {
+        try {
+            int minutes = Integer.parseInt(String.valueOf(value));
+            if (minutes >= 1 && minutes <= 1440) return minutes;
+        } catch (NumberFormatException ignored) { }
+        throw new IllegalArgumentException("Sync interval must be between 1 and 1440 minutes");
+    }
+
+    private static String scheduleTimes(Object value) {
+        String times = Objects.toString(value, "").trim();
+        if (times.isBlank() || times.length() > 2000)
+            throw new IllegalArgumentException("Enter specific sync times in HH:mm format, separated by commas");
+        return Arrays.stream(times.split(",", -1)).map(CloudSyncService::scheduleTime)
+                .distinct().sorted().collect(java.util.stream.Collectors.joining(","));
     }
 
     private void login(HttpClient client, SyncConfiguration c) throws IOException, InterruptedException {
@@ -363,13 +415,23 @@ public class CloudSyncService {
             Path resolved = folder.toAbsolutePath().normalize();
             try { if (Files.exists(resolved)) resolved = resolved.toRealPath(); }
             catch (IOException ex) { throw new IllegalArgumentException("Cannot access sync folder: " + folder, ex); }
-            if (!paths.add(resolved)) throw new IllegalArgumentException("Download, processing, completed and failed folders must be different");
+            if (!paths.add(resolved)) throw new IllegalArgumentException("Download, processing and failed folders must be different");
         }
         SyncDatasetPlan.resolve(c.getDatasets());
         scheduleTime(c.getScheduleTime());
+        scheduleMode(c.getScheduleMode());
+        intervalMinutes(c.getIntervalMinutes());
+        scheduleTimes(c.getScheduleTimes());
     }
     private static List<Path> folders(SyncConfiguration c) {
-        return List.of(Path.of(c.getDownloadFolder()), Path.of(c.getProcessingFolder()), Path.of(c.getCompletedFolder()), Path.of(c.getFailedFolder()));
+        return List.of(Path.of(c.getDownloadFolder()), Path.of(c.getProcessingFolder()), Path.of(c.getFailedFolder()));
+    }
+    private static List<Path> cleanupFolders(SyncConfiguration c) {
+        List<Path> result = new ArrayList<>(folders(c));
+        if (c.getCompletedFolder() != null && !c.getCompletedFolder().isBlank()) {
+            result.add(Path.of(c.getCompletedFolder()));
+        }
+        return result;
     }
     private static String required(Map<String, Object> input, String key) { String value = Objects.toString(input.get(key), "").trim(); if (value.isBlank()) throw new IllegalArgumentException(key + " is required"); return value; }
     private static int number(Map<String, Object> input, String key, int fallback, int min, int max) { int value; try { value = Integer.parseInt(String.valueOf(input.getOrDefault(key, fallback))); } catch (NumberFormatException ex) { value = fallback; } return Math.max(min, Math.min(max, value)); }

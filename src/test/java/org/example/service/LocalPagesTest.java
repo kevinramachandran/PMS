@@ -33,4 +33,16 @@ class LocalPagesTest {
                 .andExpect(content().string(containsString("href=\"/kpi-dashboard\"")));
         }
     }
+
+    @Test
+    void legacySettingsPermissionIncludesMasterNavigationPages() {
+        var pages = RoleAccess.sanitizePages(java.util.Set.of("SETTINGS"));
+
+        org.junit.jupiter.api.Assertions.assertTrue(pages.contains(RoleAccess.PAGE_USER_MANAGEMENT));
+        org.junit.jupiter.api.Assertions.assertTrue(pages.contains(RoleAccess.PAGE_EMAIL_CONFIGURATION));
+        org.junit.jupiter.api.Assertions.assertTrue(pages.contains(RoleAccess.PAGE_INFO_PORTAL_VIEW));
+        org.junit.jupiter.api.Assertions.assertTrue(pages.contains(RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION));
+        org.junit.jupiter.api.Assertions.assertTrue(pages.contains(RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION));
+        org.junit.jupiter.api.Assertions.assertFalse(pages.contains(RoleAccess.PAGE_LICENSE_MANAGEMENT));
+    }
 }

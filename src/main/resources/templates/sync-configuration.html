@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
     <link rel="stylesheet" href="/css/settings.css">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=navigation-20260924">
-    <link rel="stylesheet" href="/css/sync-configuration.css">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
+    <link rel="stylesheet" href="/css/sync-configuration.css?v=20260927-hourly">
+    <link rel="stylesheet" href="/css/data-sync.css?v=20260927-master-header">
 </head>
 <body class="modern-shell dashboard-bg sync-configuration-page">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -36,7 +37,7 @@
             <h1>Cloud Sync Configuration</h1>
             <p class="sync-subtitle">Click Sync to pull cloud data, stage it locally, and import it into this on-premises environment.</p>
         </div>
-        <div class="sync-badge"><i class="fas fa-shield-halved"></i> Admin / Kevin / Siva</div>
+        <div class="sync-badge"><i class="fas fa-shield-halved"></i> Super Admin / Kevin / Siva</div>
     </header>
     <section class="sync-status-panel" aria-live="polite">
         <div class="sync-status-line"><span id="syncStatusDot" class="sync-status-dot"></span><strong id="syncStatus">Loading sync status...</strong><span id="syncMessage"></span></div>
@@ -54,24 +55,29 @@
         <div class="sync-grid sync-grid-wide">
             <label>Download folder<input id="downloadFolder" required></label>
             <label>Processing folder<input id="processingFolder" required></label>
-            <label>Completed folder<input id="completedFolder" required></label>
             <label>Failed folder<input id="failedFolder" required></label>
             <label>Delay before import (seconds)<input id="delaySeconds" type="number" min="0" max="86400" required></label>
-            <label>Daily sync time<input id="scheduleTime" type="time" required></label>
+            <label>Sync schedule<select id="scheduleMode"><option value="DAILY">Once daily</option><option value="INTERVAL">Recurring interval</option><option value="TIMES">Specific daily times</option></select></label>
+            <label data-schedule-mode="DAILY">Daily sync time<input id="scheduleTime" type="time" required></label>
+            <label data-schedule-mode="INTERVAL" hidden>Sync frequency<select id="intervalMinutes" required><option value="30">Every 30 minutes</option><option value="60">Every 1 hour</option><option value="120">Every 2 hours</option><option value="180">Every 3 hours</option><option value="240">Every 4 hours</option><option value="300">Every 5 hours</option><option value="360">Every 6 hours</option><option value="420">Every 7 hours</option><option value="480">Every 8 hours</option><option value="540">Every 9 hours</option><option value="600">Every 10 hours</option><option value="660">Every 11 hours</option><option value="720">Every 12 hours</option><option value="1440">Every 24 hours</option></select></label>
+            <label data-schedule-mode="TIMES" hidden>Daily times (24-hour format)<input id="scheduleTimes" placeholder="08:00, 12:00, 16:00" maxlength="2000" required></label>
+            <label data-schedule-mode="INTERVAL" hidden>Interval start time<input id="intervalStartTime" type="time" required aria-describedby="syncScheduleHelp"></label>
         </div>
+        <p class="sync-manual-note" id="syncScheduleHelp">Times use the server's timezone. Set an interval start time to repeat at the selected frequency, including overnight (for example, every 2 hours from 08:30). A new timing starts from today's selected time; if it has passed, one catch-up sync runs. Manual sync does not shift this schedule. Existing intervals keep their timing until a start time is saved. Saved changes take effect without restarting.</p>
         <div class="sync-card-heading local-heading"><div><p class="sync-kicker">Datasets</p><h2>Cloud files to pull</h2></div><i class="fas fa-database"></i></div>
         <label>One dataset per line; use <code>dataset:CATEGORY</code> for master data<textarea id="datasets" rows="5"></textarea></label>
-        <label class="sync-toggle"><input id="enabled" type="checkbox"><span>Enable daily scheduled sync</span></label>
-        <p class="sync-manual-note"><i class="fas fa-hand-pointer"></i> Sync now always runs immediately. Scheduled sync runs once daily at the configured time.</p>
+        <label class="sync-toggle"><input id="enabled" type="checkbox"><span>Enable scheduled sync</span></label>
+        <p class="sync-manual-note"><i class="fas fa-hand-pointer"></i> Sync now always runs immediately. Automatic sync follows the saved schedule when enabled.</p>
         <div class="sync-actions"><button type="submit" class="sync-save"><i class="fas fa-save"></i> Save configuration</button><button type="button" id="syncNow" class="sync-now"><i class="fas fa-arrows-rotate"></i> Sync now</button></div>
         <p id="formMessage" class="sync-form-message"></p>
     </form>
 </main>
         </div>
-        <footer class="sync-page-footer">Cloud Sync Configuration <span>·</span> Brewery PMS</footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
-<script src="/js/ui-shell.js"></script>
-<script src="/js/sync-configuration.js"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
+<script src="/js/sync-configuration.js?v=20260928-start-time"></script>
+<script src="/js/data-sync.js?v=master-header-only-20260928"></script>
 </body>
 </html>

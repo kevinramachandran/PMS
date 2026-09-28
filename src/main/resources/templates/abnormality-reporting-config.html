@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abnormality Reporting - Carlsberg Brewery</title>
+    <title>Abnormality - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/issue-board.css?v=20260926-report-footer">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260926-report-footer">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -39,7 +39,7 @@
                 <button id="sidebarToggle" class="sidebar-toggle-btn" type="button" aria-label="Toggle sidebar">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Abnormality Reporting</h1>
+                <h1>Abnormality</h1>
             </div>
             <div class="header-right">
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -79,8 +79,7 @@
                 </div>
                 <div class="report-page-actions report-page-actions-footer">
                     <button type="button" id="abnormalityExportBtn" class="issue-add-button"><i class="fas fa-file-csv"></i><span>Download</span></button>
-                    <button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Report</span></button>
-                    <button type="button" id="abnormalityUpdatePageBtn" class="issue-add-button"><i class="fas fa-cloud-arrow-up"></i><span>Update</span></button>
+                    <button type="button" id="addAbnormalityReportingBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add new</span></button>
                 </div>
             </section>
 
@@ -176,16 +175,14 @@
             </form>
         </div>
 
-        <footer class="footer">
-            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-        </footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
 
 <script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/pdf-report.js?v=1"></script><script src="/js/report-export.js?v=2"></script><script src="/js/abnormality-reporting-config.js?v=20260926-report-cloud-actions"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
+    <script src="/js/data-sync.js?v=master-header-only-20260928"></script>
     <script src="/js/master-cloud-routing.js?v=4"></script>
 </body>
 </html>

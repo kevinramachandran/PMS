@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/css/pms-attachment.css?v=20260830">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
 </head>
 <body class="modern-shell dashboard-bg process-confirmation-page">
@@ -33,7 +33,7 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>CarlEX Process Confirmation</h1>
+                <h1>CarlEX pC</h1>
             </div>
             <div class="header-center"></div>
             <div class="header-right">
@@ -68,7 +68,7 @@
                         <h2>CarlEX Process Confirmation</h2>
                         <p id="pcFilterSummary">All periods | 0 records</p>
                     </div>
-                    <a class="issue-add-button" href="/process-confirmation-config"><i class="fas fa-plus"></i><span>New Record</span></a>
+                    <a class="issue-add-button" href="/process-confirmation-config"><i class="fas fa-plus"></i><span>Add new</span></a>
                 </div>
                 <div class="pc-filter-grid">
                     <div class="pc-filter-group">
@@ -181,19 +181,14 @@
             </section>
         </div>
 
-        <footer class="footer">
-            <div class="footer-brand">
-                <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-            </div>
-            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-        </footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
 
 <script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/process-confirmation.js?v=filters-20260913"></script>
 <script src="/js/pms-attachment.js?v=20260830"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
 </body>
 </html>
 

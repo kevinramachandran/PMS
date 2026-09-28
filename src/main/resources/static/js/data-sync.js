@@ -20,13 +20,23 @@
             '<div class="data-sync-actions"><button type="button" class="data-sync-button data-sync-run"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync now</button>' +
             '<button type="button" class="data-sync-button data-sync-ok" hidden>OK</button>' +
             '<button type="button" class="data-sync-button data-sync-cancel">Cancel</button></div></section>';
-        const target = host.classList && host.classList.contains('footer-btn-card') ? host.querySelector('.footer-btn-card-header') : document.querySelector('.top-header .header-right');
+        const reportActions = host.querySelector('.report-page-actions');
+        const target = reportActions || document.querySelector('.top-header .header-right');
+        if (reportActions) trigger.className = 'issue-add-button';
         if (!existingTrigger) {
             const triggerTarget = target && (typeof target.appendChild === 'function' || typeof target.prepend === 'function') ? target : host;
-            if (typeof triggerTarget.appendChild === 'function') triggerTarget.appendChild(trigger); else triggerTarget.prepend(trigger);
+            if (reportActions) {
+                reportActions.classList.add('report-actions-with-sync');
+                const addButton = reportActions.querySelector('button:nth-child(2)');
+                if (addButton) addButton.insertAdjacentElement('afterend', trigger);
+                else reportActions.appendChild(trigger);
+            } else if (typeof triggerTarget.appendChild === 'function') triggerTarget.appendChild(trigger); else triggerTarget.prepend(trigger);
         }
         if (typeof document.body.appendChild === 'function') document.body.appendChild(dialog);
         const panel = dialog.querySelector('.data-sync-panel');
+        if (trigger.classList.contains('master-header-sync') && !datasetSelection) {
+            panel.querySelector('.data-sync-copy').textContent = 'Runs the datasets saved in Cloud Sync Configuration. SMTP, email scheduler, connection settings and license data are not copied.';
+        }
         const status = panel.querySelector('.data-sync-status');
         const progress = panel.querySelector('.data-sync-progress-bar');
         const runButton = panel.querySelector('.data-sync-run');
@@ -72,36 +82,44 @@
         runButton.addEventListener('click', runSync);
         if (document.addEventListener) document.addEventListener('keydown', event => { if (event.key === 'Escape' && !dialog.hidden) closeDialog(); });
     }
-    function datasetForCard(card) {
-        const category = card.getAttribute('data-category') || '';
-        const mappings = {
-            'master-plant-card': 'plant-master:',
-            'master-gemba-kaizen-card': 'kaizen-master:',
-            'master-abnormality-card': 'abnormality-master:',
-            'master-gemba-walk-card': 'walk-master:',
-            'master-process-card': 'process-master:'
+    function masterPageDatasets(pathname, search) {
+        if (pathname === '/pms-configuration') return 'users';
+        if (['/sync-configuration', '/email-configuration', '/smtp-configuration'].includes(pathname)) return '';
+        if (pathname !== '/settings') return null;
+        const pages = {
+            'kpi-plant-name': 'plant-master:PLANT\nplant-master:DEPARTMENT\nplant-master:PROCESS_AREA\nplant-master:DESIGNATION',
+            'master-designation': 'plant-master:DESIGNATION',
+            'master-abnormality': 'abnormality-master:ABT_TAG_TYPE\nabnormality-master:ABNORMALITY_DEFECT_TYPE',
+            'master-gemba-walk': 'walk-master:GEMBA_CATEGORY\nwalk-master:LIFE_SAVER_RULE',
+            'master-gemba-kaizen': 'kaizen-master:CLASSIFICATION_OF_KAIZEN',
+            'master-process': 'process-master:ZM_OBSERVATION\nprocess-master:PM_OBSERVATION\nprocess-master:OM_OBSERVATION\nprocess-master:QM_OBSERVATION'
         };
-        const prefix = Object.keys(mappings).find(name => card.classList.contains(name));
-        return prefix && category ? mappings[prefix] + category : '';
+        return pages[new URLSearchParams(search).get('config')] ?? null;
+    }
+    function mountMasterHeader(datasetSelection) {
+        const header = document.querySelector('.top-header .header-right');
+        if (!header || header.querySelector('.master-header-sync')) return;
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'data-sync-trigger master-header-sync';
+        trigger.setAttribute('data-preserve-header-right', 'true');
+        trigger.innerHTML = '<i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync';
+        header.insertBefore(trigger, header.querySelector('.pms-profile'));
+        mount(header, datasetSelection, trigger);
     }
     function init() {
+        const masterDatasets = masterPageDatasets(window.location.pathname, window.location.search);
+        if (masterDatasets !== null) mountMasterHeader(masterDatasets);
         const pageDatasets = {
             '/gemba-kaizen-config': 'gemba-kaizen',
             '/abnormality-reporting-config': 'abnormality',
             '/gemba-walk-config': 'gemba-walk',
-            '/process-confirmation-config': 'process-confirmation',
-            '/pms-configuration': 'users'
+            '/process-confirmation-config': 'process-confirmation'
         };
         const pageDataset = pageDatasets[window.location.pathname];
         if (pageDataset) {
             const content = document.querySelector('.content-area');
             if (content) mount(content, pageDataset);
-        }
-        if (window.location.pathname === '/settings') {
-            document.querySelectorAll('.master-plant-sync-btn').forEach(button =>
-                mount(button.parentElement, 'plant-master:PLANT\nplant-master:DEPARTMENT\nplant-master:PROCESS_AREA\nplant-master:DESIGNATION', button));
-            ['master-plant-card', 'master-gemba-kaizen-card', 'master-abnormality-card', 'master-gemba-walk-card', 'master-process-card'].forEach(className =>
-                document.querySelectorAll('.' + className + '[data-category]').forEach(card => mount(card, datasetForCard(card))));
         }
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

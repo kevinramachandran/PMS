@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/settings.css">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
+    <link rel="stylesheet" href="/css/data-sync.css?v=20260927-master-header">
 </head>
 <body class="modern-shell dashboard-bg"
       th:attr="data-can-edit-current-page=${canEditCurrentPage},data-email-page-mode=${emailPageMode != null ? emailPageMode : 'scheduler'}">
@@ -198,13 +199,15 @@
                     </div>
                 </div>
             </div>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
         </main>
     </div>
 
     <script src="/js/dashboard.js"></script>
     <script src="/js/email-configuration.js?v=split-email-pages-20260901"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-    <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+    <script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
+<script src="/js/data-sync.js?v=master-header-only-20260928"></script>
 </body>
 </html>
 
