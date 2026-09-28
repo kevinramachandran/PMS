@@ -34,3 +34,14 @@ Correct the assignment in the source application to establish the intended link.
 The application receiving the cloud data must be rebuilt and deployed for these
 rules to take effect. Tests cover every registered reference and nested walk mappings;
 they do not guarantee that every future data or schema error can be imported.
+
+## Synced user login
+
+Deploy the updated cloud and on-premises builds, then run Users sync again to
+repair accounts imported by older builds. The administrator-only sync export
+includes BCrypt password hashes so the same password works on both instances;
+legacy plaintext passwords are hashed before export. Ordinary CSV downloads
+continue to omit credentials. The configured cloud sync account must be Admin.
+Blank credentials from older clouds preserve a matching local account password;
+new accounts without a source hash require a password reset. Account status and
+local license checks still apply.

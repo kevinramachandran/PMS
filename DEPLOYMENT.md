@@ -1,5 +1,63 @@
 # Deployment Guide
 
+## Client and test instances on the same Windows server
+
+See [the two-instance setup guide](deployment/windows/README.md), also included
+as `README.md` in the release ZIP. Install into separate folders with unique
+service names, then set `SERVER_PORT` and `DB_NAME` in each installation's
+`config/brewery-pms.env`. Both values can be changed after deployment without
+rebuilding. Remove a legacy `DB_URL` if using the separate database settings.
+Missing databases are created on connection when the MySQL account has the
+required permissions; changing DB_NAME does not migrate existing data.
+
+The cloud variant from `dist/releases/PMS-4-cloud.zip` has also been updated and
+rebuilt as `dist/releases/PMS-4-cloud.zip`. Its updated source is in
+`dist/cloud-configurable/source` (an ignored release workspace, not tracked by
+Git). To rebuild that variant from its source directory:
+
+```powershell
+.\gradlew.bat -I isolated-build.gradle zipWindowsService -PappJarName=brewery-pms-cloud
+```
+
+Both commands update the existing ZIPs in the main project's `dist/releases` folder.
+
+## Change the Windows deployment port in one place
+
+After extracting a release ZIP, copy `config/brewery-pms.env.example` to
+`config/brewery-pms.env` if the latter does not exist. In an installed service,
+edit the file under the installation directory instead.
+
+Set the port in that file, for example:
+
+```dotenv
+SERVER_PORT=8081
+```
+
+Restart PMS after changing it. The Windows service, launcher's readiness check,
+browser URL, and stop script read this setting. No source edits or rebuild are
+needed for a different port. An explicit `-ApplicationUrl` overrides only the
+browser/readiness URL, not the listening port. Stop the running app before
+changing its port if you use the direct launcher.
+
+Build a deployment ZIP from the project directory:
+
+```powershell
+.\gradlew.bat clean build zipWindowsService
+```
+
+Output: `dist/releases/PMS-4.zip`.
+The same ZIP can be used on different servers with different `SERVER_PORT`
+values. Configure database credentials in each server's environment file too.
+The ZIP contains the environment example; it does not include your live config.
+
+For a separate Cloud PMS application, configure its own listening port in its
+deployment. When its address changes, update the cloud URL in PMS sync settings
+to include the new externally reachable port. That URL is separate from this
+PMS application's `SERVER_PORT`. Use `PMS-4.zip` for PMS and `PMS-4-cloud.zip` for Cloud PMS. Each build updates its corresponding ZIP.
+
+For Docker Compose, set `SERVER_PORT` in the root `.env` file; this changes the
+published host port while the container continues listening on port 8080.
+
 ## Key Files
 
 ```text
@@ -195,7 +253,7 @@ For a release-ready handoff, generate the bundle and a versioned ZIP in one comm
 ZIP artifact output:
 
 ```text
-dist/releases/brewery-pms-be-windows-service-2.0.0.zip
+dist/releases/PMS-4.zip
 ```
 
 This creates:

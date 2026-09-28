@@ -20,17 +20,17 @@ public class SyncConfiguration {
     private String encryptedCloudPassword = "";
 
     @Column(nullable = false, length = 500)
-    private String downloadFolder = "C:/Brewery-PMS/sync/download";
+    private String downloadFolder = "sync/download";
 
     @Column(nullable = false, length = 500)
-    private String processingFolder = "C:/Brewery-PMS/sync/processing";
+    private String processingFolder = "sync/processing";
 
     // Retained for cleanup of CSVs left by older versions; no longer configurable.
     @Column(nullable = false, length = 500)
-    private String completedFolder = "C:/Brewery-PMS/sync/completed";
+    private String completedFolder = "sync/completed";
 
     @Column(nullable = false, length = 500)
-    private String failedFolder = "C:/Brewery-PMS/sync/failed";
+    private String failedFolder = "sync/failed";
 
     @Column(nullable = false)
     private int delaySeconds = 60;

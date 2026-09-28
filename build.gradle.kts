@@ -56,6 +56,7 @@ val windowsServiceDir = rootProject.layout.projectDirectory.dir("dist/windows-se
 val windowsReleaseDir = rootProject.layout.projectDirectory.dir("dist/releases")
 
 tasks.register<Copy>("copyJar") {
+    doNotTrackState("dist also contains independently built release workspaces and their locked caches")
     description = "Copies the executable JAR into the project dist/ folder."
     dependsOn("bootJar")
     from(tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar").map { it.archiveFile })
@@ -74,8 +75,10 @@ tasks.register<Copy>("bundleWindowsService") {
     }
     from("deployment/windows") {
         include("*.ps1", "*.bat", "*.xml")
+        exclude("test-*.ps1")
         into("service")
     }
+    from("deployment/windows/README.md")
     from("deployment/windows/brewery-pms.env.example") {
         into("config")
     }
@@ -86,8 +89,7 @@ tasks.register<Zip>("zipWindowsService") {
     description = "Creates a versioned ZIP archive for the Windows service deployment bundle."
     dependsOn("bundleWindowsService", "copyJar")
     from(windowsServiceDir)
-    archiveBaseName.set(appJarName.map { "$it-windows-service" })
-    archiveVersion.set(project.version.toString())
+    archiveFileName.set("PMS-4.zip")
     destinationDirectory.set(windowsReleaseDir)
 }
 

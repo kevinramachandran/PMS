@@ -1,7 +1,7 @@
 param(
     [string]$InstallRoot = "C:\Brewery-PMS",
-    [string]$ServiceName = "brewery-pms",
-    [string]$ApplicationUrl = "http://localhost:165",
+    [string]$ServiceName = "",
+    [string]$ApplicationUrl = "",
     [int]$StartupTimeoutSeconds = 420
 )
 
@@ -109,96 +109,6 @@ function Get-DirectoryFileUri {
     return ([System.Uri]$resolved).AbsoluteUri
 }
 
-function Stop-ExistingService {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name
-    )
-
-    $service = Get-Service -Name $Name -ErrorAction SilentlyContinue
-    if ($null -eq $service) {
-        Write-StartupLog "Windows service $Name is not installed"
-        return
-    }
-
-    if ($service.Status -eq "Stopped") {
-        Write-StartupLog "Windows service $Name is already stopped"
-        return
-    }
-
-    Write-StartupLog "Stopping Windows service $Name before starting this release"
-    try {
-        Stop-Service -Name $Name -Force -ErrorAction Stop
-        $service.WaitForStatus("Stopped", [TimeSpan]::FromSeconds(30))
-        Write-StartupLog "Windows service $Name stopped"
-    } catch {
-        Write-StartupLog "Could not stop Windows service $Name automatically: $($_.Exception.Message)"
-    }
-}
-
-function Get-PortListenerProcessIds {
-    param(
-        [Parameter(Mandatory = $true)]
-        [int]$Port
-    )
-
-    try {
-        return @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop |
-            Where-Object { $_.OwningProcess } |
-            Select-Object -ExpandProperty OwningProcess -Unique)
-    } catch {
-        $connections = netstat -ano | findstr ":$Port"
-        if (-not $connections) {
-            return @()
-        }
-
-        return @($connections | ForEach-Object {
-            ($_ -split "\s+")[-1]
-        } | Where-Object { $_ -match "^\d+$" } | Sort-Object -Unique)
-    }
-}
-
-function Stop-PortListeners {
-    param(
-        [Parameter(Mandatory = $true)]
-        [int]$Port
-    )
-
-    Write-Host "Checking port $Port..."
-    Write-StartupLog "Checking port $Port"
-
-    $processIds = @(Get-PortListenerProcessIds -Port $Port)
-    if (-not $processIds -or $processIds.Count -eq 0) {
-        Write-Host "No process running on port $Port"
-        Write-StartupLog "No process running on port $Port"
-        return
-    }
-
-    foreach ($processId in $processIds) {
-        Write-Host "Stopping process on port $Port (PID: $processId)"
-        Write-StartupLog "Stopping process on port $Port (PID: $processId)"
-        try {
-            Stop-Process -Id ([int]$processId) -Force -ErrorAction Stop
-            Write-StartupLog "Stopped process $processId"
-        } catch {
-            Write-StartupLog "Could not stop process $processId automatically: $($_.Exception.Message)"
-        }
-    }
-
-    $deadline = (Get-Date).AddSeconds(20)
-    while ((Get-Date) -lt $deadline) {
-        $remaining = @(Get-PortListenerProcessIds -Port $Port)
-        if (-not $remaining -or $remaining.Count -eq 0) {
-            Write-StartupLog "Port $Port is free"
-            return
-        }
-
-        Start-Sleep -Seconds 1
-    }
-
-    Write-StartupLog "Port $Port is still occupied after stop attempt"
-}
-
 function Ensure-EnvFile {
     param(
         [Parameter(Mandatory = $true)]
@@ -210,18 +120,6 @@ function Ensure-EnvFile {
     )
 
     if (Test-Path $EnvFile) {
-        $existingContent = Get-Content -Path $EnvFile -Raw
-        if ($existingContent -match '(?m)^DB_PASSWORD=Password@123\s*$' -and (Test-Path $ExampleFile)) {
-            $exampleContent = Get-Content -Path $ExampleFile -Raw
-            $exampleUsername = [regex]::Match($exampleContent, '(?m)^DB_USERNAME=(.*)$').Groups[1].Value.Trim()
-            $examplePassword = [regex]::Match($exampleContent, '(?m)^DB_PASSWORD=(.*)$').Groups[1].Value.Trim()
-            if ($exampleUsername -and $examplePassword) {
-                $existingContent = [regex]::Replace($existingContent, '(?m)^DB_USERNAME=.*$', "DB_USERNAME=$exampleUsername")
-                $existingContent = [regex]::Replace($existingContent, '(?m)^DB_PASSWORD=.*$', "DB_PASSWORD=$examplePassword")
-                Set-Content -Path $EnvFile -Value $existingContent -Encoding UTF8
-                Write-StartupLog "Updated legacy default database credentials in $EnvFile from its release example"
-            }
-        }
         return
     }
 
@@ -241,7 +139,9 @@ SPRING_PROFILES_ACTIVE=prod
 SERVER_PORT=165
 APP_TIMEZONE=UTC
 
-DB_URL=jdbc:mysql://localhost:3306/brewery_pms?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=brewery_pms
 DB_USERNAME=root
 DB_PASSWORD=Password@123
 
@@ -324,14 +224,22 @@ if (Test-Path $envFile) {
     Write-StartupLog "Loaded environment file $envFile"
 }
 
-$port = 165
-
-Stop-ExistingService -Name $ServiceName
-Stop-PortListeners -Port $port
-if ($port -ne 165) {
-    Stop-PortListeners -Port 165
+. (Join-Path $PSScriptRoot "port-config.ps1")
+$port = Get-PmsPort -EnvFile $envFile
+$env:SERVER_PORT = [string]$port
+if (-not $ApplicationUrl) {
+    $ApplicationUrl = "http://localhost:$port"
 }
-$env:SERVER_PORT = "165"
+
+. (Join-Path $PSScriptRoot "instance-config.ps1")
+$ServiceName = Get-PmsServiceName -RootDir $rootDir -Override $ServiceName
+$ownedService = Get-PmsOwnedService -RootDir $rootDir -Name $ServiceName
+if ($ownedService -and $ownedService.State -ne 'Stopped') {
+    Stop-Service -Name $ServiceName -ErrorAction Stop
+    (Get-Service -Name $ServiceName).WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30))
+}
+Stop-PmsDirectProcess -RootDir $rootDir
+Assert-PmsPortAvailable -Port $port
 
 # Start the current release only. Do not fall back to an older installed release.
 $serviceExe = Join-Path (Join-Path $rootDir "service") "$ServiceName.exe"

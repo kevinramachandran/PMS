@@ -1,12 +1,12 @@
 param(
-    [string]$ServiceName = "brewery-pms",
+    [string]$ServiceName = "",
     [string]$DisplayName = "Brewery PMS",
     [string]$InstallRoot = "C:\Brewery-PMS",
     [string]$BundleRoot = "",
     [string]$WinSWDownloadUrl = "https://github.com/winsw/winsw/releases/latest/download/WinSW-x64.exe",
     [switch]$StartAfterInstall,
     [switch]$OpenBrowserAfterStart,
-    [string]$ApplicationUrl = "http://localhost:165",
+    [string]$ApplicationUrl = "",
     [int]$StartupTimeoutSeconds = 90
 )
 
@@ -30,6 +30,13 @@ function Copy-IfMissing {
 
     if (-not (Test-Path $Destination)) {
         Copy-Item -Path $Source -Destination $Destination -Force
+    }
+}
+
+function Copy-BundleFile {
+    param([string]$Source, [string]$Destination)
+    if ([IO.Path]::GetFullPath($Source) -ne [IO.Path]::GetFullPath($Destination)) {
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
     }
 }
 
@@ -96,6 +103,17 @@ function Wait-ForApplication {
 Assert-Administrator
 
 $BundleRoot = Resolve-BundleRoot -ProvidedPath $BundleRoot
+. (Join-Path $BundleRoot 'service\instance-config.ps1')
+$InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
+$ServiceName = Get-PmsServiceName -RootDir $InstallRoot -Override $ServiceName
+$existingService = Get-PmsOwnedService -RootDir $InstallRoot -Name $ServiceName
+$nameFile = Join-Path $InstallRoot 'config\service-name.txt'
+if ((Test-Path -LiteralPath $nameFile) -and (Get-PmsServiceName -RootDir $InstallRoot) -ne $ServiceName) {
+    $oldName = Get-PmsServiceName -RootDir $InstallRoot
+    if (Get-Service -Name $oldName -ErrorAction SilentlyContinue) {
+        throw "Remove the existing service '$oldName' before registering this folder with a different name."
+    }
+}
 
 $bundleAppJar = Join-Path $BundleRoot "app\app.jar"
 $bundleXml = Join-Path $BundleRoot "service\brewery-pms.xml"
@@ -104,7 +122,7 @@ $bundleLaunchScript = Join-Path $BundleRoot "service\launch-app.ps1"
 $bundleLaunchBatch = Join-Path $BundleRoot "service\launch-app.bat"
 $bundleEnvExample = Join-Path $BundleRoot "config\brewery-pms.env.example"
 
-foreach ($requiredPath in @($bundleAppJar, $bundleXml, $bundleStartScript, $bundleLaunchScript, $bundleLaunchBatch, $bundleEnvExample)) {
+foreach ($requiredPath in @($bundleAppJar, $bundleXml, $bundleStartScript, $bundleLaunchScript, $bundleLaunchBatch, $bundleEnvExample, (Join-Path $BundleRoot 'service\port-config.ps1'), (Join-Path $BundleRoot 'service\stop-app.ps1'))) {
     if (-not (Test-Path $requiredPath)) {
         throw "Required bundle artifact is missing: $requiredPath. Run .\gradlew.bat bundleWindowsService first."
     }
@@ -127,17 +145,28 @@ $serviceLaunchScript = Join-Path $serviceDir "launch-app.ps1"
 $serviceLaunchBatch = Join-Path $serviceDir "launch-app.bat"
 $serviceEnv = Join-Path $configDir "brewery-pms.env"
 
-Invoke-WebRequest -Uri $WinSWDownloadUrl -OutFile $serviceExe
-Copy-Item -Path $bundleXml -Destination $serviceXml -Force
-Copy-Item -Path $bundleStartScript -Destination $serviceStartScript -Force
-Copy-Item -Path $bundleLaunchScript -Destination $serviceLaunchScript -Force
-Copy-Item -Path $bundleLaunchBatch -Destination $serviceLaunchBatch -Force
-Copy-Item -Path $bundleAppJar -Destination (Join-Path $appDir "app.jar") -Force
+if ($existingService) {
+    Stop-Service -Name $ServiceName -ErrorAction Stop
+    (Get-Service -Name $ServiceName).WaitForStatus('Stopped', [TimeSpan]::FromSeconds(30))
+    & $serviceExe uninstall
+    if ($LASTEXITCODE -ne 0) { throw "Could not uninstall service $ServiceName" }
+}
+Stop-PmsDirectProcess -RootDir $InstallRoot
+if (-not (Test-Path -LiteralPath $serviceExe)) {
+    Invoke-WebRequest -Uri $WinSWDownloadUrl -OutFile $serviceExe
+}
+Copy-BundleFile -Source $bundleXml -Destination $serviceXml
+Copy-BundleFile -Source $bundleStartScript -Destination $serviceStartScript
+Copy-BundleFile -Source $bundleLaunchScript -Destination $serviceLaunchScript
+Copy-BundleFile -Source $bundleLaunchBatch -Destination $serviceLaunchBatch
+Copy-BundleFile -Source $bundleAppJar -Destination (Join-Path $appDir "app.jar")
 Copy-IfMissing -Source $bundleEnvExample -Destination $serviceEnv
-
-if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
-    & $serviceExe stop | Out-Null
-    & $serviceExe uninstall | Out-Null
+foreach ($file in @('port-config.ps1', 'instance-config.ps1', 'stop-app.ps1', 'start.bat', 'stop.bat', 'remove-service.ps1')) {
+    Copy-BundleFile -Source (Join-Path $BundleRoot "service\$file") -Destination (Join-Path $serviceDir $file)
+}
+. (Join-Path $serviceDir "port-config.ps1")
+if (-not $ApplicationUrl) {
+    $ApplicationUrl = "http://localhost:$(Get-PmsPort -EnvFile $serviceEnv)"
 }
 
 [xml]$xmlDocument = Get-Content -Path $serviceXml
@@ -146,9 +175,13 @@ $xmlDocument.service.name = $DisplayName
 $xmlDocument.Save($serviceXml)
 
 & $serviceExe install
+if ($LASTEXITCODE -ne 0) { throw "Could not install service $ServiceName" }
+Set-Content -LiteralPath $nameFile -Value $ServiceName -Encoding UTF8
 
 if ($StartAfterInstall) {
+    Assert-PmsPortAvailable -Port (Get-PmsPort -EnvFile $serviceEnv)
     & $serviceExe start
+    if ($LASTEXITCODE -ne 0) { throw "Could not start service $ServiceName" }
 
     if ($OpenBrowserAfterStart) {
         if (Wait-ForApplication -Url $ApplicationUrl -TimeoutSeconds $StartupTimeoutSeconds) {
