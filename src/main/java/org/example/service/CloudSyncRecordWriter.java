@@ -72,6 +72,20 @@ public class CloudSyncRecordWriter {
         return deleted;
     }
 
+    /** Delete replaceable local users so a cloud snapshot can be re-imported as a clean set. */
+    public int deleteAllUsersForCloudReplacement() {
+        int deleted = 0;
+        for (Object item : new ArrayList<>(rows(AppUser.class, ""))) {
+            AppUser user = (AppUser) item;
+            if (users.isReservedForCloudSync(user.getUsername())) continue;
+            em.remove(em.contains(user) ? user : em.merge(user));
+            deleted++;
+        }
+        em.flush();
+        em.clear();
+        return deleted;
+    }
+
     /** Reconcile scoped duplicates before writing authoritative IDs, in the file's transaction. */
     public void prepareMasterImport(Class<?> type, String category, List<ObjectNode> incoming,
                                     Set<Long> changedIds, List<String> warnings) {

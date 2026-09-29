@@ -39,13 +39,14 @@ public class SyncSecretService {
     public String decrypt(String value) {
         try {
             byte[] source = Base64.getDecoder().decode(value);
+            if (source.length < 12 + 16) throw new IllegalArgumentException("Invalid encrypted password length");
             byte[] iv = java.util.Arrays.copyOf(source, 12);
             byte[] encrypted = java.util.Arrays.copyOfRange(source, 12, source.length);
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, iv));
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (Exception ex) {
-            throw new IllegalStateException("Stored sync password cannot be decrypted. Set it again.", ex);
+            throw new IllegalStateException("Stored sync password cannot be decrypted with the current APP_SYNC_SECRET. Restore the original secret or enter the cloud password again in Sync Configuration and save it.", ex);
         }
     }
 }

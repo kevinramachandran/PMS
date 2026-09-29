@@ -23,7 +23,7 @@ The versioned `/api/data-sync/{dataset}/export-for-sync` endpoint returns the CS
 
 Account sync preserves existing local password hashes when the password column is blank. Exports omit credentials, so newly imported accounts need a local password reset. Reserved system accounts and license checks remain protected.
 
-This imports database fields, not attachment file contents or assignment-history tables. Image paths require the corresponding files to exist on the destination.
+Reporting sync transfers referenced PNG/JPG files for Abnormality Reporting, Gemba Walk, Gemba Kaizen, and Process Confirmation along with the CSV records. Files use their existing opaque stored names and module folders. A missing or inaccessible source image fails that dataset import with the filename and module so the record does not silently point to a missing photo. This does not sync assignment-history tables.
 
 The success message reports added, replaced, and unchanged rows. Clicking OK reloads the page to display the saved data. Deploy/restart the updated application before testing against a live database.
 

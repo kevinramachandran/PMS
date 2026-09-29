@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -63,6 +64,29 @@ public class AttachmentStorageService {
             throw new java.io.FileNotFoundException("Attachment not found.");
         }
         return Files.readAllBytes(path);
+    }
+
+    /** Store an authenticated cloud attachment under its original opaque filename. */
+    public void storeSyncedImage(String module, String storedName, byte[] content) throws IOException {
+        if (content == null || content.length == 0 || content.length > 10 * 1024 * 1024)
+            throw new IllegalArgumentException("Synced image must be between 1 byte and 10 MB.");
+        String name = storedName == null ? "" : storedName.trim();
+        String ext = getExtension(name).toLowerCase();
+        if (!name.matches("[A-Za-z0-9_-]+\\.(?i:png|jpe?g)") || !ALLOWED_EXTENSIONS.contains(ext))
+            throw new IllegalArgumentException("Invalid synced image filename.");
+        Path modulePath = modulePath(module);
+        Files.createDirectories(modulePath);
+        Path target = resolveStoredPath(module, name);
+        Path temp = Files.createTempFile(modulePath, ".sync-", ".part");
+        try {
+            Files.write(temp, content);
+            try { Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
+            catch (java.nio.file.AtomicMoveNotSupportedException ex) {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
     }
 
     public void deleteImage(String module, String storedName) {

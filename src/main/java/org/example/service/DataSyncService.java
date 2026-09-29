@@ -326,6 +326,57 @@ public class DataSyncService {
         return cloudWriter.deleteMissing(data.type(), category, sourceIds);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteUsersForCloudReplacement() {
+        return cloudWriter.deleteAllUsersForCloudReplacement();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void replaceUsersForCloudSync(String csv) throws IOException {
+        validateCloudUsersCsv(csv);
+        deleteUsersForCloudReplacement();
+        importCsv("users", "", csv, syncSession(), true);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int validateCloudUsersCsv(String csv) throws IOException {
+        Dataset data = dataset("users", "", syncSession(), true);
+        if (csv.startsWith("\ufeff")) csv = csv.substring(1);
+        try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
+                .setAllowMissingColumnNames(false).setDuplicateHeaderMode(DuplicateHeaderMode.DISALLOW)
+                .build().parse(new StringReader(csv))) {
+            List<String> headers = parser.getHeaderNames();
+            if (!headers.containsAll(List.of("id", "username", "email", "role")))
+                throw new IllegalArgumentException("Cloud users CSV must include id, username, email and role columns");
+            Set<String> usernames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Set<String> emails = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Set<String> employeeIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Set<Long> ids = new HashSet<>();
+            for (CSVRecord record : parser) {
+                if (!record.isConsistent()) throw new IllegalArgumentException("Cloud users CSV has an inconsistent row");
+                String username = unprotectCell(record.get("username")).trim();
+                String email = unprotectCell(record.get("email")).trim();
+                String role = unprotectCell(record.get("role")).trim();
+                if (username.isBlank() || email.isBlank()) throw new IllegalArgumentException("Cloud users CSV contains a blank username or email");
+                if (!usernames.add(username) || !emails.add(email)) throw new IllegalArgumentException("Cloud users CSV contains duplicate usernames or emails");
+                if (!role.equalsIgnoreCase("Admin") && !role.equalsIgnoreCase("User"))
+                    throw new IllegalArgumentException("Cloud users CSV has an unsupported role for " + username);
+                String rawId = record.get("id").trim();
+                if (rawId.isBlank() || rawId.equalsIgnoreCase("null")) throw new IllegalArgumentException("Cloud users CSV contains a user without an ID");
+                long id;
+                try { id = Long.parseLong(rawId); }
+                catch (NumberFormatException ex) { throw new IllegalArgumentException("Cloud users CSV contains an invalid user ID: " + rawId); }
+                if (id <= 0 || !ids.add(id)) throw new IllegalArgumentException("Cloud users CSV contains an invalid or duplicate user ID: " + rawId);
+                if (headers.contains("employeeId")) {
+                    String employeeId = unprotectCell(record.get("employeeId")).trim();
+                    if (!employeeId.isBlank() && !employeeIds.add(employeeId))
+                        throw new IllegalArgumentException("Cloud users CSV contains duplicate employee IDs");
+                }
+            }
+            return ids.size();
+        }
+    }
+
     private static Set<String> sourceUsernames(String csv) throws IOException {
         if (csv.startsWith("\ufeff")) csv = csv.substring(1);
         Set<String> usernames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);

@@ -1,12 +1,17 @@
 package org.example.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.example.entity.SyncConfiguration;
 import org.example.repository.SyncConfigurationRepository;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +27,8 @@ public class CloudSyncService {
     private final SyncSecretService secrets;
     private final DataSyncService dataSync;
     private final ObjectMapper mapper;
+    @org.springframework.beans.factory.annotation.Autowired
+    private AttachmentStorageService attachmentStorage;
     private final AtomicBoolean running = new AtomicBoolean();
 
     public CloudSyncService(SyncConfigurationRepository repository, SyncSecretService secrets,
@@ -180,7 +187,7 @@ public class CloudSyncService {
                 batch.add(folder.resolve(name));
                 downloaded++;
             }
-            ImportSummary summary = processFiles(config, batch, sourceWarnings, runId);
+            ImportSummary summary = processFiles(config, batch, sourceWarnings, runId, client);
             config.setLastStatus(summary.hasWarnings() ? "SUCCESS_WITH_WARNINGS" : "SUCCESS");
             config.setLastSuccessAt(LocalDateTime.now());
             String message = "Sync completed. Downloaded " + downloaded + " dataset file(s). " + summary.message()
@@ -213,13 +220,14 @@ public class CloudSyncService {
         long cutoff = manualRun ? Long.MAX_VALUE : System.currentTimeMillis() - config.getDelaySeconds() * 1000L;
         try (var files = Files.list(download)) {
             return processFiles(config, files.filter(p -> p.toString().endsWith(".csv"))
-                    .filter(p -> p.toFile().lastModified() <= cutoff).toList(), List.of(), UUID.randomUUID().toString()).message();
+                    .filter(p -> p.toFile().lastModified() <= cutoff).toList(), List.of(), UUID.randomUUID().toString(), null).message();
         }
     }
 
     private record ImportSummary(String message, boolean hasWarnings) { }
 
-    private ImportSummary processFiles(SyncConfiguration config, List<Path> batch, List<String> sourceWarnings, String runId) throws IOException {
+    private ImportSummary processFiles(SyncConfiguration config, List<Path> batch, List<String> sourceWarnings, String runId,
+                                       HttpClient attachmentClient) throws IOException {
         Path processing = Path.of(config.getProcessingFolder());
         Path failed = Path.of(config.getFailedFolder());
         Files.createDirectories(processing); Files.createDirectories(failed);
@@ -241,7 +249,16 @@ public class CloudSyncService {
                     String[] parts = parseDatasetAndCategory(staged.getFileName().toString());
                     String dataset = parts[0];
                     String category = parts.length > 1 ? parts[1] : "";
-                    Map<String, Object> result = dataSync.importCsvForSync(dataset, category, Files.readString(staged));
+                    String csv = Files.readString(staged);
+                    downloadReferencedAttachments(attachmentClient, config, dataset, csv);
+                    if (dataset.equals("users")) {
+                        // Preflight the entire snapshot and replace in one database transaction.
+                        dataSync.replaceUsersForCloudSync(csv);
+                        importedSnapshots.add(new ImportedSnapshot(dataset, category, csv));
+                        Files.deleteIfExists(staged);
+                        continue;
+                    }
+                    Map<String, Object> result = dataSync.importCsvForSync(dataset, category, csv);
                     created += ((Number) result.getOrDefault("created", 0)).intValue();
                     updated += ((Number) result.getOrDefault("updated", 0)).intValue();
                     unchanged += ((Number) result.getOrDefault("unchanged", 0)).intValue();
@@ -260,11 +277,82 @@ public class CloudSyncService {
         // Delete dependants before their master data, after every cloud file has imported successfully.
         for (ImportedSnapshot snapshot : importedSnapshots.stream()
                 .sorted(Comparator.comparingInt((ImportedSnapshot s) -> SyncDatasetPlan.priority(s.dataset(), s.category())).reversed()).toList()) {
-            deleted += dataSync.deleteMissingForSync(snapshot.dataset(), snapshot.category(), snapshot.csv());
+            if (!snapshot.dataset().equals("users"))
+                deleted += dataSync.deleteMissingForSync(snapshot.dataset(), snapshot.category(), snapshot.csv());
         }
         return new ImportSummary(created + " added, " + updated + " replaced, " + unchanged + " unchanged, " + deleted + " deleted. "
                 + warnings.size() + " warning(s). "
                 + warnings.stream().limit(3).collect(java.util.stream.Collectors.joining("; ")), !warnings.isEmpty());
+    }
+
+    private void downloadReferencedAttachments(HttpClient client, SyncConfiguration config, String dataset, String csv)
+            throws IOException {
+        if (attachmentStorage == null || client == null) return; // Folder-only processing has no authenticated cloud session.
+        String module = switch (dataset) {
+            case "abnormality" -> "abnormality-reporting";
+            case "gemba-walk", "gemba-kaizen", "process-confirmation" -> dataset;
+            default -> "";
+        };
+        if (module.isBlank()) return;
+        Set<String> filenames = referencedAttachmentNames(csv);
+        for (String filename : filenames) {
+            String endpoint = url(config) + "/api/attachments/" + module + "/file/"
+                    + java.net.URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+            HttpResponse<byte[]> response;
+            try {
+                response = client.send(HttpRequest.newBuilder(URI.create(endpoint))
+                        .timeout(java.time.Duration.ofMinutes(2)).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while downloading cloud attachment " + filename, ex);
+            }
+            if (response.statusCode() / 100 != 2)
+                throw new IOException("Cloud attachment " + module + "/" + filename + " could not be downloaded (HTTP "
+                        + response.statusCode() + "). Check cloud account view permissions and confirm the source file exists.");
+            attachmentStorage.storeSyncedImage(module, filename, response.body());
+        }
+    }
+
+    static Set<String> referencedAttachmentNames(String csv) throws IOException {
+        if (csv.startsWith("\ufeff")) csv = csv.substring(1);
+        Set<String> names = new LinkedHashSet<>();
+        try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
+                .setAllowMissingColumnNames(false).setDuplicateHeaderMode(org.apache.commons.csv.DuplicateHeaderMode.DISALLOW)
+                .build().parse(new StringReader(csv))) {
+            for (CSVRecord record : parser) {
+                if (!record.isConsistent()) throw new IOException("Cloud CSV has an inconsistent row while reading attachment references");
+                for (String column : parser.getHeaderNames()) {
+                    String value = DataSyncService.unprotectCell(record.get(column)).trim();
+                    if (value.isBlank()) continue;
+                    if (isAttachmentColumn(column)) names.add(value);
+                    else if (isAttachmentJsonColumn(column)) {
+                        JsonNode root;
+                        try { root = new ObjectMapper().readTree(value); }
+                        catch (IOException ex) { throw new IOException("Invalid attachment metadata in cloud column " + column, ex); }
+                        if (root == null) continue;
+                        if (root.isArray()) for (JsonNode item : root) addAttachmentNames(item, names);
+                        else addAttachmentNames(root, names);
+                    }
+                }
+            }
+        }
+        return names;
+    }
+
+    private static boolean isAttachmentColumn(String name) {
+        return name.equals("pictureImage") || name.equals("observationImage") || name.endsWith("ObservationImage");
+    }
+
+    private static boolean isAttachmentJsonColumn(String name) {
+        return name.equals("observations") || name.equals("zmObservationsJson")
+                || name.equals("pmObservationsJson") || name.equals("qmObservationsJson");
+    }
+
+    private static void addAttachmentNames(JsonNode node, Set<String> names) {
+        for (String field : List.of("pictureImage", "observationImage")) {
+            String value = node.path(field).asText("").trim();
+            if (!value.isBlank()) names.add(value);
+        }
     }
 
     private record ImportedSnapshot(String dataset, String category, String csv) { }

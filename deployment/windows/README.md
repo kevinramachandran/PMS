@@ -43,6 +43,10 @@ DB_PASSWORD=your_mysql_password
 
 Keep the remaining settings from the example. Set `APP_EMAIL_CONFIG_SECRET` and
 `APP_SYNC_SECRET` for each installation and retain those values across restarts.
+The sync secret encrypts the saved cloud password. If it changes or is lost, enter
+the cloud password again in Sync Configuration and save it before running sync.
+User sync replaces all non-system local users with the cloud user CSV on every
+successful users import; keep local-only accounts on the cloud if they must remain.
 The default log and upload paths are relative to each installation folder.
 Use separate absolute paths if you override those defaults.
 

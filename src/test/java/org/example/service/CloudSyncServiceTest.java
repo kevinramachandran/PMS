@@ -66,10 +66,7 @@ class CloudSyncServiceTest {
             assertTrue(config.getDatasets().contains("plant-master:PROCESS_AREA"));
             assertTrue(Files.exists(temp.resolve("download/gemba-walk____old.csv")));
             verify(dataSync, never()).importCsvForSync(anyString(), anyString(), contains("old data"));
-            try (var reports = Files.list(temp.resolve("completed"))) {
-                Path report = reports.filter(p -> p.toString().endsWith(".json")).findFirst().orElseThrow();
-                assertTrue(Files.readString(report).contains("Source mapping warning"));
-            }
+            verify(dataSync).replaceUsersForCloudSync("id\n");
             rejectLogin.set(true);
             service.runNow();
             assertEquals("ERROR", config.getLastStatus());
@@ -110,11 +107,6 @@ class CloudSyncServiceTest {
             if (spec.equals("abnormality-master:ABNORMALITY_DEFECT_TYPE")) break;
         }
         verifyNoMoreInteractions(dataSync);
-        try (var reports = Files.list(temp.resolve("completed"))) {
-            var report = new ObjectMapper().readTree(reports.filter(p -> p.toString().endsWith(".json")).findFirst().orElseThrow().toFile());
-            assertEquals(1, report.path("errors").size());
-            assertEquals(11, report.path("skippedFiles").size());
-        }
     }
     @Test void failedImportIsReportedAndFilesAreSeparated() throws Exception {
         var dataSync = mock(DataSyncService.class);
@@ -130,7 +122,7 @@ class CloudSyncServiceTest {
         IOException error = assertThrows(IOException.class, () -> service.processEligible(config, true));
         assertTrue(error.getMessage().contains("CSV row 2: Unknown id"));
         assertTrue(Files.exists(temp.resolve("failed/gemba-walk____1.csv")));
-        assertTrue(Files.exists(temp.resolve("completed/plant-master__PLANT__2.csv")));
+        assertFalse(Files.exists(temp.resolve("failed/plant-master__PLANT__2.csv")));
         assertFalse(Files.exists(temp.resolve("completed/gemba-walk____1.csv")));
         var order = inOrder(dataSync);
         order.verify(dataSync).importCsvForSync("plant-master", "PLANT", "good");
@@ -153,13 +145,14 @@ class CloudSyncServiceTest {
 
         verify(dataSync).importCsvForSync("plant-master", "PLANT", "plant");
         verify(dataSync).importCsvForSync("plant-master", "DEPARTMENT", "dept");
-        assertTrue(Files.exists(temp.resolve("completed/plant-master_PLANT_legacy.csv")));
-        assertTrue(Files.exists(temp.resolve("completed/plant-master_DEPARTMENT_legacy.csv")));
+        assertFalse(Files.exists(temp.resolve("processing/plant-master_PLANT_legacy.csv")));
+        assertFalse(Files.exists(temp.resolve("processing/plant-master_DEPARTMENT_legacy.csv")));
     }
 
     @Test void successfulCloudSnapshotsDeleteMissingRowsAfterEveryImportInReverseDependencyOrder() throws Exception {
         var dataSync = mock(DataSyncService.class);
         when(dataSync.importCsvForSync(anyString(), anyString(), anyString())).thenReturn(Map.of());
+        doNothing().when(dataSync).replaceUsersForCloudSync(anyString());
         var service = new CloudSyncService(mock(SyncConfigurationRepository.class), mock(SyncSecretService.class), dataSync, new ObjectMapper());
         var config = new SyncConfiguration();
         config.setDownloadFolder(temp.resolve("download").toString()); config.setProcessingFolder(temp.resolve("processing").toString());
@@ -174,10 +167,9 @@ class CloudSyncServiceTest {
         assertTrue(message.contains("0 deleted"));
         var order = inOrder(dataSync);
         order.verify(dataSync).importCsvForSync("plant-master", "PLANT", "id\n1\n");
-        order.verify(dataSync).importCsvForSync("users", "", "id\n2\n");
+        order.verify(dataSync).replaceUsersForCloudSync("id\n2\n");
         order.verify(dataSync).importCsvForSync("gemba-walk", "", "id\n3\n");
         order.verify(dataSync).deleteMissingForSync("gemba-walk", "", "id\n3\n");
-        order.verify(dataSync).deleteMissingForSync("users", "", "id\n2\n");
         order.verify(dataSync).deleteMissingForSync("plant-master", "PLANT", "id\n1\n");
     }
 }

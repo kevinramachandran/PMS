@@ -215,6 +215,7 @@ public class DataSyncService {
                 entities.put(node.path("id").asLong(), item);
             }
             Set<Long> seen = new HashSet<>();
+            Set<Long> targetIds = new HashSet<>();
             List<Map.Entry<Long, ObjectNode>> pending = new ArrayList<>();
             for (CSVRecord record : parser) {
                 try {
@@ -223,6 +224,12 @@ public class DataSyncService {
                     String rawId = record.get("id").trim();
                     Long id = rawId.isEmpty() || cloud && rawId.equalsIgnoreCase("null") ? null : Long.valueOf(rawId);
                     if (id != null && (id <= 0 || !seen.add(id))) throw new IllegalArgumentException("Invalid or duplicate id: " + id);
+                    if (cloud && data.type() == AppUser.class && headers.contains("username")) {
+                        String username = unprotectCell(record.get("username")).trim();
+                        Optional<AppUser> usernameMatch = users.findCloudUserByUsername(username);
+                        if (usernameMatch.isPresent()) id = usernameMatch.get().getId();
+                        if (id != null && !targetIds.add(id)) throw new IllegalArgumentException("Multiple cloud users resolve to the same local account");
+                    }
                     if (!cloud && id != null && !existing.containsKey(id)) throw new IllegalArgumentException("Unknown or inaccessible id: " + id + ". Leave id blank for a new record.");
                     boolean categoryChanged = cloudMaster && existing.containsKey(id)
                             && !existing.get(id).path("category").asText().equals(masterCategory);
@@ -305,6 +312,117 @@ public class DataSyncService {
                     return null;
                 });
         return importCsv(key, category, csv, session, true);
+    }
+
+    /**
+     * Applies authoritative cloud deletion after every file in a sync run imported successfully.
+     * Keeping this separate from import prevents an incomplete run from deleting local data.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteMissingForSync(String key, String category, String csv) throws IOException {
+        Dataset data = dataset(key, category, syncSession(), true);
+        if (data.type() == AppUser.class) return cloudWriter.deleteMissingUsers(sourceUsernames(csv));
+        Set<Long> sourceIds = sourceIds(csv);
+        return cloudWriter.deleteMissing(data.type(), category, sourceIds);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteUsersForCloudReplacement() {
+        return cloudWriter.deleteAllUsersForCloudReplacement();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void replaceUsersForCloudSync(String csv) throws IOException {
+        validateCloudUsersCsv(csv);
+        deleteUsersForCloudReplacement();
+        importCsv("users", "", csv, syncSession(), true);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public int validateCloudUsersCsv(String csv) throws IOException {
+        Dataset data = dataset("users", "", syncSession(), true);
+        if (csv.startsWith("\ufeff")) csv = csv.substring(1);
+        try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
+                .setAllowMissingColumnNames(false).setDuplicateHeaderMode(DuplicateHeaderMode.DISALLOW)
+                .build().parse(new StringReader(csv))) {
+            List<String> headers = parser.getHeaderNames();
+            if (!headers.containsAll(List.of("id", "username", "email", "role")))
+                throw new IllegalArgumentException("Cloud users CSV must include id, username, email and role columns");
+            Set<String> usernames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Set<String> emails = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Set<String> employeeIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Set<Long> ids = new HashSet<>();
+            for (CSVRecord record : parser) {
+                if (!record.isConsistent()) throw new IllegalArgumentException("Cloud users CSV has an inconsistent row");
+                String username = unprotectCell(record.get("username")).trim();
+                String email = unprotectCell(record.get("email")).trim();
+                String role = unprotectCell(record.get("role")).trim();
+                if (username.isBlank() || email.isBlank()) throw new IllegalArgumentException("Cloud users CSV contains a blank username or email");
+                if (!usernames.add(username) || !emails.add(email)) throw new IllegalArgumentException("Cloud users CSV contains duplicate usernames or emails");
+                if (!role.equalsIgnoreCase("Admin") && !role.equalsIgnoreCase("User"))
+                    throw new IllegalArgumentException("Cloud users CSV has an unsupported role for " + username);
+                String rawId = record.get("id").trim();
+                if (rawId.isBlank() || rawId.equalsIgnoreCase("null")) throw new IllegalArgumentException("Cloud users CSV contains a user without an ID");
+                long id;
+                try { id = Long.parseLong(rawId); }
+                catch (NumberFormatException ex) { throw new IllegalArgumentException("Cloud users CSV contains an invalid user ID: " + rawId); }
+                if (id <= 0 || !ids.add(id)) throw new IllegalArgumentException("Cloud users CSV contains an invalid or duplicate user ID: " + rawId);
+                if (headers.contains("employeeId")) {
+                    String employeeId = unprotectCell(record.get("employeeId")).trim();
+                    if (!employeeId.isBlank() && !employeeIds.add(employeeId))
+                        throw new IllegalArgumentException("Cloud users CSV contains duplicate employee IDs");
+                }
+            }
+            return ids.size();
+        }
+    }
+
+    private static Set<String> sourceUsernames(String csv) throws IOException {
+        if (csv.startsWith("\ufeff")) csv = csv.substring(1);
+        Set<String> usernames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
+                .setAllowMissingColumnNames(false).setDuplicateHeaderMode(DuplicateHeaderMode.DISALLOW).build().parse(new StringReader(csv))) {
+            if (!parser.getHeaderNames().contains("username")) throw new IllegalArgumentException("Cloud users snapshot has no username column");
+            for (CSVRecord record : parser) {
+                if (!record.isConsistent()) throw new IllegalArgumentException("Cloud users snapshot contains an inconsistent row");
+                String username = unprotectCell(record.get("username")).trim();
+                if (username.isBlank() || !usernames.add(username)) throw new IllegalArgumentException("Cloud users snapshot contains a blank or duplicate username");
+            }
+        }
+        return usernames;
+    }
+
+    private static Set<Long> sourceIds(String csv) throws IOException {
+        if (csv.startsWith("\ufeff")) csv = csv.substring(1);
+        Set<Long> ids = new HashSet<>();
+        try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
+                .setAllowMissingColumnNames(false).setDuplicateHeaderMode(DuplicateHeaderMode.DISALLOW).build().parse(new StringReader(csv))) {
+            if (!parser.getHeaderNames().contains("id")) throw new IllegalArgumentException("Cloud snapshot has no id column");
+            for (CSVRecord record : parser) {
+                if (!record.isConsistent()) throw new IllegalArgumentException("Cloud snapshot contains an inconsistent row");
+                String rawId = record.get("id").trim();
+                if (rawId.isBlank()) throw new IllegalArgumentException("Cloud snapshot contains a row without an id");
+                long id = Long.parseLong(rawId);
+                if (id <= 0 || !ids.add(id)) throw new IllegalArgumentException("Cloud snapshot contains an invalid or duplicate id: " + rawId);
+            }
+        }
+        return ids;
+    }
+
+    private static HttpSession syncSession() {
+        return (HttpSession) Proxy.newProxyInstance(HttpSession.class.getClassLoader(), new Class<?>[]{HttpSession.class}, (proxy, method, args) -> {
+            if ("getAttribute".equals(method.getName())) return switch (String.valueOf(args[0])) {
+                case "username" -> "systemadmin";
+                case "role" -> RoleAccess.ADMIN;
+                case "viewPermissions", "editPermissions" -> RoleAccess.CONFIG_PAGES;
+                default -> null;
+            };
+            if ("getAttributeNames".equals(method.getName())) return java.util.Collections.emptyEnumeration();
+            if (method.getReturnType() == boolean.class) return false;
+            if (method.getReturnType() == int.class) return 0;
+            if (method.getReturnType() == long.class) return 0L;
+            return null;
+        });
     }
 
     private static String value(ObjectNode node, String key) { return node.path(key).asText(""); }

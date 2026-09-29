@@ -194,6 +194,11 @@ public class AuthService {
     }
 
     /** Validate trusted cloud profiles without losing account protections or password hashes. */
+    Optional<AppUser> findCloudUserByUsername(String username) {
+        String normalized = trimToEmpty(username);
+        return normalized.isBlank() ? Optional.empty() : appUserRepository.findByUsernameIgnoreCase(normalized);
+    }
+
     void prepareCloudUser(AppUser incoming, AppUser existing) {
         if (isReservedUsername(incoming.getUsername()) || existing != null && isReservedUsername(existing.getUsername()))
             throw new IllegalArgumentException("System accounts cannot be replaced by cloud sync");
@@ -536,6 +541,11 @@ public class AuthService {
 
     private boolean isReservedUsername(String username) {
         return isInternalStaticUser(username);
+    }
+
+    /** Built-in accounts are local controls and are never removed by a cloud snapshot. */
+    boolean isReservedForCloudSync(String username) {
+        return isReservedUsername(username);
     }
 
     private String normalizeInternalUsername(String value) {

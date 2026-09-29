@@ -35,6 +35,7 @@ class DataSyncServiceTest {
     @Autowired org.example.repository.GembaWalkRecordRepository walkRepository;
     @Autowired org.example.repository.AbnormalityMasterDataItemRepository defectRepository;
     @Autowired org.example.repository.AbnormalityReportingRecordRepository abnormalityRepository;
+    @Autowired org.example.repository.AppUserRepository userRepository;
     @Autowired MasterReferenceService references;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @MockBean GembaKaizenConfigService kaizen;
@@ -101,6 +102,23 @@ class DataSyncServiceTest {
         assertTrue(repository.existsById(localOnly.getId()));
         assertEquals(2, sync.importCsvForSync("gemba-walk", "", source.csv()).get("unchanged"));
         assertEquals(2, walkRepository.count());
+    }
+
+    @Test void cloudUserReplacementDeletesOldAccountsThenPersistsCloudUsers() throws Exception {
+        var local = new org.example.entity.AppUser();
+        local.setUsername("local-only"); local.setName("Local Only"); local.setEmail("local@example.test");
+        local.setPassword("hash"); local.setRole("USER"); local.setStatus("ACTIVE");
+        userRepository.saveAndFlush(local);
+        when(users.isReservedForCloudSync(anyString())).thenReturn(false);
+        String csv = "id,username,name,employeeId,department,area,plant,designation,reportingManager,email,role,status,pageViewPermissions,pageEditPermissions,password,plantId,departmentId,areaIds,designationId\n"
+                + "765432,cloud-user,Cloud User,,,,,,,cloud@example.test,User,ACTIVE,,,,,,,\n";
+
+        sync.replaceUsersForCloudSync(csv);
+
+        assertFalse(userRepository.findByUsernameIgnoreCase("local-only").isPresent());
+        var imported = userRepository.findByUsernameIgnoreCase("cloud-user").orElseThrow();
+        assertEquals(765432L, imported.getId());
+        assertEquals("cloud@example.test", imported.getEmail());
     }
 
     @Test void exportResolvesDepartmentAfterAreaEstablishesUniquePlant() throws Exception {
