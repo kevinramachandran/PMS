@@ -27,7 +27,13 @@ public class CloudSyncRecordWriter {
     }
 
     public List<?> rows(Class<?> type, String category) {
-        List<?> result = em.createQuery("from " + type.getSimpleName(), type).getResultList();
+        List<?> result;
+        if (hasField(type, "category")) {
+            result = em.createQuery("from " + type.getSimpleName() + " e where e.category = :category", type)
+                    .setParameter("category", category.trim().toUpperCase(Locale.ROOT).replace('-', '_')).getResultList();
+        } else {
+            result = em.createQuery("from " + type.getSimpleName(), type).getResultList();
+        }
         if (type == CarlexProcessConfirmation.class) for (Object item : result) {
             CarlexProcessConfirmation record = (CarlexProcessConfirmation) item;
             record.zmObservationsJson = CarlexProcessConfirmationService.cloudObservationsJson(mapper, record, "ZM");
@@ -35,6 +41,35 @@ public class CloudSyncRecordWriter {
             record.qmObservationsJson = CarlexProcessConfirmationService.cloudObservationsJson(mapper, record, "QM");
         }
         return result;
+    }
+
+    /** Remove local rows which are absent from a successfully imported cloud snapshot. */
+    public int deleteMissing(Class<?> type, String category, Set<Long> sourceIds) {
+        int deleted = 0;
+        for (Object item : new ArrayList<>(rows(type, category))) {
+            Long id = mapper.valueToTree(item).path("id").asLong();
+            if (sourceIds.contains(id)) continue;
+            if (item instanceof AppUser user && users.isReservedForCloudSync(user.getUsername())) continue;
+            em.remove(em.contains(item) ? item : em.merge(item));
+            deleted++;
+        }
+        em.flush();
+        em.clear();
+        return deleted;
+    }
+
+    public int deleteMissingUsers(Set<String> sourceUsernames) {
+        int deleted = 0;
+        for (Object item : new ArrayList<>(rows(AppUser.class, ""))) {
+            AppUser user = (AppUser) item;
+            if (sourceUsernames.stream().anyMatch(name -> name.equalsIgnoreCase(user.getUsername()))) continue;
+            if (users.isReservedForCloudSync(user.getUsername())) continue;
+            em.remove(em.contains(user) ? user : em.merge(user));
+            deleted++;
+        }
+        em.flush();
+        em.clear();
+        return deleted;
     }
 
     /** Reconcile scoped duplicates before writing authoritative IDs, in the file's transaction. */

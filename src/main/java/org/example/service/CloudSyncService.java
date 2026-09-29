@@ -226,6 +226,7 @@ public class CloudSyncService {
         List<String> errors = new ArrayList<>();
         Set<String> warnings = new LinkedHashSet<>(sourceWarnings);
         List<String> skippedFiles = new ArrayList<>();
+        List<ImportedSnapshot> importedSnapshots = new ArrayList<>();
         int created = 0, updated = 0, unchanged = 0;
         {
             List<Path> eligible = batch.stream()
@@ -245,6 +246,7 @@ public class CloudSyncService {
                     updated += ((Number) result.getOrDefault("updated", 0)).intValue();
                     unchanged += ((Number) result.getOrDefault("unchanged", 0)).intValue();
                     if (result.get("warnings") instanceof Collection<?> items) items.forEach(item -> warnings.add(dataset + (category.isBlank() ? "" : ":" + category) + ": " + item));
+                    importedSnapshots.add(new ImportedSnapshot(dataset, category, Files.readString(staged)));
                     Files.deleteIfExists(staged);
                 } catch (Exception ex) {
                     Files.move(staged, failed.resolve(staged.getFileName()), StandardCopyOption.REPLACE_EXISTING);
@@ -254,10 +256,18 @@ public class CloudSyncService {
         }
         if (!errors.isEmpty()) throw new IOException("Sync import failed for " + errors.size() + " file(s). "
                 + String.join("; ", errors) + ". " + skippedFiles.size() + " dependent file(s) not imported.");
-        return new ImportSummary(created + " added, " + updated + " replaced, " + unchanged + " unchanged. "
+        int deleted = 0;
+        // Delete dependants before their master data, after every cloud file has imported successfully.
+        for (ImportedSnapshot snapshot : importedSnapshots.stream()
+                .sorted(Comparator.comparingInt((ImportedSnapshot s) -> SyncDatasetPlan.priority(s.dataset(), s.category())).reversed()).toList()) {
+            deleted += dataSync.deleteMissingForSync(snapshot.dataset(), snapshot.category(), snapshot.csv());
+        }
+        return new ImportSummary(created + " added, " + updated + " replaced, " + unchanged + " unchanged, " + deleted + " deleted. "
                 + warnings.size() + " warning(s). "
                 + warnings.stream().limit(3).collect(java.util.stream.Collectors.joining("; ")), !warnings.isEmpty());
     }
+
+    private record ImportedSnapshot(String dataset, String category, String csv) { }
 
     private static void cleanupSyncCsvFiles(SyncConfiguration config) throws IOException {
         for (Path folder : cleanupFolders(config)) {

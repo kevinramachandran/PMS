@@ -156,4 +156,28 @@ class CloudSyncServiceTest {
         assertTrue(Files.exists(temp.resolve("completed/plant-master_PLANT_legacy.csv")));
         assertTrue(Files.exists(temp.resolve("completed/plant-master_DEPARTMENT_legacy.csv")));
     }
+
+    @Test void successfulCloudSnapshotsDeleteMissingRowsAfterEveryImportInReverseDependencyOrder() throws Exception {
+        var dataSync = mock(DataSyncService.class);
+        when(dataSync.importCsvForSync(anyString(), anyString(), anyString())).thenReturn(Map.of());
+        var service = new CloudSyncService(mock(SyncConfigurationRepository.class), mock(SyncSecretService.class), dataSync, new ObjectMapper());
+        var config = new SyncConfiguration();
+        config.setDownloadFolder(temp.resolve("download").toString()); config.setProcessingFolder(temp.resolve("processing").toString());
+        config.setCompletedFolder(temp.resolve("completed").toString()); config.setFailedFolder(temp.resolve("failed").toString());
+        Files.createDirectories(Path.of(config.getDownloadFolder()));
+        Files.writeString(temp.resolve("download/plant-master__PLANT__run.csv"), "id\n1\n");
+        Files.writeString(temp.resolve("download/users____run.csv"), "id\n2\n");
+        Files.writeString(temp.resolve("download/gemba-walk____run.csv"), "id\n3\n");
+
+        String message = service.processEligible(config, true);
+
+        assertTrue(message.contains("0 deleted"));
+        var order = inOrder(dataSync);
+        order.verify(dataSync).importCsvForSync("plant-master", "PLANT", "id\n1\n");
+        order.verify(dataSync).importCsvForSync("users", "", "id\n2\n");
+        order.verify(dataSync).importCsvForSync("gemba-walk", "", "id\n3\n");
+        order.verify(dataSync).deleteMissingForSync("gemba-walk", "", "id\n3\n");
+        order.verify(dataSync).deleteMissingForSync("users", "", "id\n2\n");
+        order.verify(dataSync).deleteMissingForSync("plant-master", "PLANT", "id\n1\n");
+    }
 }
