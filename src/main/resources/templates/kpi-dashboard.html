@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Dashboard - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=kpi-table-fit-20260816">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261008-dynamic-performance">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg kpi-tv-layout">
+<body class="modern-shell dashboard-bg kpi-tv-layout" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -1024,7 +1026,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <script src="/js/dashboard.js?v=restore-deck-banner-20260914"></script>
+    <script src="/js/dashboard.js?v=20261008-dynamic-performance"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
 </body>

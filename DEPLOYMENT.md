@@ -269,6 +269,9 @@ At minimum, set these values:
 - `DB_USERNAME=...`
 - `DB_PASSWORD=...`
 - `APP_EMAIL_CONFIG_SECRET=...`
+- `LICENSE_BIOS_BINDING_ENABLED=true` for on-premises installs; use `false` for cloud deployments. The default `auto` enables BIOS validation when cloud-managed on-premises editing is detected.
+
+License token generation is available in both environments. On-premises licenses must include the BIOS ID shown in Settings > License Management unless the token is intentionally generated with BIOS ID `0000` for universal use. The Windows service example enables BIOS validation by default; Cloud deployments should set both `CLOUD_MANAGED_EDITS=false` and `LICENSE_BIOS_BINDING_ENABLED=false`. Generation requires `biosId` and returns it alongside the token. Existing licenses without a BIOS ID must be regenerated for BIOS-enforced servers.
 
 Manage the service:
 
@@ -313,3 +316,6 @@ docker run --rm -p 8080:8080 \
 ```
 
 The image includes a Docker `HEALTHCHECK` so orchestrators can detect unhealthy containers.
+### Cloud-managed editing
+
+Set `CLOUD_MANAGED_EDITS=true` on premises and configure the Cloud PMS URL in Cloud Sync Configuration. User, master-data and reporting changes open the cloud page; local mutation APIs reject direct writes. Cloud deployments should set `CLOUD_MANAGED_EDITS=false`. The default `auto` enables routing when a Cloud Sync URL is present. Sync imports remain available through their existing protected sync paths.

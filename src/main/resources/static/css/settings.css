@@ -5248,3 +5248,116 @@ table select {
     background: transparent;
     box-shadow: none;
 }
+
+.license-bios-id-info {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(11, 107, 46, 0.18);
+    border-radius: 8px;
+    background: rgba(11, 107, 46, 0.04);
+    color: #334155;
+    font-size: 13px;
+}
+
+.license-bios-id-info[hidden] {
+    display: none;
+}
+
+.license-bios-id-info code {
+    overflow-wrap: anywhere;
+    color: #0b6b2e;
+    font-size: 13px;
+    user-select: all;
+}
+
+.daily-performance-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(140px, 0.8fr) minmax(0, 1.8fr) auto;
+    gap: 16px;
+    align-items: end;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 18px 16px 16px;
+    margin: 0 0 14px;
+    background: #f9fafb;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.daily-performance-field:hover {
+    border-color: #9ca3af;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.daily-performance-field legend {
+    padding: 0 7px;
+    color: var(--primary-green, #0b6b2e);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.daily-performance-field label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    color: var(--text-primary, #1f2937);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.daily-performance-field input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-weight: 400;
+}
+
+#form-daily-performance #addDailyPerformanceField {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    border: 1px dashed #15803d;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+#form-daily-performance #addDailyPerformanceField:hover {
+    border-style: solid;
+    background: #dcfce7;
+    color: #14532d;
+}
+
+#form-daily-performance .remove-performance-field {
+    min-height: 42px;
+    padding: 9px 14px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+    white-space: nowrap;
+}
+
+#form-daily-performance .remove-performance-field:hover {
+    border-color: #fca5a5;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#form-daily-performance > .dynamic-form > p {
+    margin: 0 0 4px;
+    color: var(--text-secondary, #64748b);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+    .daily-performance-field {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        padding: 16px 14px 14px;
+    }
+
+    #form-daily-performance .remove-performance-field {
+        justify-self: start;
+    }
+}

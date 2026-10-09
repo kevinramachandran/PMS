@@ -1,5 +1,7 @@
 (function () {
     const tableBody = document.getElementById('adminUsersTableBody');
+    const userNameSearchEl = document.getElementById('userNameSearch');
+    let loadedUsers = [];
     const openAddDrawerBtn = document.getElementById('openAddUserDrawer');
     const addDrawerEl = document.getElementById('addUserDrawer');
     const addDrawerBackdropEl = document.getElementById('addUserDrawerBackdrop');
@@ -418,7 +420,10 @@
             updateAreaDropdownLabel(select);
             return;
         }
-        parts.menu.innerHTML = options.map(function(option) {
+        parts.menu.innerHTML = '<div class="pms-area-selection-actions">' +
+            '<button type="button" data-area-action="all">Select All</button>' +
+            '<button type="button" data-area-action="clear">Clear All</button>' +
+            '</div>' + options.map(function(option) {
             const value = String(option.value || '').trim();
             const id = select.id + 'Check' + value.replace(/[^a-z0-9]+/gi, '_');
             return '<label class="pms-checkbox-option" for="' + escapeAttribute(id) + '">' +
@@ -473,6 +478,18 @@
         }
         parts.toggle.addEventListener('click', function() {
             toggleAreaDropdown(select);
+        });
+        parts.menu.addEventListener('click', function(event) {
+            const button = event.target.closest('button[data-area-action]');
+            if (!button) return;
+            const action = button.dataset.areaAction;
+            parts.menu.querySelectorAll('input[type="checkbox"]').forEach(function(input) {
+                if (!input.disabled) input.checked = action === 'all';
+            });
+            syncAreaSelectFromCheckboxes(select, parts.menu);
+            // Hierarchy refresh rebuilds the menu; keep keyboard focus on the action.
+            const refreshedButton = parts.menu.querySelector('[data-area-action="' + action + '"]');
+            if (refreshedButton) refreshedButton.focus();
         });
         parts.menu.addEventListener('change', function(event) {
             if (event.target && event.target.matches('input[type="checkbox"]')) {
@@ -750,7 +767,87 @@
         sectionElement.style.display = isAdmin ? 'none' : 'block';
     }
 
+    function applyUserSearch() {
+        const query = String(userNameSearchEl ? userNameSearchEl.value : '').trim().toLowerCase();
+        const matches = loadedUsers.filter(function (user) {
+            return [user.name, user.username].some(function (value) {
+                return String(value || '').toLowerCase().includes(query);
+            });
+        });
+        renderUsers(matches);
+        if (tableBody && query && matches.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#64748b;padding:14px;">No users match your search.</td></tr>';
+        }
+    }
+
+    if (userNameSearchEl) {
+        userNameSearchEl.addEventListener('input', applyUserSearch);
+    }
+
+    const areaTooltip = document.createElement('div');
+    areaTooltip.id = 'userAreaTooltip';
+    areaTooltip.className = 'um-area-tooltip';
+    areaTooltip.setAttribute('role', 'tooltip');
+    areaTooltip.tabIndex = 0;
+    areaTooltip.hidden = true;
+    document.body.appendChild(areaTooltip);
+    let areaTooltipTrigger = null;
+    let areaTooltipTimer;
+
+    function hideAreaTooltip() {
+        clearTimeout(areaTooltipTimer);
+        areaTooltip.hidden = true;
+        if (areaTooltipTrigger) areaTooltipTrigger.removeAttribute('aria-describedby');
+        areaTooltipTrigger = null;
+    }
+
+    function delayHideAreaTooltip() {
+        clearTimeout(areaTooltipTimer);
+        areaTooltipTimer = setTimeout(hideAreaTooltip, 180);
+    }
+
+    function showAreaTooltip(button) {
+        hideAreaTooltip();
+        areaTooltipTrigger = button;
+        const areas = splitAreaValues(button.dataset.areas);
+        areaTooltip.innerHTML = '<strong>Assigned areas (' + areas.length + ')</strong><ul>'
+            + areas.map(area => '<li>' + escapeHtml(area) + '</li>').join('') + '</ul>';
+        button.setAttribute('aria-describedby', areaTooltip.id);
+        areaTooltip.hidden = false;
+        const rect = button.getBoundingClientRect();
+        const width = areaTooltip.offsetWidth;
+        const height = areaTooltip.offsetHeight;
+        areaTooltip.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)) + 'px';
+        const top = rect.bottom + height + 8 <= window.innerHeight ? rect.bottom + 6 : rect.top - height - 6;
+        areaTooltip.style.top = Math.max(8, Math.min(top, window.innerHeight - height - 8)) + 'px';
+    }
+
+    areaTooltip.addEventListener('mouseenter', () => clearTimeout(areaTooltipTimer));
+    areaTooltip.addEventListener('mouseleave', delayHideAreaTooltip);
+    areaTooltip.addEventListener('focus', () => clearTimeout(areaTooltipTimer));
+    areaTooltip.addEventListener('blur', delayHideAreaTooltip);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') hideAreaTooltip();
+    });
+    document.addEventListener('pointerdown', event => {
+        if (!areaTooltip.contains(event.target) && !event.target.closest('.um-area-trigger')) hideAreaTooltip();
+    });
+    window.addEventListener('resize', hideAreaTooltip);
+    document.addEventListener('scroll', event => {
+        if (!areaTooltip.contains(event.target)) hideAreaTooltip();
+    }, true);
+
+    function renderUserArea(user) {
+        const areas = splitAreaValues(user.area);
+        if (!areas.length) return '<span class="um-muted">-</span>';
+        return '<button type="button" class="um-area-trigger" aria-label="Show ' + areas.length
+            + ' assigned areas" data-areas="' + escapeAttribute(areas.join(', ')) + '">'
+            + '<i class="fas fa-map-marker-alt" aria-hidden="true"></i>'
+            + '<span aria-hidden="true">' + areas.length + '</span></button>';
+    }
+
     function renderUsers(users) {
+        hideAreaTooltip();
         if (!tableBody) return;
 
         if (!Array.isArray(users) || users.length === 0) {
@@ -764,7 +861,7 @@
                 '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i><strong>' + escapeHtml(userDisplayName(u)) + '</strong><div class="um-muted">@' + escapeHtml(u.username) + '</div></td>' +
                 '<td>' + escapeHtml(u.employeeId || '-') + '</td>' +
                 '<td>' + escapeHtml(u.department || '-') + '</td>' +
-                '<td>' + escapeHtml(u.area || '-') + '</td>' +
+                '<td>' + renderUserArea(u) + '</td>' +
                 '<td>' + escapeHtml(u.plant || '-') + '</td>' +
                 '<td>' + escapeHtml(designationLabel(u.designation)) + '</td>' +
                 '<td>' + escapeHtml(u.reportingManager || '-') + '</td>' +
@@ -781,6 +878,13 @@
                 '</tr>';
         }).join('');
 
+        tableBody.querySelectorAll('.um-area-trigger').forEach(function(button) {
+            button.addEventListener('mouseenter', () => showAreaTooltip(button));
+            button.addEventListener('mouseleave', delayHideAreaTooltip);
+            button.addEventListener('focus', () => showAreaTooltip(button));
+            button.addEventListener('blur', delayHideAreaTooltip);
+            button.addEventListener('click', () => showAreaTooltip(button));
+        });
         bindTableActions();
     }
 
@@ -796,6 +900,7 @@
     function loadUsers() {
         if (!tableBody) return;
 
+        if (userNameSearchEl) userNameSearchEl.disabled = true;
         fetch('/api/users')
             .then(parseJsonResponse)
             .then(function (data) {
@@ -803,7 +908,9 @@
                     tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#b91c1c;padding:14px;">' + escapeHtml(data.message || 'Failed to load users.') + '</td></tr>';
                     return;
                 }
-                renderUsers(data.users);
+                loadedUsers = Array.isArray(data.users) ? data.users : [];
+                if (userNameSearchEl) userNameSearchEl.disabled = false;
+                applyUserSearch();
             })
             .catch(function () {
                 tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#b91c1c;padding:14px;">Error loading users.</td></tr>';
@@ -1289,6 +1396,84 @@
     });
 
     togglePermissionSection(roleEl, newPermissionsSectionEl);
+
+    function initializeUserColumnResize() {
+        const table = document.querySelector('.pms-users-table');
+        if (!table || !table.tHead) return;
+        const headers = Array.from(table.tHead.rows[0].cells);
+        const storageKey = 'pms-user-column-widths-v1';
+        const minimum = 75;
+        const maximum = 700;
+        const defaults = headers.map(header => Math.max(minimum, Math.round(header.getBoundingClientRect().width)));
+        let widths = defaults.slice();
+        try {
+            const saved = JSON.parse(localStorage.getItem(storageKey));
+            if (Array.isArray(saved) && saved.length === headers.length && saved.every(width => Number.isFinite(width) && width >= minimum && width <= maximum)) widths = saved;
+        } catch (_) { /* Use defaults when storage is unavailable. */ }
+        const group = document.createElement('colgroup');
+        const columns = headers.map(() => group.appendChild(document.createElement('col')));
+        table.insertBefore(group, table.firstChild);
+        table.classList.add('um-resizable-table');
+        const applyWidths = () => {
+            columns.forEach((column, index) => { column.style.width = widths[index] + 'px'; });
+            table.style.width = widths.reduce((sum, width) => sum + width, 0) + 'px';
+        };
+        const saveWidths = () => {
+            try { localStorage.setItem(storageKey, JSON.stringify(widths)); } catch (_) { /* Resizing still works. */ }
+        };
+        headers.forEach((header, index) => {
+            const handle = document.createElement('span');
+            handle.className = 'um-column-resize-handle';
+            handle.tabIndex = 0;
+            handle.setAttribute('role', 'separator');
+            handle.setAttribute('aria-orientation', 'vertical');
+            handle.setAttribute('aria-label', 'Resize ' + header.textContent.trim() + ' column');
+            handle.setAttribute('aria-valuemin', minimum);
+            handle.setAttribute('aria-valuemax', maximum);
+            handle.setAttribute('aria-valuenow', widths[index]);
+            handle.title = 'Drag to resize. Double-click to reset. Arrow keys adjust width.';
+            header.appendChild(handle);
+            let drag = null;
+            const update = width => {
+                widths[index] = Math.round(Math.max(minimum, Math.min(maximum, width)));
+                handle.setAttribute('aria-valuenow', widths[index]);
+                applyWidths();
+            };
+            handle.addEventListener('click', event => event.stopPropagation());
+            handle.addEventListener('dblclick', event => {
+                event.stopPropagation(); update(defaults[index]); saveWidths();
+            });
+            handle.addEventListener('pointerdown', event => {
+                if (event.button !== 0) return;
+                event.preventDefault(); event.stopPropagation();
+                drag = { x: event.clientX, width: widths[index] };
+                handle.setPointerCapture(event.pointerId);
+                document.body.classList.add('um-resizing-column');
+            });
+            handle.addEventListener('pointermove', event => {
+                if (drag) update(drag.width + event.clientX - drag.x);
+            });
+            const finish = () => {
+                if (!drag) return;
+                drag = null;
+                document.body.classList.remove('um-resizing-column');
+                saveWidths();
+            };
+            handle.addEventListener('pointerup', finish);
+            handle.addEventListener('pointercancel', finish);
+            handle.addEventListener('lostpointercapture', finish);
+            handle.addEventListener('keydown', event => {
+                event.stopPropagation();
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                event.preventDefault();
+                update(widths[index] + (event.key === 'ArrowRight' ? 10 : -10));
+                saveWidths();
+            });
+        });
+        applyWidths();
+    }
+
+    initializeUserColumnResize();
 
     loadMasterOptions();
     loadUsers();

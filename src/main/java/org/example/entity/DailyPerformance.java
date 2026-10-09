@@ -16,6 +16,13 @@ public class DailyPerformance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Convert(converter = DailyPerformanceFieldsConverter.class)
+    @Column(name = "configured_fields", columnDefinition = "LONGTEXT")
+    private java.util.List<DailyPerformanceField> fields;
+
+    public java.util.List<DailyPerformanceField> getFields() { return fields; }
+    public void setFields(java.util.List<DailyPerformanceField> fields) { this.fields = fields; }
+
     @Column(name = "month_target", nullable = false)
     @JsonProperty("month_target")
     private Double monthTarget;

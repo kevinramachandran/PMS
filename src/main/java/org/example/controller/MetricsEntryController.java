@@ -101,7 +101,21 @@ public class MetricsEntryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveMetricsEntry(@RequestBody MetricsEntryBundlePayload payload) {
+    public ResponseEntity<?> saveMetricsEntry(@RequestBody MetricsEntryBundlePayload payload, jakarta.servlet.http.HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        java.util.Set<String> edits = session.getAttribute("editPermissions") instanceof java.util.Set<?> values
+                ? values.stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet()) : java.util.Set.of();
+        if (!org.example.util.RoleAccess.isAdmin(role) && !edits.contains(org.example.util.RoleAccess.PAGE_PRODUCTION_METRICS_DATA)) {
+            for (MetricsEntryPayload entry : java.util.Arrays.asList(payload.getActual(), payload.getTarget())) {
+                if (entry == null) continue;
+                if (((entry.getPeople() != null && !entry.getPeople().isEmpty()) && !edits.contains("PRODUCTION_METRICS_DATA_PEOPLE"))
+                        || ((entry.getQuality() != null && !entry.getQuality().isEmpty()) && !edits.contains("PRODUCTION_METRICS_DATA_QUALITY"))
+                        || ((entry.getService() != null && !entry.getService().isEmpty()) && !edits.contains("PRODUCTION_METRICS_DATA_SERVICE"))
+                        || ((entry.getCost() != null && !entry.getCost().isEmpty()) && !edits.contains("PRODUCTION_METRICS_DATA_COST"))) {
+                    return ResponseEntity.status(403).build();
+                }
+            }
+        }
         try {
             return ResponseEntity.ok(productionMetricsService.saveMetricsEntryBundle(payload));
         } catch (IllegalArgumentException e) {

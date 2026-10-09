@@ -11,8 +11,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page" th:attr="data-can-edit-issue-board=${session.canEditIssueBoardConfiguration}">
+<body class="modern-shell dashboard-bg issue-board-page" th:attr="data-can-edit-current-page=${canEditCurrentPage},data-can-edit-issue-board=${session.canEditIssueBoardConfiguration}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -204,7 +206,7 @@
         </div>
         <div class="issue-drawer-actions">
             <button type="button" class="btn btn-secondary" id="issueBoardDrawerCancel"><i class="fas fa-times"></i> Cancel</button>
-            <button type="submit" class="btn btn-primary" id="issueBoardDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
+            <button data-requires-edit="true" type="submit" class="btn btn-primary" id="issueBoardDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
         </div>
         <datalist id="issueBoardResponsibleList"></datalist>
     </form>

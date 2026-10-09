@@ -349,6 +349,7 @@ $(function() {
     }
 
     function openDrawer(record) {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(document.body)) return;
         const editing = !!(record && record.id);
         $('#gembaWalkDrawerTitle').text(editing ? 'Edit Gemba Walk' : 'Add Gemba Walk');
         $('#gembaWalkSubmitBtn span').text(editing ? 'Update Walk' : 'Save Walk');
@@ -426,6 +427,7 @@ $(function() {
     }
 
     function saveRecord() {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(document.body)) return;
         if (saveInFlight) return;
         saveInFlight = true;
         const id = $('#gembaWalkRecordId').val();

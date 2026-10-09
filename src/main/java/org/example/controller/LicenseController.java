@@ -37,6 +37,8 @@ public class LicenseController {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "success");
         response.put("license", current.map(licenseService::toResponse).orElse(null));
+        response.put("biosBindingEnabled", licenseService.isBiosBindingEnabled());
+        response.put("hostBiosId", licenseService.isBiosBindingEnabled() ? licenseService.getHostBiosId() : "");
         return response;
     }
 
@@ -45,7 +47,9 @@ public class LicenseController {
      * Open API — no session required. Generates an AES-encrypted license token
      * from the supplied payload and returns it WITHOUT saving to DB.
      *
-     * Payload: { vendorName, licensedBy, licensedTo, softwareVersion, dateFrom, dateTo, userCount, licenseText }
+    * Payload: { vendorName, licensedBy, licensedTo, softwareVersion, dateFrom, dateTo, userCount, licenseText, biosId }
+    * Generation works in cloud and on-prem deployments. On-prem validation binds to biosId;
+    * biosId "0000" creates a universal license that skips host validation.
      */
     @PostMapping("/generate")
     public Map<String, Object> generateToken(@RequestBody LicenseGeneratePayload payload) {
@@ -59,6 +63,7 @@ public class LicenseController {
         response.put("message", "License token generated. Paste it in License Management UI to activate.");
         response.put("licenseToken", result.token());
         response.put("tokenLength", result.token().length());
+        response.put("biosId", licenseService.decodeToken(result.token()).fields().get("biosId"));
         return response;
     }
 

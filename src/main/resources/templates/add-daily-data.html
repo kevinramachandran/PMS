@@ -554,8 +554,10 @@
         }
     </style>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body>
+<body th:attr="data-can-edit-current-page=${canEditCurrentPage}">
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -647,10 +649,10 @@
                         </div>
 
                         <div class="btn-group">
-                            <button type="submit" class="btn btn-submit">
+                            <button data-requires-edit="true" type="submit" class="btn btn-submit">
                                 <i class="fas fa-save"></i> Save Daily Data
                             </button>
-                            <button type="reset" class="btn btn-reset">
+                            <button data-requires-edit="true" type="reset" class="btn btn-reset">
                                 <i class="fas fa-redo"></i> Reset Form
                             </button>
                         </div>

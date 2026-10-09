@@ -5,6 +5,7 @@ import org.example.model.LicenseGeneratePayload;
 import org.example.repository.AppLicenseRepository;
 import org.example.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,15 @@ public class LicenseService {
     @Autowired
     private AppUserRepository appUserRepository;
 
+    @Autowired
+    private HostBiosIdProvider hostBiosIdProvider;
+
+    @Autowired
+    private CloudRoutingService cloudRoutingService;
+
+    @Value("${app.license.bios-binding-enabled:auto}")
+    private String biosBindingMode = "auto";
+
     public Optional<AppLicense> getCurrentLicense() {
         return appLicenseRepository.findTopByOrderByIdDesc();
     }
@@ -57,6 +67,12 @@ public class LicenseService {
             return LicenseGateResult.deny("License has expired. Contact internal administrator.", "LICENSE_EXPIRED");
         }
 
+        Optional<HostBindingError> hostBindingError = validateHostBinding(license);
+        if (hostBindingError.isPresent()) {
+            HostBindingError error = hostBindingError.get();
+            return LicenseGateResult.deny(error.message(), error.code());
+        }
+
         long licensedUsers = license.getUserCount() == null ? 0 : license.getUserCount();
         long managedUsers = appUserRepository.count();
         if (licensedUsers > 0 && managedUsers > licensedUsers) {
@@ -79,6 +95,11 @@ public class LicenseService {
         }
         if (license.getDateTo() != null && today.isAfter(license.getDateTo())) {
             return Optional.of("License has expired. Cannot add users.");
+        }
+
+        Optional<HostBindingError> hostBindingError = validateHostBinding(license);
+        if (hostBindingError.isPresent()) {
+            return Optional.of(hostBindingError.get().message());
         }
 
         long licensedUsers = license.getUserCount() == null ? 0 : license.getUserCount();
@@ -122,7 +143,7 @@ public class LicenseService {
             String normalizedToken = normalizeToken(token);
             String inner = decrypt(normalizedToken);
             String[] parts = inner.split(FIELD_SEP, -1);
-            if (parts.length != 5 && parts.length != 8) {
+            if (parts.length != 5 && parts.length != 8 && parts.length != 9) {
                 return DecodeTokenResult.error("Invalid token format");
             }
 
@@ -134,6 +155,7 @@ public class LicenseService {
             String licensedBy = parts.length >= 8 ? parts[5] : vendorName;
             String licensedTo = parts.length >= 8 ? parts[6] : "";
             String softwareVersion = parts.length >= 8 ? parts[7] : "2.0.0";
+            String biosId = parts.length >= 9 ? parts[8] : "";
 
             Map<String, Object> fields = new LinkedHashMap<>();
             fields.put("vendorName",  vendorName);
@@ -144,6 +166,7 @@ public class LicenseService {
             fields.put("licensedBy", licensedBy);
             fields.put("licensedTo", licensedTo);
             fields.put("softwareVersion", softwareVersion);
+            fields.put("biosId", biosId);
             return DecodeTokenResult.success(fields);
         } catch (Exception e) {
             return DecodeTokenResult.error("Invalid or tampered token");
@@ -176,6 +199,7 @@ public class LicenseService {
         license.setLicensedBy((String) f.get("licensedBy"));
         license.setLicensedTo((String) f.get("licensedTo"));
         license.setSoftwareVersion((String) f.get("softwareVersion"));
+        license.setBiosId((String) f.get("biosId"));
         license.setLicenseToken(normalizedToken);
         license.setCreatedBy(actor == null ? "" : actor.trim());
 
@@ -204,11 +228,17 @@ public class LicenseService {
         res.put("licensedBy", firstPresent(license.getLicensedBy(), license.getVendorName()));
         res.put("licensedTo", firstPresent(license.getLicensedTo(), ""));
         res.put("softwareVersion", firstPresent(license.getSoftwareVersion(), "2.0.0"));
+        res.put("biosId", firstPresent(license.getBiosId(), ""));
         res.put("dateFrom", license.getDateFrom());
         res.put("dateTo", license.getDateTo());
         res.put("userCount", license.getUserCount());
         res.put("licenseText", license.getLicenseText());
         res.put("licenseToken", license.getLicenseToken());
+        Optional<HostBindingError> bindingError = validateHostBinding(license);
+        if ("ACTIVE".equals(status) && bindingError.isPresent()) {
+            status = bindingError.get().code();
+            res.put("validationMessage", bindingError.get().message());
+        }
         res.put("status", status);
         res.put("createdBy", license.getCreatedBy());
         res.put("createdAt", license.getCreatedAt());
@@ -232,7 +262,8 @@ public class LicenseService {
                 + FIELD_SEP + payload.getLicenseText().trim()
                 + FIELD_SEP + licensedBy
                 + FIELD_SEP + licensedTo
-                + FIELD_SEP + softwareVersion;
+                + FIELD_SEP + softwareVersion
+                + FIELD_SEP + clean(payload.getBiosId()).toUpperCase(java.util.Locale.ROOT);
     }
 
     private String encrypt(String plaintext) throws Exception {
@@ -281,7 +312,46 @@ public class LicenseService {
         if (payload.getLicenseText() == null || payload.getLicenseText().trim().isEmpty()) {
             return Optional.of("License text is required");
         }
+        if (clean(payload.getBiosId()).isEmpty()) {
+            return Optional.of("BIOS ID is required. Use the target server BIOS ID or 0000 for a universal license.");
+        }
+        if (payload.getBiosId().contains(FIELD_SEP)) return Optional.of("BIOS ID contains an invalid character");
         return Optional.empty();
+    }
+
+    public boolean isBiosBindingEnabled() {
+        return "auto".equalsIgnoreCase(biosBindingMode) ? cloudRoutingService.isCloudManaged()
+                : !"false".equalsIgnoreCase(biosBindingMode);
+    }
+
+    public String getHostBiosId() {
+        return hostBiosIdProvider.getBiosId().orElse("");
+    }
+
+    private Optional<HostBindingError> validateHostBinding(AppLicense license) {
+        if (!isBiosBindingEnabled()) {
+            return Optional.empty();
+        }
+        if ("0000".equals(normalizeBiosId(license.getBiosId()))) {
+            return Optional.empty();
+        }
+        if (license.getBiosId() == null || license.getBiosId().isBlank()) {
+            return Optional.of(new HostBindingError("This on-prem server requires a BIOS-bound license or the universal ID 0000.", "LICENSE_BIOS_ID_REQUIRED"));
+        }
+        Optional<String> hostBiosId = hostBiosIdProvider.getBiosId();
+        if (hostBiosId.isEmpty()) {
+            return Optional.of(new HostBindingError(
+                    "Unable to read this server's BIOS ID. Check the on-prem service account permissions.",
+                    "LICENSE_HOST_ID_UNAVAILABLE"));
+        }
+        if (!normalizeBiosId(license.getBiosId()).equals(normalizeBiosId(hostBiosId.get()))) {
+            return Optional.of(new HostBindingError("This license is bound to a different server BIOS ID.", "LICENSE_HOST_MISMATCH"));
+        }
+        return Optional.empty();
+    }
+
+    private String normalizeBiosId(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toUpperCase(java.util.Locale.ROOT);
     }
 
     // ==================== RESULT RECORDS ====================
@@ -322,4 +392,6 @@ public class LicenseService {
             return new LicenseGateResult(false, message, code);
         }
     }
+
+    private record HostBindingError(String message, String code) { }
 }

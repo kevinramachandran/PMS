@@ -9,8 +9,10 @@
     <link rel="stylesheet" href="/css/meeting-agenda.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">

@@ -214,6 +214,7 @@ $(function() {
     }
 
     function openDrawer(record) {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(document.body)) return;
         const isEdit = !!(record && record.id);
         $('#gembaKaizenDrawerTitle').text(isEdit ? 'Edit Gemba Kaizen' : 'Add Gemba Kaizen');
         $('#gembaKaizenSubmitBtn span').text(isEdit ? 'Update Kaizen' : 'Save Kaizen');
@@ -281,6 +282,7 @@ $(function() {
     }
 
     function saveRecord() {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(document.body)) return;
         if (saveInFlight) {
             return;
         }

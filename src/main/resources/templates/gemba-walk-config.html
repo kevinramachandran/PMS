@@ -13,8 +13,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
     <link rel="stylesheet" href="/css/data-sync.css?v=2">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page gemba-walk-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
+<body class="modern-shell dashboard-bg issue-board-page gemba-walk-config-page" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -46,7 +48,7 @@
             <section class="issue-board-card gw-config-table-card">
                 <div class="issue-board-title-row">
                     <h2>Gemba Walk</h2>
-                    <button type="button" id="gembaWalkAddRecordBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Walk</span></button>
+                    <button data-requires-edit="true" type="button" id="gembaWalkAddRecordBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Walk</span></button>
                 </div>
 
                 <div class="gw-table-shell">
@@ -123,7 +125,7 @@
                 <div id="gembaWalkObservations" class="gw-observations"></div>
 
                 <div class="gw-add-row">
-                    <button type="button" id="addObservationBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add</span></button>
+                    <button data-requires-edit="true" type="button" id="addObservationBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add</span></button>
                 </div>
                 <div class="gw-form-group gw-wide">
                     <label for="finalComments">Remarks / Final Comments</label>
@@ -133,7 +135,7 @@
                 </div>
                 <div class="gw-drawer-actions">
                     <button type="button" id="gembaWalkConfigCancelBtn" class="issue-cancel-button"><i class="fas fa-times"></i><span>Cancel</span></button>
-                    <button type="submit" id="gembaWalkSubmitBtn" class="issue-add-button"><i class="fas fa-check"></i><span>Save Walk</span></button>
+                    <button data-requires-edit="true" type="submit" id="gembaWalkSubmitBtn" class="issue-add-button"><i class="fas fa-check"></i><span>Save Walk</span></button>
                 </div>
             </form>
         </div>
@@ -147,10 +149,11 @@
     </main>
 </div>
 
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-walk-config.js?v=20260921-mutation-fixes"></script>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-walk-config.js?v=20261008-permissions"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
+<script src="/js/master-cloud-routing.js?v=20261008"></script>
 </body>
 </html>
 

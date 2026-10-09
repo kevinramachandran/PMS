@@ -1596,6 +1596,7 @@ function buildCustomKpiTableConfig() {
         const decimals = Number.isFinite(Number(definition.decimals)) ? Number(definition.decimals) : 2;
         return {
             name: definition.label || 'Custom Metric',
+            section: normalizeDashboardSection(definition.section),
             unit: definition.unit || '-',
             actualField: buildCustomMetricFieldRef(definition.id, 'ftdActual'),
             targetField: buildCustomMetricFieldRef(definition.id, 'ftdTarget'),
@@ -1610,9 +1611,18 @@ function buildCustomKpiTableConfig() {
 }
 
 function getCombinedKpiTableConfig() {
+    const sectionOrder = ['PEOPLE', 'COST', 'SERVICE', 'QUALITY'];
     return fixedKpiTableConfig.filter(function(kpi) {
         return isKpiTableVisible(getDefaultKpiTableRowKey(kpi));
-    }).concat(buildCustomKpiTableConfig());
+    }).map(function(kpi) {
+        const definition = systemKpiChartDefinitions.find(function(item) {
+            return item.actualField === kpi.actualField;
+        });
+        return Object.assign({}, kpi, { section: definition ? definition.section : 'OTHER' });
+    }).concat(buildCustomKpiTableConfig()).sort(function(a, b) {
+        const rank = section => sectionOrder.includes(section) ? sectionOrder.indexOf(section) : sectionOrder.length;
+        return rank(a.section) - rank(b.section);
+    });
 }
 
 function getCustomChartPalette(section) {
@@ -2244,10 +2254,16 @@ function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear, selec
     updateDailyPerformanceAsOf(todayTargetRecord ? todayTargetRecord.targetDate || todayTargetRecord.date : null, true);
     updateYesterdayDataDate(yesterdayActualRecord ? yesterdayActualRecord.date : null);
     updateDateLabel('todayTargetDate', todayTargetRecord ? (todayTargetRecord.targetDate || todayTargetRecord.date) : null);
-    updateDateLabel('ftdYesterdayDate', yesterdayTargetRecord ? yesterdayTargetRecord.date : null);
-    updateDateLabel('ftdTodayDate', todayTargetRecord ? todayTargetRecord.date : null);
+    updateDateLabel('ftdYesterdayDate', yesterdayTargetRecord ? yesterdayTargetRecord.targetDate : null);
+    updateDateLabel('ftdTodayDate', todayTargetRecord ? todayTargetRecord.targetDate : null);
 
+    let previousSection = null;
     const rows = getCombinedKpiTableConfig().map(function(kpi, index) {
+        const section = kpi.section || 'OTHER';
+        const sectionHeader = section !== previousSection
+            ? '<tr class="kpi-section-row"><th colspan="10" scope="colgroup">' + escapeHtmlText(section.charAt(0) + section.slice(1).toLowerCase()) + '</th></tr>'
+            : '';
+        previousSection = section;
         const todayTarget = readNumber(todayTargetRecord, kpi.targetField);
         const yesterdayTarget = readNumber(yesterdayTargetRecord, kpi.targetField);
         const yesterdayActual = readNumber(yesterdayActualRecord, kpi.actualField);
@@ -2269,7 +2285,7 @@ function renderDailyPerformanceTable(metrics, selectedMonth, selectedYear, selec
         const yesterdayActualClass = getPerformanceClass(yesterdayActual, todayTarget, kpi.higherIsBetter);
         const actualMtdClass = getPerformanceClass(actualMtdValue, targetMtdValue, kpi.higherIsBetter);
 
-        return '' +
+        return sectionHeader +
             '<tr>' +
                 '<td>' + (index + 1) + '</td>' +
                 '<td class="text-left">' + escapeHtmlText(kpi.name) + '</td>' +
@@ -2352,6 +2368,25 @@ function renderDailyPerformanceSummary(performanceData) {
         updateDailyPerformanceAsOf(performanceData.date, true);
     }
 
+    const tbody = summaryTable.querySelector('tbody');
+    if (performanceData && Array.isArray(performanceData.fields)) {
+        const fields = performanceData.fields;
+        const rows = [];
+        for (let index = 0; index < fields.length; index += 2) {
+            const cells = fields.slice(index, index + 2).map(function(field) {
+                const label = field.label + (field.unit ? ' (' + field.unit + ')' : '');
+                return '<th scope="row">' + escapeHtmlText(label) + '</th><td>' + escapeHtmlText(field.value ?? '') + '</td>';
+            });
+            if (cells.length === 1) cells.push('<td colspan="2"></td>');
+            rows.push('<tr>' + cells.join('') + '</tr>');
+        }
+        tbody.innerHTML = rows.join('') || '<tr><td colspan="4">No fields configured.</td></tr>';
+        refreshKpiDashboardLayout();
+        return;
+    }
+    // Restore the original layout when selecting a record saved before configurable fields.
+    tbody.innerHTML = '<tr><th>Month Target (HL)</th><td>-</td><th>Actual MTD (HL)</th><td>-</td></tr>'
+        + '<tr><th>Daily Target (HL)</th><td>-</td><th>Yesterday\'s (HL)</th><td>-</td></tr>';
     const valueCells = summaryTable.querySelectorAll('td');
     if (!valueCells || valueCells.length < 4) return;
 

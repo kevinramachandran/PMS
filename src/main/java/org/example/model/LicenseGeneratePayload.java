@@ -10,6 +10,7 @@ public class LicenseGeneratePayload {
     private String licensedBy;
     private String licensedTo;
     private String softwareVersion;
+    private String biosId;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateFrom;
@@ -50,6 +51,14 @@ public class LicenseGeneratePayload {
 
     public void setSoftwareVersion(String softwareVersion) {
         this.softwareVersion = softwareVersion;
+    }
+
+    public String getBiosId() {
+        return biosId;
+    }
+
+    public void setBiosId(String biosId) {
+        this.biosId = biosId;
     }
 
     public LocalDate getDateFrom() {

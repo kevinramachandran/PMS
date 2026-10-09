@@ -25,6 +25,9 @@ public class AppLicense {
     @Column(length = 80)
     private String softwareVersion;
 
+    @Column(length = 200)
+    private String biosId;
+
     @Column(nullable = false)
     private LocalDate dateFrom;
 
@@ -101,6 +104,14 @@ public class AppLicense {
 
     public void setSoftwareVersion(String softwareVersion) {
         this.softwareVersion = softwareVersion;
+    }
+
+    public String getBiosId() {
+        return biosId;
+    }
+
+    public void setBiosId(String biosId) {
+        this.biosId = biosId;
     }
 
     public LocalDate getDateFrom() {

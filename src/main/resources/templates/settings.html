@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=kpi-visibility-20260816">
-    <link rel="stylesheet" href="/css/settings.css?v=20260921-mutation-fixes">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261008-dynamic-performance">
+    <link rel="stylesheet" href="/css/settings.css?v=20261008-daily-performance-form">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
     <link rel="stylesheet" href="/css/data-sync.css?v=2">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg" th:attr="data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
+<body class="modern-shell dashboard-bg" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-manage-metrics=${session.canManageMetricDefinitions},data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -40,7 +42,7 @@
                     <button type="button" class="btn btn-secondary" id="downloadMetricsCsvTemplateBtn">
                         <i class="fas fa-file-download"></i> Download CSV Template
                     </button>
-                    <button type="button" class="btn btn-secondary" id="uploadMetricsCsvBtn" th:disabled="${!canEditCurrentPage}">
+                    <button data-requires-edit="true" type="button" class="btn btn-secondary" id="uploadMetricsCsvBtn" th:attr="data-edit-authorized=${session.canEditAllMetrics}" th:disabled="${!canEditCurrentPage}">
                         <i class="fas fa-file-upload"></i> Upload CSV (All 4 Types)
                     </button>
                     <input type="file" id="metricsCsvFileInput" accept=".csv,text/csv" style="display:none;">
@@ -116,10 +118,10 @@
                                         <textarea id="priority3" name="priority3" placeholder="Enter top 3 priority..." rows="3"></textarea>
                                     </div>
                                     <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button data-requires-edit="true" type="submit" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
-                                        <button type="reset" class="btn btn-secondary">
+                                        <button data-requires-edit="true" type="reset" class="btn btn-secondary">
                                             <i class="fas fa-redo"></i> Reset
                                         </button>
                                     </div>
@@ -143,10 +145,10 @@
                                         <textarea id="weekly3" name="weekly3" placeholder="Enter weekly priority 3..." rows="3"></textarea>
                                     </div>
                                     <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button data-requires-edit="true" type="submit" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
-                                        <button type="reset" class="btn btn-secondary">
+                                        <button data-requires-edit="true" type="reset" class="btn btn-secondary">
                                             <i class="fas fa-redo"></i> Reset
                                         </button>
                                     </div>
@@ -156,24 +158,11 @@
 
                             <div id="form-daily-performance" class="form-section">
                                 <form id="dailyPerformanceForm" class="dynamic-form">
-                                    <div class="form-group">
-                                        <label for="monthTargetInput">Month Target (HL)</label>
-                                        <input type="number" id="monthTargetInput" name="monthTarget" min="0" step="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="actualMtdInput">Actual MTD (HL)</label>
-                                        <input type="number" id="actualMtdInput" name="actualMtd" min="0" step="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="dailyTargetInput">Daily Target (HL)</label>
-                                        <input type="number" id="dailyTargetInput" name="dailyTarget" min="0" step="0.01" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="yesterdayInput">Yesterday's (HL)</label>
-                                        <input type="number" id="yesterdayInput" name="yesterday" min="0" step="0.01" required>
-                                    </div>
+                                    <p>Configure field names, units, and values. Add or remove fields, then save to update the dashboard.</p>
+                                    <div id="dailyPerformanceFields"></div>
+                                    <button data-requires-edit="true" type="button" class="btn btn-secondary" id="addDailyPerformanceField">Add Field</button>
                                     <div class="form-actions">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button data-requires-edit="true" type="submit" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
                                     </div>
@@ -196,12 +185,12 @@
                                         <tbody id="dailyDataTableBody">
                                         </tbody>
                                     </table>
-                                    <button type="button" class="btn btn-secondary" id="addRowBtn">
+                                    <button data-requires-edit="true" type="button" class="btn btn-secondary" id="addRowBtn">
                                         <i class="fas fa-plus"></i> Add New Row
                                     </button>
                                 </div>
                                 <div class="form-actions">
-                                    <button id="saveDailyBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveDailyBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save All Changes
                                     </button>
                                 </div>
@@ -211,13 +200,13 @@
                             <div id="form-metrics-data" class="form-section">
                                 <form id="metricsDataForm" class="dynamic-form">
                                     <div class="metrics-tabs" role="tablist" aria-label="Production Metrics Sections">
-                                        <button type="button" class="metrics-tab active" data-tab="people">People</button>
-                                        <button type="button" class="metrics-tab" data-tab="quality">Quality</button>
-                                        <button type="button" class="metrics-tab" data-tab="service">Service</button>
-                                        <button type="button" class="metrics-tab" data-tab="cost">Cost</button>
+                                        <button type="button" class="metrics-tab active" data-tab="people" th:attr="data-permission-hidden=${!session.canViewMetricsPEOPLE}">People</button>
+                                        <button type="button" class="metrics-tab" data-tab="quality" th:attr="data-permission-hidden=${!session.canViewMetricsQUALITY}">Quality</button>
+                                        <button type="button" class="metrics-tab" data-tab="service" th:attr="data-permission-hidden=${!session.canViewMetricsSERVICE}">Service</button>
+                                        <button type="button" class="metrics-tab" data-tab="cost" th:attr="data-permission-hidden=${!session.canViewMetricsCOST}">Cost</button>
                                     </div>
 
-                                    <div class="metrics-tab-panel active" id="metrics-panel-people" data-panel="people">
+                                    <div class="metrics-tab-panel active" id="metrics-panel-people" data-panel="people" th:attr="data-edit-authorized=${session.canEditMetricsPEOPLE},data-permission-hidden=${!session.canViewMetricsPEOPLE}">
                                         <div class="metrics-type-group">
                                             <h3>People</h3>
                                             <div class="metrics-grid">
@@ -256,13 +245,13 @@
                                             </div>
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
-                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="people">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary metrics-save-btn" data-section="people">
                                                 <i class="fas fa-save"></i> Save People
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div class="metrics-tab-panel" id="metrics-panel-quality" data-panel="quality">
+                                    <div class="metrics-tab-panel" id="metrics-panel-quality" data-panel="quality" th:attr="data-edit-authorized=${session.canEditMetricsQUALITY},data-permission-hidden=${!session.canViewMetricsQUALITY}">
                                         <div class="metrics-type-group">
                                             <h3>Quality</h3>
                                             <div class="metrics-grid">
@@ -317,13 +306,13 @@
                                             </div>
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
-                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="quality">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary metrics-save-btn" data-section="quality">
                                                 <i class="fas fa-save"></i> Save Quality
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div class="metrics-tab-panel" id="metrics-panel-service" data-panel="service">
+                                    <div class="metrics-tab-panel" id="metrics-panel-service" data-panel="service" th:attr="data-edit-authorized=${session.canEditMetricsSERVICE},data-permission-hidden=${!session.canViewMetricsSERVICE}">
                                         <div class="metrics-type-group">
                                             <h3>Service</h3>
                                             <div class="metrics-grid">
@@ -450,13 +439,13 @@
                                             </div>
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
-                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="service">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary metrics-save-btn" data-section="service">
                                                 <i class="fas fa-save"></i> Save Service
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div class="metrics-tab-panel" id="metrics-panel-cost" data-panel="cost">
+                                    <div class="metrics-tab-panel" id="metrics-panel-cost" data-panel="cost" th:attr="data-edit-authorized=${session.canEditMetricsCOST},data-permission-hidden=${!session.canViewMetricsCOST}">
                                         <div class="metrics-type-group">
                                             <h3>Cost</h3>
                                             <div class="metrics-grid">
@@ -511,7 +500,7 @@
                                             </div>
                                         </div>
                                         <div class="form-actions metrics-tab-actions">
-                                            <button type="button" class="btn btn-primary metrics-save-btn" data-section="cost">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary metrics-save-btn" data-section="cost">
                                                 <i class="fas fa-save"></i> Save Cost
                                             </button>
                                         </div>
@@ -535,7 +524,7 @@
                                             <button type="button" class="btn btn-secondary" id="cancelMetricsCsvUploadBtn">
                                                 Cancel
                                             </button>
-                                            <button type="button" class="btn btn-primary" id="confirmMetricsCsvUploadBtn">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary" id="confirmMetricsCsvUploadBtn" th:attr="data-edit-authorized=${session.canEditAllMetrics}">
                                                 <i class="fas fa-file-upload"></i> Upload CSV
                                             </button>
                                         </div>
@@ -606,13 +595,13 @@
                                 </div>
 
                                 <div class="form-actions sticky-save-bar">
-                                    <button type="button" class="btn btn-secondary issue-add-row-btn" id="addIssueBoardRowTableBtn">
+                                    <button data-requires-edit="true" type="button" class="btn btn-secondary issue-add-row-btn" id="addIssueBoardRowTableBtn">
                                         <i class="fas fa-plus"></i> Add New Issue
                                     </button>
                                     <button id="cancelIssueBoardBtn" type="button" class="btn btn-secondary">
                                         <i class="fas fa-ban"></i> Cancel
                                     </button>
-                                    <button id="saveIssueBoardBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveIssueBoardBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Issue Board
                                     </button>
                                 </div>
@@ -724,7 +713,7 @@
                                     </form>
                                     <div class="issue-drawer-actions">
                                         <button type="button" class="btn btn-secondary" id="issueConfigDrawerCancel"><i class="fas fa-times"></i> Cancel</button>
-                                        <button type="submit" form="issueConfigDrawerForm" class="btn btn-primary" id="issueConfigDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
+                                        <button data-requires-edit="true" type="submit" form="issueConfigDrawerForm" class="btn btn-primary" id="issueConfigDrawerSave"><i class="fas fa-check"></i> Update Issue</button>
                                     </div>
                                 </aside>
                                 <div class="issue-drawer-backdrop" id="issueConfigHistoryDrawerBackdrop"></div>
@@ -776,7 +765,7 @@
                                         </table>
                                     </div>
                                     <div class="form-actions compact-actions" style="margin-top: 12px;">
-                                        <button type="button" class="btn btn-secondary" id="addGembaRowBtn">
+                                        <button data-requires-edit="true" type="button" class="btn btn-secondary" id="addGembaRowBtn">
                                             <i class="fas fa-plus"></i> Add New Row
                                         </button>
                                     </div>
@@ -786,7 +775,7 @@
                                     <button id="cancelGembaScheduleBtn" type="button" class="btn btn-secondary">
                                         <i class="fas fa-ban"></i> Cancel
                                     </button>
-                                    <button id="saveGembaScheduleBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveGembaScheduleBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Gemba Walk Scheduler
                                     </button>
                                 </div>
@@ -807,7 +796,7 @@
                                                 <label for="masterGembaCategoryInput">Gemba Category</label>
                                                 <input type="text" id="masterGembaCategoryInput" class="master-gemba-walk-input" maxlength="160" placeholder="Gemba Category">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-gemba-walk-add-btn" data-category="GEMBA_CATEGORY">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-gemba-walk-add-btn" data-category="GEMBA_CATEGORY">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -831,7 +820,7 @@
                                                 <label for="masterLifeSaverRuleInput">Life Saver Rule (LSR)</label>
                                                 <input type="text" id="masterLifeSaverRuleInput" class="master-gemba-walk-input" maxlength="160" placeholder="Life Saver Rule (LSR)">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-gemba-walk-add-btn" data-category="LIFE_SAVER_RULE">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-gemba-walk-add-btn" data-category="LIFE_SAVER_RULE">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -891,13 +880,13 @@
                                         </thead>
                                         <tbody id="lgtConfigTableBody"></tbody>
                                     </table>
-                                    <button type="button" class="btn btn-secondary" id="addLgtRowBtn">
+                                    <button data-requires-edit="true" type="button" class="btn btn-secondary" id="addLgtRowBtn">
                                         <i class="fas fa-plus"></i> Add New Row
                                     </button>
                                 </div>
 
                                 <div class="form-actions">
-                                    <button id="saveLgtConfigBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveLgtConfigBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Leadership Gemba Tracker
                                     </button>
                                 </div>
@@ -918,7 +907,7 @@
                                                 <label for="masterClassificationOfKaizenInput">Classification of Kaizen</label>
                                                 <input type="text" id="masterClassificationOfKaizenInput" class="master-gemba-kaizen-input" maxlength="160" placeholder="Classification of Kaizen">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-gemba-kaizen-add-btn" data-category="CLASSIFICATION_OF_KAIZEN">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-gemba-kaizen-add-btn" data-category="CLASSIFICATION_OF_KAIZEN">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -982,7 +971,7 @@
                                         </table>
                                     </div>
                                     <div class="form-actions compact-actions" style="margin-top: 12px;">
-                                        <button type="button" class="btn btn-secondary" id="addTrainingScheduleRowBtn">
+                                        <button data-requires-edit="true" type="button" class="btn btn-secondary" id="addTrainingScheduleRowBtn">
                                             <i class="fas fa-plus"></i> Add New Row
                                         </button>
                                     </div>
@@ -992,7 +981,7 @@
                                     <button id="cancelTrainingScheduleBtn" type="button" class="btn btn-secondary">
                                         <i class="fas fa-ban"></i> Cancel
                                     </button>
-                                    <button id="saveTrainingScheduleBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveTrainingScheduleBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Training Schedule
                                     </button>
                                 </div>
@@ -1119,7 +1108,7 @@
                                 </div>
 
                                 <div class="form-actions">
-                                    <button id="saveMeetingAgendaBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveMeetingAgendaBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save PMS Agenda
                                     </button>
                                 </div>
@@ -1276,7 +1265,7 @@
                                 </div>
 
                                 <div class="form-actions">
-                                    <button id="saveProcessConfirmationBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveProcessConfirmationBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save PMS Process Confirmation
                                     </button>
                                 </div>
@@ -1297,7 +1286,7 @@
                                                 <label for="masterZmObservationInput">ZM Describe Your Observation</label>
                                                 <input type="text" id="masterZmObservationInput" class="master-process-input" maxlength="160" placeholder="ZM Describe Your Observation">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="ZM_OBSERVATION">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-process-add-btn" data-category="ZM_OBSERVATION">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -1321,7 +1310,7 @@
                                                 <label for="masterPmObservationInput">PM Describe Your Observation</label>
                                                 <input type="text" id="masterPmObservationInput" class="master-process-input" maxlength="160" placeholder="PM Describe Your Observation">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="PM_OBSERVATION">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-process-add-btn" data-category="PM_OBSERVATION">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -1345,7 +1334,7 @@
                                                 <label for="masterOmObservationInput">OM Describe Your Observation</label>
                                                 <input type="text" id="masterOmObservationInput" class="master-process-input" maxlength="160" placeholder="OM Describe Your Observation">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="OM_OBSERVATION">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-process-add-btn" data-category="OM_OBSERVATION">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -1369,7 +1358,7 @@
                                                 <label for="masterQmObservationInput">QM Describe Your Observation</label>
                                                 <input type="text" id="masterQmObservationInput" class="master-process-input" maxlength="160" placeholder="QM Describe Your Observation">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-process-add-btn" data-category="QM_OBSERVATION">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-process-add-btn" data-category="QM_OBSERVATION">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -1421,13 +1410,13 @@
                                         </table>
                                     </div>
                                     <div class="form-actions compact-actions" style="margin-top: 12px;">
-                                        <button type="button" class="btn btn-secondary" id="addAtRowBtn">
+                                        <button data-requires-edit="true" type="button" class="btn btn-secondary" id="addAtRowBtn">
                                             <i class="fas fa-plus"></i> Add Row
                                         </button>
                                         <button type="button" class="btn btn-secondary" id="downloadAtCsvTemplateBtn">
                                             <i class="fas fa-download"></i> Download CSV Template
                                         </button>
-                                        <button type="button" class="btn btn-secondary" id="uploadAtCsvBtn">
+                                        <button data-requires-edit="true" type="button" class="btn btn-secondary" id="uploadAtCsvBtn">
                                             <i class="fas fa-upload"></i> Upload CSV
                                         </button>
                                         <input type="file" id="atCsvFileInput" accept=".csv,text/csv" hidden>
@@ -1435,7 +1424,7 @@
                                 </div>
 
                                 <div class="form-actions sticky-save-bar">
-                                    <button id="saveAtConfigBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveAtConfigBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Abnormality Data
                                     </button>
                                 </div>
@@ -1456,7 +1445,7 @@
                                                 <label for="masterAbtTagTypeInput">ABT Tag Type</label>
                                                 <input type="text" id="masterAbtTagTypeInput" class="master-abnormality-input" maxlength="160" placeholder="ABT Tag Type">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-abnormality-add-btn" data-category="ABT_TAG_TYPE">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-abnormality-add-btn" data-category="ABT_TAG_TYPE">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -1480,7 +1469,7 @@
                                                 <label for="masterAbnormalityDefectTypeInput">Abnormality / Defect Type</label>
                                                 <input type="text" id="masterAbnormalityDefectTypeInput" class="master-abnormality-input" maxlength="160" placeholder="Abnormality / Defect Type">
                                             </div>
-                                            <button type="button" class="btn btn-primary master-abnormality-add-btn" data-category="ABNORMALITY_DEFECT_TYPE">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-abnormality-add-btn" data-category="ABNORMALITY_DEFECT_TYPE">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
                                         </div>
@@ -1532,7 +1521,7 @@
                                         <button type="button" id="downloadHsCrossCsvBtn" class="btn btn-secondary">
                                             <i class="fas fa-file-csv"></i> Download CSV
                                         </button>
-                                        <button type="button" id="saveHsCrossBtn" class="btn btn-primary">
+                                        <button data-requires-edit="true" type="button" id="saveHsCrossBtn" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
                                     </div>
@@ -1572,7 +1561,7 @@
                                         <button type="button" id="downloadLsrCsvBtn" class="btn btn-secondary">
                                             <i class="fas fa-file-csv"></i> Download CSV
                                         </button>
-                                        <button type="button" id="saveLsrBtn" class="btn btn-primary">
+                                        <button data-requires-edit="true" type="button" id="saveLsrBtn" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save Changes
                                         </button>
                                     </div>
@@ -1584,7 +1573,7 @@
                             <div id="form-info-portal" class="form-section">
 
                                 <div class="info-portal-config-toolbar">
-                                    <button type="button" id="addInfoPortalButtonBtn" class="btn btn-secondary">
+                                    <button data-requires-edit="true" type="button" id="addInfoPortalButtonBtn" class="btn btn-secondary">
                                         <i class="fas fa-plus"></i> Add Button
                                     </button>
                                 </div>
@@ -1595,7 +1584,7 @@
                                     <button id="cancelInfoPortalBtn" type="button" class="btn btn-secondary">
                                         <i class="fas fa-ban"></i> Cancel
                                     </button>
-                                    <button id="saveInfoPortalBtn" type="button" class="btn btn-primary">
+                                    <button data-requires-edit="true" id="saveInfoPortalBtn" type="button" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save Buttons
                                     </button>
                                 </div>
@@ -1616,17 +1605,17 @@
                                         <div class="master-plant-entry">
                                             <div class="form-group">
                                                 <label for="masterPlantSelect">Plant</label>
-                                                <select id="masterPlantSelect" class="master-plant-parent-select">
+                                                <select id="masterPlantSelect" data-permission-read-control="true" class="master-plant-parent-select">
                                                     <option value="">Select Plant</option>
                                                 </select>
                                             </div>
                                             <button type="button" id="confirmMasterPlantSelection" class="btn btn-primary">
                                                 <i class="fas fa-check"></i> OK
                                             </button>
-                                            <button type="button" id="openMasterPlantAddModal" class="btn btn-primary">
+                                            <button data-requires-edit="true" type="button" id="openMasterPlantAddModal" class="btn btn-primary">
                                                 <i class="fas fa-plus"></i> Add Plant
                                             </button>
-                                            <button type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
+                                            <button data-requires-edit="true" type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
                                         </div>
                                         <div id="masterPlantList" class="master-plant-inline-list" aria-label="Saved plants" aria-live="polite"></div>
                                         <div class="master-plant-list-hint">Select a plant and click OK to show it on the KPI Dashboard.</div>
@@ -1642,10 +1631,10 @@
                                                     <div id="masterDepartmentSuggestions" class="master-plant-suggestions" role="listbox"></div>
                                                 </div>
                                             </div>
-                                            <button type="button" class="btn btn-primary master-plant-add-btn" data-category="DEPARTMENT">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-plant-add-btn" data-category="DEPARTMENT">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
-                                            <button type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
+                                            <button data-requires-edit="true" type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
                                         </div>
                                         <div id="masterDepartmentList" class="master-plant-inline-list" aria-label="Departments in selected plant" aria-live="polite"></div>
                                         <div class="master-plant-list-hint">Select a department below to show its areas.</div>
@@ -1659,7 +1648,7 @@
                                         <div class="master-plant-entry">
                                             <div class="form-group">
                                                 <label for="masterProcessAreaDepartmentSelect">Department</label>
-                                                <select id="masterProcessAreaDepartmentSelect" class="master-plant-parent-select">
+                                                <select id="masterProcessAreaDepartmentSelect" data-permission-read-control="true" class="master-plant-parent-select">
                                                     <option value="">Select Department</option>
                                                 </select>
                                             </div>
@@ -1670,10 +1659,10 @@
                                                     <div id="masterProcessAreaSuggestions" class="master-plant-suggestions" role="listbox"></div>
                                                 </div>
                                             </div>
-                                            <button type="button" class="btn btn-primary master-plant-add-btn" data-category="PROCESS_AREA">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-plant-add-btn" data-category="PROCESS_AREA">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
-                                            <button type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
+                                            <button data-requires-edit="true" type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
                                         </div>
                                         <div id="masterProcessAreaList" class="master-plant-inline-list" aria-label="Areas in selected department" aria-live="polite"></div>
                                         <div class="master-plant-list-hint">Areas for the selected plant and department.</div>
@@ -1689,10 +1678,10 @@
                                                     <div id="masterDesignationSuggestions" class="master-plant-suggestions" role="listbox"></div>
                                                 </div>
                                             </div>
-                                            <button type="button" class="btn btn-primary master-plant-add-btn" data-category="DESIGNATION">
+                                            <button data-requires-edit="true" type="button" class="btn btn-primary master-plant-add-btn" data-category="DESIGNATION">
                                                 <i class="fas fa-plus"></i> Add
                                             </button>
-                                            <button type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
+                                            <button data-requires-edit="true" type="button" class="btn btn-secondary master-plant-update-btn"><i class="fas fa-rotate"></i> Update</button>
                                         </div>
                                         <div id="masterDesignationList" class="master-plant-inline-list" aria-label="Saved designations" aria-live="polite"></div>
                                         <div class="master-plant-list-hint">Designations for the selected plant.</div>
@@ -1721,7 +1710,7 @@
                                     <p id="masterPlantDeleteConfirmText" class="master-plant-delete-text">Delete this item? Undo is not possible.</p>
                                     <div class="modal-actions">
                                         <button type="button" id="cancelMasterPlantDelete" class="btn btn-secondary">Cancel</button>
-                                        <button type="button" id="confirmMasterPlantDelete" class="btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+                                        <button data-requires-edit="true" type="button" id="confirmMasterPlantDelete" class="btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
                                     </div>
                                 </div>
                             </div>
@@ -1739,7 +1728,7 @@
                                     <div id="masterPlantAddMessage" class="form-message"></div>
                                     <div class="modal-actions">
                                         <button type="button" id="cancelMasterPlantAdd" class="btn btn-secondary">Cancel</button>
-                                        <button type="button" id="saveMasterPlantAdd" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+                                        <button data-requires-edit="true" type="button" id="saveMasterPlantAdd" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
                                     </div>
                                 </div>
                             </div>
@@ -1760,7 +1749,7 @@
 
                                     <div id="kpiRenameMetricList" class="kpi-rename-list"></div>
 
-                                    <button type="button" id="showKpiRenameAddFormBtn" class="kpi-rename-add-trigger">
+                                    <button data-requires-edit="true" type="button" id="showKpiRenameAddFormBtn" class="kpi-rename-add-trigger">
                                         <i class="fas fa-plus"></i> Add Item
                                     </button>
 
@@ -1784,14 +1773,14 @@
                                                     <option value="4">4</option>
                                                 </select>
                                             </div>
-                                            <button type="button" id="addKpiRenameMetricBtn" class="btn btn-secondary">
+                                            <button data-requires-edit="true" type="button" id="addKpiRenameMetricBtn" class="btn btn-secondary">
                                                 <i class="fas fa-plus"></i> Add Item
                                             </button>
                                         </div>
                                     </div>
 
                                     <div class="form-actions kpi-rename-save-colors-actions">
-                                        <button type="button" id="saveKpiRenameAlertColorsBtn" class="btn btn-primary">
+                                        <button data-requires-edit="true" type="button" id="saveKpiRenameAlertColorsBtn" class="btn btn-primary">
                                             <i class="fas fa-save"></i> Save
                                         </button>
                                     </div>
@@ -1938,7 +1927,7 @@
                                 <div id="kpiCrossColorCustomContainer"></div>
 
                                 <div class="form-actions">
-                                    <button type="button" id="saveKpiCrossColor" class="btn btn-primary">
+                                    <button data-requires-edit="true" type="button" id="saveKpiCrossColor" class="btn btn-primary">
                                         <i class="fas fa-save"></i> Save &amp; Apply All
                                     </button>
                                 </div>
@@ -1954,12 +1943,16 @@
                                         Licensed by: - | Licensed to: - | Software Version number: -
                                     </div>
                                     <div id="licenseMetaText" class="metrics-dashboard-note">No license loaded.</div>
+                                    <div id="licenseBiosIdInfo" class="license-bios-id-info" hidden>
+                                        <strong>On-prem server BIOS ID</strong>
+                                        <code id="licenseHostBiosId">Unavailable</code>
+                                    </div>
                                 </div>
 
                                 <form id="licenseForm" class="dynamic-form">
 
                                     <!-- Update Button -->
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="openLicenseModal()">
+                                    <button data-requires-edit="true" type="button" class="btn btn-primary btn-sm" onclick="openLicenseModal()">
                                         <i class="fas fa-key"></i> Update License
                                     </button>
 
@@ -1979,7 +1972,7 @@
                                     <div id="licenseModalMessage" role="status"></div>
 
                                     <div class="modal-actions">
-                                        <button class="btn btn-primary" onclick="saveLicenseFromModal()">Save</button>
+                                        <button data-requires-edit="true" class="btn btn-primary" onclick="saveLicenseFromModal()">Save</button>
                                         <button class="btn btn-secondary" onclick="closeLicenseModal()">Cancel</button>
                                     </div>
                                 </div>
@@ -1991,7 +1984,7 @@
                                     <h3><i class="fas fa-trash-alt delete-modal-icon"></i> Delete Custom Metric</h3>
                                     <p class="delete-metric-modal-msg">Deleting this metric will permanently remove all FTD, MTD, YTD and historical values.<br><br>Do you want to proceed?</p>
                                     <div class="modal-actions">
-                                        <button class="btn btn-danger" onclick="executeDeleteCustomMetric()">Delete</button>
+                                        <button data-requires-edit="true" class="btn btn-danger" onclick="executeDeleteCustomMetric()">Delete</button>
                                         <button class="btn btn-secondary" onclick="closeDeleteCustomMetricModal()">Cancel</button>
                                     </div>
                                 </div>
@@ -2024,12 +2017,13 @@
         })();
     </script>
     <script src="/js/dashboard.js?v=plant-name-only-header-20260913"></script>
-    <script src="/js/settings.js?v=20260923-popup-close"></script>
+    <script src="/js/settings.js?v=20261008-license-bios"></script>
     <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
     <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
+<script src="/js/master-cloud-routing.js?v=20261008"></script>
 </body>
 </html>
 

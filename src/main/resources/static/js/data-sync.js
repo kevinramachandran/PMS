@@ -3,6 +3,7 @@
     function mount(host) {
         const trigger = document.createElement('button');
         trigger.type = 'button';
+        trigger.dataset.requiresEdit = 'true';
         trigger.className = 'data-sync-trigger';
         trigger.innerHTML = '<i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync';
         trigger.setAttribute('aria-haspopup', 'dialog');
@@ -15,7 +16,7 @@
             '<p class="data-sync-copy">Imports cloud data using its IDs. Matching local records are replaced, missing IDs are added, and other local records are kept.</p>' +
             '<div class="data-sync-progress-track"><div class="data-sync-progress-bar"></div></div>' +
             '<p class="data-sync-status" role="status" aria-live="polite">Ready to sync.</p>' +
-            '<div class="data-sync-actions"><button type="button" class="data-sync-button data-sync-run"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync now</button>' +
+            '<div class="data-sync-actions"><button type="button" data-requires-edit="true" class="data-sync-button data-sync-run"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Sync now</button>' +
             '<button type="button" class="data-sync-button data-sync-ok" hidden>OK</button>' +
             '<button type="button" class="data-sync-button data-sync-cancel">Cancel</button></div></section>';
         const target = host.classList && host.classList.contains('footer-btn-card') ? host.querySelector('.footer-btn-card-header') : document.querySelector('.top-header .header-right');

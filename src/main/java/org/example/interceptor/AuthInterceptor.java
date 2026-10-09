@@ -22,6 +22,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     @Autowired
     private LicenseService licenseService;
 
+    @Autowired
+    private org.example.service.CloudRoutingService cloudRoutingService;
+
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request,
                               @NonNull HttpServletResponse response,
@@ -32,6 +35,22 @@ public class AuthInterceptor implements HandlerInterceptor {
         String role          = (session != null) ? (String) session.getAttribute("role")     : null;
 
         String path = request.getRequestURI();
+
+        // Refresh authorization before either the admin shortcut or page rendering.
+        if (username != null && !authService.isInternalStaticUser(username)) {
+            var currentUser = authService.findActiveUser(username);
+            if (currentUser.isEmpty()) {
+                session.invalidate();
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                return false;
+            }
+            var user = currentUser.get();
+            role = user.getRole();
+            session.setAttribute("role", role);
+            session.setAttribute("roleLabel", RoleAccess.displayName(role));
+            session.setAttribute("viewPermissions", user.getViewPermissions());
+            session.setAttribute("editPermissions", user.getEditPermissions());
+        }
 
         boolean syncConfigurationUser = authService.isSyncConfigurationUser(username, role);
         request.setAttribute("syncConfigurationUser", syncConfigurationUser);
@@ -87,20 +106,32 @@ public class AuthInterceptor implements HandlerInterceptor {
             }
         }
 
+        request.setAttribute("cloudManagedEdits", cloudRoutingService.isCloudManaged());
+        if (cloudRoutingService.blocksWrite(path, request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":\"error\",\"message\":\"Make these changes in Cloud PMS, then sync them to this server.\",\"code\":\"CLOUD_MANAGED_EDITS\"}");
+            return false;
+        }
         if (RoleAccess.isAdmin(role)) {
             applyNavigationSessionAttributes(session, role, RoleAccess.CONFIG_PAGES, RoleAccess.CONFIG_PAGES);
             applyPermissionAttributes(request, true, true, protectedPageKeyForRequest(request));
             return true;
         }
 
-        Set<String> viewPermissions = extractPermissions(session, "viewPermissions");
+        Set<String> viewPermissions = new java.util.HashSet<>(extractPermissions(session, "viewPermissions"));
+        viewPermissions.addAll(extractPermissions(session, "editPermissions"));
         Set<String> editPermissions = extractPermissions(session, "editPermissions");
         applyNavigationSessionAttributes(session, role, viewPermissions, editPermissions);
+        if (path.equals("/kpi-dashboard") && !Boolean.TRUE.equals(session.getAttribute("canViewKpiDashboard"))) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
         String protectedPageKey = resolveProtectedPageKey(request);
         boolean canViewCurrentPage = protectedPageKey == null || protectedPageKey.isBlank()
                 || RoleAccess.canViewPage(role, viewPermissions, protectedPageKey);
-        boolean canEditCurrentPage = protectedPageKey == null || protectedPageKey.isBlank()
-                || RoleAccess.canEditPage(role, editPermissions, protectedPageKey);
+        boolean canEditCurrentPage = protectedPageKey != null && !protectedPageKey.isBlank()
+                && RoleAccess.canEditPage(role, editPermissions, protectedPageKey);
         applyPermissionAttributes(request, canViewCurrentPage, canEditCurrentPage, protectedPageKey);
 
         if (protectedPageKey == null || protectedPageKey.isBlank()) {
@@ -111,10 +142,17 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        if (!isReadMethod(request.getMethod()) && (path.startsWith("/api/production-metrics")
+                    || ((path.contains("/custom-definitions") || path.contains("/system-definitions"))
+                        && RoleAccess.PAGE_PRODUCTION_METRICS_DATA.equals(protectedPageKey)))
+                && !editPermissions.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA)) {
+            denyAccess(request, response);
+            return false;
+        }
         boolean requiresEditPermission = requiresEditPermission(request, protectedPageKey);
         boolean allowed = requiresEditPermission
                 ? RoleAccess.canEditPage(role, editPermissions, protectedPageKey)
-                : canAccessReadPage(role, viewPermissions, editPermissions, protectedPageKey);
+                : canAccessReadPage(role, viewPermissions, editPermissions, protectedPageKey, path);
 
         if (!allowed) {
             denyAccess(request, response);
@@ -174,6 +212,20 @@ public class AuthInterceptor implements HandlerInterceptor {
                 || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
 
+        for (String section : java.util.List.of("PEOPLE", "QUALITY", "SERVICE", "COST")) {
+            String key = "PRODUCTION_METRICS_DATA_" + section;
+            boolean fullView = RoleAccess.isAdmin(role) || viewPermissions.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA);
+            boolean fullEdit = RoleAccess.isAdmin(role) || editPermissions.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA);
+            session.setAttribute("canViewMetrics" + section, fullView || fullEdit || viewPermissions.contains(key) || editPermissions.contains(key));
+            session.setAttribute("canEditMetrics" + section, fullEdit || editPermissions.contains(key));
+        }
+        session.setAttribute("canManageMetricDefinitions", RoleAccess.isAdmin(role)
+                || editPermissions.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD));
+        session.setAttribute("canEditAllMetrics", RoleAccess.isAdmin(role) || editPermissions.contains(RoleAccess.PAGE_PRODUCTION_METRICS_DATA));
+        session.setAttribute("canEditGembaWalkConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION));
+        session.setAttribute("canEditLeadershipGembaTrackerConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION));
+        session.setAttribute("canEditAbnormalityTrackerConfiguration", RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION));
         session.setAttribute("canViewSettings", RoleAccess.canViewAnyConfigurationPage(role, viewPermissions));
         session.setAttribute("canEditSettings", RoleAccess.canEditAnyConfigurationPage(role, editPermissions));
         session.setAttribute("canViewPmsDataEntry", canViewPmsDataEntry);
@@ -237,6 +289,24 @@ public class AuthInterceptor implements HandlerInterceptor {
     private String resolveProtectedPageKey(HttpServletRequest request) {
         String path = request.getRequestURI();
 
+        if (path.startsWith("/api/master-cloud-target")) {
+            return "user-management".equals(request.getParameter("config")) ? RoleAccess.PAGE_USER_MANAGEMENT
+                    : RoleAccess.pageKeyForSettingsConfig(request.getParameter("config"));
+        }
+        if (path.equals("/gemba-schedule")) return RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION;
+        if (path.equals("/training-schedule")) return RoleAccess.PAGE_TRAINING_SCHEDULE_CONFIGURATION;
+        if (path.equals("/meeting-agenda")) return RoleAccess.PAGE_MEETING_AGENDA_CONFIGURATION;
+        if (path.equals("/process-confirmation")) return RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION;
+        if (path.equals("/abnormality-tracker")) return RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
+        if (path.equals("/leadership-gemba-tracker")) return RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
+        if (path.equals("/pms/production-metrics")) return RoleAccess.PAGE_PRODUCTION_METRICS_DATA;
+        if (path.startsWith("/api/assignment-history/gemba-walk/")) return RoleAccess.PAGE_GEMBA_WALK_REPORTING;
+        if (path.startsWith("/api/assignment-history/gemba-kaizen/")) return RoleAccess.PAGE_LEADERSHIP_GEMBA_TRACKER_CONFIGURATION;
+        if (path.startsWith("/api/assignment-history/abnormality-reporting/")) return RoleAccess.PAGE_ABNORMALITY_TRACKER_CONFIGURATION;
+        if (path.startsWith("/api/production-metrics") || path.equals("/metrics") || path.startsWith("/metrics/")) {
+            return RoleAccess.PAGE_PRODUCTION_METRICS_DATA;
+        }
+
         if (path.startsWith("/pms-configuration") || path.startsWith("/api/users")) {
             return RoleAccess.PAGE_USER_MANAGEMENT;
         }
@@ -287,6 +357,12 @@ public class AuthInterceptor implements HandlerInterceptor {
             return RoleAccess.PAGE_PMS_DATA_ENTRY;
         }
 
+        if ((path.startsWith("/api/metrics/custom-definitions") || path.startsWith("/api/metrics/system-definitions"))
+                && (isReadMethod(request.getMethod())
+                    ? RoleAccess.canViewPage((String) request.getSession().getAttribute("role"), extractPermissions(request.getSession(), "viewPermissions"), RoleAccess.PAGE_KPI_RENAME_DASHBOARD)
+                    : RoleAccess.canEditPage((String) request.getSession().getAttribute("role"), extractPermissions(request.getSession(), "editPermissions"), RoleAccess.PAGE_KPI_RENAME_DASHBOARD))) {
+            return RoleAccess.PAGE_KPI_RENAME_DASHBOARD;
+        }
         if (path.startsWith("/add-metrics") || path.startsWith("/api/metrics")) {
             return RoleAccess.PAGE_PRODUCTION_METRICS_DATA;
         }
@@ -376,8 +452,12 @@ public class AuthInterceptor implements HandlerInterceptor {
         response.sendRedirect(request.getContextPath() + "/kpi-dashboard");
     }
 
-    private boolean canAccessReadPage(String role, Set<String> viewPermissions, Set<String> editPermissions, String pageKey) {
-        if (RoleAccess.PAGE_INFO_PORTAL.equals(pageKey)) {
+    private boolean canAccessReadPage(String role, Set<String> viewPermissions, Set<String> editPermissions, String pageKey, String path) {
+        if (RoleAccess.PAGE_GEMBA_WALK_REPORTING.equals(pageKey) && path.startsWith("/api/")) {
+            return RoleAccess.canViewPage(role, viewPermissions, pageKey)
+                    || RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_GEMBA_WALK_CONFIGURATION);
+        }
+        if (RoleAccess.PAGE_INFO_PORTAL.equals(pageKey) && path.startsWith("/api/")) {
             return RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL)
                     || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL)
                     || RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW)

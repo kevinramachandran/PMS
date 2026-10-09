@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
 <body class="modern-shell dashboard-bg"
       th:attr="data-can-edit-current-page=${canEditCurrentPage},data-email-page-mode=${emailPageMode != null ? emailPageMode : 'scheduler'}">
@@ -184,10 +186,10 @@
                                 <div class="email-config-hint"><i class="fas fa-circle-info"></i> Recommended combinations: port 465 with SSL, port 587 with TLS.</div>
                             </div>
                             <div class="form-actions email-action-row">
-                                <button type="button" class="btn btn-secondary" id="testConnectionBtn" disabled th:style="${emailPageMode == 'scheduler'} ? 'display:none;' : ''">
+                                <button data-requires-edit="true" type="button" class="btn btn-secondary" id="testConnectionBtn" disabled th:style="${emailPageMode == 'scheduler'} ? 'display:none;' : ''">
                                     <i class="fas fa-plug"></i> Test Connection
                                 </button>
-                                <button type="button" class="btn btn-primary" id="saveEmailConfigBtn">
+                                <button data-requires-edit="true" type="button" class="btn btn-primary" id="saveEmailConfigBtn">
                                     <i class="fas fa-save"></i> <span th:text="${emailPageMode == 'scheduler'} ? 'Save Scheduler' : 'Save Configuration'">Save Configuration</span>
                                 </button>
                             </div>

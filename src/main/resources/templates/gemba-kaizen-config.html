@@ -13,8 +13,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
     <link rel="stylesheet" href="/css/data-sync.css?v=2">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page gemba-kaizen-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
+<body class="modern-shell dashboard-bg issue-board-page gemba-kaizen-config-page" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -46,7 +48,7 @@
             <section class="issue-board-card gk-config-table-card">
                 <div class="issue-board-title-row">
                     <h2>Gemba Kaizen</h2>
-                    <button type="button" id="gembaKaizenAddRecordBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Kaizen</span></button>
+                    <button data-requires-edit="true" type="button" id="gembaKaizenAddRecordBtn" class="issue-add-button"><i class="fas fa-plus"></i><span>Add New Kaizen</span></button>
                 </div>
 
                 <div class="gk-table-shell">
@@ -139,7 +141,7 @@
                 </div>
                 <div class="gk-drawer-actions">
                     <button type="button" id="gembaKaizenConfigCancelBtn" class="issue-cancel-button"><i class="fas fa-times"></i><span>Cancel</span></button>
-                    <button type="submit" id="gembaKaizenSubmitBtn" class="issue-add-button"><i class="fas fa-check"></i><span>Save Kaizen</span></button>
+                    <button data-requires-edit="true" type="submit" id="gembaKaizenSubmitBtn" class="issue-add-button"><i class="fas fa-check"></i><span>Save Kaizen</span></button>
                 </div>
             </form>
         </div>
@@ -153,10 +155,11 @@
     </main>
 </div>
 
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-kaizen-config.js?v=20260921-mutation-fixes"></script>
+<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-kaizen-config.js?v=20261008-permissions"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
 <script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script src="/js/data-sync.js?v=20260922-cloud-upsert"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
+<script src="/js/master-cloud-routing.js?v=20261008"></script>
 </body>
 </html>
 

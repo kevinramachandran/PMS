@@ -12,8 +12,10 @@
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page abnormality-reporting-page">
+<body class="modern-shell dashboard-bg issue-board-page abnormality-reporting-page" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -69,7 +71,7 @@
                         <h2>Abnormality Report</h2>
                         <p id="abnormalityFilterSummary">All periods | 0 records</p>
                     </div>
-                    <a href="/abnormality-reporting-config" class="issue-add-button" th:if="${session.canViewAbnormalityTrackerConfiguration}">
+                    <a data-requires-edit="true" href="/abnormality-reporting-config" class="issue-add-button" th:if="${session.canEditAbnormalityTrackerConfiguration}" data-edit-authorized="true">
                         <i class="fas fa-plus"></i>
                         <span>New Record</span>
                     </a>

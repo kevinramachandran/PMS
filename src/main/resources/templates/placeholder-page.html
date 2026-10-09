@@ -8,9 +8,11 @@
     <link rel="stylesheet" href="/css/dashboard.css?v=user-dashboard-columns-20260915">
     <link rel="stylesheet" href="/css/settings.css">
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
 <body class="modern-shell dashboard-bg"
-      th:attr="data-current-username=${session.username},data-current-email=${session.email},data-current-role=${session.role}">
+      th:attr="data-can-edit-current-page=${canEditCurrentPage},data-current-username=${session.username},data-current-email=${session.email},data-current-role=${session.role}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">

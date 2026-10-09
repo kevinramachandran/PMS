@@ -19,14 +19,17 @@ class LocalPagesTest {
     @Autowired MockMvc mvc;
     @MockBean AuthService authService;
     @MockBean LicenseService licenseService;
+    @MockBean CloudRoutingService cloudRoutingService;
 
     @Test void localPagesRenderWithTheSameFullMenu() throws Exception {
         when(licenseService.evaluateForLogin(anyBoolean())).thenReturn(new LicenseService.LicenseGateResult(true, "OK", "OK"));
         when(authService.isSyncConfigurationUser(anyString(), anyString())).thenReturn(true);
+        when(authService.findActiveUser("cloud-admin")).thenReturn(java.util.Optional.of(
+            new org.example.model.UserInfo("cloud-admin", "", "", RoleAccess.ADMIN, RoleAccess.CONFIG_PAGES, RoleAccess.CONFIG_PAGES)));
         var session = new MockHttpSession();
         session.setAttribute("username", "cloud-admin");
         session.setAttribute("role", RoleAccess.ADMIN);
-        for (var page : java.util.List.of("/sync-configuration", "/settings?config=kpi-plant-name", "/pms-configuration", "/gemba-walk-config", "/gemba-kaizen-config", "/abnormality-reporting-config", "/process-confirmation-config", "/email-configuration")) {
+        for (var page : java.util.List.of("/sync-configuration", "/settings?config=kpi-plant-name", "/pms-configuration", "/gemba-walk-config", "/gemba-kaizen-config", "/abnormality-reporting-config", "/process-confirmation-config", "/email-configuration", "/gemba-reporting", "/gemba-schedule", "/training-schedule", "/meeting-agenda", "/process-confirmation", "/abnormality-tracker", "/leadership-gemba-tracker", "/kpi-dashboard", "/client-selection", "/add-metrics", "/add-daily-data", "/settings?config=metrics-data")) {
             mvc.perform(get(page).session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("aria-label=\"Local navigation\"")))

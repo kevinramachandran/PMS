@@ -21,13 +21,17 @@ public class DailyPerformanceController {
 
     @PostMapping
     public ResponseEntity<DailyPerformance> save(@RequestBody DailyPerformance payload) {
-        if (payload.getMonthTarget() == null || payload.getActualMtd() == null ||
-                payload.getDailyTarget() == null || payload.getYesterday() == null) {
+        try {
+            return ResponseEntity.ok(service.saveOrUpdateToday(payload));
+        } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
+    }
 
-        DailyPerformance saved = service.saveOrUpdateToday(payload);
-        return ResponseEntity.ok(saved);
+    @GetMapping("/latest")
+    public ResponseEntity<DailyPerformance> getLatest() {
+        return service.getLatest().map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/today")

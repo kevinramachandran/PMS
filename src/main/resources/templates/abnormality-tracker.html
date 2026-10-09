@@ -13,8 +13,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell at-dashboard">
+<body class="modern-shell at-dashboard" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">

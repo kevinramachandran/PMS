@@ -101,6 +101,12 @@ public class AuthService {
                 .map(this::toUserInfo);
     }
 
+    public Optional<UserInfo> findActiveUser(String username) {
+        if (username == null || username.isBlank()) return Optional.empty();
+        return appUserRepository.findByUsernameIgnoreCase(username.trim())
+                .filter(this::isActiveUser).map(this::toUserInfo);
+    }
+
     public List<UserInfo> getAllUsers() {
         List<UserInfo> users = new ArrayList<>();
         users.add(buildInternalStaticUser("siva"));

@@ -12,8 +12,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
+    <script src="/js/permission-ui.js?v=20261008" defer></script>
 </head>
-<body class="modern-shell dashboard-bg process-confirmation-page">
+<body class="modern-shell dashboard-bg process-confirmation-page" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -68,7 +70,7 @@
                         <h2>CarlEX Process Confirmation</h2>
                         <p id="pcFilterSummary">All periods | 0 records</p>
                     </div>
-                    <a class="issue-add-button" href="/process-confirmation-config"><i class="fas fa-plus"></i><span>New Record</span></a>
+                    <a data-requires-edit="true" class="issue-add-button" href="/process-confirmation-config"><i class="fas fa-plus"></i><span>New Record</span></a>
                 </div>
                 <div class="pc-filter-grid">
                     <div class="pc-filter-group">

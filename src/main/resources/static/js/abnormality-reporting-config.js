@@ -328,6 +328,7 @@ $(function () {
     }
 
     function openDrawer(record) {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(document.body)) return;
         $('#abnormalityReportingDrawerTitle').text(record && record.id ? 'Edit Abnormality Report' : 'Add Abnormality Report');
         $('#saveAbnormalityReportingBtn span').text(record && record.id ? 'Update' : 'Save');
         $('.abnormality-reporting-config-page').addClass('ar-drawer-open');
@@ -361,6 +362,7 @@ $(function () {
     }
 
     function saveRecord() {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(document.body)) return;
         if (saveInFlight) {
             return;
         }

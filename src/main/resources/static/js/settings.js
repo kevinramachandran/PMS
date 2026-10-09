@@ -158,62 +158,6 @@ $(document).ready(function() {
                              'training-schedule', 'meeting-agenda', 'process-confirmation', 'master-process', 'hs-cross',
                              'lsr-tracking', 'info-portal', 'license', 'metrics-data', 'kpi-cross-color', 'kpi-rename-dashboard', 'kpi-plant-name'];
     const supportedConfigs = ['priorities', 'weekly-priorities', 'daily-performance', 'daily-section'].concat(directNavConfigs);
-    const readOnlyActionSelectors = [
-        '.form-actions button',
-        '#addRowBtn',
-        '#addGembaRowBtn',
-        '#addLgtRowBtn',
-        '#addAtRowBtn',
-        '#addTrainingScheduleRowBtn',
-        '#cancelTrainingScheduleBtn',
-        '#saveTrainingScheduleBtn',
-        '.issue-delete',
-        '.issue-edit',
-        '.issue-add-row-btn',
-        '#issueConfigDrawerSave',
-        '#issueConfigDrawerCancel',
-        '#issueConfigDrawerClose',
-        '.file-upload-trigger',
-        '#saveKpiCrossColor',
-        '#saveKpiPlantNameBtn',
-        '#resetKpiPlantNameBtn',
-        '#openMasterPlantAddModal',
-        '#saveMasterPlantAdd',
-        '.master-plant-add-btn',
-        '.master-plant-edit-btn',
-        '.master-plant-save-btn',
-        '.master-plant-cancel-btn',
-        '.master-plant-delete-btn',
-        '.master-abnormality-add-btn',
-        '.master-abnormality-edit-btn',
-        '.master-abnormality-save-btn',
-        '.master-abnormality-cancel-btn',
-        '.master-abnormality-delete-btn',
-        '.master-gemba-walk-add-btn',
-        '.master-gemba-walk-edit-btn',
-        '.master-gemba-walk-save-btn',
-        '.master-gemba-walk-cancel-btn',
-        '.master-gemba-walk-delete-btn',
-        '.master-gemba-kaizen-add-btn',
-        '.master-gemba-kaizen-edit-btn',
-        '.master-gemba-kaizen-save-btn',
-        '.master-gemba-kaizen-cancel-btn',
-        '.master-gemba-kaizen-delete-btn',
-        '.master-process-add-btn',
-        '.master-process-edit-btn',
-        '.master-process-save-btn',
-        '.master-process-cancel-btn',
-        '.master-process-delete-btn',
-        '#addKpiRenameMetricBtn',
-        '#saveKpiRenameAlertColorsBtn',
-        '.kpi-rename-visibility-btn',
-        '.kpi-rename-edit-btn',
-        '.kpi-rename-cancel-edit-btn',
-        '.kpi-rename-delete-btn',
-        '.kpi-rename-remove-draft-btn',
-        '.metrics-custom-save-btn',
-        '.metrics-custom-cancel-btn'
-    ].join(', ');
 
     function currentPageTitle() {
         return serverActiveTitle || 'this page';
@@ -243,24 +187,10 @@ $(document).ready(function() {
             return;
         }
 
-        $section.addClass('permission-readonly-mode');
+        if (!$section.hasClass('permission-readonly-mode')) $section.addClass('permission-readonly-mode');
         ensureReadonlyBanner($section);
 
-        $section.find('input:not([type="hidden"]), textarea, select').each(function() {
-            $(this)
-                .prop('disabled', true)
-                .attr('title', 'Edit access required');
-        });
-
-        $section.find(readOnlyActionSelectors).each(function() {
-            const $element = $(this);
-            if ($element.is('button, input, select, textarea')) {
-                $element.prop('disabled', true);
-            } else {
-                $element.addClass('permission-readonly-trigger').attr('aria-disabled', 'true');
-            }
-            $element.attr('title', 'Edit access required');
-        });
+        if (window.PmsPermissions) window.PmsPermissions.apply();
     }
 
     function installReadonlyObserver() {
@@ -281,7 +211,7 @@ $(document).ready(function() {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ['class', 'disabled', 'style']
+            attributeFilter: ['class']
         });
     }
     
@@ -564,66 +494,83 @@ $(document).ready(function() {
     });
 
     // ==================== DAILY PERFORMANCE FORM ====================
+    function appendDailyPerformanceField(field) {
+        const container = $('#dailyPerformanceFields');
+        if (container.children().length >= 30) {
+            showMessage('dailyPerformanceMessage', 'You can configure up to 30 fields.', 'error');
+            return;
+        }
+        field = field || {};
+        const row = $('<fieldset class="daily-performance-field"></fieldset>');
+        row.append('<legend>Performance field</legend>');
+        row.append('<label class="form-group">Field name<input class="performance-label" type="text" maxlength="120" required value="' + escapeHtml(field.label || '') + '"></label>');
+        row.append('<label class="form-group">Unit (optional)<input class="performance-unit" type="text" maxlength="40" placeholder="e.g. HL, %, hours" value="' + escapeHtml(field.unit || '') + '"></label>');
+        row.append('<label class="form-group">Value<input class="performance-value" type="text" maxlength="200" required placeholder="Number or text" value="' + escapeHtml(field.value ?? '') + '"></label>');
+        row.append('<button type="button" class="btn btn-secondary remove-performance-field">Remove</button>');
+        container.append(row);
+    }
+
+    function populateDailyPerformanceFields(data) {
+        $('#dailyPerformanceFields').empty();
+        const fields = data && Array.isArray(data.fields) ? data.fields : [
+            { label: 'Month Target', unit: 'HL', value: data?.month_target ?? '' },
+            { label: 'Actual MTD', unit: 'HL', value: data?.actual_mtd ?? '' },
+            { label: 'Daily Target', unit: 'HL', value: data?.daily_target ?? '' },
+            { label: "Yesterday's", unit: 'HL', value: data?.yesterday ?? '' }
+        ];
+        fields.forEach(appendDailyPerformanceField);
+    }
+
     function loadDailyPerformanceData() {
+        $('#dailyPerformanceForm button').prop('disabled', true);
         $.ajax({
-            url: '/api/daily-performance/current-month',
+            url: '/api/daily-performance/latest',
             type: 'GET',
             success: function(data) {
-                if (!data) {
-                    resetDailyPerformanceForm();
-                    return;
-                }
-
-                $('#monthTargetInput').val(data.month_target ?? '');
-                $('#actualMtdInput').val(data.actual_mtd ?? '');
-                $('#dailyTargetInput').val(data.daily_target ?? '');
-                $('#yesterdayInput').val(data.yesterday ?? '');
+                populateDailyPerformanceFields(data || null);
+                $('#dailyPerformanceForm button').prop('disabled', false);
             },
-            error: function(xhr) {
-                if (xhr.status === 204 || xhr.status === 404) {
-                    resetDailyPerformanceForm();
-                    return;
-                }
-                showMessage('dailyPerformanceMessage', 'Unable to load Daily Performance data.', 'error');
+            error: function() {
+                showMessage('dailyPerformanceMessage', 'Unable to load Daily Performance data. Reopen this section to retry.', 'error');
             }
         });
     }
 
-    function resetDailyPerformanceForm() {
-        $('#monthTargetInput').val('');
-        $('#actualMtdInput').val('');
-        $('#dailyTargetInput').val('');
-        $('#yesterdayInput').val('');
-    }
+    $('#addDailyPerformanceField').on('click', function() {
+        appendDailyPerformanceField();
+        $('#dailyPerformanceFields .performance-label').last().trigger('focus');
+    });
+    $('#dailyPerformanceFields').on('click', '.remove-performance-field', function() {
+        $(this).closest('.daily-performance-field').remove();
+    });
 
     $('#dailyPerformanceForm').on('submit', function(e) {
         e.preventDefault();
-
-        const payload = {
-            month_target: parseNumericField('#monthTargetInput'),
-            actual_mtd: parseNumericField('#actualMtdInput'),
-            daily_target: parseNumericField('#dailyTargetInput'),
-            yesterday: parseNumericField('#yesterdayInput')
-        };
-
-        if (payload.month_target === null || payload.actual_mtd === null ||
-            payload.daily_target === null || payload.yesterday === null) {
-            showMessage('dailyPerformanceMessage', 'All Daily Performance fields are required and must be numeric.', 'error');
+        const fields = $('#dailyPerformanceFields .daily-performance-field').map(function() {
+            return {
+                label: $(this).find('.performance-label').val().trim(),
+                unit: $(this).find('.performance-unit').val().trim(),
+                value: $(this).find('.performance-value').val().trim()
+            };
+        }).get();
+        if (fields.some(field => !field.label || !field.value)) {
+            showMessage('dailyPerformanceMessage', 'Each field needs a name and value.', 'error');
             return;
         }
-
+        const saveButton = $('#dailyPerformanceForm button[type="submit"]').prop('disabled', true);
         $.ajax({
             url: '/api/daily-performance',
             type: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(payload),
+            data: JSON.stringify({ fields: fields }),
             success: function() {
                 showMessage('dailyPerformanceMessage', 'Daily Performance saved successfully!', 'success');
                 updateKPIDashboard();
             },
             error: function() {
                 showMessage('dailyPerformanceMessage', 'Error saving Daily Performance. Please try again.', 'error');
-            }
+            },
+            complete: function() { saveButton.prop('disabled', false); }
         });
     });
 
@@ -835,6 +782,11 @@ $(document).ready(function() {
         mountMetricsDateControls(tab);
     });
 
+    const firstAllowedMetricsTab = $('#metricsDataForm .metrics-tab').filter(function() {
+        return this.dataset.permissionHidden !== 'true';
+    }).first();
+    if (firstAllowedMetricsTab.length) firstAllowedMetricsTab.trigger('click');
+
     $('#metricsDataForm').on('submit', function(e) {
         e.preventDefault();
     });
@@ -1013,6 +965,7 @@ $(document).ready(function() {
     });
 
     $('.metrics-save-btn').on('click', function() {
+        if (window.PmsPermissions && !window.PmsPermissions.canEdit(this)) return;
         const section = $(this).data('section') || 'people';
         const $btn = $(this);
         mountMetricsDateControls(section);
@@ -2082,7 +2035,7 @@ function regroupRows($container){
         return '' +
             '<tr class="kpi-rename-row kpi-rename-row-default" data-row-key="' + escapeAttributeValue(rowKey) + '" data-metric-key="' + escapeAttributeValue(metric.metricKey || '') + '" data-section="' + escapeAttributeValue(section.toUpperCase()) + '">' +
                 '<td><input type="text" class="kpi-rename-label" maxlength="160" value="' + escapeAttributeValue(metric.label) + '"></td>' +
-                '<td><input type="text" class="kpi-rename-unit" value="' + escapeAttributeValue(metric.unit || '-') + '" readonly><input type="hidden" class="kpi-rename-decimals" value="' + escapeAttributeValue(metric.decimals) + '"></td>' +
+                '<td><input type="text" class="kpi-rename-unit" maxlength="64" value="' + escapeAttributeValue(metric.unit || '-') + '"><input type="hidden" class="kpi-rename-decimals" value="' + escapeAttributeValue(metric.decimals) + '"></td>' +
                 '<td>' + (metric.chartId ? buildKpiCrossColorInlineHtml(metric.chartId, rowKey) : '<span class="kpi-rename-muted">No chart</span>') + '</td>' +
                 '<td>' + buildKpiRenameVisibilityControl('graph', graphVisible, rowKey, '', metric.chartId ? '' : 'No graph') + '</td>' +
                 '<td>' + buildKpiRenameVisibilityControl('table', tableVisible, rowKey, '', '') + '</td>' +
@@ -7303,6 +7256,10 @@ function loadLicenseConfig() {
                 return;
             }
 
+            const biosBindingEnabled = response.biosBindingEnabled === true;
+            $('#licenseBiosIdInfo').prop('hidden', !biosBindingEnabled);
+            $('#licenseHostBiosId').text(response.hostBiosId || 'Unavailable');
+
             const license = response.license;
 
             if (!license) {
@@ -7319,7 +7276,8 @@ function loadLicenseConfig() {
             $('#licenseIdentityText').text(
                 'Licensed by: ' + (license.licensedBy || license.vendorName || '-') +
                 ' | Licensed to: ' + (license.licensedTo || '-') +
-                ' | Software Version number: ' + (license.softwareVersion || '-')
+                ' | Software Version number: ' + (license.softwareVersion || '-') +
+                ' | License BIOS ID: ' + (license.biosId || 'Missing')
             );
             $('#licenseMetaText').text(
                 'Vendor: ' + (license.vendorName || '-') +
@@ -7333,7 +7291,9 @@ function loadLicenseConfig() {
                 $('#licenseTokenInput').val(license.licenseToken);
             }
 
-            if (license.status === 'EXPIRED') {
+            if (license.validationMessage) {
+                showMessage('licenseMessage', license.validationMessage, 'error');
+            } else if (license.status === 'EXPIRED') {
                 showMessage('licenseMessage', 'License is expired. Normal users cannot sign in until renewed.', 'error');
             } else if (license.status === 'ACTIVE') {
                 showMessage('licenseMessage', 'License is active.', 'success');

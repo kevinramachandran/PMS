@@ -20,16 +20,32 @@ public class DailyPerformanceService {
 
     @Transactional
     public DailyPerformance saveOrUpdateToday(DailyPerformance input) {
+        if (input.getFields() != null) {
+            if (input.getFields().size() > 30 || input.getFields().stream().anyMatch(field ->
+                    field == null || field.label() == null || field.label().isBlank() || field.label().length() > 120
+                    || (field.unit() != null && field.unit().length() > 40)
+                    || field.value() == null || field.value().isBlank() || field.value().length() > 200)) {
+                throw new IllegalArgumentException("Provide up to 30 fields with a name and value.");
+            }
+        } else if (input.getMonthTarget() == null || input.getActualMtd() == null
+                || input.getDailyTarget() == null || input.getYesterday() == null) {
+            throw new IllegalArgumentException("Daily performance values are required.");
+        }
         LocalDate today = LocalDate.now();
         DailyPerformance existing = repository.findByDate(today).orElseGet(DailyPerformance::new);
 
         existing.setDate(today);
-        existing.setMonthTarget(input.getMonthTarget());
-        existing.setActualMtd(input.getActualMtd());
-        existing.setDailyTarget(input.getDailyTarget());
-        existing.setYesterday(input.getYesterday());
+        existing.setMonthTarget(input.getMonthTarget() != null ? input.getMonthTarget() : (existing.getMonthTarget() != null ? existing.getMonthTarget() : 0.0));
+        existing.setActualMtd(input.getActualMtd() != null ? input.getActualMtd() : (existing.getActualMtd() != null ? existing.getActualMtd() : 0.0));
+        existing.setDailyTarget(input.getDailyTarget() != null ? input.getDailyTarget() : (existing.getDailyTarget() != null ? existing.getDailyTarget() : 0.0));
+        existing.setYesterday(input.getYesterday() != null ? input.getYesterday() : (existing.getYesterday() != null ? existing.getYesterday() : 0.0));
 
+        if (input.getFields() != null) existing.setFields(new java.util.ArrayList<>(input.getFields()));
         return repository.save(existing);
+    }
+
+    public Optional<DailyPerformance> getLatest() {
+        return repository.findTopByOrderByDateDesc();
     }
 
     public Optional<DailyPerformance> getToday() {

@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface DailyPerformanceRepository extends JpaRepository<DailyPerformance, Long> {
 
+    Optional<DailyPerformance> findTopByOrderByDateDesc();
+
     Optional<DailyPerformance> findByDate(LocalDate date);
 
     Optional<DailyPerformance> findTopByDateBetweenOrderByDateDesc(LocalDate startDate, LocalDate endDate);
