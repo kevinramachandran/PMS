@@ -38,6 +38,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         boolean syncConfigurationUser = authService.isSyncConfigurationUser(username, role);
         request.setAttribute("syncConfigurationUser", syncConfigurationUser);
+        if (session != null) session.setAttribute("syncConfigurationUser", syncConfigurationUser);
 
         // Not logged in: APIs must return 401 JSON (not HTML redirect), pages redirect to login.
         if (username == null) {
@@ -53,6 +54,13 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return false;
             }
 
+            if ("GET".equalsIgnoreCase(request.getMethod())
+                    && handler instanceof org.springframework.web.method.HandlerMethod loginMethod
+                    && loginMethod.getBeanType() == org.example.controller.WebController.class) {
+                String target = request.getRequestURI();
+                if (request.getQueryString() != null) target += "?" + request.getQueryString();
+                request.getSession(true).setAttribute("loginTarget", target);
+            }
             response.sendRedirect(request.getContextPath() + "/pms-login");
             return false;
         }
@@ -69,7 +77,13 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (path.startsWith("/sync-configuration") || path.startsWith("/api/cloud-sync")) {
-            if (!syncConfigurationUser) {
+            boolean syncExecution = (path.equals("/api/cloud-sync/run") && "POST".equals(request.getMethod()))
+                    || (path.equals("/api/cloud-sync/status") && "GET".equals(request.getMethod()))
+                    || (path.equals("/api/cloud-sync/identity") && "GET".equals(request.getMethod()))
+                    || (path.startsWith("/api/cloud-sync/data/") && "GET".equals(request.getMethod()))
+                    || (path.equals("/api/cloud-sync/push") && "POST".equals(request.getMethod()))
+                    || (path.startsWith("/api/cloud-sync/attachments/") && Set.of("GET", "PUT").contains(request.getMethod()));
+            if (!syncConfigurationUser && !(syncExecution && RoleAccess.isAdmin(role))) {
                 denyAccess(request, response);
                 return false;
             }

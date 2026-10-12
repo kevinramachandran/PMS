@@ -9,8 +9,12 @@
     <link rel="stylesheet" href="/css/meeting-agenda.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261011-cloud-mobile">
+    <script src="/js/mobile-responsive.js?v=20261011-cloud-mobile" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012">
+    <script src="/js/delete-access.js?v=20261012" defer></script>
 </head>
-<body class="modern-shell dashboard-bg">
+<body class="modern-shell dashboard-bg" th:attr="data-can-delete-records=${canDeleteRecords}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">

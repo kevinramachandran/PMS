@@ -43,6 +43,7 @@ public class TrainingScheduleService {
     @Transactional
     public List<TrainingScheduleItem> replaceByDate(LocalDate configDate, List<TrainingScheduleItem> rows) {
         String periodLabel = PERIOD_FORMATTER.format(configDate);
+        org.example.util.DeletionGuard.checkRemoval(rows.size() < repository.findByPeriodLabelOrderByRowOrderAscIdAsc(periodLabel).size());
         repository.deleteByPeriodLabel(periodLabel);
 
         int rowOrder = 1;

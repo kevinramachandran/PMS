@@ -158,6 +158,8 @@ $(function() {
         $('#kaizenIdea').val(item.kaizenIdea || '');
         $('#pictureImage').val('');
         $('#pictureImageStored').val(item.pictureImage || '');
+        window.PmsCurrentAttachment.render(document.getElementById('pictureImageCurrent'), 'gemba-kaizen',
+            document.getElementById('pictureImageStored'), document.getElementById('pictureImage'));
         $('#benefitsOfKaizen').val(item.benefitsOfKaizen || '');
         $('#isKaizenImplemented').val(item.isKaizenImplemented || 'No');
         $('#assignedTo').val(item.assignedTo || '');
@@ -178,6 +180,8 @@ $(function() {
         $('#kaizenIdea').val('');
         $('#pictureImage').val('');
         $('#pictureImageStored').val('');
+        window.PmsCurrentAttachment.render(document.getElementById('pictureImageCurrent'), 'gemba-kaizen',
+            document.getElementById('pictureImageStored'), document.getElementById('pictureImage'));
         $('#benefitsOfKaizen').val('');
         $('#isKaizenImplemented').val('No');
         $('#assignedTo').val('');
@@ -366,6 +370,8 @@ $(function() {
             contentType: false,
             success: function(data) {
                 $('#pictureImageStored').val(data.storedName || '');
+                window.PmsCurrentAttachment.render(document.getElementById('pictureImageCurrent'), 'gemba-kaizen',
+                    document.getElementById('pictureImageStored'), document.getElementById('pictureImage'));
             },
             error: function(xhr) {
                 setMessage(xhr.responseJSON?.error || 'Image upload failed.', 'error');

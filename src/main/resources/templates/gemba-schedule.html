@@ -12,8 +12,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261011-cloud-mobile">
+    <script src="/js/mobile-responsive.js?v=20261011-cloud-mobile" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012">
+    <script src="/js/delete-access.js?v=20261012" defer></script>
 </head>
-<body class="modern-shell dashboard-bg" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
+<body class="modern-shell dashboard-bg" th:attr="data-can-delete-records=${canDeleteRecords},data-can-edit-current-page=${canEditCurrentPage}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">

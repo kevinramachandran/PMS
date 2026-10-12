@@ -31,7 +31,7 @@ public class AuthController {
     @GetMapping("/pms-login")
     public String loginPage(HttpSession session) {
         if (session.getAttribute("username") != null) {
-            return "redirect:" + landingPageForSession(session);
+            return "redirect:" + consumeLoginTarget(session);
         }
         return "login";
     }
@@ -71,10 +71,21 @@ public class AuthController {
                     "roleLabel", RoleAccess.displayName(normalizedRole),
                 "username", user.get().getUsername(),
                 "email",    user.get().getEmail(),
-                "redirectUrl", landingPageForSession(session)
+                "redirectUrl", consumeLoginTarget(session)
             );
         }
         return Map.of("status", "error", "message", "Invalid credentials");
+    }
+
+    private String consumeLoginTarget(HttpSession session) {
+        Object saved = session.getAttribute("loginTarget");
+        session.removeAttribute("loginTarget");
+        if (saved instanceof String target && target.startsWith("/")
+                && !target.startsWith("//") && !target.contains("\\")
+                && !target.contains("\r") && !target.contains("\n")) {
+            return target;
+        }
+        return landingPageForSession(session);
     }
 
     /** Invalidate session and redirect to login page. */

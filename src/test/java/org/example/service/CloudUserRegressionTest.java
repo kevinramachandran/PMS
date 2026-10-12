@@ -47,4 +47,30 @@ class CloudUserRegressionTest {
         assertNotEquals(existing.getPassword(), incoming.getPassword());
         assertTrue(incoming.getPassword().startsWith("$2"));
     }
+
+    @Test void syncedCloudHashAllowsSamePasswordForNewAndExistingUsers() {
+        var service = new AuthService();
+        var repository = mock(AppUserRepository.class);
+        ReflectionTestUtils.setField(service, "appUserRepository", repository);
+        ReflectionTestUtils.setField(service, "licenseService", mock(LicenseService.class));
+        var cloudUser = user();
+        cloudUser.setPassword(new BCryptPasswordEncoder().encode("cloud-password"));
+        for (AppUser previous : new AppUser[] { null, user() }) {
+            var incoming = user();
+            incoming.setPassword(service.passwordHashForSync(cloudUser));
+            service.prepareCloudUser(incoming, previous);
+            assertEquals(cloudUser.getPassword(), incoming.getPassword());
+            when(repository.findByUsernameIgnoreCase("alice")).thenReturn(java.util.Optional.of(incoming));
+            assertTrue(service.authenticate("alice", "cloud-password").isPresent());
+            assertTrue(service.authenticate("alice", "wrong-password").isEmpty());
+        }
+    }
+
+    @Test void legacyPasswordIsHashedBeforeSyncExport() {
+        var service = new AuthService();
+        var cloudUser = user(); cloudUser.setPassword("legacy-password");
+        String exported = service.passwordHashForSync(cloudUser);
+        assertNotEquals("legacy-password", exported);
+        assertTrue(new BCryptPasswordEncoder().matches("legacy-password", exported));
+    }
 }

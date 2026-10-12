@@ -5,16 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gemba Kaizen Reporting - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/report-export.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=20260921-mutation-fixes">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sidebar-height-20260928">
-    <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
+    <link rel="stylesheet" href="/css/report-export.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/issue-board.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/gemba-kaizen-config.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/attachment-preview.css?v=20261012-api-sync">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
+<link rel="stylesheet" href="/css/assignment-workflow.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261012-api-sync">
+    <script src="/js/mobile-responsive.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/report-layout.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012-api-sync">
+    <script src="/js/delete-access.js?v=20261012-api-sync" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page gemba-kaizen-config-page" th:attr="data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
+<body class="pms-report-register modern-shell dashboard-bg issue-board-page gemba-kaizen-config-page" th:attr="data-can-delete-records=${canDeleteRecords},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -50,7 +55,7 @@
                 </div>
 
                 <div class="gk-table-shell">
-                    <table class="gk-config-table">
+                    <table class="pms-mobile-scroll-only gk-config-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -117,6 +122,7 @@
                     <div class="gk-form-group">
                         <label for="pictureImage">Picture/Image</label>
                         <input type="file" id="pictureImage" accept="image/*">
+                        <div id="pictureImageCurrent" aria-live="polite"></div>
                     </div>
                     <div class="gk-form-group gk-wide">
                         <label for="benefitsOfKaizen">Benefits of Kaizen</label>
@@ -153,9 +159,9 @@
     </main>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script><script src="/js/pdf-report.js?v=history-column-20260817"></script><script src="/js/report-export.js"></script><script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-kaizen-config.js?v=20260921-mutation-fixes"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script><script src="/js/pdf-report.js?v=20261012-api-sync"></script><script src="/js/report-export.js?v=20261012-api-sync"></script><script src="/js/assignment-workflow.js?v=20261012-api-sync"></script><script src="/js/assignment-history.js?v=20261012-api-sync"></script><script src="/js/attachment-preview.js?v=20261012-api-sync"></script><script src="/js/gemba-kaizen-config.js?v=20261012-api-sync"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=sidebar-toggle-20260928"></script>
+<script src="/js/ui-shell.js?v=20261012-api-sync"></script>
 </body>
 </html>
 

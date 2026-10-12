@@ -11,7 +11,7 @@ val appJarName = providers.gradleProperty("appJarName").orElse("brewery-pms-be")
 
 if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) {
     val localBuildBase = System.getenv("LOCALAPPDATA") ?: System.getProperty("java.io.tmpdir")
-    layout.buildDirectory.set(file("$localBuildBase/${rootProject.name}/gradle-build"))
+    layout.buildDirectory.set(file("$localBuildBase/${rootProject.name}-${rootProject.projectDir.absolutePath.hashCode().toString(16)}/gradle-build"))
 }
 
 java {

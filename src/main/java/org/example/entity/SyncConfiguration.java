@@ -16,20 +16,32 @@ public class SyncConfiguration {
     @Column(nullable = false, length = 160)
     private String cloudUsername = "";
 
+    /** Stable identity lets the remote endpoint distinguish installations. */
+    @Column(length = 36)
+    private String instanceId;
+
+    @Column(length = 36)
+    private String cloudInstanceId;
+
+    /** Reports may be published back to Cloud; users and masters remain Cloud-owned. */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean pushReportsEnabled;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String encryptedCloudPassword = "";
 
     @Column(nullable = false, length = 500)
-    private String downloadFolder = "C:/Brewery-PMS/sync/download";
+    private String downloadFolder = "sync/download";
 
     @Column(nullable = false, length = 500)
-    private String processingFolder = "C:/Brewery-PMS/sync/processing";
+    private String processingFolder = "sync/processing";
+
+    // Retained for cleanup of CSVs left by older versions; no longer configurable.
+    @Column(nullable = false, length = 500)
+    private String completedFolder = "sync/completed";
 
     @Column(nullable = false, length = 500)
-    private String completedFolder = "C:/Brewery-PMS/sync/completed";
-
-    @Column(nullable = false, length = 500)
-    private String failedFolder = "C:/Brewery-PMS/sync/failed";
+    private String failedFolder = "sync/failed";
 
     @Column(nullable = false)
     private int delaySeconds = 60;
@@ -53,6 +65,12 @@ public class SyncConfiguration {
     @Column(length = 2000)
     private String scheduleTimes;
 
+    // Null keeps existing interval schedules unchanged until a start time is saved.
+    @Column(length = 5)
+    private String intervalStartTime;
+
+    private LocalDateTime intervalAnchorAt;
+
     private LocalDateTime lastRunAt;
     private LocalDateTime lastSuccessAt;
 
@@ -67,6 +85,12 @@ public class SyncConfiguration {
     public void setCloudUrl(String cloudUrl) { this.cloudUrl = cloudUrl; }
     public String getCloudUsername() { return cloudUsername; }
     public void setCloudUsername(String cloudUsername) { this.cloudUsername = cloudUsername; }
+    public String getInstanceId() { return instanceId; }
+    public void setInstanceId(String instanceId) { this.instanceId = instanceId; }
+    public String getCloudInstanceId() { return cloudInstanceId; }
+    public void setCloudInstanceId(String cloudInstanceId) { this.cloudInstanceId = cloudInstanceId; }
+    public boolean isPushReportsEnabled() { return pushReportsEnabled; }
+    public void setPushReportsEnabled(boolean pushReportsEnabled) { this.pushReportsEnabled = pushReportsEnabled; }
     public String getEncryptedCloudPassword() { return encryptedCloudPassword; }
     public void setEncryptedCloudPassword(String encryptedCloudPassword) { this.encryptedCloudPassword = encryptedCloudPassword; }
     public String getDownloadFolder() { return downloadFolder; }
@@ -91,6 +115,10 @@ public class SyncConfiguration {
     public void setScheduleMode(String scheduleMode) { this.scheduleMode = scheduleMode; }
     public String getScheduleTimes() { return scheduleTimes == null || scheduleTimes.isBlank() ? scheduleTime : scheduleTimes; }
     public void setScheduleTimes(String scheduleTimes) { this.scheduleTimes = scheduleTimes; }
+    public String getIntervalStartTime() { return intervalStartTime; }
+    public void setIntervalStartTime(String intervalStartTime) { this.intervalStartTime = intervalStartTime; }
+    public LocalDateTime getIntervalAnchorAt() { return intervalAnchorAt; }
+    public void setIntervalAnchorAt(LocalDateTime intervalAnchorAt) { this.intervalAnchorAt = intervalAnchorAt; }
     public LocalDateTime getLastRunAt() { return lastRunAt; }
     public void setLastRunAt(LocalDateTime lastRunAt) { this.lastRunAt = lastRunAt; }
     public LocalDateTime getLastSuccessAt() { return lastSuccessAt; }

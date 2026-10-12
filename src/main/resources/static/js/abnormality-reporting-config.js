@@ -286,6 +286,8 @@ $(function () {
         $('#proposedAction').val(item.proposedAction || '');
         $('#pictureImage').val('');
         $('#pictureImageStored').val(item.pictureImage || '');
+        window.PmsCurrentAttachment.render(document.getElementById('pictureImageCurrent'), 'abnormality-reporting',
+            document.getElementById('pictureImageStored'), document.getElementById('pictureImage'));
         $('#abnormalityDefectType').val(item.abnormalityDefectType || '');
         loadDepartmentOptions(item.department || '');
         AssignmentWorkflow.select('#assignTo', item.assignTo || '');
@@ -499,6 +501,8 @@ $(function () {
             contentType: false,
             success: function(data) {
                 $('#pictureImageStored').val(data.storedName || '');
+                window.PmsCurrentAttachment.render(document.getElementById('pictureImageCurrent'), 'abnormality-reporting',
+                    document.getElementById('pictureImageStored'), document.getElementById('pictureImage'));
                 setMessage('Image attached.', 'success');
             },
             error: function(xhr) {

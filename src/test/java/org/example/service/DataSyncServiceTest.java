@@ -35,6 +35,7 @@ class DataSyncServiceTest {
     @Autowired org.example.repository.GembaWalkRecordRepository walkRepository;
     @Autowired org.example.repository.AbnormalityMasterDataItemRepository defectRepository;
     @Autowired org.example.repository.AbnormalityReportingRecordRepository abnormalityRepository;
+    @Autowired org.example.repository.AppUserRepository userRepository;
     @Autowired MasterReferenceService references;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @MockBean GembaKaizenConfigService kaizen;
@@ -57,6 +58,65 @@ class DataSyncServiceTest {
         admin = new MockHttpSession(); admin.setAttribute("username", "admin"); admin.setAttribute("role", "ADMIN");
     }
 
+    @Test void directApiPullCommitsValidDatasetsAndRollsBackFailedDataset() throws Exception {
+        var mapper = new ObjectMapper();
+        var master = new DataSyncService.JsonSyncExport(1, "plant-master", "PLANT",
+                (com.fasterxml.jackson.databind.node.ArrayNode) mapper.readTree("[{\"id\":90101,\"name\":\"Atomic plant\"}]"), List.of());
+        var invalid = new DataSyncService.JsonSyncExport(1, "gemba-walk", "",
+                (com.fasterxml.jackson.databind.node.ArrayNode) mapper.readTree("[{\"id\":90102,\"unknownField\":true}]"), List.of());
+        var result = sync.applyJsonSnapshots(List.of(master, invalid), null, false);
+        assertTrue(repository.existsById(90101L));
+        assertFalse(walkRepository.existsById(90102L));
+        assertEquals(List.of(master), result.get("successfulSnapshots"));
+        assertTrue(result.get("warnings").toString().contains("gemba-walk"));
+    }
+
+    @Test void directApiRejectsMissingPasswordBeforeDeletingLocalUsers() throws Exception {
+        var user = new org.example.entity.AppUser();
+        user.setUsername("keep-local"); user.setEmail("keep@example.test"); user.setName("Keep");
+        user.setRole("USER"); user.setPassword("existing-hash");
+        user = userRepository.saveAndFlush(user);
+        var records = (com.fasterxml.jackson.databind.node.ArrayNode) new ObjectMapper().readTree(
+                "[{\"id\":90103,\"username\":\"cloud-user\",\"email\":\"cloud@example.test\"}]");
+        assertThrows(IllegalArgumentException.class, () -> sync.replaceUsersForCloudSync(records));
+        assertEquals("existing-hash", userRepository.findById(user.getId()).orElseThrow().getPassword());
+        userRepository.delete(user);
+    }
+
+    @Test void directApiTransfersPasswordHashRoleAndPagePermissionsExactly() {
+        var user = new org.example.entity.AppUser();
+        user.setId(90106L); user.setUsername("api-user"); user.setEmail("api@example.test"); user.setRole("USER");
+        String hash = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("cloud-password");
+        user.setPassword(hash); user.setPageViewPermissions("gemba-walk-reporting"); user.setPageEditPermissions("gemba-walk-reporting");
+        when(users.getManageableUsers()).thenReturn(List.of(user));
+        when(users.passwordHashForSync(user)).thenReturn(hash);
+        var snapshot = sync.exportJsonForSync("users", "");
+        sync.replaceUsersForCloudSync(snapshot.records());
+        var saved = userRepository.findById(90106L).orElseThrow();
+        assertEquals(hash, saved.getPassword());
+        assertEquals(user.getRole(), saved.getRole());
+        assertEquals(user.getPageViewPermissions(), saved.getPageViewPermissions());
+        assertEquals(user.getPageEditPermissions(), saved.getPageEditPermissions());
+        userRepository.delete(saved);
+    }
+
+    @Test void directApiPreservesNestedImagesHistoryAndTimestampsWithoutCsvEscaping() throws Exception {
+        var records = (com.fasterxml.jackson.databind.node.ArrayNode) new ObjectMapper().readTree("""
+                [{"id":90104,"department":"=Literal, department\\nnext line",
+                  "createdAt":"2026-09-01T08:30:00","updatedAt":"2026-09-02T09:30:00",
+                  "observations":[{"id":90105,"pictureImage":"walk.png","status":"Open"}],
+                  "assignmentHistory":[{"fromAssignee":"A","toAssignee":"B","assignedBy":"admin",
+                    "remarks":"Follow up","escalationLevel":1,"assignedAt":"2026-09-02T09:00:00"}]}]
+                """);
+        sync.importJsonForSync("gemba-walk", "", records);
+        sync.importJsonForSync("gemba-walk", "", records);
+        var saved = walkRepository.findById(90104L).orElseThrow();
+        assertEquals("=Literal, department\nnext line", saved.getDepartment());
+        assertEquals(java.time.LocalDateTime.parse("2026-09-01T08:30:00"), saved.getCreatedAt());
+        assertEquals("walk.png", jdbc.queryForObject("select picture_image from gemba_walk_observations where id = 90105", String.class));
+        assertEquals(1, jdbc.queryForObject("select count(*) from assignment_history where module = 'gemba-walk' and record_id = 90104", Integer.class));
+    }
+
     @Test void exportsMastersAndRecordsThenImportsIntoEmptyDestinationWithOriginalIds() throws Exception {
         var plant = plants.add("PLANT", "North");
         var department = plants.add("DEPARTMENT", "Packing", "North", "");
@@ -67,29 +127,19 @@ class DataSyncServiceTest {
         plants.update(plant.getId(), "New North").orElseThrow();
         plants.update(department.getId(), "New Packing").orElseThrow();
         plants.update(area.getId(), "New line").orElseThrow();
-        when(walk.listForUser("admin", "ADMIN")).thenAnswer(call -> walkRepository.findAll());
-        var source = sync.exportForSync("gemba-walk", "", admin);
+        when(walk.listForUser(anyString(), eq("ADMIN"))).thenAnswer(call -> walkRepository.findAll());
+        var source = sync.exportJsonForSync("gemba-walk", "");
         assertTrue(source.warnings().stream().anyMatch(w -> w.contains("Area2")));
-        var masterExports = new java.util.LinkedHashMap<String, String>();
+        var snapshots = new java.util.ArrayList<DataSyncService.JsonSyncExport>();
         for (String category : List.of("PLANT", "DEPARTMENT", "PROCESS_AREA", "DESIGNATION"))
-            masterExports.put(category, sync.exportForSync("plant-master", category, admin).csv());
+            snapshots.add(sync.exportJsonForSync("plant-master", category));
+        snapshots.add(source);
 
         // Clearing this isolated H2 database models a destination with no source records.
         walkRepository.deleteAll();
         repository.deleteAll();
         var localOnly = plants.add("PLANT", "Destination only");
-        var config = new org.example.entity.SyncConfiguration();
-        config.setDownloadFolder(syncTemp.resolve("download").toString());
-        config.setProcessingFolder(syncTemp.resolve("processing").toString());
-        config.setCompletedFolder(syncTemp.resolve("completed").toString());
-        config.setFailedFolder(syncTemp.resolve("failed").toString());
-        java.nio.file.Files.createDirectories(java.nio.file.Path.of(config.getDownloadFolder()));
-        for (var entry : masterExports.entrySet()) java.nio.file.Files.writeString(syncTemp.resolve("download/plant-master__" + entry.getKey() + "__1.csv"), entry.getValue());
-        java.nio.file.Files.writeString(syncTemp.resolve("download/gemba-walk____1.csv"), source.csv());
-        var cloud = new CloudSyncService(mock(org.example.repository.SyncConfigurationRepository.class), mock(SyncSecretService.class), sync,
-                new ObjectMapper().findAndRegisterModules());
-        String summary = cloud.processEligible(config, true);
-        assertTrue(summary.contains("warning(s)"));
+        sync.applyJsonSnapshots(snapshots, null, false);
         var imported = walkRepository.findById(90050L).orElseThrow();
         assertEquals(List.of(area.getId()), imported.getMasterReferences().get("processAreaId").ids());
         assertEquals(List.of(department.getId()), imported.getMasterReferences().get("departmentId").ids());
@@ -98,9 +148,26 @@ class DataSyncServiceTest {
         assertEquals("New line", repository.findById(area.getId()).orElseThrow().getName());
         assertEquals("Area2", walkRepository.findById(90051L).orElseThrow().getLocationOfMswConducted());
         assertFalse(walkRepository.findById(90051L).orElseThrow().getMasterReferences().containsKey("processAreaId"));
-        assertTrue(repository.existsById(localOnly.getId()));
-        assertEquals(2, sync.importCsvForSync("gemba-walk", "", source.csv()).get("unchanged"));
+        assertFalse(repository.existsById(localOnly.getId()));
+        assertEquals(2, sync.importJsonForSync("gemba-walk", "", source.records()).get("unchanged"));
         assertEquals(2, walkRepository.count());
+    }
+
+    @Test void cloudUserReplacementDeletesOldAccountsThenPersistsCloudUsers() throws Exception {
+        var local = new org.example.entity.AppUser();
+        local.setUsername("local-only"); local.setName("Local Only"); local.setEmail("local@example.test");
+        local.setPassword("hash"); local.setRole("USER"); local.setStatus("ACTIVE");
+        userRepository.saveAndFlush(local);
+        when(users.isReservedForCloudSync(anyString())).thenReturn(false);
+        String csv = "id,username,name,employeeId,department,area,plant,designation,reportingManager,email,role,status,pageViewPermissions,pageEditPermissions,password,plantId,departmentId,areaIds,designationId\n"
+                + "765432,cloud-user,Cloud User,,,,,,,cloud@example.test,User,ACTIVE,,,,,,,\n";
+
+        sync.replaceUsersForCloudSync(csv);
+
+        assertFalse(userRepository.findByUsernameIgnoreCase("local-only").isPresent());
+        var imported = userRepository.findByUsernameIgnoreCase("cloud-user").orElseThrow();
+        assertEquals(765432L, imported.getId());
+        assertEquals("cloud@example.test", imported.getEmail());
     }
 
     @Test void exportResolvesDepartmentAfterAreaEstablishesUniquePlant() throws Exception {
@@ -540,5 +607,21 @@ class DataSyncServiceTest {
         assertThrows(IllegalArgumentException.class, () -> sync.importCsvForSync("plant-master", "PLANT",
                 "id,name\n" + item.getId() + ",Changed\n,\n"));
         assertEquals("Original", repository.findById(item.getId()).orElseThrow().getName());
+    }
+
+    @Test void userCredentialsAreOnlyExportedForAdministratorSync() throws Exception {
+        var user = new org.example.entity.AppUser(); user.setId(7L); user.setUsername("alice");
+        user.setEmail("alice@example.test"); user.setRole("USER");
+        String hash = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("cloud-password");
+        user.setPassword(hash);
+        when(users.getManageableUsers()).thenReturn(List.of(user));
+        when(users.passwordHashForSync(user)).thenReturn(hash);
+        assertTrue(sync.exportForSync("users", "", admin).csv().contains(hash));
+        assertFalse(sync.exportCsv("users", "", admin).contains(hash));
+        assertFalse(sync.exportForSync("users", "", admin).csv().contains("cloud-password"));
+        var reader = new MockHttpSession(); reader.setAttribute("username", "reader"); reader.setAttribute("role", "USER");
+        reader.setAttribute("viewPermissions", Set.of(org.example.util.RoleAccess.PAGE_USER_MANAGEMENT));
+        assertThrows(ResponseStatusException.class, () -> sync.exportForSync("users", "", reader));
+        assertFalse(sync.exportCsv("users", "", reader).contains(hash));
     }
 }

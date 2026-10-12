@@ -12,8 +12,12 @@
     <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261011-cloud-mobile">
+    <script src="/js/mobile-responsive.js?v=20261011-cloud-mobile" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012">
+    <script src="/js/delete-access.js?v=20261012" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page gemba-reporting-page">
+<body class="modern-shell dashboard-bg issue-board-page gemba-reporting-page" th:attr="data-can-delete-records=${canDeleteRecords}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">

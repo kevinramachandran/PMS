@@ -51,6 +51,7 @@ public class AbnormalityTrackerService {
     @Transactional
     public List<AbnormalityTrackerEntry> replaceByPeriod(String periodLabel,
                                                           List<AbnormalityTrackerEntry> items) {
+        org.example.util.DeletionGuard.checkRemoval(items.size() < repository.findByPeriodLabelOrderByRowOrderAscIdAsc(periodLabel).size());
         repository.deleteByPeriodLabel(periodLabel);
 
         int row = 1;

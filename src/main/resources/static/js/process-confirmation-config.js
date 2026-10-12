@@ -294,13 +294,17 @@ $(function() {
                 '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' Counter measure actions</label><textarea class="pc-observation-actions" rows="2" placeholder="Enter counter measure actions…">' + esc(item.counterMeasureActions) + '</textarea></div>' +
                 '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Status</label><select class="pc-observation-status">' +
                 '<option value="">Select status</option><option value="P">P</option><option value="D">D</option><option value="C">C</option><option value="A">A</option></select></div>' +
-                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><label class="carlex-image-picker"><i class="fas fa-image" aria-hidden="true"></i><span>' + (item.observationImage ? 'Replace' : 'Choose') + '</span><input class="pc-observation-image" type="file" accept="image/*" capture="environment" aria-label="' + group.label + ' ' + (index + 1) + ' observation image"><input class="pc-observation-image-stored" type="hidden" value="' + escAttribute(item.observationImage) + '"></label></div>' +
+                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><label class="carlex-image-picker"><i class="fas fa-image" aria-hidden="true"></i><span>' + (item.observationImage ? 'Replace' : 'Choose') + '</span><input id="pc-image-file-' + groupKey + '-' + index + '" class="pc-observation-image" type="file" accept="image/*" capture="environment" aria-label="' + group.label + ' ' + (index + 1) + ' observation image"><input id="pc-image-stored-' + groupKey + '-' + index + '" class="pc-observation-image-stored" type="hidden" value="' + escAttribute(item.observationImage) + '"></label><div class="pc-current-attachment" aria-live="polite"></div></div>' +
                 '<div class="carlex-observation-actions">' + remove + '</div>' +
                 '</div>';
         }).join('');
         $('#' + groupKey + 'ObservationList').html(rows);
         $('#' + groupKey + 'ObservationList .carlex-observation-row').each(function(index) {
-            $(this).find('.pc-observation-status').val((observationState[groupKey][index] || {}).status || '');
+            const row = this;
+            $(row).find('.pc-observation-status').val((observationState[groupKey][index] || {}).status || '');
+            window.PmsCurrentAttachment.render(row.querySelector('.pc-current-attachment'), 'process-confirmation',
+                row.querySelector('.pc-observation-image-stored'), row.querySelector('.pc-observation-image'),
+                row.querySelector('.carlex-image-picker span'));
         });
     }
 
@@ -508,6 +512,7 @@ $(function() {
         $('#carlexSaveBtn').toggle(!readOnly);
         $('#carlexCancelBtn').text(readOnly ? 'Close' : 'Cancel');
         $('#carlexFields input, #carlexFields select, #carlexFields textarea, .carlex-add-observation, .carlex-remove-observation').prop('disabled', readOnly);
+        $('#carlexFields .current-attachment-remove').toggle(!readOnly);
         AssignmentWorkflow.refresh();
         $('#carlexBackdrop, #carlexForm').attr('aria-hidden', 'false');
         $('.carlex-config-page').addClass('carlex-drawer-open');
@@ -639,6 +644,10 @@ $(function() {
             success: function(data) {
                 hidden.val(data.storedName || '');
                 $(input).siblings('span').text('Replace');
+                const row = input.closest('.carlex-observation-row');
+                window.PmsCurrentAttachment.render(row.querySelector('.pc-current-attachment'), 'process-confirmation',
+                    row.querySelector('.pc-observation-image-stored'), input,
+                    row.querySelector('.carlex-image-picker span'));
             },
             error: function(xhr) {
                 $(input).siblings('span').text(hidden.val() ? 'Replace' : 'Choose');

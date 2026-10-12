@@ -81,7 +81,13 @@ public class AuthService {
     }
 
     public boolean isSyncConfigurationUser(String username, String role) {
-        return RoleAccess.isAdmin(role) || "kevin".equalsIgnoreCase(username) || "siva".equalsIgnoreCase(username);
+        if (username == null) {
+            return false;
+        }
+        String normalized = normalizeInternalUsername(username);
+        return "kevin".equals(normalized)
+                || "siva".equals(normalized)
+                || SystemAdminInitializer.SYSTEM_ADMIN_USERNAME.equals(normalized);
     }
 
     public Optional<UserInfo> authenticate(String username, String password) {
@@ -99,6 +105,11 @@ public class AuthService {
             .filter(this::isActiveUser)
             .filter(u -> matchesAndMigrateIfLegacy(u, password))
                 .map(this::toUserInfo);
+    }
+
+    public Optional<UserInfo> findActiveUser(String username) {
+        if (username == null || username.isBlank()) return Optional.empty();
+        return appUserRepository.findByUsernameIgnoreCase(username.trim()).filter(this::isActiveUser).map(this::toUserInfo);
     }
 
     public List<UserInfo> getAllUsers() {
@@ -180,7 +191,19 @@ public class AuthService {
                 .toList();
     }
 
+    /** Only used by the administrator-only sync export, never by normal user/CSV responses. */
+    String passwordHashForSync(AppUser user) {
+        String stored = user.getPassword();
+        if (stored == null || stored.isBlank()) return "";
+        return isBcryptHash(stored) ? stored : passwordEncoder.encode(stored);
+    }
+
     /** Validate trusted cloud profiles without losing account protections or password hashes. */
+    Optional<AppUser> findCloudUserByUsername(String username) {
+        String normalized = trimToEmpty(username);
+        return normalized.isBlank() ? Optional.empty() : appUserRepository.findByUsernameIgnoreCase(normalized);
+    }
+
     void prepareCloudUser(AppUser incoming, AppUser existing) {
         if (isReservedUsername(incoming.getUsername()) || existing != null && isReservedUsername(existing.getUsername()))
             throw new IllegalArgumentException("System accounts cannot be replaced by cloud sync");
@@ -204,10 +227,12 @@ public class AuthService {
         incoming.setPageEditPermissions(toPermissionCsv(sanitizeEditPermissionsForRole(incoming.getRole(), views,
                 new HashSet<>(Arrays.asList(trimToEmpty(incoming.getPageEditPermissions()).split(","))))));
         if (trimToEmpty(incoming.getPassword()).isBlank()) {
-            // Exports intentionally omit credentials. New accounts need a local password reset.
+            // Compatibility with older cloud exports that omitted credentials.
             boolean sameAccount = existing != null && incoming.getUsername().equalsIgnoreCase(trimToEmpty(existing.getUsername()));
             incoming.setPassword(sameAccount ? existing.getPassword() : passwordEncoder.encode(UUID.randomUUID().toString()));
-        } else incoming.setPassword(passwordEncoder.encode(incoming.getPassword()));
+        } else if (!isBcryptHash(incoming.getPassword())) {
+            incoming.setPassword(passwordEncoder.encode(incoming.getPassword()));
+        }
     }
 
     public synchronized Optional<String> updateUser(Long id,
@@ -521,6 +546,11 @@ public class AuthService {
 
     private boolean isReservedUsername(String username) {
         return isInternalStaticUser(username);
+    }
+
+    /** Built-in accounts are local controls and are never removed by a cloud snapshot. */
+    boolean isReservedForCloudSync(String username) {
+        return isReservedUsername(username);
     }
 
     private String normalizeInternalUsername(String value) {

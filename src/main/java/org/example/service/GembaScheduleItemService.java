@@ -42,6 +42,7 @@ public class GembaScheduleItemService {
 
     @Transactional
     public List<GembaScheduleItem> replaceByDate(LocalDate scheduleDate, List<GembaScheduleItem> items) {
+        org.example.util.DeletionGuard.checkRemoval(items.size() < repository.findByScheduleDateOrderByRowOrderAscIdAsc(scheduleDate).size());
         repository.deleteByScheduleDate(scheduleDate);
 
         String monthLabel = SCHEDULE_MONTH_FORMATTER.format(scheduleDate);

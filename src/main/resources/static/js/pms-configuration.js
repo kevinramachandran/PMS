@@ -1,5 +1,7 @@
 (function () {
     const tableBody = document.getElementById('adminUsersTableBody');
+    const mobileUsersListEl = document.getElementById('mobileUsersList');
+    const userNameSearchEl = document.getElementById('userNameSearch');
     const openAddDrawerBtn = document.getElementById('openAddUserDrawer');
     const addDrawerEl = document.getElementById('addUserDrawer');
     const addDrawerBackdropEl = document.getElementById('addUserDrawerBackdrop');
@@ -55,6 +57,7 @@
     const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
     let pendingDeleteUserId = null;
+    let cachedUsers = [];
     const canEditUserManagement = String(document.body.getAttribute('data-can-edit-user-management') || '').toLowerCase() === 'true';
 
     const DESIGNATION_VALUES = ['HOD', 'AREA_HOD', 'ENGINEER', 'EXECUTIVE', 'OPERATOR'];
@@ -342,6 +345,183 @@
             .map(function(item) { return item.trim(); })
             .filter(Boolean);
     }
+
+    const areaTooltip = document.createElement('div');
+    areaTooltip.className = 'um-area-tooltip';
+    areaTooltip.setAttribute('role', 'tooltip');
+    areaTooltip.hidden = true;
+    document.body.appendChild(areaTooltip);
+
+    function hideAreaTooltip() {
+        areaTooltip.hidden = true;
+    }
+
+    function showAreaTooltip(button) {
+        const areas = splitAreaValues(button.dataset.areas);
+        areaTooltip.innerHTML = '<strong>Assigned areas (' + areas.length + ')</strong><ul>'
+            + areas.map(area => '<li>' + escapeHtml(area) + '</li>').join('') + '</ul>';
+        areaTooltip.hidden = false;
+        const rect = button.getBoundingClientRect();
+        const width = areaTooltip.offsetWidth;
+        const height = areaTooltip.offsetHeight;
+        areaTooltip.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)) + 'px';
+        areaTooltip.style.top = Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - height - 8)) + 'px';
+    }
+
+    if (tableBody) {
+        tableBody.addEventListener('click', function(event) {
+            const button = event.target.closest('.um-area-trigger');
+            if (button) showAreaTooltip(button);
+            else hideAreaTooltip();
+        });
+        tableBody.addEventListener('focusin', function(event) {
+            const button = event.target.closest('.um-area-trigger');
+            if (button) showAreaTooltip(button);
+        });
+    }
+    document.addEventListener('pointerdown', function(event) {
+        if (!areaTooltip.contains(event.target) && !event.target.closest('.um-area-trigger')) hideAreaTooltip();
+    });
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') hideAreaTooltip();
+    });
+
+    function renderUserArea(user) {
+        const areas = splitAreaValues(user.area);
+        if (!areas.length) return '<span class="um-muted">-</span>';
+        return '<button type="button" class="um-area-trigger" aria-label="Show ' + areas.length
+            + ' assigned areas" data-areas="' + escapeAttribute(areas.join(', ')) + '">'
+            + '<i class="fas fa-map-marker-alt" aria-hidden="true"></i>'
+            + '<span aria-hidden="true">' + areas.length + '</span></button>';
+    }
+
+    function renderMobileUserCard(user) {
+        const id = escapeAttribute(user.id);
+        const name = userDisplayName(user);
+        const roleText = user.roleLabel || roleLabel(user.role);
+        const meta = [user.employeeId ? 'E-ID: ' + user.employeeId : '', user.department || ''].filter(Boolean).join(' | ');
+        const menu = canEditUserManagement
+            ? '<button type="button" class="um-mobile-user-more" aria-label="More actions for ' + escapeAttribute(name) + '" aria-expanded="false"><i class="fas fa-ellipsis-vertical" aria-hidden="true"></i></button>' +
+                '<div class="um-mobile-user-menu" hidden>' +
+                    '<button type="button" data-mobile-user-action="edit" data-id="' + id + '"><i class="fas fa-pen" aria-hidden="true"></i> Edit</button>' +
+                    '<button type="button" data-mobile-user-action="delete" data-id="' + id + '"><i class="fas fa-trash" aria-hidden="true"></i> Delete</button>' +
+                '</div>'
+            : '';
+        return '<article class="um-mobile-user-card" data-user-id="' + id + '">' +
+            '<button type="button" class="um-mobile-user-summary" data-mobile-user-detail="' + id + '">' +
+                '<span class="um-mobile-avatar" aria-hidden="true">' + escapeHtml(name.trim().charAt(0).toUpperCase() || '?') + '</span>' +
+                '<span class="um-mobile-user-copy"><strong>' + escapeHtml(name) + '</strong>' +
+                    '<small>@' + escapeHtml(user.username || '-') + '</small>' +
+                    '<small class="um-mobile-user-meta">' + escapeHtml(meta || '-') + '</small>' +
+                    '<span class="um-mobile-user-badges"><span class="pms-role-badge ' + roleClass(user.role) + '">' + escapeHtml(roleText) + '</span>' +
+                    '<span class="pms-status-badge ' + statusClass(user.status) + '">' + escapeHtml(statusLabel(user.status)) + '</span></span>' +
+                '</span>' +
+            '</button>' + menu +
+        '</article>';
+    }
+
+    function renderMobileUsers(users, emptyMessage) {
+        if (!mobileUsersListEl) return;
+        if (!Array.isArray(users) || users.length === 0) {
+            mobileUsersListEl.innerHTML = '<p class="um-mobile-empty">' + escapeHtml(emptyMessage || 'No users found.') + '</p>';
+            return;
+        }
+        mobileUsersListEl.innerHTML = users.map(renderMobileUserCard).join('');
+        bindMobileUserList();
+    }
+
+    let lastMobileUserTrigger = null;
+    let mobileUserDetailEl = null;
+
+    function closeMobileUserDetail() {
+        if (!mobileUserDetailEl) return;
+        mobileUserDetailEl.hidden = true;
+        document.body.classList.remove('um-mobile-detail-open');
+        if (lastMobileUserTrigger) lastMobileUserTrigger.focus();
+    }
+
+    function openMobileUserDetail(user, trigger) {
+        lastMobileUserTrigger = trigger;
+        if (!mobileUserDetailEl) {
+            mobileUserDetailEl = document.createElement('div');
+            mobileUserDetailEl.className = 'um-mobile-user-detail';
+            mobileUserDetailEl.hidden = true;
+            mobileUserDetailEl.setAttribute('aria-label', 'User details');
+            document.body.appendChild(mobileUserDetailEl);
+            mobileUserDetailEl.addEventListener('click', function(event) {
+                if (event.target === mobileUserDetailEl || event.target.closest('[data-mobile-detail-close]')) closeMobileUserDetail();
+                const action = event.target.closest('[data-mobile-detail-action]');
+                if (!action) return;
+                closeMobileUserDetail();
+                if (action.dataset.mobileDetailAction === 'edit') openEditModal(user);
+                if (action.dataset.mobileDetailAction === 'delete') openDeleteModal(user.id);
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && mobileUserDetailEl && !mobileUserDetailEl.hidden) closeMobileUserDetail();
+            });
+        }
+        const areas = splitAreaValues(user.area);
+        const viewPermissions = Array.isArray(user.viewPermissions) ? user.viewPermissions : String(user.viewPermissions || '').split(',').filter(Boolean);
+        const editPermissions = Array.isArray(user.editPermissions) ? user.editPermissions : String(user.editPermissions || '').split(',').filter(Boolean);
+        const permissions = Array.from(new Set(viewPermissions.concat(editPermissions)));
+        const field = function(label, value) {
+            return '<div class="um-mobile-detail-field"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value || '-') + '</strong></div>';
+        };
+        mobileUserDetailEl.innerHTML = '<section class="um-mobile-detail-panel" role="dialog" aria-modal="true" aria-labelledby="umMobileDetailTitle">' +
+            '<header class="um-mobile-detail-header"><button type="button" data-mobile-detail-close aria-label="Back to users"><i class="fas fa-arrow-left"></i></button>' +
+                '<h2 id="umMobileDetailTitle">User Details</h2><span class="um-mobile-detail-actions">' +
+                    (canEditUserManagement ? '<button type="button" data-mobile-detail-action="edit" aria-label="Edit user"><i class="fas fa-pen"></i></button><button type="button" data-mobile-detail-action="delete" aria-label="Delete user"><i class="fas fa-trash"></i></button>' : '') +
+                '</span></header>' +
+            '<div class="um-mobile-detail-content"><div class="um-mobile-detail-profile"><span class="um-mobile-avatar" aria-hidden="true">' + escapeHtml(userDisplayName(user).trim().charAt(0).toUpperCase() || '?') + '</span>' +
+                '<div><h3>' + escapeHtml(userDisplayName(user)) + '</h3><p>@' + escapeHtml(user.username || '-') + '</p><span class="pms-status-badge ' + statusClass(user.status) + '">' + escapeHtml(statusLabel(user.status)) + '</span></div></div>' +
+            '<section class="um-mobile-detail-section"><h3>Basic Information</h3>' +
+                field('Employee ID', user.employeeId) + field('Department', user.department) + field('Role', user.roleLabel || roleLabel(user.role)) +
+                field('Plant', user.plant) + field('Designation', designationLabel(user.designation)) + field('Reporting To', user.reportingManager) + field('Email', user.email) +
+            '</section><section class="um-mobile-detail-section"><h3>Area Access</h3>' +
+                (areas.length ? '<ul>' + areas.map(area => '<li>' + escapeHtml(area) + '</li>').join('') + '</ul>' : '<p>-</p>') +
+            '</section><section class="um-mobile-detail-section"><h3>Permissions</h3>' +
+                (permissions.length ? '<ul>' + permissions.map(permission => '<li>' + escapeHtml(String(permission).replace(/_/g, ' ')) + '</li>').join('') + '</ul>' : '<p>-</p>') +
+            '</section></div><button type="button" class="um-mobile-detail-close" data-mobile-detail-close>Close</button></section>';
+        mobileUserDetailEl.hidden = false;
+        document.body.classList.add('um-mobile-detail-open');
+        mobileUserDetailEl.querySelector('[data-mobile-detail-close]').focus();
+    }
+
+    function bindMobileUserList() {
+        if (!mobileUsersListEl || mobileUsersListEl.dataset.bound === 'true') return;
+        mobileUsersListEl.dataset.bound = 'true';
+        mobileUsersListEl.addEventListener('click', function(event) {
+            const more = event.target.closest('.um-mobile-user-more');
+            if (more) {
+                const menu = more.parentElement.querySelector('.um-mobile-user-menu');
+                const open = menu.hidden;
+                mobileUsersListEl.querySelectorAll('.um-mobile-user-menu').forEach(item => { item.hidden = true; });
+                menu.hidden = !open;
+                more.setAttribute('aria-expanded', String(open));
+                return;
+            }
+            const action = event.target.closest('[data-mobile-user-action]');
+            if (action) {
+                const user = cachedUsers.find(item => String(item.id) === String(action.dataset.id));
+                if (user && action.dataset.mobileUserAction === 'edit') openEditModal(user);
+                if (user && action.dataset.mobileUserAction === 'delete') openDeleteModal(user.id);
+                return;
+            }
+            const summary = event.target.closest('[data-mobile-user-detail]');
+            if (summary) {
+                const user = cachedUsers.find(item => String(item.id) === String(summary.dataset.mobileUserDetail));
+                if (user) openMobileUserDetail(user, summary);
+            }
+        });
+    }
+
+    function applyUserSearch() {
+        const query = String(userNameSearchEl ? userNameSearchEl.value : '').trim().toLowerCase();
+        const filtered = cachedUsers.filter(user => [user.name, user.username, user.employeeId, user.email].some(value => String(value || '').toLowerCase().includes(query)));
+        renderUsers(filtered);
+    }
+
+    if (userNameSearchEl) userNameSearchEl.addEventListener('input', applyUserSearch);
 
     function getSelectedValues(select) {
         if (!select) {
@@ -755,8 +935,11 @@
 
         if (!Array.isArray(users) || users.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#64748b;padding:14px;">No users found.</td></tr>';
+            renderMobileUsers([], userNameSearchEl && userNameSearchEl.value ? 'No users match your search.' : 'No users found.');
             return;
         }
+
+        renderMobileUsers(users);
 
         tableBody.innerHTML = users.map(function (u) {
             return '' +
@@ -764,7 +947,7 @@
                 '<td><i class="fas ' + userIcon(u.role) + '" style="margin-right:6px;color:#2563eb;"></i><strong>' + escapeHtml(userDisplayName(u)) + '</strong><div class="um-muted">@' + escapeHtml(u.username) + '</div></td>' +
                 '<td>' + escapeHtml(u.employeeId || '-') + '</td>' +
                 '<td>' + escapeHtml(u.department || '-') + '</td>' +
-                '<td>' + escapeHtml(u.area || '-') + '</td>' +
+                '<td>' + renderUserArea(u) + '</td>' +
                 '<td>' + escapeHtml(u.plant || '-') + '</td>' +
                 '<td>' + escapeHtml(designationLabel(u.designation)) + '</td>' +
                 '<td>' + escapeHtml(u.reportingManager || '-') + '</td>' +
@@ -801,12 +984,16 @@
             .then(function (data) {
                 if (data.status !== 'success') {
                     tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#b91c1c;padding:14px;">' + escapeHtml(data.message || 'Failed to load users.') + '</td></tr>';
+                    renderMobileUsers([], data.message || 'Failed to load users.');
                     return;
                 }
-                renderUsers(data.users);
+                cachedUsers = Array.isArray(data.users) ? data.users : [];
+                if (userNameSearchEl) userNameSearchEl.disabled = false;
+                renderUsers(cachedUsers);
             })
             .catch(function () {
                 tableBody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#b91c1c;padding:14px;">Error loading users.</td></tr>';
+                renderMobileUsers([], 'Unable to load users.');
             });
     }
 

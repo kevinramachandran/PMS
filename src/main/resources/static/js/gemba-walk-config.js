@@ -210,14 +210,15 @@ $(function() {
             '<section class="gw-observation" data-index="' + index + '">' +
             '<h3 class="gw-observation-title">' + title + '</h3>' +
             '<div class="gw-observation-grid">' +
-            '<input type="hidden" class="gw-picture-stored" value="' + escapeHtml(item.pictureImage) + '">' +
             '<div class="gw-form-group">' +
             '<label>Observation Description</label>' +
             '<textarea class="gw-observation-description" rows="2">' + escapeHtml(item.observationDescription) + '</textarea>' +
             '</div>' +
             '<div class="gw-form-group">' +
             '<label>Picture/Image</label>' +
-            '<input type="file" class="gw-picture-image" accept="image/*">' +
+            '<input type="file" id="gw-picture-file-' + index + '" class="gw-picture-image" accept="image/*">' +
+            '<input type="hidden" id="gw-picture-stored-' + index + '" class="gw-picture-stored" value="' + escapeHtml(item.pictureImage) + '">' +
+            '<div class="gw-current-attachment" aria-live="polite"></div>' +
             '</div>' +
             '<div class="gw-form-group">' +
             '<label>' + categoryLabel + '</label>' +
@@ -239,6 +240,8 @@ $(function() {
         const item = observation || {};
         $section.find('.gw-observation-description').val(item.observationDescription || '');
         $section.find('.gw-picture-stored').val(item.pictureImage || '');
+        window.PmsCurrentAttachment.render($section.find('.gw-current-attachment')[0], 'gemba-walk',
+            $section.find('.gw-picture-stored')[0], $section.find('.gw-picture-image')[0]);
         $section.find('.gw-gemba-category').val(item.gembaCategory || '');
         $section.find('.gw-life-saver-rule').val(item.lifeSaverRule || '');
         $section.find('.gw-status').val(item.status || 'Open');
@@ -568,6 +571,8 @@ $(function() {
             contentType: false,
             success: function(data) {
                 $section.find('.gw-picture-stored').val(data.storedName || '');
+                window.PmsCurrentAttachment.render($section.find('.gw-current-attachment')[0], 'gemba-walk',
+                    $section.find('.gw-picture-stored')[0], $section.find('.gw-picture-image')[0]);
             },
             error: function(xhr) {
                 setMessage(xhr.responseJSON?.error || 'Image upload failed.', 'error');

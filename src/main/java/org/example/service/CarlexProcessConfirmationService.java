@@ -124,6 +124,12 @@ public class CarlexProcessConfirmationService {
             String previousDepartment = trim(existing.department);
             String previousArea = trim(existing.areaOfGwProcessConfirmationConducted);
             assignmentHistoryService.validateTransition(false, previousAssignee, incoming.assignedTo, previousReassignedTo1, incoming.reassignedTo1, incoming.reassignment1Remark, previousReassignedTo2, incoming.reassignedTo2, incoming.reassignment2Remark);
+            if (!isBlank(incoming.zmObservationsJson) || !isBlank(incoming.pmObservationsJson) || !isBlank(incoming.qmObservationsJson)) {
+                org.example.util.DeletionGuard.checkRemoval(
+                        parseObservationRows("ZM", incoming.zmObservationsJson).size() < parseObservationRows("ZM", observationsJson(existing, "ZM")).size()
+                        || parseObservationRows("PM", incoming.pmObservationsJson).size() < parseObservationRows("PM", observationsJson(existing, "PM")).size()
+                        || parseObservationRows("QM", incoming.qmObservationsJson).size() < parseObservationRows("QM", observationsJson(existing, "QM")).size());
+            }
             copyEditableFields(existing, incoming);
             applyDefaults(existing, username, false);
             if (!previousDepartment.equalsIgnoreCase(trim(existing.department)))
