@@ -6,6 +6,38 @@
     border: 1px solid #e5e7eb;
 }
 
+.report-export-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .52);
+}
+
+.report-export-backdrop.is-open { display: flex; }
+.report-export-dialog { width: min(100%, 460px); border-radius: 14px; padding: 24px; background: #fff; box-shadow: 0 24px 70px rgba(15, 23, 42, .25); }
+.report-export-heading, .report-export-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.report-export-heading h2 { margin: 0 0 6px; color: #166534; font-size: 20px; }
+.report-export-heading p { margin: 0; color: #64748b; font-size: 14px; }
+.report-export-close { border: 0; background: transparent; color: #64748b; font-size: 28px; cursor: pointer; }
+.report-export-mode { display: flex; gap: 24px; margin: 22px 0 16px; color: #334155; }
+.report-export-mode label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.report-export-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.report-export-fields label { display: grid; gap: 7px; color: #475569; font-size: 13px; font-weight: 700; }
+.report-export-fields input { min-width: 0; height: 42px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 10px; font: inherit; }
+.report-export-fields .report-export-month { grid-column: 1 / -1; }
+.report-export-format { display: flex; gap: 24px; margin: 16px 0 8px; border: 0; padding: 0; color: #334155; }
+.report-export-format legend { margin-bottom: 9px; color: #475569; font-size: 13px; font-weight: 700; }
+.report-export-format label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.report-export-error { min-height: 20px; margin: 10px 0; color: #b91c1c; font-size: 13px; }
+.report-export-footer { justify-content: flex-end; }
+.report-export-cancel, .report-export-download { min-height: 40px; border-radius: 8px; padding: 0 15px; font-weight: 700; cursor: pointer; }
+.report-export-cancel { border: 1px solid #cbd5e1; background: #fff; color: #334155; }
+.report-export-download { border: 1px solid #064e3b; background: #064e3b; color: #fff; }
+
 .issue-board-title-row {
     display: flex;
     align-items: center;
@@ -20,6 +52,20 @@
 .issue-board-title-row h2 {
     font-size: 20px;
     letter-spacing: 0.01em;
+}
+
+.report-page-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.report-page-actions-footer {
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
 }
 
 .review-dates {
@@ -985,6 +1031,10 @@ body.issue-board-page .issue-drawer-backdrop {
     }
 
     .issue-add-button {
+        width: 100%;
+    }
+
+    .report-page-actions {
         width: 100%;
     }
 

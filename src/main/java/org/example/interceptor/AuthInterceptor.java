@@ -54,6 +54,9 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         boolean syncConfigurationUser = authService.isSyncConfigurationUser(username, role);
         request.setAttribute("syncConfigurationUser", syncConfigurationUser);
+        if (session != null) {
+            session.setAttribute("syncConfigurationUser", syncConfigurationUser);
+        }
 
         // Not logged in: APIs must return 401 JSON (not HTML redirect), pages redirect to login.
         if (username == null) {
@@ -69,12 +72,25 @@ public class AuthInterceptor implements HandlerInterceptor {
                 return false;
             }
 
+            if ("GET".equalsIgnoreCase(request.getMethod())
+                    && handler instanceof org.springframework.web.method.HandlerMethod loginMethod
+                    && loginMethod.getBeanType() == org.example.controller.WebController.class) {
+                String target = request.getRequestURI();
+                if (request.getQueryString() != null) target += "?" + request.getQueryString();
+                request.getSession(true).setAttribute("loginTarget", target);
+            }
             response.sendRedirect(request.getContextPath() + "/pms-login");
             return false;
         }
 
         if (path.startsWith("/sync-configuration") || path.startsWith("/api/cloud-sync")) {
-            if (!syncConfigurationUser) {
+            boolean syncExecution = (path.equals("/api/cloud-sync/run") && "POST".equals(request.getMethod()))
+                    || (path.equals("/api/cloud-sync/status") && "GET".equals(request.getMethod()))
+                    || (path.equals("/api/cloud-sync/identity") && "GET".equals(request.getMethod()))
+                    || (path.startsWith("/api/cloud-sync/data/") && "GET".equals(request.getMethod()))
+                    || (path.equals("/api/cloud-sync/push") && "POST".equals(request.getMethod()))
+                    || (path.startsWith("/api/cloud-sync/attachments/") && Set.of("GET", "PUT").contains(request.getMethod()));
+            if (!syncConfigurationUser && !(syncExecution && RoleAccess.isAdmin(role))) {
                 denyAccess(request, response);
                 return false;
             }
@@ -162,6 +178,19 @@ public class AuthInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    private boolean isCloudManagedMasterWrite(String path, String method) {
+        if (!Set.of("POST", "PUT", "DELETE").contains(method.toUpperCase(java.util.Locale.ROOT))) return false;
+        return path.startsWith("/api/dashboard-config/master-data/")
+                || path.startsWith("/api/dashboard-config/abnormality-master-data/")
+                || path.startsWith("/api/dashboard-config/gemba-walk-master-data/")
+                || path.startsWith("/api/dashboard-config/gemba-kaizen-master-data/")
+                || path.startsWith("/api/dashboard-config/process-master-data/")
+                || path.startsWith("/api/gemba-kaizen-config/records")
+                || path.startsWith("/api/gemba-walk-config/records")
+                || path.startsWith("/api/abnormality-reporting-config/records")
+                || path.startsWith("/api/carlex-process-confirmation/records");
+    }
+
     private String protectedPageKeyForRequest(HttpServletRequest request) {
         String protectedPageKey = resolveProtectedPageKey(request);
         return protectedPageKey == null ? "" : protectedPageKey;
@@ -199,16 +228,22 @@ public class AuthInterceptor implements HandlerInterceptor {
         boolean canViewHsCrossDailyConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_HS_CROSS_DAILY_CONFIGURATION);
         boolean canViewLsrTrackingConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LSR_TRACKING_CONFIGURATION);
         boolean canEditInfoPortalView = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW);
-        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW) || canEditInfoPortalView;
-        boolean canViewInfoPortalConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewInfoPortal = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL_VIEW)
+                || canEditInfoPortalView
+                || RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
+        boolean canViewInfoPortalConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_INFO_PORTAL)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_INFO_PORTAL);
         boolean canViewKpiTargetCrossColor = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_TARGET_CROSS_COLOR);
         boolean canViewKpiRenameDashboard = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_RENAME_DASHBOARD);
         boolean canViewKpiPlantName = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_KPI_PLANT_NAME);
-        boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
+        boolean canViewUserManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_USER_MANAGEMENT)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_USER_MANAGEMENT);
         boolean canViewLicenseManagement = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_LICENSE_MANAGEMENT);
-        boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
+        boolean canViewEmailConfiguration = RoleAccess.canViewPage(role, viewPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION)
+                || RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_EMAIL_CONFIGURATION);
         boolean canViewMasterDataGroup = canViewUserManagement || canViewEmailConfiguration || canViewLicenseManagement || canViewKpiPlantName
-                || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
+                || canViewInfoPortal || canViewInfoPortalConfiguration || canViewAbnormalityTrackerConfiguration || canViewGembaWalkConfiguration
                 || canViewLeadershipGembaTrackerConfiguration || canViewProcessConfirmationConfiguration;
         boolean canEditIssueBoardConfiguration = RoleAccess.canEditPage(role, editPermissions, RoleAccess.PAGE_ISSUE_BOARD_CONFIGURATION);
 

@@ -13,6 +13,55 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AbnormalitySaveRegressionTest {
+    @Test void standardUserGetsAreaHodAssigneeForSelectedDepartment() {
+        var repository = mock(AbnormalityReportingRecordRepository.class);
+        var masters = mock(AbnormalityMasterDataService.class);
+        var plants = mock(PlantMasterDataService.class);
+        var users = mock(AppUserRepository.class);
+        var email = mock(EmailConfigService.class);
+
+        AppUser actor = new AppUser();
+        actor.setUsername("reporter"); actor.setRole("USER"); actor.setStatus("ACTIVE");
+        actor.setDepartment("Dep1"); actor.setArea("Proc1");
+        AppUser areaHod = new AppUser();
+        areaHod.setUsername("area.hod"); areaHod.setName("Area HoD"); areaHod.setRole("USER");
+        areaHod.setStatus("ACTIVE"); areaHod.setDepartment("Dep1"); areaHod.setArea("Proc1");
+        areaHod.setDesignation("AREA HOD");
+        when(users.findAll()).thenReturn(List.of(actor, areaHod));
+        when(users.findByUsernameIgnoreCase("reporter")).thenReturn(Optional.of(actor));
+        var service = new AbnormalityReportingConfigService(repository, masters, plants, users, email,
+                new AssignmentHistoryService(mock(AssignmentHistoryRepository.class)));
+
+        var options = service.departmentOptions("reporter", "USER", "Dep1", "Proc1", null);
+
+        @SuppressWarnings("unchecked")
+        var assignable = (List<java.util.Map<String, String>>) options.get("assignableUsers");
+        assertEquals(1, assignable.size());
+        assertEquals("area.hod", assignable.get(0).get("username"));
+    }
+
+    @Test void recognizesCommonHodDesignationVariantsForAssignment() {
+        for (String designation : List.of("Are Hod", "Area Hod", "AREA_HOD", "Area Head", "AREAHEAD")) {
+            var repository = mock(AbnormalityReportingRecordRepository.class);
+            var users = mock(AppUserRepository.class);
+            AppUser actor = new AppUser();
+            actor.setUsername("reporter"); actor.setRole("USER"); actor.setStatus("ACTIVE");
+            AppUser areaHod = new AppUser();
+            areaHod.setUsername("hod"); areaHod.setRole("USER"); areaHod.setStatus("ACTIVE");
+            areaHod.setDepartment("Dep1"); areaHod.setArea("Proc1"); areaHod.setDesignation(designation);
+            when(users.findAll()).thenReturn(List.of(actor, areaHod));
+            when(users.findByUsernameIgnoreCase("reporter")).thenReturn(Optional.of(actor));
+            var service = new AbnormalityReportingConfigService(repository,
+                    mock(AbnormalityMasterDataService.class), mock(PlantMasterDataService.class), users,
+                    mock(EmailConfigService.class), new AssignmentHistoryService(mock(AssignmentHistoryRepository.class)));
+
+            var options = service.departmentOptions("reporter", "USER", "Dep1", "Proc1", null);
+            @SuppressWarnings("unchecked")
+            var assignable = (List<java.util.Map<String, String>>) options.get("assignableUsers");
+            assertEquals(1, assignable.size(), designation);
+        }
+    }
+
     @Test void createAndUpdateWithEmptyReassignmentSlotsDoNotThrow() {
         var repository = mock(AbnormalityReportingRecordRepository.class);
         var masters = mock(AbnormalityMasterDataService.class);

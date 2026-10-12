@@ -1,0 +1,32 @@
+﻿{
+    "onprem":  {
+                   "service/launch-app.ps1":  "3ee1cb0d1c47b15cebca07b0c2116e4e15833e406f3f5be96a02711dc643c13d",
+                   "service/instance-config.ps1":  "4794e5cca143609dbf36baa18b52ce4d678690c95da059d5dd8b2572a98b1e94",
+                   "service/start-service.ps1":  "0173e83b5dde726c2da9ece1d8e56001479f0aa28fa8b3253c7c48c43cbcfbe6",
+                   "service/launch-app.bat":  "e18c0071f460d6211fc5461e8d8df78e86b8acf976bed7be59016894359a417a",
+                   "README.md":  "3ca3b884a2765b35036eedc70d1c4b86b84a9fa4dd61b6d4d955be017aeb1c0a",
+                   "service/stop-app.ps1":  "13be1d3ed62023bfd5776c153259366d7b40ae3fcd03720ff803154ff951217c",
+                   "service/remove-service.ps1":  "d64d4fb204fe8c5ba41aa83a9fa2868912de4db85ce26022944967d8ef804e27",
+                   "service/brewery-pms.xml":  "b9dcba946be3ef882bf9e48ceb0dafcf886f41c0b5a5123710c3561f44bf1766",
+                   "service/start.bat":  "089c36517f15d5385a0d1a47f76bfb207faa0490d75e5144749de4ec56510571",
+                   "service/port-config.ps1":  "398ad01184861e59592ca4c55ab976c0882c55fa4f97ab9cbd2bed5489dc3897",
+                   "service/install-service.ps1":  "2c347b834b2b11a3c7c8761f5d8f8a3d8e4d9f6cc90790a28258b92cf80c5202",
+                   "service/stop.bat":  "6e945e0e7538d54307c9dc022764e013dfa05198e47d184cf5931d075b3ad6ee",
+                   "config/brewery-pms.env.example":  "e8e7cab903e747035156dd1274109a0921e1ec6318c9d3bc1747e415d7b4670a"
+               },
+    "cloud":  {
+                  "service/launch-app.ps1":  "c0047a2e3726dd2ba729ffac6739edbfe23733d87b01500f4a72bbdb6437c994",
+                  "service/instance-config.ps1":  "4794e5cca143609dbf36baa18b52ce4d678690c95da059d5dd8b2572a98b1e94",
+                  "service/start-service.ps1":  "63ec338c8a10880d97251ee91c6405d8ad21a36d3a89205e71779201211830b7",
+                  "service/launch-app.bat":  "e18c0071f460d6211fc5461e8d8df78e86b8acf976bed7be59016894359a417a",
+                  "README.md":  "22ccea152bf2b559042c2a8796a02a09f6cb5ae1caf16f15e7c62da823b9eb8b",
+                  "service/stop-app.ps1":  "13be1d3ed62023bfd5776c153259366d7b40ae3fcd03720ff803154ff951217c",
+                  "service/remove-service.ps1":  "d64d4fb204fe8c5ba41aa83a9fa2868912de4db85ce26022944967d8ef804e27",
+                  "service/brewery-pms.xml":  "b9dcba946be3ef882bf9e48ceb0dafcf886f41c0b5a5123710c3561f44bf1766",
+                  "service/start.bat":  "089c36517f15d5385a0d1a47f76bfb207faa0490d75e5144749de4ec56510571",
+                  "service/port-config.ps1":  "398ad01184861e59592ca4c55ab976c0882c55fa4f97ab9cbd2bed5489dc3897",
+                  "service/install-service.ps1":  "2c347b834b2b11a3c7c8761f5d8f8a3d8e4d9f6cc90790a28258b92cf80c5202",
+                  "service/stop.bat":  "6e945e0e7538d54307c9dc022764e013dfa05198e47d184cf5931d075b3ad6ee",
+                  "config/brewery-pms.env.example":  "f996c7a97a8f37d596b6eedd13e7961c5da54aa44eca18f2b83775bebc66833a"
+              }
+}

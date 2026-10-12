@@ -94,6 +94,21 @@ $(function() {
         }
     }
 
+    function observationDescriptions(record, groupKey) {
+        const jsonRows = safeParse(record[GROUPS[groupKey].jsonField]);
+        const rows = jsonRows.length ? jsonRows : (Array.isArray(record.observations) ? record.observations
+            .filter(function(item) { return String(item.groupType || '').toLowerCase() === groupKey; }) : []);
+        const descriptions = rows.map(function(item) { return String(item.description || '').trim(); }).filter(Boolean);
+        if (descriptions.length) return descriptions;
+        return LEGACY_FIELDS[groupKey].map(function(fields) { return String(record[fields[0]] || '').trim(); }).filter(Boolean);
+    }
+
+    function observationDescriptionCell(record, groupKey) {
+        return observationDescriptions(record, groupKey).map(function(description) {
+            return '<div>' + esc(description) + '</div>';
+        }).join('');
+    }
+
     function fieldHtml(field) {
         const id = field[0], label = field[1], type = field[2];
         let input = type === 'textarea'
@@ -293,13 +308,17 @@ $(function() {
                 '<div class="carlex-form-group carlex-wide"><label>' + group.label + ' ' + (index + 1) + ' Counter measure actions</label><textarea class="pc-observation-actions" rows="2" placeholder="Enter counter measure actions…">' + esc(item.counterMeasureActions) + '</textarea></div>' +
                 '<div class="carlex-form-group"><label>' + group.label + ' ' + (index + 1) + ' Status</label><select class="pc-observation-status">' +
                 '<option value="">Select status</option><option value="P">P</option><option value="D">D</option><option value="C">C</option><option value="A">A</option></select></div>' +
-                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><label class="carlex-image-picker"><i class="fas fa-image" aria-hidden="true"></i><span>' + (item.observationImage ? 'Replace' : 'Choose') + '</span><input class="pc-observation-image" type="file" accept="image/*" capture="environment" aria-label="' + group.label + ' ' + (index + 1) + ' observation image"><input class="pc-observation-image-stored" type="hidden" value="' + escAttribute(item.observationImage) + '"></label></div>' +
+                '<div class="carlex-form-group carlex-observation-image-group"><label>' + group.label + ' ' + (index + 1) + ' Observation Image</label><label class="carlex-image-picker"><i class="fas fa-image" aria-hidden="true"></i><span>' + (item.observationImage ? 'Replace' : 'Choose') + '</span><input id="pc-image-file-' + groupKey + '-' + index + '" class="pc-observation-image" type="file" accept="image/*" capture="environment" aria-label="' + group.label + ' ' + (index + 1) + ' observation image"><input id="pc-image-stored-' + groupKey + '-' + index + '" class="pc-observation-image-stored" type="hidden" value="' + escAttribute(item.observationImage) + '"></label><div class="pc-current-attachment" aria-live="polite"></div></div>' +
                 '<div class="carlex-observation-actions">' + remove + '</div>' +
                 '</div>';
         }).join('');
         $('#' + groupKey + 'ObservationList').html(rows);
         $('#' + groupKey + 'ObservationList .carlex-observation-row').each(function(index) {
-            $(this).find('.pc-observation-status').val((observationState[groupKey][index] || {}).status || '');
+            const row = this;
+            $(row).find('.pc-observation-status').val((observationState[groupKey][index] || {}).status || '');
+            window.PmsCurrentAttachment.render(row.querySelector('.pc-current-attachment'), 'process-confirmation',
+                row.querySelector('.pc-observation-image-stored'), row.querySelector('.pc-observation-image'),
+                row.querySelector('.carlex-image-picker span'));
         });
     }
 
@@ -429,14 +448,14 @@ $(function() {
             return '<tr><td>' + (i + 1) + '</td><td>' + esc(r.id) + '</td><td>' + esc(formatDate(r.dateOfGwProcessConfirmationConducted)) + '</td>' +
                 '<td>' + esc(r.name) + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.department) + '</td>' +
                 '<td>' + esc(r.areaOfGwProcessConfirmationConducted) + '</td><td>' + esc(r.areaResponsibility) + '</td><td>' + esc(r.assignedTo) + '</td>' +
-                '<td>' + esc(r.zm1Description) + '</td><td>' + esc(r.pm1Description) + '</td><td>' + esc(r.qm1Description) + '</td>' +
+                '<td class="carlex-observation-description">' + observationDescriptionCell(r, 'zm') + '</td>' +
+                '<td class="carlex-observation-description">' + observationDescriptionCell(r, 'pm') + '</td>' +
+                '<td class="carlex-observation-description">' + observationDescriptionCell(r, 'qm') + '</td>' +
                 '<td>' + esc(r.zm1Status || r.pm1Status || r.qm1Status) + '</td><td>' + imageFields.map(function(field) {
                     return attachmentIcon('process-confirmation', r[field], r[field]);
                 }).join(' ') + '</td><td class="assignment-history-cell" data-record-id="' + r.id + '">Loading...</td>' +
-                '<td class="carlex-actions"><button class="carlex-view" data-id="' + r.id + '" title="View"><i class="fas fa-eye"></i></button>' +
-                '<button class="carlex-edit" data-id="' + r.id + '" title="Edit"><i class="fas fa-pen"></i></button>' +
-                '<button class="carlex-delete" data-id="' + r.id + '" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
-        }).join('') || '<tr><td colspan="16">No records found.</td></tr>');
+                '</tr>';
+        }).join('') || '<tr><td colspan="15">No records found.</td></tr>');
         $('.assignment-history-cell').each(function() {
             const cell = $(this);
             $.getJSON(API + '/' + cell.data('record-id') + '/history', function(entries) {
@@ -467,7 +486,7 @@ $(function() {
             records = data.records || data || [];
             render();
         }).fail(function() {
-            $('#carlexRecordsBody').html('<tr><td colspan="16">Unable to load records.</td></tr>');
+            $('#carlexRecordsBody').html('<tr><td colspan="15">Unable to load records.</td></tr>');
         });
     }
 
@@ -484,6 +503,7 @@ $(function() {
         $('#carlexSaveBtn').toggle(!readOnly);
         $('#carlexCancelBtn').text(readOnly ? 'Close' : 'Cancel');
         $('#carlexFields input, #carlexFields select, #carlexFields textarea, .carlex-add-observation, .carlex-remove-observation').prop('disabled', readOnly);
+        $('#carlexFields .current-attachment-remove').toggle(!readOnly);
         AssignmentWorkflow.refresh();
         $('#carlexBackdrop, #carlexForm').attr('aria-hidden', 'false');
         $('.carlex-config-page').addClass('carlex-drawer-open');
@@ -615,6 +635,10 @@ $(function() {
             success: function(data) {
                 hidden.val(data.storedName || '');
                 $(input).siblings('span').text('Replace');
+                const row = input.closest('.carlex-observation-row');
+                window.PmsCurrentAttachment.render(row.querySelector('.pc-current-attachment'), 'process-confirmation',
+                    row.querySelector('.pc-observation-image-stored'), input,
+                    row.querySelector('.carlex-image-picker span'));
             },
             error: function(xhr) {
                 $(input).siblings('span').text(hidden.val() ? 'Replace' : 'Choose');
@@ -634,6 +658,23 @@ $(function() {
             $('#sidebar').toggleClass('collapsed');
             $('.main-content').toggleClass('expanded');
         }
+    });
+
+    $('#carlexExportBtn').on('click', function() {
+        window.ReportExport.open({
+            title: 'Process Confirmation', filename: 'process-confirmation', records: function() { return records; },
+            dateValue: function(record) { return record.dateOfGwProcessConfirmationConducted; },
+            columns: [
+                { label: 'ID', value: function(r) { return r.id; } }, { label: 'Date', value: function(r) { return r.dateOfGwProcessConfirmationConducted; } },
+                { label: 'Name', value: function(r) { return r.name; } }, { label: 'Email', value: function(r) { return r.email; } },
+                { label: 'Department', value: function(r) { return r.department; } }, { label: 'Area', value: function(r) { return r.areaOfGwProcessConfirmationConducted; } },
+                { label: 'Responsibility', value: function(r) { return r.areaResponsibility; } }, { label: 'Assigned To', value: function(r) { return r.assignedTo; } },
+                { label: 'ZM Observations', value: function(r) { return observationDescriptions(r, 'zm').join('; '); } },
+                { label: 'PM Observations', value: function(r) { return observationDescriptions(r, 'pm').join('; '); } },
+                { label: 'QM Observations', value: function(r) { return observationDescriptions(r, 'qm').join('; '); } },
+                { label: 'Status', value: function(r) { return r.zm1Status || r.pm1Status || r.qm1Status; } }
+            ]
+        });
     });
 
     buildForm();

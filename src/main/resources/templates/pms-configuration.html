@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMS Configuration � Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=20261008-user-search-header">
-    <link rel="stylesheet" href="/css/settings.css">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
-    <link rel="stylesheet" href="/css/data-sync.css?v=2">
-    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
-    <script src="/js/permission-ui.js?v=20261008" defer></script>
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/settings.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/data-sync.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261012-api-sync">
+    <script src="/js/permission-ui.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261012-api-sync">
+    <script src="/js/mobile-responsive.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012-api-sync">
+    <script src="/js/delete-access.js?v=20261012-api-sync" defer></script>
 </head>
-<body class="modern-shell dashboard-bg user-management-page" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-can-edit-user-management=${session.canEditUserManagement}">
+<body class="modern-shell dashboard-bg user-management-page" th:attr="data-can-delete-records=${canDeleteRecords},data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-can-edit-user-management=${session.canEditUserManagement}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -60,7 +64,7 @@
                         <div>
                             <span class="um-intro-kicker">Access Control</span>
                             <h2>Assign page-level access with clearer View and Edit rules</h2>
-                            <p>View opens the page and lets users inspect data. Edit enables save, update, upload, and delete actions, and always includes View automatically.</p>
+                            <p>View opens the page and lets users inspect data. Edit enables save, update, and upload actions, and always includes View automatically.</p>
                         </div>
                         <div class="um-intro-chips">
                             <span class="um-intro-chip view"><i class="fas fa-eye"></i> View for read access</span>
@@ -245,6 +249,7 @@
 
                 </div>
             </div>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
         </main>
     </div>
 
@@ -367,12 +372,12 @@
     <datalist id="departmentOptions"></datalist>
     <datalist id="areaOptions"></datalist>
 
-    <script src="/js/dashboard.js"></script>
-    <script src="/js/pms-configuration.js?v=20261008-column-resize"></script>
+    <script src="/js/dashboard.js?v=20261012-api-sync"></script>
+    <script src="/js/pms-configuration.js?v=20261012-api-sync"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
-    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
-<script src="/js/master-cloud-routing.js?v=20261008"></script>
+<script src="/js/ui-shell.js?v=20261012-api-sync"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261012-api-sync"></script>
+<script src="/js/master-cloud-routing.js?v=20261012-api-sync"></script>
 </body>
 </html>
 

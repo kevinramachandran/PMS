@@ -1,0 +1,17 @@
+name: Release workflow guards
+on:
+  push:
+    branches: [cloud-minimal-ui, fix/pms-dashboard-permissions-license-20261009]
+    paths: ['tools/release/**', '.github/workflows/release-guards.yml']
+  pull_request:
+    paths: ['tools/release/**', '.github/workflows/release-guards.yml']
+  workflow_dispatch:
+jobs:
+  guards:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tools/release/release.test.cjs

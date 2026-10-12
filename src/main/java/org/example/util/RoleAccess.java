@@ -72,6 +72,8 @@ public final class RoleAccess {
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
+            PAGE_USER_MANAGEMENT,
+            PAGE_EMAIL_CONFIGURATION,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
             PAGE_KPI_PLANT_NAME
@@ -94,6 +96,8 @@ public final class RoleAccess {
             PAGE_LSR_TRACKING_CONFIGURATION,
             PAGE_INFO_PORTAL_VIEW,
             PAGE_INFO_PORTAL,
+            PAGE_USER_MANAGEMENT,
+            PAGE_EMAIL_CONFIGURATION,
             PAGE_KPI_TARGET_CROSS_COLOR,
             PAGE_KPI_RENAME_DASHBOARD,
             PAGE_KPI_PLANT_NAME
@@ -271,6 +275,7 @@ public final class RoleAccess {
         }
 
         return switch (config.trim().toLowerCase(Locale.ROOT)) {
+            case "user-management" -> PAGE_USER_MANAGEMENT;
             case "metrics-data" -> PAGE_PRODUCTION_METRICS_DATA;
             case "issue-board" -> PAGE_ISSUE_BOARD_CONFIGURATION;
             case "master-gemba-walk" -> PAGE_GEMBA_WALK_CONFIGURATION;

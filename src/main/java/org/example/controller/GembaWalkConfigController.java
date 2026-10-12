@@ -97,7 +97,11 @@ public class GembaWalkConfigController {
         if (!canView(session) && !canViewReporting(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), department, location, recordId)));
+        return ResponseEntity.ok(Map.of("options", service.options(username(session), optionsRole(session), department, location, recordId)));
+    }
+
+    private String optionsRole(HttpSession session) {
+        return canEdit(session) ? RoleAccess.ADMIN : role(session);
     }
 
     private boolean canEdit(HttpSession session) {

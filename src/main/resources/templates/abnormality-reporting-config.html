@@ -3,20 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abnormality Reporting - Carlsberg Brewery</title>
+    <title>Abnormality - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
-    <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
-    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20260921-mutation-fixes">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/issue-board.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/attachment-preview.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/abnormality-reporting-config.css?v=20261012-api-sync">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
-        <link rel="stylesheet" href="/css/data-sync.css?v=2">
-    <link rel="stylesheet" href="/css/data-sync.css?v=2">
-    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
-    <script src="/js/permission-ui.js?v=20261008" defer></script>
+<link rel="stylesheet" href="/css/assignment-workflow.css?v=20261012-api-sync">
+        <link rel="stylesheet" href="/css/data-sync.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/data-sync.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261012-api-sync">
+    <script src="/js/permission-ui.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261012-api-sync">
+    <script src="/js/mobile-responsive.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012-api-sync">
+    <script src="/js/delete-access.js?v=20261012-api-sync" defer></script>
 </head>
-<body class="modern-shell dashboard-bg abnormality-reporting-config-page" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
+<body class="modern-shell dashboard-bg abnormality-reporting-config-page" th:attr="data-can-delete-records=${canDeleteRecords},data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -38,7 +45,7 @@
                 <button id="sidebarToggle" class="sidebar-toggle-btn" type="button" aria-label="Toggle sidebar">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Abnormality Reporting</h1>
+                <h1>Abnormality</h1>
             </div>
             <div class="header-right">
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -73,13 +80,16 @@
                                 <th>Date Closed</th>
                                 <th>Status</th>
                                 <th>Assignment History</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="abnormalityReportingRecordsBody">
-                            <tr><td colspan="18" class="ar-empty">Loading records...</td></tr>
+                            <tr><td colspan="17" class="ar-empty">Loading records...</td></tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="report-page-actions report-page-actions-footer">
+                    <button type="button" id="abnormalityExportBtn" class="issue-add-button"><i class="fas fa-file-csv"></i><span>Download</span></button>
+                    
                 </div>
             </section>
 
@@ -143,6 +153,7 @@
                         <label for="pictureImage">Picture/Image</label>
                         <input type="file" id="pictureImage" name="pictureImage" accept="image/png,image/jpeg">
                         <input type="hidden" id="pictureImageStored">
+                        <div id="pictureImageCurrent" aria-live="polite"></div>
                     </div>
                     <div class="form-group">
                         <label for="abnormalityDefectType">Abnormality/Defect Type</label>
@@ -175,17 +186,19 @@
             </form>
         </div>
 
-        <footer class="footer">
-            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-        </footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
 
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/abnormality-reporting-config.js?v=20261008-permissions"></script>
+<script src="/js/assignment-workflow.js?v=20261012-api-sync"></script><script src="/js/assignment-history.js?v=20261012-api-sync"></script><script src="/js/attachment-preview.js?v=20261012-api-sync"></script><script src="/js/abnormality-reporting-config.js?v=20261012-api-sync"></script>
+
+<script src="/js/pdf-report.js?v=20261012-api-sync"></script>
+
+<script src="/js/report-export.js?v=20261012-api-sync"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
-<script src="/js/master-cloud-routing.js?v=20261008"></script>
+<script src="/js/ui-shell.js?v=20261012-api-sync"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261012-api-sync"></script>
+<script src="/js/master-cloud-routing.js?v=20261012-api-sync"></script>
 </body>
 </html>
 

@@ -34,6 +34,7 @@ public class DailyPerformanceService {
         LocalDate today = LocalDate.now();
         DailyPerformance existing = repository.findByDate(today).orElseGet(DailyPerformance::new);
 
+        org.example.util.DeletionGuard.checkRemoval(input.getFields() != null && existing.getFields() != null && input.getFields().size() < existing.getFields().size());
         existing.setDate(today);
         existing.setMonthTarget(input.getMonthTarget() != null ? input.getMonthTarget() : (existing.getMonthTarget() != null ? existing.getMonthTarget() : 0.0));
         existing.setActualMtd(input.getActualMtd() != null ? input.getActualMtd() : (existing.getActualMtd() != null ? existing.getActualMtd() : 0.0));

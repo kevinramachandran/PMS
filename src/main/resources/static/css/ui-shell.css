@@ -172,8 +172,10 @@ body.modern-shell .top-header {
     position: fixed !important;
     left: 0 !important;
     top: 0 !important;
+    bottom: 0 !important;
     width: var(--sidebar-width) !important;
-    height: 100vh !important;
+    /* Anchor both edges so page zoom cannot leave a gap below navigation. */
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     overflow-y: auto !important;
@@ -257,7 +259,7 @@ body.modern-shell .top-header {
 .main-content {
     margin-left: var(--sidebar-width) !important;
     width: calc(100% - var(--sidebar-width)) !important;
-    padding-bottom: 42px !important;
+    padding-bottom: 0 !important;
 }
 
 .sidebar.collapsed {
@@ -386,35 +388,79 @@ table th.pms-cell-center {
     border: none !important;
 }
 
-.footer,
-body.modern-shell .footer {
-    position: fixed !important;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 30px !important;
-    margin: 0 !important;
-    padding: 0 8px !important;
-    border-top: 1px solid #dddddd;
+/* One flowing footer for both short configuration pages and long reports. */
+body .main-content {
+    /* dashboard.css scales desktop pages to 90%; fill the visible viewport. */
+    min-height: calc(100vh / 0.9) !important;
+    display: flex;
+    flex-direction: column;
+}
+
+body .main-content > .app-footer {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 56px !important;
+    margin: auto 0 0 !important;
+    padding: 12px 20px !important;
+    border-top: 1px solid #dce5df;
     background: #ffffff !important;
     display: flex !important;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
     justify-content: center !important;
     align-items: center !important;
-    gap: 8px;
-    z-index: 1300;
+    gap: 8px 16px;
+    /* Flex-item stacking keeps the fixed watermark behind the legal text. */
+    z-index: 11;
+    box-sizing: border-box;
 }
 
-.footer-brand-logo,
-.footer img {
-    height: 18px !important;
+body .app-footer .footer-brand {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    margin: 0;
+}
+
+body .app-footer .footer-brand-logo {
+    display: block;
+    height: 44px !important;
     width: auto;
-    opacity: 0.5 !important;
+    max-width: 112px;
+    object-fit: contain;
+    opacity: 1 !important;
 }
 
-.footer p {
+body .app-footer p {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px 12px;
+    margin: 0;
     font-size: 11px !important;
-    color: #6b7280 !important;
+    line-height: 1.6;
+    color: #526459 !important;
+    text-align: center;
+}
+
+.app-footer a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.app-footer a:hover { color: var(--pms-primary); }
+.app-footer a:focus-visible { outline: 2px solid var(--pms-primary); outline-offset: 3px; }
+
+@media (max-width: 1024px) {
+    body:not(.kpi-tv-layout) .main-content { min-height: 100vh !important; }
+}
+
+@media (max-width: 600px) {
+    body .main-content > .app-footer { padding: 12px 16px !important; gap: 6px; }
+    body .app-footer p { width: 100%; }
+    body .app-footer p > span:first-child { width: 100%; }
 }
 
 .pms-toast {

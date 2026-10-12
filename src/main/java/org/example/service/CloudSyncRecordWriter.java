@@ -26,8 +26,46 @@ public class CloudSyncRecordWriter {
         this.mapper = mapper; this.references = references; this.users = users;
     }
 
+    public com.fasterxml.jackson.databind.node.ArrayNode assignmentHistory(String module, long recordId) {
+        var result = mapper.createArrayNode();
+        for (var entry : em.createQuery("from AssignmentHistory h where h.module = :module and h.recordId = :recordId order by h.assignedAt, h.id", AssignmentHistory.class)
+                .setParameter("module", module).setParameter("recordId", recordId).getResultList()) {
+            ObjectNode row = mapper.valueToTree(entry);
+            row.remove(List.of("id", "module", "recordId"));
+            result.add(row);
+        }
+        return result;
+    }
+
+    private void mergeAssignmentHistory(String module, long recordId, com.fasterxml.jackson.databind.JsonNode incoming) {
+        if (incoming == null) return;
+        if (!incoming.isArray()) throw new IllegalArgumentException("Assignment history must be an array");
+        var existing = assignmentHistory(module, recordId);
+        for (var row : incoming) {
+            if (!row.isObject()) throw new IllegalArgumentException("Assignment history entry must be an object");
+            ObjectNode clean = ((ObjectNode) row).deepCopy();
+            clean.remove(List.of("id", "module", "recordId"));
+            AssignmentHistory entry = mapper.convertValue(clean, AssignmentHistory.class);
+            ObjectNode canonical = mapper.valueToTree(entry);
+            canonical.remove(List.of("id", "module", "recordId"));
+            boolean present = false;
+            for (var previous : existing) if (previous.equals(canonical)) { present = true; break; }
+            if (present) continue;
+            entry.setModule(module); entry.setRecordId(recordId);
+            em.persist(entry);
+            existing.add(canonical);
+        }
+        em.flush();
+    }
+
     public List<?> rows(Class<?> type, String category) {
-        List<?> result = em.createQuery("from " + type.getSimpleName(), type).getResultList();
+        List<?> result;
+        if (hasField(type, "category")) {
+            result = em.createQuery("from " + type.getSimpleName() + " e where e.category = :category", type)
+                    .setParameter("category", category.trim().toUpperCase(Locale.ROOT).replace('-', '_')).getResultList();
+        } else {
+            result = em.createQuery("from " + type.getSimpleName(), type).getResultList();
+        }
         if (type == CarlexProcessConfirmation.class) for (Object item : result) {
             CarlexProcessConfirmation record = (CarlexProcessConfirmation) item;
             record.zmObservationsJson = CarlexProcessConfirmationService.cloudObservationsJson(mapper, record, "ZM");
@@ -35,6 +73,55 @@ public class CloudSyncRecordWriter {
             record.qmObservationsJson = CarlexProcessConfirmationService.cloudObservationsJson(mapper, record, "QM");
         }
         return result;
+    }
+
+    public List<?> rowsForImport(Class<?> type, String category) {
+        // Master identities are shared across categories within each table.
+        return hasField(type, "category") ? em.createQuery("from " + type.getSimpleName(), type).getResultList()
+                : rows(type, category);
+    }
+
+    /** Remove local rows which are absent from a successfully imported cloud snapshot. */
+    public int deleteMissing(Class<?> type, String category, Set<Long> sourceIds) {
+        int deleted = 0;
+        for (Object item : new ArrayList<>(rows(type, category))) {
+            Long id = mapper.valueToTree(item).path("id").asLong();
+            if (sourceIds.contains(id)) continue;
+            if (item instanceof AppUser user && users.isReservedForCloudSync(user.getUsername())) continue;
+            em.remove(em.contains(item) ? item : em.merge(item));
+            deleted++;
+        }
+        em.flush();
+        em.clear();
+        return deleted;
+    }
+
+    public int deleteMissingUsers(Set<String> sourceUsernames) {
+        int deleted = 0;
+        for (Object item : new ArrayList<>(rows(AppUser.class, ""))) {
+            AppUser user = (AppUser) item;
+            if (sourceUsernames.stream().anyMatch(name -> name.equalsIgnoreCase(user.getUsername()))) continue;
+            if (users.isReservedForCloudSync(user.getUsername())) continue;
+            em.remove(em.contains(user) ? user : em.merge(user));
+            deleted++;
+        }
+        em.flush();
+        em.clear();
+        return deleted;
+    }
+
+    /** Delete replaceable local users so a cloud snapshot can be re-imported as a clean set. */
+    public int deleteAllUsersForCloudReplacement() {
+        int deleted = 0;
+        for (Object item : new ArrayList<>(rows(AppUser.class, ""))) {
+            AppUser user = (AppUser) item;
+            if (users.isReservedForCloudSync(user.getUsername())) continue;
+            em.remove(em.contains(user) ? user : em.merge(user));
+            deleted++;
+        }
+        em.flush();
+        em.clear();
+        return deleted;
     }
 
     /** Reconcile scoped duplicates before writing authoritative IDs, in the file's transaction. */
@@ -103,6 +190,7 @@ public class CloudSyncRecordWriter {
         if (id != null && id <= 0) throw new IllegalArgumentException("Cloud IDs must be positive when supplied");
         Object previous = id == null ? null : em.find(type, id);
         ObjectNode payload = references.payload(type, input);
+        payload.remove("assignmentHistory");
         if (hasField(type, "category")) {
             String normalized = Objects.toString(category, "").trim().toUpperCase(Locale.ROOT).replace('-', '_');
             if (normalized.isBlank()) throw new IllegalArgumentException("Master category is required");
@@ -112,8 +200,8 @@ public class CloudSyncRecordWriter {
         Object value = mapper.convertValue(payload, type);
         if (value instanceof AppUser user) users.prepareCloudUser(user, (AppUser) previous);
         if (value instanceof GembaWalkRecord walk) {
-            walk.setCreatedAt(previous instanceof GembaWalkRecord old ? old.getCreatedAt() : LocalDateTime.now());
-            walk.setUpdatedAt(LocalDateTime.now());
+            if (walk.getCreatedAt() == null) walk.setCreatedAt(previous instanceof GembaWalkRecord old ? old.getCreatedAt() : LocalDateTime.now());
+            if (walk.getUpdatedAt() == null) walk.setUpdatedAt(LocalDateTime.now());
             Set<Long> seen = new HashSet<>();
             for (GembaWalkObservation observation : walk.getObservations()) {
                 Long childId = observation.getId();
@@ -154,6 +242,11 @@ public class CloudSyncRecordWriter {
                 }
             }
         }
+        String historyModule = type == GembaWalkRecord.class ? "gemba-walk"
+                : type == GembaKaizenRecord.class ? "gemba-kaizen"
+                : type == AbnormalityReportingRecord.class ? "abnormality-reporting"
+                : type == CarlexProcessConfirmation.class ? "carlex-process-confirmation" : null;
+        if (historyModule != null) mergeAssignmentHistory(historyModule, id, input.get("assignmentHistory"));
         // Native ID writes must not leave stale managed entities or child collections behind.
         em.clear();
         return id;

@@ -43,7 +43,11 @@ public class CarlexProcessConfirmationController {
         if (!canView(session)) {
             return forbidden();
         }
-        return ResponseEntity.ok(Map.of("options", service.options(username(session), role(session), department, area, recordId)));
+        return ResponseEntity.ok(Map.of("options", service.options(username(session), optionsRole(session), department, area, recordId)));
+    }
+
+    private String optionsRole(HttpSession session) {
+        return canEdit(session) ? RoleAccess.ADMIN : role(session);
     }
 
     @GetMapping("/records/{id}/history")
@@ -116,6 +120,12 @@ public class CarlexProcessConfirmationController {
 
     private boolean canView(HttpSession session) {
         return RoleAccess.canViewPage(role(session), permissions(session), RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION);
+    }
+
+    private boolean canEdit(HttpSession session) {
+        Object value = session == null ? null : session.getAttribute("editPermissions");
+        Set<String> edits = value instanceof Set<?> ? ((Set<?>) value).stream().map(String::valueOf).collect(java.util.stream.Collectors.toSet()) : Set.of();
+        return RoleAccess.canEditPage(role(session), edits, RoleAccess.PAGE_PROCESS_CONFIRMATION_CONFIGURATION);
     }
 
     private String username(HttpSession session) {

@@ -1,0 +1,21 @@
+import groovy.json.JsonOutput
+gradle.projectsEvaluated {
+    def project = gradle.rootProject
+    project.tasks.register('pmsReleaseMetadata') {
+        dependsOn project.tasks.named('bootJar'), project.tasks.named('test')
+        doLast {
+            def boot = project.tasks.named('bootJar').get()
+            def javaTask = project.tasks.named('compileJava').get()
+            def build = project.layout.buildDirectory.get().asFile
+            def output = new File(System.getenv('PMS_RELEASE_METADATA'))
+            output.text = JsonOutput.prettyPrint(JsonOutput.toJson([
+                jar: boot.archiveFile.get().asFile.absolutePath,
+                classes: javaTask.destinationDirectory.get().asFile.absolutePath,
+                resources: new File(project.projectDir, 'src/main/resources').absolutePath,
+                javaSources: new File(project.projectDir, 'src/main/java').absolutePath,
+                testResults: new File(build, 'test-results/test').absolutePath,
+                javap: new File(javaTask.javaCompiler.get().metadata.installationPath.asFile, 'bin/javap.exe').absolutePath
+            ]))
+        }
+    }
+}

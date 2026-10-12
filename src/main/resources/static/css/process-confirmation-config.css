@@ -1,3 +1,20 @@
+.carlex-config-page .report-page-actions .issue-add-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: auto;
+    min-height: 44px;
+    border-radius: 7px;
+    padding: 0 22px;
+    font-size: 13px;
+    font-weight: 800;
+    border: 1px solid #15803d;
+    background: #168334;
+    color: #fff;
+    cursor: pointer;
+}
+
 .pc-page-toolbar {
     display: flex;
     align-items: center;
@@ -19,10 +36,14 @@
     font-size: 13px;
 }
 
-.pc-records-wrap,
-.carlex-table-wrap {
+.pc-records-wrap {
     overflow: auto;
     max-height: calc(100vh - 255px);
+}
+
+.carlex-table-wrap {
+    overflow: auto;
+    max-height: calc(100vh - 190px);
 }
 
 .pc-records-table,
@@ -63,6 +84,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.carlex-table td.carlex-observation-description {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    vertical-align: top;
 }
 
 .carlex-table th:nth-child(1),
@@ -452,6 +480,10 @@ body.carlex-drawer-open {
     .pc-page-toolbar {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .carlex-config-page .pc-page-toolbar .report-page-actions {
+        width: 100%;
     }
 
     .carlex-drawer {

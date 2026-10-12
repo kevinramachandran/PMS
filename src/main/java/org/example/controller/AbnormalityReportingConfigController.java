@@ -104,7 +104,11 @@ public class AbnormalityReportingConfigController {
         if (!canView(session)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("status", "error", "message", "Forbidden"));
         }
-        return ResponseEntity.ok(Map.of("status", "success", "options", service.options(username(session), role(session), department, areaMachine, recordId)));
+        return ResponseEntity.ok(Map.of("status", "success", "options", service.options(username(session), optionsRole(session), department, areaMachine, recordId)));
+    }
+
+    private String optionsRole(HttpSession session) {
+        return canEdit(session) ? RoleAccess.ADMIN : role(session);
     }
 
     @GetMapping("/department-options")

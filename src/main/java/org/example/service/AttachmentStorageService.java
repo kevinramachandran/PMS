@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -63,6 +64,49 @@ public class AttachmentStorageService {
             throw new java.io.FileNotFoundException("Attachment not found.");
         }
         return Files.readAllBytes(path);
+    }
+
+    /** Existing local bytes let API sync avoid re-downloading immutable, opaque stored names. */
+    public boolean hasImage(String module, String storedName) {
+        try { return Files.isRegularFile(resolveStoredPath(module, storedName)); }
+        catch (IllegalArgumentException ex) { return false; }
+    }
+
+    public boolean matchesImage(String module, String storedName, String checksum) {
+        if (checksum == null || !checksum.matches("(?i)[a-f0-9]{64}")) return false;
+        try {
+            byte[] bytes = readImage(module, storedName);
+            String local = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));
+            return local.equalsIgnoreCase(checksum);
+        } catch (IOException | java.security.NoSuchAlgorithmException | IllegalArgumentException ex) { return false; }
+    }
+
+    /** Store an authenticated cloud attachment under its original opaque filename. */
+    public void storeSyncedImage(String module, String storedName, byte[] content) throws IOException {
+        if (content == null || content.length == 0 || content.length > 10 * 1024 * 1024)
+            throw new IllegalArgumentException("Synced image must be between 1 byte and 10 MB.");
+        String name = storedName == null ? "" : storedName.trim();
+        String ext = getExtension(name).toLowerCase();
+        if (!name.matches("[A-Za-z0-9_-]+\\.(?i:png|jpe?g)") || !ALLOWED_EXTENSIONS.contains(ext))
+            throw new IllegalArgumentException("Invalid synced image filename.");
+        boolean png = content.length >= 8 && content[0] == (byte) 0x89 && content[1] == 0x50
+                && content[2] == 0x4e && content[3] == 0x47 && content[4] == 0x0d
+                && content[5] == 0x0a && content[6] == 0x1a && content[7] == 0x0a;
+        boolean jpeg = content.length >= 3 && content[0] == (byte) 0xff && content[1] == (byte) 0xd8 && content[2] == (byte) 0xff;
+        if (!(ext.equals("png") ? png : jpeg)) throw new IllegalArgumentException("Synced image content does not match its PNG/JPG filename.");
+        Path modulePath = modulePath(module);
+        Files.createDirectories(modulePath);
+        Path target = resolveStoredPath(module, name);
+        Path temp = Files.createTempFile(modulePath, ".sync-", ".part");
+        try {
+            Files.write(temp, content);
+            try { Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
+            catch (java.nio.file.AtomicMoveNotSupportedException ex) {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
     }
 
     public void deleteImage(String module, String storedName) {

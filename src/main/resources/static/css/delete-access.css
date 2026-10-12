@@ -1,0 +1,10 @@
+[data-delete-hidden="true"],
+body:not([data-can-delete-records="true"]) :is(
+    [data-requires-delete], .issue-delete, .btn-delete, .metric-delete-btn,
+    .kpi-rename-delete-btn, .master-plant-delete-btn, .master-abnormality-delete-btn,
+    .master-gemba-walk-delete-btn, .master-gemba-kaizen-delete-btn, .master-process-delete-btn,
+    .gw-delete-record, .gk-delete-record, .ar-delete-record, .carlex-delete,
+    .pms-action-btn.delete, [data-mobile-user-action="delete"], [data-mobile-detail-action="delete"], .pms-confirm-delete,
+    #confirmDeleteBtn, #confirmMasterPlantDelete, .remove-performance-field,
+    .info-button-remove, .file-remove-btn, .carlex-remove-observation, .kpi-rename-remove-draft-btn
+) { display: none !important; }

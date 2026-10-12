@@ -3059,6 +3059,17 @@ body.modern-shell .footer p {
     background: #f0fdf4;
 }
 
+.pms-checkbox-select-all {
+    position: sticky;
+    top: -6px;
+    z-index: 1;
+    margin: -6px -6px 4px;
+    padding: 9px 15px;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 700;
+}
+
 .pms-checkbox-option input {
     width: 16px;
     height: 16px;

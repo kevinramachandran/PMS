@@ -1,0 +1,490 @@
+﻿{
+    "reviewer":  "",
+    "reviewedAt":  "",
+    "commits":  {
+                    "onprem":  "",
+                    "cloud":  ""
+                },
+    "results":  [
+                    {
+                        "variant":  "onprem",
+                        "page":  "gemba-walk-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-walk-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-walk-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "gemba-walk-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-walk-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-walk-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "gemba-walk-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-walk-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-walk-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "gemba-kaizen-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-kaizen-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-kaizen-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "gemba-kaizen-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-kaizen-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-kaizen-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "gemba-kaizen-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-kaizen-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/gemba-kaizen-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "abnormality-reporting-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/abnormality-reporting-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/abnormality-reporting-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "abnormality-reporting-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/abnormality-reporting-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/abnormality-reporting-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "abnormality-reporting-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/abnormality-reporting-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/abnormality-reporting-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "process-confirmation-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/process-confirmation-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/process-confirmation-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "process-confirmation-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/process-confirmation-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/process-confirmation-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "onprem",
+                        "page":  "process-confirmation-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/process-confirmation-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "onprem/process-confirmation-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "gemba-walk-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-walk-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-walk-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "gemba-walk-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-walk-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-walk-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "gemba-walk-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-walk-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-walk-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "gemba-kaizen-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-kaizen-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-kaizen-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "gemba-kaizen-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-kaizen-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-kaizen-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "gemba-kaizen-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-kaizen-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/gemba-kaizen-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "abnormality-reporting-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/abnormality-reporting-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/abnormality-reporting-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "abnormality-reporting-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/abnormality-reporting-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/abnormality-reporting-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "abnormality-reporting-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/abnormality-reporting-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/abnormality-reporting-config-1440-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "process-confirmation-config",
+                        "width":  375,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/process-confirmation-config-375-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/process-confirmation-config-375-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "process-confirmation-config",
+                        "width":  768,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/process-confirmation-config-768-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/process-confirmation-config-768-form.png"
+                                            }
+                                        ]
+                    },
+                    {
+                        "variant":  "cloud",
+                        "page":  "process-confirmation-config",
+                        "width":  1440,
+                        "headers":  "pending",
+                        "tables":  "pending",
+                        "forms":  "pending",
+                        "buttons":  "pending",
+                        "navigation":  "pending",
+                        "screenshots":  [
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/process-confirmation-config-1440-register.png"
+                                            },
+                                            {
+                                                "sha256":  "",
+                                                "path":  "cloud/process-confirmation-config-1440-form.png"
+                                            }
+                                        ]
+                    }
+                ]
+}

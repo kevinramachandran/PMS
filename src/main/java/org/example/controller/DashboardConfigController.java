@@ -152,6 +152,11 @@ public class DashboardConfigController {
     @PostMapping("/info-portal")
     public Map<String, Object> saveInfoPortalConfig(@RequestBody Map<String, Object> request) {
         List<Map<String, Object>> buttons = normalizeRequestedButtons(request.get("buttons"), kpiFooterButtonsConfigService.getOrCreateDefaults());
+        for (var previous : getInfoPortalButtons(kpiFooterButtonsConfigService.getOrCreateDefaults())) {
+            var next = findButton(buttons, toPositiveInt(previous.get("id"), -1));
+            org.example.util.DeletionGuard.checkRemoval(next.isEmpty()
+                    || (!asString(previous.get("file")).isBlank() && asString(next.get("file")).isBlank()));
+        }
         KpiFooterButtonsConfig incoming = new KpiFooterButtonsConfig();
         Map<String, Object> first = buttons.size() > 0 ? buttons.get(0) : Map.of();
         Map<String, Object> second = buttons.size() > 1 ? buttons.get(1) : Map.of();

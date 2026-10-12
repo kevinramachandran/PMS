@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "variants": {
+    "onprem": { "directory": "local-git", "branch": "fix/pms-dashboard-permissions-license-20261009", "zip": "PMS-4.zip" },
+    "cloud": { "directory": "cloud-minimal-ui", "branch": "cloud-minimal-ui", "zip": "PMS-4-cloud.zip" }
+  },
+  "releaseInputs": ["src", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat", "gradle", "deployment", "tools", "docs", "AGENTS.md", ".github", ".gitignore", "database-setup.sql"],
+  "legacySources": { "parent": "..", "cloud-snapshot": "cloud-configurable/source" },
+  "legacyInputs": ["src", "build.gradle.kts", "settings.gradle.kts", "gradle.properties", "deployment"],
+  "visualPages": ["gemba-walk-config", "gemba-kaizen-config", "abnormality-reporting-config", "process-confirmation-config"],
+  "visualWidths": [375, 768, 1440],
+  "visualChecks": ["headers", "tables", "forms", "buttons", "navigation"]
+}

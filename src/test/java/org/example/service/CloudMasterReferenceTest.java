@@ -28,6 +28,23 @@ class CloudMasterReferenceTest {
         }
     }
 
+    @Test void cloudUserMapsDesignationByNameWhenSourceIdDiffers() {
+        var catalog = new MasterReferenceService.Catalog(Map.of(PlantMasterDataItem.class, List.of(
+                new MasterReferenceService.Master(150L, "DESIGNATION", "Operator", "", ""))));
+        var row = mapper.createObjectNode().put("id", 5).put("designation", "Operator").put("designationId", "6");
+        var warnings = new ArrayList<String>();
+        service.resolveCloud(AppUser.class, null, row, Set.of("id", "designation", "designationId"), catalog, warnings);
+        assertEquals("150", row.path("designationId").asText());
+        assertFalse(warnings.stream().anyMatch(w -> w.contains("designation")));
+    }
+
+    @Test void cloudUserKeepsStrictValidationWhenDesignationNameCannotBeMapped() {
+        var catalog = new MasterReferenceService.Catalog(Map.of());
+        var row = mapper.createObjectNode().put("id", 5).put("designation", "Operator").put("designationId", "6");
+        assertThrows(IllegalArgumentException.class, () -> service.resolveCloud(AppUser.class, null, row,
+                Set.of("id", "designation", "designationId"), catalog, new ArrayList<>()));
+    }
+
     @Test void userReferenceValidationRemainsStrictForExplicitIdsAndManualImports() {
         var catalog = new MasterReferenceService.Catalog(Map.of());
         var row = mapper.createObjectNode().put("id", 5).put("area", "Old area").put("areaIds", "99");
@@ -161,6 +178,7 @@ class CloudMasterReferenceTest {
             assertEquals("Historical value", legacy.path(link.field()).asText());
             assertEquals("", legacy.path(link.column()).asText());
         }
+        if (type == AppUser.class && link.column().equals("designationId")) return;
         for (String invalid : List.of("999", "-1", "abc", "88,88")) {
             var invalidRow = row.deepCopy().put(link.column(), invalid);
             assertThrows(IllegalArgumentException.class, () -> service.resolveCloud(type, null,

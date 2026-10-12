@@ -189,6 +189,8 @@ public class IssueBoardItemService {
     @Transactional
     public List<IssueBoardItem> replaceByBoardDate(LocalDate boardDate, List<IssueBoardItem> items, String editedBy) {
         List<IssueBoardItem> existingItems = repository.findByBoardDateOrderByRowOrderAscIdAsc(boardDate);
+        var submittedIds = items.stream().map(IssueBoardItem::getId).filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet());
+        org.example.util.DeletionGuard.checkRemoval(existingItems.stream().anyMatch(item -> !submittedIds.contains(item.getId())));
         Map<Long, IssueBoardItem> previousById = new HashMap<>();
         Map<Long, IssueBoardItem> existingById = new HashMap<>();
         for (IssueBoardItem existing : existingItems) {

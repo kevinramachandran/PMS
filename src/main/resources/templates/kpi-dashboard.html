@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KPI Dashboard - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=20261008-dynamic-performance">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261012-api-sync">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=sticky-table-header-20260913">
-    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
-    <script src="/js/permission-ui.js?v=20261008" defer></script>
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261012-api-sync">
+    <script src="/js/permission-ui.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261012-api-sync">
+    <script src="/js/mobile-responsive.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012-api-sync">
+    <script src="/js/delete-access.js?v=20261012-api-sync" defer></script>
 </head>
-<body class="modern-shell dashboard-bg kpi-tv-layout" th:attr="data-can-edit-current-page=${canEditCurrentPage}">
+<body class="modern-shell dashboard-bg kpi-tv-layout" th:attr="data-can-delete-records=${canDeleteRecords},data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -437,12 +441,7 @@
 
             <div id="dashboardToast" class="dashboard-toast" aria-live="polite" aria-atomic="true"></div>
 
-            <footer class="footer">
-                <div class="footer-brand">
-                    <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-                </div>
-                <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-            </footer>
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
         </main>
     </div>
 
@@ -1026,9 +1025,9 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <script src="/js/dashboard.js?v=20261008-dynamic-performance"></script>
+    <script src="/js/dashboard.js?v=20261012-api-sync"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=smtp-nav-20260901"></script>
+<script src="/js/ui-shell.js?v=20261012-api-sync"></script>
 </body>
 </html>
 

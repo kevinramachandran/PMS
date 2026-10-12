@@ -132,6 +132,15 @@ public class MasterReferenceService {
             String oldName = original == null ? "" : text(original, link.field());
             String name = text(incoming, link.field());
             String rawIds = text(incoming, link.column());
+            // User accounts are matched by username on the destination, while their master
+            // references still carry cloud IDs. If the local user's designation differs,
+            // translate the source designation by its exact name before validating the ID.
+            // Keep strict ID validation for all other cloud references and manual imports.
+            if (cloud && type == AppUser.class && link.column().equals("designationId")
+                    && !rawIds.isBlank() && !name.isBlank()) {
+                List<Master> named = matchNames(link, name, incoming, catalog);
+                if (named.size() == 1) rawIds = named.get(0).id().toString();
+            }
             if (original != null && !headers.contains(link.column()) && same(name, oldName)) {
                 rawIds = oldIds;
                 incoming.put(link.column(), oldIds);

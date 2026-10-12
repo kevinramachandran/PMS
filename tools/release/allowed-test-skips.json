@@ -1,0 +1,4 @@
+{
+  "org.example.service.CloudMasterReferenceTest::reportedCsvRowResolvesWithCurrentCloudRules()": "Optional historical customer CSV fixture is not part of the repository; normal JSON/API sync has independent mandatory tests.",
+  "org.example.service.DataSyncServiceTest::suppliedCsvBatchImportsAfterCategoryCollisionAndRepeatsWithoutDuplicates()": "Optional historical customer CSV batch fixture is not part of the repository; normal JSON/API sync has independent mandatory tests."
+}

@@ -220,7 +220,7 @@
 }
 
 .abnormality-reporting-config-page .ar-table-wrap {
-    max-height: calc(100vh - 275px);
+    max-height: calc(100vh - 190px);
     overflow: auto;
 }
 

@@ -1,6 +1,19 @@
 .data-sync-trigger { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 8px 13px; border: 1px solid #19823d; border-radius: 6px; background: #fff; color: #176d35; font: 600 13px/1.4 inherit; cursor: pointer; }
 .data-sync-trigger:hover { background: #e8f3ec; }
 .footer-btn-card-header .data-sync-trigger { margin-left: auto; }
+.report-page-actions.report-actions-with-sync { flex-wrap: nowrap; overflow-x: auto; }
+.master-sync-header { display: flex; align-items: center; gap: 10px; }
+.master-sync-header .data-sync-trigger,
+.header-right .master-header-sync {
+    margin-left: auto; flex-shrink: 0; height: 36px; min-height: 36px;
+    padding: 0 14px; border: 1px solid #15803d; border-radius: 7px;
+    background: #168334; color: #fff; font-size: 13px; font-weight: 800;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    white-space: nowrap;
+}
+.master-sync-header .data-sync-trigger:hover,
+.header-right .master-header-sync:hover { background: #15803d; }
+.header-right .master-header-sync { margin-left: 0; }
 .data-sync-dialog[hidden] { display: none; }
 .data-sync-dialog { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; }
 .data-sync-backdrop { position: absolute; inset: 0; background: #10261dcc; }

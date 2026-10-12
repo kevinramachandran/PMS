@@ -3,20 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemba Walk Reporting - Carlsberg Brewery</title>
+    <title>Gemba Walk - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=nav-size-20260814">
-    <link rel="stylesheet" href="/css/issue-board.css?v=issue-data-sync-20260821">
-    <link rel="stylesheet" href="/css/gemba-walk-config.css?v=20260921-mutation-fixes">
-    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
-    <link rel="stylesheet" href="/css/attachment-preview.css?v=20260903">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/issue-board.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/gemba-walk-config.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/attachment-preview.css?v=20261012-api-sync">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link rel="stylesheet" href="/css/assignment-workflow.css?v=20260914">
-    <link rel="stylesheet" href="/css/data-sync.css?v=2">
-    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
-    <script src="/js/permission-ui.js?v=20261008" defer></script>
+<link rel="stylesheet" href="/css/assignment-workflow.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/data-sync.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261012-api-sync">
+    <script src="/js/permission-ui.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261012-api-sync">
+    <script src="/js/mobile-responsive.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012-api-sync">
+    <script src="/js/delete-access.js?v=20261012-api-sync" defer></script>
 </head>
-<body class="modern-shell dashboard-bg issue-board-page gemba-walk-config-page" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
+<body class="modern-shell dashboard-bg issue-board-page gemba-walk-config-page" th:attr="data-can-delete-records=${canDeleteRecords},data-cloud-managed-edits=${cloudManagedEdits},data-can-edit-current-page=${canEditCurrentPage},data-username=${session.username != null ? session.username : ''}">
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="app-container">
@@ -36,7 +42,7 @@
         <header class="top-header">
             <div class="header-left">
                 <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
-                <h1>Gemba Walk Reporting</h1>
+                <h1>Gemba Walk</h1>
             </div>
             <div class="header-right">
                 <div class="header-icon"><i class="fas fa-bell"></i><span class="notification-badge"></span></div>
@@ -69,13 +75,16 @@
                                 <th>Observations</th>
                                 <th>Final Comments</th>
                                 <th>Assignment History</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="gembaWalkConfigRecordsBody">
-                            <tr><td colspan="15" class="gw-empty-cell">Loading records...</td></tr>
+                            <tr><td colspan="14" class="gw-empty-cell">Loading records...</td></tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="report-page-actions report-page-actions-footer">
+                    <button type="button" id="gembaWalkExportBtn" class="issue-add-button"><i class="fas fa-file-csv"></i><span>Download</span></button>
+                    
                 </div>
             </section>
 
@@ -140,20 +149,19 @@
             </form>
         </div>
 
-        <footer class="footer">
-            <div class="footer-brand">
-                <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-            </div>
-            <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-        </footer>
+        <footer th:replace="~{fragments/footer :: footer}"></footer>
     </main>
 </div>
 
-<script src="/js/assignment-workflow.js?v=20260914"></script><script src="/js/assignment-history.js"></script><script src="/js/attachment-preview.js"></script><script src="/js/gemba-walk-config.js?v=20261008-permissions"></script>
+<script src="/js/assignment-workflow.js?v=20261012-api-sync"></script><script src="/js/assignment-history.js?v=20261012-api-sync"></script><script src="/js/attachment-preview.js?v=20261012-api-sync"></script><script src="/js/gemba-walk-config.js?v=20261012-api-sync"></script>
+
+<script src="/js/pdf-report.js?v=20261012-api-sync"></script>
+
+<script src="/js/report-export.js?v=20261012-api-sync"></script>
 <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
-<script src="/js/master-cloud-routing.js?v=20261008"></script>
+<script src="/js/ui-shell.js?v=20261012-api-sync"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261012-api-sync"></script>
+<script src="/js/master-cloud-routing.js?v=20261012-api-sync"></script>
 </body>
 </html>
 

@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMS Data Entry - Carlsberg Brewery</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/dashboard.css?v=20261008-dynamic-performance">
-    <link rel="stylesheet" href="/css/settings.css?v=20261008-daily-performance-form">
+    <link rel="stylesheet" href="/css/dashboard.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/settings.css?v=20261012-api-sync">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="/css/ui-shell.css?v=20260921-mutation-fixes">
-    <link rel="stylesheet" href="/css/data-sync.css?v=2">
-    <link rel="stylesheet" href="/css/permission-ui.css?v=20261008">
-    <script src="/js/permission-ui.js?v=20261008" defer></script>
+    <link rel="stylesheet" href="/css/ui-shell.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/data-sync.css?v=20261012-api-sync">
+    <link rel="stylesheet" href="/css/permission-ui.css?v=20261012-api-sync">
+    <script src="/js/permission-ui.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/mobile-responsive.css?v=20261012-api-sync">
+    <script src="/js/mobile-responsive.js?v=20261012-api-sync" defer></script>
+    <link rel="stylesheet" href="/css/delete-access.css?v=20261012-api-sync">
+    <script src="/js/delete-access.js?v=20261012-api-sync" defer></script>
 </head>
-<body class="modern-shell dashboard-bg" th:attr="data-cloud-managed-edits=${cloudManagedEdits},data-can-manage-metrics=${session.canManageMetricDefinitions},data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
+<body class="modern-shell dashboard-bg" th:attr="data-can-delete-records=${canDeleteRecords},data-cloud-managed-edits=${cloudManagedEdits},data-can-manage-metrics=${session.canManageMetricDefinitions},data-active-page=${activePage},data-active-type=${activeType},data-active-title=${activeTitle},data-can-edit-current-page=${canEditCurrentPage}">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-container">
@@ -785,9 +789,6 @@
                             <!-- Master Data Gemba Walk Form -->
                             <div id="form-master-gemba-walk" class="form-section">
                                 <div class="kpi-rename-shell">
-                                    <div class="kpi-rename-page-header">
-                                        <h2>Gemba Walk</h2>
-                                    </div>
 
                                     <div class="footer-btn-card master-gemba-walk-card" data-category="GEMBA_CATEGORY">
                                         <div class="footer-btn-card-header"><i class="fas fa-list"></i> Gemba Category</div>
@@ -896,9 +897,6 @@
                             <!-- Master Data Gemba Kaizen Form -->
                             <div id="form-master-gemba-kaizen" class="form-section">
                                 <div class="kpi-rename-shell">
-                                    <div class="kpi-rename-page-header">
-                                        <h2>Gemba Kaizen</h2>
-                                    </div>
 
                                     <div class="footer-btn-card master-gemba-kaizen-card" data-category="CLASSIFICATION_OF_KAIZEN">
                                         <div class="footer-btn-card-header"><i class="fas fa-lightbulb"></i> Classification of Kaizen</div>
@@ -1275,9 +1273,6 @@
                             <!-- Master Data Process Form -->
                             <div id="form-master-process" class="form-section">
                                 <div class="kpi-rename-shell">
-                                    <div class="kpi-rename-page-header">
-                                        <h2>Process</h2>
-                                    </div>
 
                                     <div class="footer-btn-card master-process-card" data-category="ZM_OBSERVATION">
                                         <div class="footer-btn-card-header"><i class="fas fa-eye"></i> ZM Describe Your Observation</div>
@@ -1434,9 +1429,6 @@
                             <!-- Master Data Abnormality Form -->
                             <div id="form-master-abnormality" class="form-section">
                                 <div class="kpi-rename-shell">
-                                    <div class="kpi-rename-page-header">
-                                        <h2>Abnormality</h2>
-                                    </div>
 
                                     <div class="footer-btn-card master-abnormality-card" data-category="ABT_TAG_TYPE">
                                         <div class="footer-btn-card-header"><i class="fas fa-tag"></i> ABT Tag Type</div>
@@ -1594,10 +1586,6 @@
                             <!-- Master Data Plant Form -->
                             <div id="form-master-plant" class="form-section">
                                 <div class="kpi-rename-shell">
-                                    <div class="kpi-rename-page-header">
-                                        <h2>Plant</h2>
-                                        <button type="button" class="btn btn-secondary master-plant-sync-btn"><i class="fas fa-rotate"></i> Sync</button>
-                                    </div>
 
                                     <div class="master-plant-row">
                                     <div class="footer-btn-card master-plant-card" data-category="PLANT">
@@ -1995,12 +1983,7 @@
                 </div>
             </div>
 
-            <footer class="footer">
-                <div class="footer-brand">
-                    <img class="footer-brand-logo" src="/images/solvex-logo.png" onerror="this.onerror=null;this.src='/images/solvex-logo.svg';" alt="Solvex Engineering Solution Logo">
-                </div>
-                <p>&copy; 2026 SolveX Engineering Solutions | All rights reserved | www.solvexes.com</p>
-            </footer>
+            <footer th:replace="~{fragments/footer :: footer}"></footer>
         </main>
     </div>
 
@@ -2016,14 +1999,14 @@
             dateElement.textContent = `${day}-${month}-${year}`;
         })();
     </script>
-    <script src="/js/dashboard.js?v=plant-name-only-header-20260913"></script>
-    <script src="/js/settings.js?v=20261008-license-bios"></script>
-    <script src="/js/hs-cross-config.js?v=hs-csv-download-20260817"></script>
-    <script src="/js/lsr-tracking-config.js?v=lsr-csv-download-20260817"></script>
+    <script src="/js/dashboard.js?v=20261012-api-sync"></script>
+    <script src="/js/settings.js?v=20261012-api-sync"></script>
+    <script src="/js/hs-cross-config.js?v=20261012-api-sync"></script>
+    <script src="/js/lsr-tracking-config.js?v=20261012-api-sync"></script>
     <img src="/images/solvex-logo.png" class="solvex-watermark" alt="SolveX Watermark">
-<script src="/js/ui-shell.js?v=20260921-mutation-fixes"></script>
-    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261008-permissions"></script>
-<script src="/js/master-cloud-routing.js?v=20261008"></script>
+<script src="/js/ui-shell.js?v=20261012-api-sync"></script>
+    <script th:if="${syncConfigurationUser}" src="/js/data-sync.js?v=20261012-api-sync"></script>
+<script src="/js/master-cloud-routing.js?v=20261012-api-sync"></script>
 </body>
 </html>
 

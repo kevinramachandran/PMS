@@ -386,12 +386,12 @@ public class AbnormalityReportingConfigService {
         if (user == null) {
             return false;
         }
-        String designation = normalize(user.getDesignation());
+        String designation = compact(user.getDesignation());
         return RoleAccess.isHod(user.getRole())
                 || designation.contains("HOD")
-                || designation.contains("HEAD_OF_DEPARTMENT")
-                || designation.contains("DEPARTMENT_HEAD")
-                || designation.contains("AREA_HEAD");
+                || designation.contains("HEADOFDEPARTMENT")
+                || designation.contains("DEPARTMENTHEAD")
+                || designation.contains("AREAHEAD");
     }
 
     private boolean isAreaHod(AppUser user) {
@@ -399,10 +399,11 @@ public class AbnormalityReportingConfigService {
             return false;
         }
         String role = RoleAccess.normalize(user.getRole());
-        String designation = normalize(user.getDesignation());
+        String designation = compact(user.getDesignation());
         return RoleAccess.AREA_HOD.equals(role)
-                || designation.contains("AREA_HOD")
-                || designation.contains("AREA_HEAD");
+                || designation.contains("AREAHOD")
+                || designation.contains("AREHOD")
+                || designation.contains("AREAHEAD");
     }
 
     private boolean isOperational(AppUser user) {

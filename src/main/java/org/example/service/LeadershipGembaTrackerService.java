@@ -45,6 +45,7 @@ public class LeadershipGembaTrackerService {
     @Transactional
     public List<LeadershipGembaTrackerEntry> replaceByDate(LocalDate scheduleDate, List<LeadershipGembaTrackerEntry> items) {
         String periodLabel = PERIOD_FORMATTER.format(scheduleDate);
+        org.example.util.DeletionGuard.checkRemoval(items.size() < repository.findByPeriodLabelOrderByRowOrderAscIdAsc(periodLabel).size());
         repository.deleteByPeriodLabel(periodLabel);
 
         int row = 1;
